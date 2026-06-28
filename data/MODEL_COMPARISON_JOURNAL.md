@@ -28,6 +28,15 @@ Running scoreboard — median |Δ%| vs empirical `∫P·dt` over 44 power rides 
 | approximate `off` + 2 m elev smooth | 10.0 | +9.8 | 5 |
 | approximate `off` (baseline) | 19.2 | +19.2 | 2 |
 
+**Code provenance** — the commit holding each entry's analysis code:
+
+- **Entries 1–4** (harness `build_model_inputs.py` + `compare.mjs`: methodology, baseline,
+  climb-fraction, P_flat/P_avg) — [`797173f`](../data/activities/compare.mjs)
+- **Entry 5** (per-regime, elevation noise, deadband filter, τ=2) — `cd2f549`; the filter +
+  `k_h` wired into the app/`notas.md` in `7e46fab`
+- **Entry 6** (DEM/IGC comparison, `research/dem/`) — `7d958ca`; extended with the IGC 5 m
+  DTM in the following commit
+
 ---
 
 ## 2026-06-28 — Entry 6: external DEMs (FABDEM/SRTM/COP30) and k_h for DEM-derived h₊/h₋
@@ -46,30 +55,35 @@ engineered road. Two parts: nearest-neighbour sampling adds ~30 pp of staircase 
 (**use bilinear**), and a real residual remains because the road is graded/cut and DEMs
 keep terrain roughness (plus canopy/buildings for the DSMs).
 
-| DEM (bilinear, 3 m) | Σ h₊ vs recorded | Σ h₋ vs recorded |
-|---|--:|--:|
-| FABDEM | +35 % | +37 % |
-| COP30 | +50 % | +52 % |
-| SRTM | +71 % | +73 % |
+A later check added the **IGC-SP 2010 5 m aerophotogrammetric DTM** (bare-earth, covers 10
+of the 12 rides) and it shows **no single source is ground truth for ascent — they bracket
+it.** Σ h₊ (3 m-hyst, bilinear) over the 10 IGC-covered rides, IGC as reference:
 
-**k_h for DEM-derived ascent/descent** — the factor that maps a DEM `h₊`/`h₋` (bilinear,
-3 m-hyst) back to the recorded-baro (road) reference, `k_h = recorded / DEM`:
+| source | res | Σ h₊ | vs IGC | k_h = IGC/src |
+|---|--|--:|--:|--:|
+| recorded baro | — | 13 622 (raw 15 292) | −21 % (raw −11 %) | 1.26 |
+| **IGC** (bare-earth) | **5 m** | **17 162** | reference | 1.00 |
+| FABDEM (bare-earth) | 30 m | 18 160 | +6 % | 0.95 |
+| COP30 (DSM) | 30 m | 20 310 | +18 % | 0.84 |
+| SRTM (DSM) | 30 m | 22 951 | +34 % | 0.75 |
 
-| DEM | k_h(h₊) | k_h(h₋) |
-|---|--:|--:|
-| **FABDEM** | **0.74** | **0.73** |
-| COP30 | 0.67 | 0.66 |
-| SRTM | 0.59 | 0.58 |
+- **The two bare-earth sources agree (~17–18 km, within 6 %)** — IGC 5 m and FABDEM 30 m
+  cross-check the real terrain ascent.
+- **The recorded baro *under*-records** (−11 % raw, −21 % smoothed): the altimeter lags and
+  smooths, so short climbs read as ~null grade (Danilo's observation). It is the LOW
+  outlier — **not** ground truth (correcting an earlier overstatement). The DSMs *over*-record
+  (canopy/buildings; SRTM +34 %).
+- **But DTMs/DEMs miss bridges and tunnels** — a bridge dips the surface into the spanned
+  valley, a tunnel climbs it over the pierced ridge — so they over-record exactly where the
+  baro is right. The truth is bracketed: baro low, DTM high.
+- **k_h(h₊) ≈ k_h(h₋)** throughout (symmetric), so one factor per source corrects both.
 
-- **k_h(h₊) ≈ k_h(h₋)** for each DEM — the inflation is symmetric, so one `k_h` per DEM
-  corrects both, exactly as the model assumes (`k_h·β·(h₊ − ε·h₋)`).
-- **FABDEM needs k_h ≈ 0.74 — the *same* as the recorded baro's own deadband k_h** (Entry
-  5, ~0.74 at τ=2). A bare-earth DEM sampled bilinearly is about as good as the raw baro
-  and corrects the same way; SRTM (0.59) and COP30 (0.67) need more.
-- **Practical:** with a barometric track, use it (best road-ascent proxy). With only a DEM
-  (planned route, no baro), use **FABDEM, bilinear, k_h ≈ 0.74**; the DSMs over-state
-  climbing. These are São-Paulo-tile values — `k_h` is source/terrain-dependent, so
-  calibrate per region.
+**This geometric k_h is NOT the model's k_h.** The energy model (Entry 5) wanted h₊ *below*
+even the raw baro, because `β·h₊` over-charges climb energy: on rollers the rider's momentum
+from the preceding descent carries them over the next rise without paying `mg·h`. So the
+*energy-effective* ascent (notas-v2 `k_h ≈ 0.74` vs the baro) sits below the *geometric*
+ascent (IGC/FABDEM, above the baro). The DEM `k_h` here maps geometry → survey truth; the
+model `k_h` maps geometry → pedalling energy — different corrections, don't conflate.
 
 ---
 

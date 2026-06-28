@@ -4,12 +4,14 @@ Does an external DEM give a better elevation/ascent than the device's recorded t
 This bears directly on the `k_h` ascent-noise work
 ([../data/MODEL_COMPARISON_JOURNAL.md](../data/MODEL_COMPARISON_JOURNAL.md) Entry 5,
 [../notas.md](../notas.md) v2): the closed-form climb term `β·h₊` is linear in ascent, so
-the *ascent source* matters a lot. Three independent 30 m DEMs were sampled at every
-track point and compared to the recorded barometric elevation.
+the *ascent source* matters a lot. Three 30 m global DEMs — and a 5 m local DTM — were
+sampled at every track point and compared to the recorded barometric elevation.
 
 - **FABDEM** V1-2 (bare-earth: forest & buildings removed) — `telhas.pedalhidrografi.co/fabdem/`
 - **COP30** Copernicus GLO-30 (DSM) — AWS `copernicus-dem-30m`
 - **SRTM** GL1 30 m (DSM) — AWS `elevation-tiles-prod/skadi`
+- **IGC-SP 2010** (bare-earth DTM, **5 m**, aerophotogrammetry; SIRGAS2000/UTM-23S) —
+  limited to the São Paulo region, covering 10 of the 12 test rides
 
 All three are WGS84, ~30 m, read with GDAL (`gdallocationinfo`). Scripts:
 [research/dem/extract_coords.mjs](dem/extract_coords.mjs) (track → lon/lat/ele per ride),
@@ -73,31 +75,54 @@ sampling method is fixed.
 ## Result 3 — k_h for DEM-derived h₊ and h₋
 
 The model's `k_h` ([../notas.md](../notas.md) v2) is "the factor that adjusts DEM height
-variation vs empirical." Quantifying it as `k_h = recorded-baro / DEM` (bilinear, 3 m-hyst),
-the scalar that brings a DEM-derived ascent/descent back to the road reference:
+variation vs empirical." Quantifying it as `k_h = recorded-baro / source` (bilinear,
+3 m-hyst), the scalar that brings a source-derived ascent/descent back to the road
+reference — including the **IGC-SP 2010 5 m DTM** (bare-earth aerophotogrammetry, covers 10
+of the 12 rides):
 
-| DEM | k_h(h₊) | k_h(h₋) |
+| source | res | shape RMS | Σ h₊ vs rec | k_h(h₊) | k_h(h₋) |
+|---|--|--:|--:|--:|--:|
+| SRTM (DSM) | 30 m | 7.6 m | +71 % | 0.59 | 0.58 |
+| COP30 (DSM) | 30 m | 7.7 m | +50 % | 0.67 | 0.66 |
+| FABDEM (bare-earth) | 30 m | 7.1 m | +35 % | 0.74 | 0.73 |
+| **IGC (bare-earth)** | **5 m** | **6.4 m** | **+8 %** | **0.92** | **0.92** |
+
+- **`k_h(h₊) ≈ k_h(h₋)`** for every source — symmetric, so one factor corrects both.
+- The table above is `k_h` **relative to the baro**, and the baro is **not** ground truth: it
+  lags and smooths, so short climbs read as ~null grade. Taking the **5 m IGC DTM as the
+  reference** instead (the bare-earth survey), the picture *inverts* — the baro is the LOW
+  outlier (over the 10 IGC-covered rides, h₊ 3 m-hyst):
+
+| source | Σ h₊ vs IGC 5 m | k_h = IGC/source |
 |---|--:|--:|
-| **FABDEM** | **0.74** | **0.73** |
-| COP30 | 0.67 | 0.66 |
-| SRTM | 0.59 | 0.58 |
+| recorded baro (3 m) | −21 % (raw −11 %) | 1.26 |
+| FABDEM 30 m | +6 % | 0.95 |
+| COP30 30 m | +18 % | 0.84 |
+| SRTM 30 m | +34 % | 0.75 |
 
-- **`k_h(h₊) ≈ k_h(h₋)`** — the inflation is symmetric, so one factor per DEM corrects both
-  (matching the model's `k_h·β·(h₊ − ε·h₋)`).
-- **FABDEM's k_h ≈ 0.74 equals the recorded baro's own deadband k_h** (~0.74 at τ=2): a
-  bare-earth DEM sampled bilinearly is about as good as the raw baro and needs the same
-  correction. The DSMs need more (COP30 0.67, SRTM 0.59).
-- These are São-Paulo-tile values; `k_h` is source/terrain-dependent — calibrate per region.
+- **The two bare-earth sources agree** (IGC 5 m ≈ FABDEM 30 m, within 6 %, ~17–18 km) — a
+  strong cross-check on the real terrain ascent.
+- **No source is ground truth.** The baro *under*-records (lag / missed climbs) yet is
+  correct at **bridges and tunnels**, which the DTMs cannot see (a bridge dips into the
+  spanned valley, a tunnel climbs over the pierced ridge → the DTM over-records there). The
+  truth is bracketed — baro low, DTM high.
+- These DEM `k_h` correct *geometry*; the **model's** `k_h` (notas v2) is different — it maps
+  geometry to *pedalling energy*, which is lower still because momentum carries the rider
+  over rollers without paying `mg·h` (journal Entry 6). Don't conflate them.
 
 ## Implications for the energy model
 
-- **The recorded barometric ascent is the best `h₊` source — do *not* replace it with a
-  DEM-sampled ascent.** Even with correct bilinear sampling, DEM-along-GPS ascent is
-  35–71 % too high; it would wreck the `β·h₊` climb term far worse than the baro noise the
-  `k_h` correction targets. (With nearest-neighbour it is 65–114 % — a trap to avoid.)
-- This **reinforces the `k_h` approach**: the recorded baro only needs mild de-noising
-  (Entry 5: ~20 % of raw baro `h₊` is sub-3 m jitter), and the true road ascent is likely
-  *at or slightly below* the 3 m-hysteresis baro value — the opposite direction from a DEM.
+- **No single source is ground truth for geometric ascent.** The bare-earth DTMs (IGC 5 m ≈
+  FABDEM 30 m) agree and are the best terrain reference; the baro *under*-records (lag/missed
+  climbs, −11 to −21 % vs IGC) but is right at bridges/tunnels the DTMs miss; the DSMs
+  *over*-record (canopy). Use a bare-earth DTM for geometry; the baro for road altitude at
+  engineered features.
+- **For the energy model, the geometric question is secondary.** `β·h₊` should use the
+  *energy-effective* ascent, which is *below* even the baro (momentum carries the rider over
+  rollers without paying `mg·h`), so the Entry-5 `k_h ≈ 0.74` deadband on the baro is the
+  right lever regardless of the geometric truth. Do **not** swap in a raw DEM-along-GPS
+  ascent — the DSMs run 18–34 % above the bare-earth truth (50–71 % above the baro), which
+  would wreck the climb term. (NN sampling adds another ~30 pp — always use bilinear.)
 - **If a DEM is the only elevation available** (a planned route with no baro track), use
   **FABDEM** (bare-earth, smoothest) and smooth aggressively — but expect it to over-state
   climbing; a DSM (SRTM/COP30) is materially worse over forest/urban terrain.

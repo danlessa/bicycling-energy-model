@@ -1,19 +1,21 @@
 #!/usr/bin/env python3
-"""Compare recorded track elevation against FABDEM, SRTM and COP30 DEMs.
+"""Compare recorded track elevation against FABDEM, SRTM, COP30 (30 m global) and,
+where covered, the IGC-SP 2010 5 m aerophotogrammetric DTM.
 
-For each ride whose track lies within the available DEM tiles, sample the three
-DEMs at every track point (via gdallocationinfo), then compare to the device's
-recorded elevation: vertical bias, shape RMS (after removing the mean offset),
-and — most relevant to the energy model — the cumulative ascent h+ each source
-yields (raw and 3 m-hysteresis). DEMs are independent of the barometric/GPS noise
-in the recorded track, so they bound how much of the recorded h+ is real.
+For each ride within the DEM tiles, sample each source at every track point
+(bilinear via gdallocationinfo), then compare to the device's recorded elevation:
+vertical bias, shape RMS (after removing the mean offset), the cumulative ascent
+h+ / descent h- each source yields, and k_h = recorded / source — the factor that
+maps a source-derived h+/h- back to the recorded (road) value.
 
-Usage: python3 compare_dem.py <coords_dir> <tiles_dir>
+Usage: python3 compare_dem.py <coords_dir> <tiles_dir> [igc.tif]
   tiles_dir/{fabdem,cop30,srtm}/<TILE>.{tif,tif,hgt}
 """
 import sys, os, csv, math, subprocess, statistics
 
 COORDS, TILES = sys.argv[1], sys.argv[2]
+IGC = sys.argv[3] if len(sys.argv) > 3 else None
+IGC_BBOX = (-47.457, -24.126, -45.609, -23.058)   # WGS84 lon_min, lat_min, lon_max, lat_max
 DEMS = {"fabdem": ("fabdem", "tif"), "srtm": ("srtm", "hgt"), "cop30": ("cop30", "tif")}
 
 def tile(lat, lon):
@@ -24,11 +26,8 @@ def have_tile(dem, t):
     sub, ext = DEMS[dem]
     return os.path.exists(os.path.join(TILES, sub, f"{t}.{ext}"))
 
-def sample(dem, t, lonlat, interp="near"):
-    """Batch-sample one DEM tile at [(lon,lat),...] -> [elev or None].
-    interp = 'near' (default, pixel value) or 'bilinear' (sub-pixel interpolation)."""
-    sub, ext = DEMS[dem]
-    raster = os.path.join(TILES, sub, f"{t}.{ext}")
+def query(raster, lonlat, interp):
+    """Batch-sample a raster at [(lon,lat),...] (WGS84) -> [elev or None]."""
     inp = "".join(f"{lon} {lat}\n" for lon, lat in lonlat)
     r = subprocess.run(["gdallocationinfo", "-valonly", "-wgs84", "-r", interp, raster],
                        input=inp, capture_output=True, text=True)
@@ -38,13 +37,15 @@ def sample(dem, t, lonlat, interp="near"):
         if line == "":
             out.append(None); continue
         try:
-            v = float(line)
-            out.append(None if v <= -1000 or v > 9000 else v)  # nodata / void
+            v = float(line); out.append(None if v <= -1000 or v > 9000 else v)
         except ValueError:
             out.append(None)
-    # gdallocationinfo prints one line per point; pad/truncate defensively
     while len(out) < len(lonlat): out.append(None)
     return out[:len(lonlat)]
+
+def sample(dem, t, lonlat, interp="near"):
+    sub, ext = DEMS[dem]
+    return query(os.path.join(TILES, sub, f"{t}.{ext}"), lonlat, interp)
 
 def ascent(h, tau):
     vals = [x for x in h if x is not None]
@@ -58,63 +59,60 @@ def ascent(h, tau):
         elif d <= -tau: ref = x
     return gain
 
-def descent(h, tau):   # h₋: same hysteresis on the negated series
+def descent(h, tau):
     return ascent([-x for x in h if x is not None], tau)
+
+def stats(diffs):
+    bias = statistics.mean(diffs)
+    return bias, math.sqrt(statistics.mean((x - bias) ** 2 for x in diffs))
 
 def main():
     ids = sorted(f[:-4] for f in os.listdir(COORDS) if f.endswith(".csv") and not f.startswith("_"))
-    rows = []
-    agg = {d: {"bias": [], "rms": [], "hp3_n": [], "hp3_b": [], "hm3_b": []} for d in DEMS}  # _n near, _b bilinear
-    agg_rec = {"hp_raw": 0.0, "hp3": 0.0, "hm3": 0.0}
+    rides = []
     for rid in ids:
         pts = list(csv.DictReader(open(os.path.join(COORDS, f"{rid}.csv"))))
         lonlat = [(float(p["lon"]), float(p["lat"])) for p in pts]
         rec = [float(p["ele"]) for p in pts]
         tiles_used = {tile(la, lo) for lo, la in lonlat}
-        if not all(have_tile(d, t) for d in DEMS for t in tiles_used):
-            continue  # tiles not downloaded for this ride
-        # single-tile fast path (all rides here are within one tile)
-        if len(tiles_used) != 1:
+        if len(tiles_used) != 1 or not all(have_tile(d, t) for d in DEMS for t in tiles_used):
             continue
         t = next(iter(tiles_used))
-        demN = {d: sample(d, t, lonlat, "near") for d in DEMS}       # nearest neighbour
-        demB = {d: sample(d, t, lonlat, "bilinear") for d in DEMS}   # bilinear (sub-pixel)
-        line = {"id": rid, "n": len(pts), "rec_hp3": ascent(rec, 3), "rec_hm3": descent(rec, 3)}
-        agg_rec["hp_raw"] += ascent(rec, 0); agg_rec["hp3"] += line["rec_hp3"]; agg_rec["hm3"] += line["rec_hm3"]
+        r = {"id": rid, "rec_raw": ascent(rec, 0), "rec3": ascent(rec, 3), "recm3": descent(rec, 3)}
         for d in DEMS:
-            dvB = demB[d]
+            dvB = sample(d, t, lonlat, "bilinear")
             diffs = [dvB[i] - rec[i] for i in range(len(rec)) if dvB[i] is not None]
-            if not diffs: continue
-            bias = statistics.mean(diffs)
-            rms = math.sqrt(statistics.mean((x - bias) ** 2 for x in diffs))
-            line[f"{d}_bias"] = bias; line[f"{d}_rms"] = rms
-            agg[d]["bias"].append(bias); agg[d]["rms"].append(rms)
-            agg[d]["hp3_n"].append(ascent(demN[d], 3))
-            agg[d]["hp3_b"].append(ascent(dvB, 3)); agg[d]["hm3_b"].append(descent(dvB, 3))
-        rows.append(line)
+            if diffs: r[d + "_bias"], r[d + "_rms"] = stats(diffs)
+            r[d + "_hp3"] = ascent(dvB, 3); r[d + "_hm3"] = descent(dvB, 3)
+            r[d + "_hp3_n"] = ascent(sample(d, t, lonlat, "near"), 3)
+        if IGC and all(IGC_BBOX[0] <= lo <= IGC_BBOX[2] and IGC_BBOX[1] <= la <= IGC_BBOX[3] for lo, la in lonlat):
+            iv = query(IGC, lonlat, "bilinear")
+            if sum(1 for x in iv if x is not None) / len(iv) > 0.99:
+                diffs = [iv[i] - rec[i] for i in range(len(rec)) if iv[i] is not None]
+                r["igc"] = True; r["igc_bias"], r["igc_rms"] = stats(diffs)
+                r["igc_raw"] = ascent(iv, 0); r["igc_hp3"] = ascent(iv, 3); r["igc_hm3"] = descent(iv, 3)
+        rides.append(r)
 
-    # aggregate
-    n = len(rows)
-    rec3 = agg_rec["hp3"]
-    print(f"AGGREGATE over {n} rides (single-tile S24W047).  recorded 3m-hyst ascent = {rec3:.0f} m")
-    print(f"\n{'DEM':8}{'med bias(m)':>12}{'shapeRMS(m)':>13}"
-          f"{'Σh+ NEAREST':>13}{'vs rec':>8}{'Σh+ BILINEAR':>14}{'vs rec':>8}")
-    print("-" * 76)
+    # Table 1 — all rides, recorded baro as the reference (its own limitations noted below)
+    rec3 = sum(r["rec3"] for r in rides)
+    print(f"TABLE 1 — {len(rides)} rides (S24W047), recorded-baro reference (h+ 3m = {rec3:.0f} m)")
+    print(f"{'source':8}{'res':>5}{'med bias':>10}{'shapeRMS':>10}{'Σh+ near':>10}{'Σh+ bilin':>11}{'vs baro':>9}")
     for d in DEMS:
-        a = agg[d]
-        if not a["bias"]: continue
-        hn, hb = sum(a["hp3_n"]), sum(a["hp3_b"])
-        print(f"{d:8}{statistics.median(a['bias']):>12.1f}{statistics.median(a['rms']):>13.1f}"
-              f"{hn:>13.0f}{(hn-rec3)/rec3*100:>7.0f}%{hb:>14.0f}{(hb-rec3)/rec3*100:>7.0f}%")
-    # k_h for DEM-derived h+ and h-  =  recorded baro / DEM (bilinear, 3 m) — the factor
-    # that maps a DEM-derived ascent/descent back to the empirical (road) value.
-    recm3 = agg_rec["hm3"]
-    print(f"\nk_h = recorded / DEM   (bilinear, 3 m-hyst)   recorded h+={rec3:.0f} h-={recm3:.0f} m")
-    print(f"{'DEM':8}{'Σ h+ (DEM)':>12}{'k_h(h+)':>9}{'Σ h- (DEM)':>12}{'k_h(h-)':>9}")
-    for d in DEMS:
-        hp, hm = sum(agg[d]["hp3_b"]), sum(agg[d]["hm3_b"])
-        if hp and hm:
-            print(f"{d:8}{hp:>12.0f}{rec3/hp:>9.2f}{hm:>12.0f}{recm3/hm:>9.2f}")
+        hn = sum(r[d + "_hp3_n"] for r in rides); hb = sum(r[d + "_hp3"] for r in rides)
+        bias = statistics.median(r[d + "_bias"] for r in rides if d + "_bias" in r)
+        rms = statistics.median(r[d + "_rms"] for r in rides if d + "_rms" in r)
+        print(f"{d:8}{'30':>4}m{bias:>10.1f}{rms:>10.1f}{hn:>10.0f}{hb:>11.0f}{(hb-rec3)/rec3*100:>8.0f}%")
+
+    # Table 2 — IGC 5 m DTM as reference (baro lags/misses climbs; DTM misses bridges/tunnels)
+    ig = [r for r in rides if r.get("igc")]
+    if ig:
+        I3 = sum(r["igc_hp3"] for r in ig)
+        b3 = sum(r["rec3"] for r in ig); braw = sum(r["rec_raw"] for r in ig)
+        print(f"\nTABLE 2 — IGC 5 m DTM as reference, over {len(ig)} covered rides (h+ 3 m-hyst)")
+        print(f"  IGC (5 m, bilinear)     {I3:>6.0f} m   = reference")
+        print(f"  recorded baro (3 m)     {b3:>6.0f} m   {b3/I3*100-100:+.0f}% vs IGC   (raw {braw:.0f}, {braw/I3*100-100:+.0f}%)   k_h=IGC/baro {I3/b3:.2f}")
+        for d in DEMS:
+            h3 = sum(r[d + "_hp3"] for r in ig)
+            print(f"  {d:8} (30 m, bilinear) {h3:>6.0f} m   {h3/I3*100-100:+.0f}% vs IGC                       k_h=IGC/{d[:5]} {I3/h3:.2f}")
 
 if __name__ == "__main__":
     main()
