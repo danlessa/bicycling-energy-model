@@ -15,15 +15,103 @@ Output: `data/activities/model_comparison.csv` (gitignored). Dataset & verificat
 [data/activities/README.md](activities/README.md),
 [data/VERIFICATION_NOTES.md](VERIFICATION_NOTES.md).
 
-Running scoreboard — median |Δ%| vs empirical `∫P·dt` over 44 power rides:
+Running scoreboard — median |Δ%| vs empirical `∫P·dt` over 44 power rides (best first):
 
 | model / variant | median \|Δ%\| | median Δ% | entry |
 |---|--:|--:|:--:|
+| **approximate `cf` + 2 m elev smooth** | **3.4** | +2.2 | 5 |
 | canonical (forward sim) | 5.1 | −1.7 | 2 |
-| approximate `off` (current) | 19.2 | +19.2 | 2 |
-| approximate + climb-fraction (`cf`) | 8.7 | +8.5 | 3 |
-| approximate `cf` + measured `v_f` | 7.5 | +2.7 | 4 |
+| canonical + 2 m elev smooth | 5.6 | −3.6 | 5 |
 | approximate `cf` + sheet `v_f` (`P_flat/P_avg`) | 7.2 | −0.5 | 4 |
+| approximate `cf` + measured `v_f` | 7.5 | +2.7 | 4 |
+| approximate + climb-fraction (`cf`) | 8.7 | +8.5 | 3 |
+| approximate `off` + 2 m elev smooth | 10.0 | +9.8 | 5 |
+| approximate `off` (baseline) | 19.2 | +19.2 | 2 |
+
+---
+
+## 2026-06-28 — Entry 5: per-regime breakdown, elevation noise in h₊, and a smoothing filter
+
+*Prompts: how do the models compare on climb / flat / descent separately? how much is
+elevation noise affecting h₊? then — apply a filter and compare.*
+
+### 5.1 Where the error lives — per-regime energy
+
+Each model's energy split into climb / flat / descent (same ±2 % / −1.5 % thresholds),
+summed over the 44 rides (kJ), vs empirical `∫P·dt` per regime:
+
+| regime | share | empirical | canon Δ% | off Δ% | cf Δ% |
+|---|--:|--:|--:|--:|--:|
+| **climb** | 48 % | 57 274 | +7.5 | +48.1 | +26.7 |
+| flat | 45 % | 53 756 | −3.8 | −2.6 | −2.6 |
+| descent | 7 % | 8 003 | −17.9 | +17.4 | +17.4 |
+
+- **Flat (45 %): everyone within ±4 %** — the flat-match anchor holds; `cf` ≡ `off` on
+  the flat (the correction only touches climbs). Neither model has a flat problem.
+- **Climb (48 %): the entire approximate error lives here.** `off` over-charges climb
+  energy by **+48 %** (the uphill aero over-charge, isolated); `cf` cuts it to +27 %;
+  canonical is +7.5 %. The approximate's whole +19 % total is a climb story.
+- **Descent (7 %): small, opposite misses** — canonical −18 % (its coast-to-`v_max` sim
+  pedals less than the rider did), approximate +17 % (the `ε≈0.25` recovery under-credits).
+  They partly cancel; only 7 % of energy.
+
+### 5.2 How much of the climb residual is elevation noise in h₊
+
+Total ascent `h₊` over rides, at hysteresis thresholds (raw = every positive step;
+τ-m = commit only after τ m net rise):
+
+| smoothing | Σ h₊ (km) | % of raw |
+|---|--:|--:|
+| raw | 92.4 | 100 % |
+| 1 m | 83.3 | 90 % |
+| 2 m | 77.4 | 84 % |
+| 3 m | 73.3 | 79 % |
+| 5 m | 66.9 | 72 % |
+| **engine (5 m grid, current)** | **91.7** | **99 %** |
+
+- **~20 % of raw `h₊` is sub-3 m jitter** (0.2 m altitude quantization + high sample
+  rate). Both sources noisy: RWGPS −20 %, Strava −22 % raw→3 m.
+- **The engine doesn't denoise it** — the 5 m distance-resample is interpolation, not
+  filtering, so 99 % of the raw noise flows into `β·h₊`.
+- **Energy:** `β·h₊` = 69 039 kJ raw → 54 758 kJ at 3 m. The 14 282 kJ difference is
+  **25 % of empirical climb energy** and **~93 % of `cf`'s climb over-prediction** — so
+  almost all of `cf`'s remaining climb miss is ascent noise, not model form. It also
+  explains why the approximate (whose `β·h₊` is *linear* in raw ascent) is hit far
+  harder than canonical.
+
+### 5.3 Applying an elevation filter — and an asymmetry
+
+Added a **deadband filter** on the profile elevation (ignores moves < τ, tracks larger
+ones) and re-ran both engines on the smoothed profile. Tried τ = 2 and 3 m (engine `h₊`
+91.7 km raw → 68.4 km at 2 m → 63.0 km at 3 m):
+
+| variant (median \|Δ%\|) | raw | +2 m | +3 m |
+|---|--:|--:|--:|
+| canonical | 5.1 | **5.6** | 6.2 |
+| approx `off` | 19.2 | 10.0 | **7.4** |
+| **approx `cf`** | 8.7 | **3.4** | 3.1 |
+| `cf` climb-regime Δ% | +26.7 | **−4.5** | −12.0 |
+
+- **`cf` + smoothing → median |Δ%| ≈ 3 % — the closed-form law now beats the raw
+  canonical forward-sim (5.1 %).** The climb-fraction aero fix and elevation denoising
+  together close essentially the whole gap.
+- **The filter helps the approximate but mildly *hurts* canonical** — the two models feel
+  elevation noise through different mechanisms:
+  - The approximate's `β·h₊` is **linear in ascent** — a 1 m noise bump adds `β·1 m` of
+    spurious energy, so denoising fixes it directly.
+  - The canonical's energy is `Σ P·dt ≈ distance × power` — a small bump adds almost no
+    horizontal distance, so it is nearly **immune** to ascent noise. Smoothing instead
+    perturbs its **regime classification** (former micro-climbs become "flat", swapping
+    `P_climb`→`P_flat`), slightly *under*-counting the power spent on real undulations.
+- **Chosen default: τ = 2 m** (`TAU_SMOOTH = 2`). It's a hair behind τ = 3 on the
+  aggregate median (3.4 vs 3.1) but **far better balanced per-regime** (`cf` climb −4.5
+  vs −12) and **gentler on canonical** (5.6 vs 6.2) — a model that is right regime-by-
+  regime beats one that is right in aggregate by cancellation.
+- **Takeaway:** denoise `h₊` for the **approximate** (it needs it); the **canonical** is
+  fine on the raw profile — smoothing it is mildly counter-productive.
+
+Reproduce: the per-regime, elevation-noise, and filter blocks are at the end of
+`compare.mjs` (`TAU_SMOOTH = 2`).
 
 ---
 

@@ -20,6 +20,7 @@ const HERE = path.dirname(fileURLToPath(import.meta.url));
 const G = 9.81, NS = 240;
 const VMAX = 38 / 3.6, VSTART = 15 / 3.6;       // app defaults (km/h -> m/s)
 const CLIMB_THR = 0.02, DESC_THR = -0.015, ENGINE_DX = 5, CLIMB_AERO = 'off';
+const TAU_SMOOTH = 2;   // elevation deadband threshold (m) — rejects sub-tau jitter in h+
 
 let H = new Float64Array(NS), physProfile = null;   // globals buildProfile writes
 
@@ -60,6 +61,7 @@ function canonical(prof, pw, p) {
   const KEinit = 0.5 * m * p.vstart * p.vstart;
   let KE = KEinit;
   let legE = 0, t = 0, Wrr = 0, Waero = 0, Wgrav = 0, Wbrake = 0;
+  const legER = [0, 0, 0];   // per-regime legE bookkeeping [descent, flat, climb] (does not affect dynamics)
   const speed = new Float64Array(n), brk = new Uint8Array(n), regime = new Int8Array(n);
   speed[0] = Math.sqrt(2 * KE / m);
   let minV = speed[0];
@@ -98,7 +100,7 @@ function canonical(prof, pw, p) {
         }
       } else KEn = Math.max(B, 1e-12);
       const vNew = Math.sqrt(2 * KEn / m), dt = dsSub / vNew;
-      legE += Pleg * dt; t += dt;
+      legE += Pleg * dt; legER[reg + 1] += Pleg * dt; t += dt;
       Wrr += Frr * dsSub; Waero += Faero * dsSub; Wgrav += Fgrav * dsSub;
       KE = KEn;
       if (KE > keCap) { Wbrake += KE - keCap; KE = keCap; braked = 1; }
@@ -111,6 +113,7 @@ function canonical(prof, pw, p) {
   const dKE = KE - KEinit;
   const dispE = dKE + Wrr + Waero + Wbrake;
   return { legE, t, Wrr, Waero, Wgrav, Wbrake, speed, brk, regime,
+           legEByReg: { descent: legER[0], flat: legER[1], climb: legER[2] },
            avgV: dist / t, minV, KEinit, KEfin: KE, dKE, dispE };
 }
 function approximate(prof, p, vf, eps, opts) {
@@ -121,8 +124,10 @@ function approximate(prof, p, vf, eps, opts) {
   const mode = (opts && opts.climbAeroMode) || 'off';
   const climbThr = opts && opts.climbThr != null ? opts.climbThr : 0.02;
   const Pc = (opts && opts.climbPower) || 0;
+  const dThr = opts && opts.descThr != null ? opts.descThr : -0.015;   // for the regime split
   const xs = prof.x, hs = prof.h;
   let X = 0, hplus = 0, hminus = 0, aeroSum = 0, clamped = 0;
+  const EByReg = [0, 0, 0];   // [descent, flat, climb] split of E (sums to E; same thresholds as canonical)
   for (let i = 1; i < xs.length; i++) {
     const dx = xs[i] - xs[i - 1], dh = hs[i] - hs[i - 1], slope = dh / dx;
     X += dx;
@@ -137,11 +142,15 @@ function approximate(prof, p, vf, eps, opts) {
     }
     const segAero = aeroDx * dx; aeroSum += segAero;
     const alphaSeg = aRoll * dx + segAero;
+    const segGrav = dh >= 0 ? beta * dh : -eps * beta * (-dh);  // climb lift / descent recovery
     if (dh >= 0) { hplus += dh; clamped += alphaSeg + beta * dh; }
     else { hminus += -dh; clamped += Math.max(0, alphaSeg - eps * beta * (-dh)); }
+    const rg = slope >= climbThr ? 2 : slope <= dThr ? 0 : 1;   // by the same regime thresholds
+    EByReg[rg] += alphaSeg + segGrav;
   }
   const roll = aRoll * X, aero = aeroSum, climb = beta * hplus, recov = -eps * beta * hminus;
-  return { E: roll + aero + climb + recov, clamped, alpha: aRoll + aAero, beta, X, hplus, hminus, roll, aero, climb, recov };
+  return { E: roll + aero + climb + recov, clamped, alpha: aRoll + aAero, beta, X, hplus, hminus, roll, aero, climb, recov,
+           EByReg: { descent: EByReg[0], flat: EByReg[1], climb: EByReg[2] } };
 }
 function buildProfile(distArr, eleArr) {
   const X = [distArr[0]], E = [eleArr[0]];
@@ -347,12 +356,52 @@ function overallMeanPower(pts) {
   for (const q of pts) if (q.power !== undefined) { sw += (q.dt || 1); swp += (q.dt || 1) * q.power; }
   return sw ? swp / sw : 0;
 }
+// Measured pedalling energy Σ power·dt split by regime (J), binned by the sample's
+// grade over a 30 m window — same thresholds as canonical/extractRegimePowers. Sums
+// to the total empirical, so it is comparable to the models' EByReg / legEByReg.
+function empiricalByRegime(pts, climbThr, descThr) {
+  const W = 30, byReg = { climb: 0, flat: 0, descent: 0 };
+  for (let i = 0; i < pts.length; i++) {
+    if (pts[i].power === undefined) continue;
+    let j = i; while (j < pts.length - 1 && pts[j].x - pts[i].x < W) j++;
+    const dd = pts[j].x - pts[i].x;
+    let grade;
+    if (dd > 1) grade = (pts[j].alt - pts[i].alt) / dd;
+    else { let k = i; while (k > 0 && pts[i].x - pts[k].x < W) k--; const db = pts[i].x - pts[k].x; grade = db > 1 ? (pts[i].alt - pts[k].alt) / db : 0; }
+    const e = pts[i].power * (pts[i].dt || 0);
+    if (grade >= climbThr) byReg.climb += e; else if (grade <= descThr) byReg.descent += e; else byReg.flat += e;
+  }
+  return byReg;
+}
 // fraction of horizontal distance ridden on climbs (slope >= thr) — the f_climb
 // behind notas.md's climb-fraction aero correction (f_flat = 1 - this).
 function climbFraction(prof, thr) {
   const xs = prof.x, hs = prof.h; let X = 0, Xc = 0;
   for (let i = 1; i < xs.length; i++) { const dx = xs[i] - xs[i - 1]; X += dx; if ((hs[i] - hs[i - 1]) / dx >= thr) Xc += dx; }
   return X > 0 ? Xc / X : 0;
+}
+// Cumulative ascent of an elevation array with a hysteresis threshold tau (m):
+// tau=0 sums every positive step (max noise); tau>0 commits a gain only after a
+// net rise of tau, rejecting sub-tau jitter. The raw->tau shrink quantifies noise.
+function ascentHyst(h, tau) {
+  let gain = 0;
+  if (tau <= 0) { for (let i = 1; i < h.length; i++) { const d = h[i] - h[i - 1]; if (d > 0) gain += d; } return gain; }
+  let ref = h[0];
+  for (let i = 1; i < h.length; i++) { const d = h[i] - ref; if (d >= tau) { gain += d; ref = h[i]; } else if (d <= -tau) { ref = h[i]; } }
+  return gain;
+}
+// Deadband (backlash) filter: returns a smoothed elevation array that ignores
+// moves smaller than tau and tracks larger ones (lagging by tau). Removes sub-tau
+// jitter from h+/h- while preserving real climbs — a usable de-noised PROFILE.
+function deadband(h, tau) {
+  const out = new Float64Array(h.length);
+  let y = h[0]; out[0] = y;
+  for (let i = 1; i < h.length; i++) {
+    if (h[i] > y + tau) y = h[i] - tau;
+    else if (h[i] < y - tau) y = h[i] + tau;
+    out[i] = y;
+  }
+  return out;
 }
 // MEASURED flat ground speed (m/s): time-weighted mean speed on near-flat 30 m
 // cells (|grade| < 1%) — the v_f definition from epsFromFIT in the app.
@@ -370,6 +419,13 @@ function measuredFlatSpeed(pts) {
 
 const inputs = JSON.parse(fs.readFileSync(path.join(HERE, 'model_inputs.json'), 'utf8'));
 const rows = [];
+// energy-weighted per-regime totals across rides (kJ), for the climb/flat/descent breakdown
+const mkReg = () => ({ emp: 0, canon: 0, off: 0, cf: 0, canonS: 0, offS: 0, cfS: 0 });  // *S = elevation-smoothed
+const REG = { climb: mkReg(), flat: mkReg(), descent: mkReg() };
+// elevation-noise accounting: Σ ascent (m) at smoothing levels + Σ climb-gravity energy (kJ)
+const TAUS = [0, 1, 2, 3, 5, 10];
+const ELEV = { h: Object.fromEntries(TAUS.map(t => [t, 0])), eng: 0, engS: 0, gravRaw: 0, grav3: 0,
+               bySrc: { rwgps_trip: { raw: 0, h3: 0 }, strava: { raw: 0, h3: 0 } } };
 for (const e of inputs) {
   if (!e.file || !e.has_power) continue;
   try {
@@ -393,7 +449,7 @@ for (const e of inputs) {
     const pAvg = overallMeanPower(pts);                  // data avg (over recorded time), for reference
     const pFlatSheet = (e.pflat_pavg != null && e.wmes != null) ? e.pflat_pavg * e.wmes : pw.flat;
     const vfSheet = flatEqSpeed(pFlatSheet, p);
-    const opt = mode => ({ climbAeroMode: mode, climbThr: CLIMB_THR, climbPower: pw.climb });
+    const opt = mode => ({ climbAeroMode: mode, climbThr: CLIMB_THR, descThr: DESC_THR, climbPower: pw.climb });
     const aOff = approximate(prof, p, vf, e.eps, opt('off'));   // current: full v_f aero everywhere
     const aCf  = approximate(prof, p, vf, e.eps, opt('zero'));  // climb-fraction: aero only on f_flat (notas eq.)
     const aVc  = approximate(prof, p, vf, e.eps, opt('vc'));    // near-exact: climb aero at v_c
@@ -401,7 +457,31 @@ for (const e of inputs) {
     const vfMeas = measuredFlatSpeed(pts) || vf;                        // measured flat ground speed
     const aCfMeas = approximate(prof, p, vfMeas, e.eps, opt('zero'));   // cf + measured v_f
     const c = canonical(prof, pw, p);
+    // same engines on the elevation-deadband-SMOOTHED profile (same pw, vf, params)
+    const profS = { x: prof.x, h: deadband(prof.h, TAU_SMOOTH) };
+    const aOffS = approximate(profS, p, vf, e.eps, opt('off'));
+    const aCfS = approximate(profS, p, vf, e.eps, opt('zero'));
+    const cS = canonical(profS, pw, p);
     const emp = empiricalKJ(pts);                               // kJ
+    const empReg = empiricalByRegime(pts, CLIMB_THR, DESC_THR);
+    for (const rg of ['climb', 'flat', 'descent']) {
+      REG[rg].emp += empReg[rg] / 1000;
+      REG[rg].canon += c.legEByReg[rg] / 1000;
+      REG[rg].off += aOff.EByReg[rg] / 1000;
+      REG[rg].cf += aCf.EByReg[rg] / 1000;
+      REG[rg].canonS += cS.legEByReg[rg] / 1000;
+      REG[rg].offS += aOffS.EByReg[rg] / 1000;
+      REG[rg].cfS += aCfS.EByReg[rg] / 1000;
+    }
+    // elevation-noise: ascent on the NATIVE profile at each hysteresis threshold
+    const beta = e.m * G / e.keff, hN = physProfile.h;
+    for (const t of TAUS) ELEV.h[t] += ascentHyst(hN, t);
+    ELEV.eng += aOff.hplus;                                  // what the engine actually used (5 m grid raw)
+    ELEV.engS += aOffS.hplus;                                // h+ after the deadband filter
+    const hRaw = ascentHyst(hN, 0), h3 = ascentHyst(hN, 3);
+    ELEV.gravRaw += beta * hRaw / 1000; ELEV.grav3 += beta * h3 / 1000;
+    const sk = e.source === 'strava' ? 'strava' : 'rwgps_trip';
+    if (ELEV.bySrc[sk]) { ELEV.bySrc[sk].raw += hRaw; ELEV.bySrc[sk].h3 += h3; }
     const kj = j => j / 1000, dlt = j => (kj(j) - emp) / emp * 100;
     rows.push({
       ride: e.label, source: e.source,
@@ -411,6 +491,7 @@ for (const e of inputs) {
       approx_off: kj(aOff.E), approx_cf: kj(aCf.E), approx_vc: kj(aVc.E), approx_cf_sheet: kj(aCfSheet.E),
       canon_vs_emp: dlt(c.legE), off_vs_emp: dlt(aOff.E), cf_vs_emp: dlt(aCf.E), vc_vs_emp: dlt(aVc.E),
       cfsheet_vs_emp: dlt(aCfSheet.E), cfmeas_vs_emp: dlt(aCfMeas.E),
+      canonS_vs_emp: dlt(cS.legE), offS_vs_emp: dlt(aOffS.E), cfS_vs_emp: dlt(aCfS.E),
       p_avg: pAvg, wmes: e.wmes, pflat_extracted: pw.flat, pflat_sheet: pFlatSheet,
       data_ratio: e.wmes ? pw.flat / e.wmes : null, sheet_ratio: e.pflat_pavg,  // both flat/<W>_mes
       vf_kmh: vf * 3.6, vf_sheet_kmh: vfSheet * 3.6, vf_meas_kmh: vfMeas * 3.6,
@@ -443,7 +524,8 @@ const stats = (key) => {
 };
 console.log('='.repeat(64));
 console.log(`${'model vs empirical'.padEnd(30)}${'n'.padStart(4)}${'med|Δ%|'.padStart(9)}${'medΔ%'.padStart(8)}${'meanΔ%'.padStart(8)}`);
-for (const [lab, key] of [['canonical (forward sim)','canon_vs_emp'],['approx off (current)','off_vs_emp'],['approx climb-fraction (cf)','cf_vs_emp'],['approx near-exact v_c','vc_vs_emp'],['approx cf + sheet v_f','cfsheet_vs_emp'],['approx cf + measured v_f','cfmeas_vs_emp']]) {
+for (const [lab, key] of [['canonical (forward sim)','canon_vs_emp'],['approx off (current)','off_vs_emp'],['approx climb-fraction (cf)','cf_vs_emp'],['approx near-exact v_c','vc_vs_emp'],['approx cf + sheet v_f','cfsheet_vs_emp'],['approx cf + measured v_f','cfmeas_vs_emp'],
+  ['canonical + 3 m smooth','canonS_vs_emp'],['approx off + 3 m smooth','offS_vs_emp'],['approx cf + 3 m smooth','cfS_vs_emp']]) {
   const s = stats(key);
   console.log(`${lab.padEnd(30)}${String(s.n).padStart(4)}${f(s.medAbs,1).padStart(9)}${f(s.medSigned,1).padStart(8)}${f(s.mean,1).padStart(8)}`);
 }
@@ -453,6 +535,49 @@ const dr = good.map(r=>r.data_ratio).filter(Number.isFinite);
 const sr = good.map(r=>r.sheet_ratio).filter(Number.isFinite);
 console.log(`P_flat/<W>_mes — data(extracted): median ${f(med(dr),2)}  ·  sheet(AB): median ${f(med(sr),2)}  (n_sheet=${sr.length})`);
 console.log(`v_f — extracted flatEqSpeed: ${f(med(good.map(r=>r.vf_kmh)),1)}  ·  sheet-derived: ${f(med(good.map(r=>r.vf_sheet_kmh)),1)}  ·  measured flat: ${f(med(good.map(r=>r.vf_meas_kmh)),1)} km/h (medians)`);
+
+// ---- per-regime breakdown (energy-weighted totals across rides, kJ) ----
+const totEmp = REG.climb.emp + REG.flat.emp + REG.descent.emp;
+console.log('\n' + '='.repeat(64));
+console.log('PER-REGIME energy (Σ over rides, kJ) and Δ% vs empirical ∫P·dt');
+console.log(`${'regime'.padEnd(9)}${'share'.padStart(6)}${'emp'.padStart(8)}${'canon'.padStart(8)}${'off'.padStart(8)}${'cf'.padStart(8)}   ${'canonΔ%'.padStart(8)}${'offΔ%'.padStart(7)}${'cfΔ%'.padStart(7)}`);
+console.log('-'.repeat(74));
+for (const rg of ['climb', 'flat', 'descent']) {
+  const r = REG[rg], d = m => r.emp ? (m - r.emp) / r.emp * 100 : NaN;
+  console.log(
+    rg.padEnd(9) + f(r.emp / totEmp * 100, 0).padStart(5) + '%' +
+    f(r.emp, 0).padStart(8) + f(r.canon, 0).padStart(8) + f(r.off, 0).padStart(8) + f(r.cf, 0).padStart(8) + '   ' +
+    f(d(r.canon), 1).padStart(8) + f(d(r.off), 1).padStart(7) + f(d(r.cf), 1).padStart(7));
+}
+
+// ---- elevation noise in h+ ----
+console.log('\n' + '='.repeat(64));
+console.log('ELEVATION NOISE — total ascent h+ (km, Σ over rides) vs hysteresis threshold');
+const hraw = ELEV.h[0];
+console.log(`${'smoothing'.padEnd(18)}${'Σ h+ (km)'.padStart(10)}${'% of raw'.padStart(9)}`);
+for (const t of TAUS) console.log(`${(t === 0 ? 'raw (every step)' : 'hysteresis ' + t + ' m').padEnd(18)}${f(ELEV.h[t] / 1000, 1).padStart(10)}${f(ELEV.h[t] / hraw * 100, 0).padStart(8)}%`);
+console.log(`engine (5 m grid)  ${f(ELEV.eng / 1000, 1).padStart(8)}${f(ELEV.eng / hraw * 100, 0).padStart(8)}%   <- what approximate's beta*h+ uses`);
+const noiseKJ = ELEV.gravRaw - ELEV.grav3;
+console.log(`\nClimb-gravity energy beta*h+ : raw ${f(ELEV.gravRaw, 0)} kJ -> 3 m-smoothed ${f(ELEV.grav3, 0)} kJ`);
+console.log(`noise in h+ (raw - 3 m): ${f(ELEV.h[0] - ELEV.h[3], 0)} m total = ${f(noiseKJ, 0)} kJ`
+  + ` = ${f(noiseKJ / REG.climb.emp * 100, 0)}% of empirical CLIMB energy, ${f(noiseKJ / totEmp * 100, 1)}% of total`);
+for (const sk of ['rwgps_trip', 'strava']) {
+  const s = ELEV.bySrc[sk];
+  console.log(`  ${sk.padEnd(11)} raw->3 m shrink: ${f((1 - s.h3 / s.raw) * 100, 0)}% (raw ${f(s.raw / 1000, 1)} km -> ${f(s.h3 / 1000, 1)} km)`);
+}
+
+// ---- effect of the 3 m elevation filter ----
+console.log('\n' + '='.repeat(64));
+console.log(`APPLYING THE ${TAU_SMOOTH} m ELEVATION FILTER — engine h+ ${f(ELEV.eng/1000,1)} km -> ${f(ELEV.engS/1000,1)} km`);
+console.log(`${'metric'.padEnd(26)}${'raw'.padStart(9)}${'+filter'.padStart(9)}`);
+const climbD = (k) => REG.climb.emp ? (REG.climb[k] - REG.climb.emp) / REG.climb.emp * 100 : NaN;
+console.log(`${'CLIMB energy Δ% — canon'.padEnd(26)}${f(climbD('canon'),1).padStart(9)}${f(climbD('canonS'),1).padStart(9)}`);
+console.log(`${'CLIMB energy Δ% — off'.padEnd(26)}${f(climbD('off'),1).padStart(9)}${f(climbD('offS'),1).padStart(9)}`);
+console.log(`${'CLIMB energy Δ% — cf'.padEnd(26)}${f(climbD('cf'),1).padStart(9)}${f(climbD('cfS'),1).padStart(9)}`);
+const medSign = (k) => med(good.map(r => r[k]).filter(Number.isFinite));
+console.log(`${'TOTAL median Δ% — canon'.padEnd(26)}${f(medSign('canon_vs_emp'),1).padStart(9)}${f(medSign('canonS_vs_emp'),1).padStart(9)}`);
+console.log(`${'TOTAL median Δ% — off'.padEnd(26)}${f(medSign('off_vs_emp'),1).padStart(9)}${f(medSign('offS_vs_emp'),1).padStart(9)}`);
+console.log(`${'TOTAL median Δ% — cf'.padEnd(26)}${f(medSign('cf_vs_emp'),1).padStart(9)}${f(medSign('cfS_vs_emp'),1).padStart(9)}`);
 
 // csv
 const cols = ['ride','source','dist_km','climb_frac','empirical','canonical','approx_off','approx_cf','approx_vc','approx_cf_sheet','canon_vs_emp','off_vs_emp','cf_vs_emp','vc_vs_emp','cfsheet_vs_emp','cfmeas_vs_emp','p_avg','wmes','pflat_extracted','pflat_sheet','data_ratio','sheet_ratio','vf_kmh','vf_sheet_kmh','vf_meas_kmh','pClimb','pFlat','pDescent','error'];
