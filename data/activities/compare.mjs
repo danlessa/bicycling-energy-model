@@ -426,6 +426,7 @@ const REG = { climb: mkReg(), flat: mkReg(), descent: mkReg() };
 const TAUS = [0, 1, 2, 3, 5, 10];
 const ELEV = { h: Object.fromEntries(TAUS.map(t => [t, 0])), eng: 0, engS: 0, gravRaw: 0, grav3: 0,
                bySrc: { rwgps_trip: { raw: 0, h3: 0 }, strava: { raw: 0, h3: 0 } } };
+const KH = [];   // per-ride {xkm, hpRaw, hpSm, c=spurious/km, kh, hilly=hpRaw/km} for the heuristic study
 for (const e of inputs) {
   if (!e.file || !e.has_power) continue;
   try {
@@ -480,6 +481,8 @@ for (const e of inputs) {
     ELEV.engS += aOffS.hplus;                                // h+ after the deadband filter
     const hRaw = ascentHyst(hN, 0), h3 = ascentHyst(hN, 3);
     ELEV.gravRaw += beta * hRaw / 1000; ELEV.grav3 += beta * h3 / 1000;
+    const hpSm = ascentHyst(deadband(hN, TAU_SMOOTH), 0), xkm = prof.x[prof.x.length - 1] / 1000;
+    KH.push({ ride: e.label, xkm, hpRaw: hRaw, hpSm, c: (hRaw - hpSm) / xkm, kh: hpSm / hRaw, hilly: hRaw / xkm });
     const sk = e.source === 'strava' ? 'strava' : 'rwgps_trip';
     if (ELEV.bySrc[sk]) { ELEV.bySrc[sk].raw += hRaw; ELEV.bySrc[sk].h3 += h3; }
     const kj = j => j / 1000, dlt = j => (kj(j) - emp) / emp * 100;
@@ -578,6 +581,21 @@ const medSign = (k) => med(good.map(r => r[k]).filter(Number.isFinite));
 console.log(`${'TOTAL median Δ% — canon'.padEnd(26)}${f(medSign('canon_vs_emp'),1).padStart(9)}${f(medSign('canonS_vs_emp'),1).padStart(9)}`);
 console.log(`${'TOTAL median Δ% — off'.padEnd(26)}${f(medSign('off_vs_emp'),1).padStart(9)}${f(medSign('offS_vs_emp'),1).padStart(9)}`);
 console.log(`${'TOTAL median Δ% — cf'.padEnd(26)}${f(medSign('cf_vs_emp'),1).padStart(9)}${f(medSign('cfS_vs_emp'),1).padStart(9)}`);
+
+// ---- low-compute heuristic for k_h (no profile, only totals h+, x) ----
+console.log('\n' + '='.repeat(64));
+console.log('HEURISTIC for k_h from totals only — target = deadband-smoothed h+');
+const cMed = med(KH.map(r => r.c));               // spurious ascent rate (m/km)
+const khMed = med(KH.map(r => r.kh));             // constant-k_h fallback
+console.log(`spurious ascent rate c = h+_raw - h+_smooth per km:  median ${f(cMed,1)} m/km  (IQR ${f(med(KH.map(r=>r.c).filter(x=>x<cMed)),1)}–${f(med(KH.map(r=>r.c).filter(x=>x>cMed)),1)})`);
+console.log(`constant k_h (smooth/raw):  median ${f(khMed,2)}  (range ${f(Math.min(...KH.map(r=>r.kh)),2)}–${f(Math.max(...KH.map(r=>r.kh)),2)})`);
+// score each heuristic: predicted corrected h+ vs the true smoothed h+, |rel err|
+const errConstKh = KH.map(r => Math.abs(khMed * r.hpRaw - r.hpSm) / r.hpSm);
+const errRate    = KH.map(r => Math.abs(Math.max(0, r.hpRaw - cMed * r.xkm) - r.hpSm) / r.hpSm);
+console.log(`\nheuristic h+_corr vs true smoothed h+ — median |rel err|:`);
+console.log(`  (A) constant k_h = ${f(khMed,2)}                 : ${f(med(errConstKh)*100,1)}%`);
+console.log(`  (B) subtract rate: h+ - ${f(cMed,1)}·x_km        : ${f(med(errRate)*100,1)}%   <- physics-based`);
+console.log(`implied k_h(hilliness) = 1 - c/(h+/x):  flat ride 30 m/km -> ${f(1-cMed/30,2)},  hilly 150 m/km -> ${f(1-cMed/150,2)}`);
 
 // csv
 const cols = ['ride','source','dist_km','climb_frac','empirical','canonical','approx_off','approx_cf','approx_vc','approx_cf_sheet','canon_vs_emp','off_vs_emp','cf_vs_emp','vc_vs_emp','cfsheet_vs_emp','cfmeas_vs_emp','p_avg','wmes','pflat_extracted','pflat_sheet','data_ratio','sheet_ratio','vf_kmh','vf_sheet_kmh','vf_meas_kmh','pClimb','pFlat','pDescent','error'];

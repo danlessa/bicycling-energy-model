@@ -2,6 +2,8 @@
 
 ## Energy Model
 
+### v1
+
 
 The energy transmitted from a cyclist to the wheels during a segment is approximately:
 $$E \approx \alpha x + \beta (h_+ - \epsilon h_-)$$
@@ -13,6 +15,58 @@ $$\alpha := \frac{m g C_{rr} + \frac{C_d A \rho v_f^2}{2}}{k_{eff}}$$
 $m$ is the bicycle+rider mass, g is the gravitational constant, $C_{rr}$ is the rolling resistance, $C_d$ is the drag coefficient, $A$ is the effective frontal area, $\rho$ is the air density and $v_f$ is an estimate of rider speed on pure flats.
 
 $$\beta := \frac{m g}{k_{eff}}$$
+
+### v2
+
+Two refinements to v1, each removing a systematic bias measured against power-meter
+rides (see `data/MODEL_COMPARISON_JOURNAL.md`):
+
+$$E \approx \alpha_r\, x + \alpha_a\, x_{flat} + k_h\,\beta\,(h_+ - \epsilon\, h_-)$$
+
+**(i) Split $\alpha$, charge aero only off the climbs.** v1 bills the aero part of
+$\alpha$ at the flat speed $v_f$ over the whole distance, but the rider climbs far
+slower, so v1 over-charges climbing aero (the dominant error — almost entirely on
+climbs). Keep rolling over all of $x$, apply aero only over the non-climbing fraction:
+
+$$\alpha_r := \frac{m g\, C_{rr}}{k_{eff}}, \qquad
+  \alpha_a := \frac{C_d A\, \rho\, v_f^2}{2\, k_{eff}}, \qquad
+  x_{flat} := x\,(1 - f_{climb}), \qquad
+  f_{climb} := \frac{x_+}{x},$$
+
+with $x_+$ the horizontal distance on climbing segments (grade $\ge$ a climb threshold).
+This is the closed-form twin of the per-segment correction derived in [Correcting the
+climb aero over-charge](#correcting-the-climb-aero-over-charge); the *near-exact* variant
+there charges climb aero at the quasi-steady climb speed $v_c$ instead of zeroing it.
+
+**(ii) Correct the DEM/track ascent for noise — $k_h$.** Elevation from a DEM or a
+GPS/baro track carries sub-metre jitter (altitude quantisation + dense sampling), so the
+raw ascent $h_+$ over-counts the real climbing. Because the climb term $\beta h_+$ is
+**linear** in $h_+$, that noise inflates $E$ directly (it explained ~all of the residual
+climb over-prediction). $k_h \in (0,1]$ rescales the raw $h_+$ (and $h_-$) to the
+de-noised value:
+
+$$k_h := \frac{h_+^{\text{smoothed}}}{h_+^{\text{raw}}},$$
+
+realised by a hysteresis/deadband filter on the elevation profile (ignore moves below a
+few metres before summing $h_+$, $h_-$). Empirically $k_h \approx 0.7$–$0.8$ on these
+tracks ($\approx 0.74$ at a 2 m deadband).
+
+**Low-compute form (no profile).** When only the totals $h_+$, $x$ are available — the
+closed form's whole point is to run with little data and no per-segment pass — the noise
+needs no filter, just a subtraction. The spurious ascent is a per-sample jitter that
+accumulates with *distance*, not with terrain, so it is a near-constant **rate** $c$:
+
+$$h_+^{\text{corr}} = \max(0,\; h_+ - c\,x), \qquad
+  k_h = 1 - \frac{c\,x}{h_+}, \qquad c \approx 3\ \text{m/km}$$
+
+(measured 3.2 m/km, IQR 2.7–3.8, on these FIT/DEM tracks — calibrate per source). This
+beats a flat $k_h$ because it **auto-adapts**: $k_h \approx 0.89$ on a flat ride (30 m/km
+of climbing, where the noise floor is a big share) and $\approx 0.98$ on a hilly one
+(150 m/km, where real ascent dominates). Apply the same subtraction to $h_-$.
+
+**$k_h$ applies to the approximate model only** — the canonical simulation's energy is
+$\sim$ distance $\times$ power and is nearly immune to ascent noise, so smoothing its
+elevation is mildly counter-productive.
 
 
 ## Recovery factor $\epsilon$

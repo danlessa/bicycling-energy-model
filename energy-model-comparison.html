@@ -103,6 +103,7 @@
       <div class="row" style="margin-top:8px"><label>Carregar GPX/FIT</label><input type="file" id="gpxFile" accept=".gpx,.xml,.fit,application/gpx+xml,application/xml,text/xml,application/octet-stream" style="max-width:158px;font-size:12px"></div>
       <div class="hint" id="gpxInfo"></div>
       <div class="row" style="margin-top:8px"><label>Resolução do motor (dx)</label><input type="number" id="engineDx" value="5" min="0" max="500" step="1"><span class="unit">m</span></div>
+      <div class="row"><label title="Suaviza a elevação (filtro deadband) antes de somar h₊/h₋ no modelo APROXIMADO — remove o ruído sub-τ do DEM/track que infla a subida (notas.md v2, k_h). O canônico fica na elevação crua. 0 = desligado.">Suavização de h₊ (só aprox.)</label><input type="number" id="tauSmooth" value="2" min="0" max="20" step="0.5"><span class="unit">m</span></div>
       <div class="hint">0 = nativa (GPX: pontos do arquivo). Menor dx = mais fino e lento; reamostra o perfil para o passo do integrador.</div>
     </div>
 
@@ -331,6 +332,24 @@ function resampleProfile(src, dx) {
     x[i] = d; h[i] = src.h[j] * (1 - f) + src.h[j + 1] * f;
   }
   return { x, h };
+}
+
+// Deadband (backlash) filter on the elevation of a profile: ignores moves smaller
+// than tau (m) and tracks larger ones — de-noises the sub-tau DEM/track jitter that
+// inflates h₊ (and h₋). The closed-form β·h₊ term is LINEAR in ascent, so that noise
+// over-predicts climb energy directly (see notas.md "v2", k_h). Applied to the
+// approximate path only — the canonical sim's energy ≈ distance·power, nearly immune
+// to ascent noise, so smoothing it is counter-productive. tau=0 ⇒ unchanged.
+function smoothElevation(src, tau) {
+  if (!(tau > 0)) return src;
+  const h = src.h, out = new Float64Array(h.length);
+  let y = h[0]; out[0] = y;
+  for (let i = 1; i < h.length; i++) {
+    if (h[i] > y + tau) y = h[i] - tau;
+    else if (h[i] < y - tau) y = h[i] + tau;
+    out[i] = y;
+  }
+  return { x: src.x, h: out };
 }
 
 // ---------- canonical forward simulation ----------
@@ -871,9 +890,14 @@ function recompute() {
   let prof;
   if (physProfile) prof = dx > 0 ? resampleProfile(physProfile, dx) : physProfile;
   else { const Dm = num('dist') * 1000; prof = resample(Dm, dx > 0 ? dx : Dm / (NS - 1)); }
+  // raw ascent/descent — canonical & the geometry readout stay on this. The
+  // APPROXIMATE runs on the deadband-smoothed elevation (k_h correction, notas v2).
+  let hpRaw = 0, hmRaw = 0;
+  for (let i = 1; i < prof.x.length; i++) { const dh = prof.h[i] - prof.h[i - 1]; if (dh >= 0) hpRaw += dh; else hmRaw += -dh; }
+  const profA = smoothElevation(prof, num('tauSmooth'));
   const c = canonical(prof, pw, p);
   const aeroOpts = { climbAeroMode: $('climbAeroMode').value, climbThr: num('climbThr') / 100, climbPower: num('pClimb') };
-  const a = approximate(prof, p, vf, eps, aeroOpts);
+  const a = approximate(profA, p, vf, eps, aeroOpts);
   const veq = flatEqSpeed(pw.flat, p);
 
   // big numbers
@@ -904,10 +928,12 @@ function recompute() {
   pill.style.color = mag > .5 ? '#ffb454' : '#5fb3ff';
 
   // stats
-  $('statGeom').textContent = `${(a.X / 1000).toFixed(2)} km · +${a.hplus.toFixed(0)} / −${a.hminus.toFixed(0)} m`;
+  const kh = hpRaw > 0 ? a.hplus / hpRaw : 1;
+  $('statGeom').textContent = `${(a.X / 1000).toFixed(2)} km · +${hpRaw.toFixed(0)} / −${hmRaw.toFixed(0)} m`
+    + (num('tauSmooth') > 0 ? ` · k_h ${kh.toFixed(2)} → h₊ ${a.hplus.toFixed(0)}` : '');
   $('statRes').textContent = `${prof.x.length} pts · ${(prof.x[prof.x.length - 1] / (prof.x.length - 1)).toFixed(1)} m/passo${dx > 0 ? '' : ' (nativa)'}`;
   $('statTime').textContent = `${(c.t / 60).toFixed(1)} min · ${(c.avgV * 3.6).toFixed(1)} km/h`;
-  const at = approxTime(prof, p, vf, pw);
+  const at = approxTime(profA, p, vf, pw);
   $('statTApprox').textContent = `${(at.t / 60).toFixed(1)} min · ${(at.X / at.t * 3.6).toFixed(1)} km/h`;
   $('statPApprox').textContent = `${(a.E / at.t).toFixed(0)} W`;
   $('statK').textContent = `${isFinite(at.kPlus) ? at.kPlus.toFixed(1) : '—'} / ${isFinite(at.kMinus) ? at.kMinus.toFixed(2) : '—'}`;
@@ -936,7 +962,7 @@ function recompute() {
     } else {
       epsStarApply = epsStar;
       let extra = '';
-      const eClamp = epsForClampedMatch(prof, p, vf, c.legE, aeroOpts);   // engine per-edge clamp
+      const eClamp = epsForClampedMatch(profA, p, vf, c.legE, aeroOpts);   // engine per-edge clamp
       if (isFinite(eClamp) && Math.abs(eClamp - epsStar) > 0.01) extra = ` · clamp ${(eClamp * 100).toFixed(1)}%`;
       $('statEpsMatch').innerHTML = `<b>${pct}%</b>${extra}`;
       $('epsHint').innerHTML = `→ casa com as pernas em <b>ε = ${pct}%</b>${extra}`;
@@ -948,7 +974,7 @@ function recompute() {
 
   // breakdown bars — canonical gross pedal-energy budget (÷keff), with the
   // gross climbing cost (mg·h₊) and the descent concession (mg·h₋) shown apart.
-  const climbWheel = p.m * G * a.hplus, descWheel = p.m * G * a.hminus;
+  const climbWheel = p.m * G * hpRaw, descWheel = p.m * G * hmRaw;   // canonical: raw ascent
   const cb = $('canonBar'); cb.innerHTML = '';
   const canTot = (c.Wrr + c.Waero + climbWheel + c.Wbrake) / p.keff;
   seg(cb, 'rolamento', c.Wrr / p.keff, canTot, 'var(--roll)');
