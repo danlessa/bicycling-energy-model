@@ -2,6 +2,17 @@
 # Drop an anonymised .fit here and force-add it if you want a committed fixture.
 *.fit
 
+# Downloaded activity tracks (RideWithGPS JSON / Strava originals) carry GPS —
+# keep local, never commit. See data/activities/README.md. The fetcher and the
+# README itself are committable; the raw tracks and manifest are not.
+data/activities/rwgps/
+data/activities/strava/
+data/activities/manifest.json
+data/activities/*.csv
+
 # OS / editor cruft
 .DS_Store
 .vscode/
+__pycache__/
+*.pyc
+.env
