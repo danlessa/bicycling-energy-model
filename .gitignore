@@ -7,7 +7,7 @@
 # README itself are committable; the raw tracks and manifest are not.
 data/activities/rwgps/
 data/activities/strava/
-data/activities/manifest.json
+data/activities/*.json
 data/activities/*.csv
 
 # OS / editor cruft
