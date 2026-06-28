@@ -30,6 +30,49 @@ Running scoreboard — median |Δ%| vs empirical `∫P·dt` over 44 power rides 
 
 ---
 
+## 2026-06-28 — Entry 6: external DEMs (FABDEM/SRTM/COP30) and k_h for DEM-derived h₊/h₋
+
+*Prompt: pull FABDEM, SRTM, COP30 for the routes and see how the elevation differs; then —
+what is k_h for h₊/h₋ derived from a DEM?*
+
+Sampled three independent 30 m DEMs at every track point for the 12 rides inside the São
+Paulo tile S24W047, vs the recorded barometric track. Full write-up:
+[../research/dem-elevation-comparison.md](../research/dem-elevation-comparison.md).
+
+**Headline.** DEMs are accurate *terrain* models (elevation shape matches the recorded
+track to ~7–8 m RMS; SRTM sits ~7 m above FABDEM = the canopy/buildings FABDEM strips).
+But **DEM ascent sampled along the GPS track is inflated** — a DEM is the terrain, not the
+engineered road. Two parts: nearest-neighbour sampling adds ~30 pp of staircase artifact
+(**use bilinear**), and a real residual remains because the road is graded/cut and DEMs
+keep terrain roughness (plus canopy/buildings for the DSMs).
+
+| DEM (bilinear, 3 m) | Σ h₊ vs recorded | Σ h₋ vs recorded |
+|---|--:|--:|
+| FABDEM | +35 % | +37 % |
+| COP30 | +50 % | +52 % |
+| SRTM | +71 % | +73 % |
+
+**k_h for DEM-derived ascent/descent** — the factor that maps a DEM `h₊`/`h₋` (bilinear,
+3 m-hyst) back to the recorded-baro (road) reference, `k_h = recorded / DEM`:
+
+| DEM | k_h(h₊) | k_h(h₋) |
+|---|--:|--:|
+| **FABDEM** | **0.74** | **0.73** |
+| COP30 | 0.67 | 0.66 |
+| SRTM | 0.59 | 0.58 |
+
+- **k_h(h₊) ≈ k_h(h₋)** for each DEM — the inflation is symmetric, so one `k_h` per DEM
+  corrects both, exactly as the model assumes (`k_h·β·(h₊ − ε·h₋)`).
+- **FABDEM needs k_h ≈ 0.74 — the *same* as the recorded baro's own deadband k_h** (Entry
+  5, ~0.74 at τ=2). A bare-earth DEM sampled bilinearly is about as good as the raw baro
+  and corrects the same way; SRTM (0.59) and COP30 (0.67) need more.
+- **Practical:** with a barometric track, use it (best road-ascent proxy). With only a DEM
+  (planned route, no baro), use **FABDEM, bilinear, k_h ≈ 0.74**; the DSMs over-state
+  climbing. These are São-Paulo-tile values — `k_h` is source/terrain-dependent, so
+  calibrate per region.
+
+---
+
 ## 2026-06-28 — Entry 5: per-regime breakdown, elevation noise in h₊, and a smoothing filter
 
 *Prompts: how do the models compare on climb / flat / descent separately? how much is
