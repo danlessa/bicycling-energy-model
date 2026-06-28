@@ -1,0 +1,7 @@
+# Raw FIT files carry a GPS track — kept local for testing, not committed.
+# Drop an anonymised .fit here and force-add it if you want a committed fixture.
+*.fit
+
+# OS / editor cruft
+.DS_Store
+.vscode/

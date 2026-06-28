@@ -1,0 +1,1070 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Modelo de energia — aproximado × canônico</title>
+<style>
+  :root {
+    --bg: #0f1419; --panel: #1a2129; --ink: #e6edf3; --muted: #8b98a5;
+    --line: #2d3742; --accent: #5fb3ff; --warn: #ffb454;
+    --canon: #ff6b6b; --approx: #5fb3ff; --speed: #ffd166;
+    --roll: #6aa84f; --aero: #4a86e8; --climb: #cc6677; --brake: #e69138; --recov: #45818e;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font: 14px/1.5 -apple-system, "Segoe UI", system-ui, sans-serif;
+  }
+  header { padding: 14px 18px; border-bottom: 1px solid var(--line); }
+  header h1 { margin: 0 0 2px; font-size: 17px; }
+  header p { margin: 0; color: var(--muted); font-size: 12.5px; max-width: 70ch; }
+  .wrap { display: grid; grid-template-columns: 300px 1fr; gap: 16px; padding: 16px; align-items: start; }
+  @media (max-width: 880px) { .wrap { grid-template-columns: 1fr; } }
+  .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 14px; }
+  .panel h2 { margin: 0 0 10px; font-size: 12px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
+  .panel + .panel { margin-top: 14px; }
+  .row { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 7px 0; }
+  .row label { color: var(--muted); flex: 1; }
+  .row input[type=number] {
+    width: 78px; background: #0d1117; color: var(--ink); border: 1px solid var(--line);
+    border-radius: 6px; padding: 4px 6px; font: inherit; text-align: right;
+  }
+  .row input[type=range] { width: 120px; }
+  .row input:disabled { opacity: .5; cursor: not-allowed; }
+  .row select { background: #0d1117; color: var(--ink); border: 1px solid var(--line); border-radius: 6px; padding: 4px 6px; font: inherit; }
+  .unit { color: var(--muted); font-size: 12px; min-width: 34px; }
+  .presets { display: flex; flex-wrap: wrap; gap: 6px; }
+  button {
+    background: #242c36; color: var(--ink); border: 1px solid var(--line);
+    border-radius: 6px; padding: 5px 9px; font: inherit; cursor: pointer;
+  }
+  button:hover { background: #2d3742; border-color: var(--accent); }
+  button:disabled { opacity: .45; cursor: not-allowed; }
+  button:disabled:hover { background: #242c36; border-color: var(--line); }
+  button.mini { padding: 2px 7px; font-size: 12px; }
+  canvas { display: block; width: 100%; background: #0b0f14; border-radius: 8px; touch-action: none; }
+  .hint { color: var(--muted); font-size: 12px; margin: 6px 2px 0; }
+  .results { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 12px; margin-top: 14px; }
+  .bignum { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 14px; }
+  .bignum .lab { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .05em; }
+  .bignum .val { font-size: 30px; font-weight: 600; margin-top: 2px; }
+  .bignum .sub { color: var(--muted); font-size: 12px; margin-top: 4px; }
+  .bignum.canon { border-left: 4px solid var(--canon); }
+  .bignum.approx { border-left: 4px solid var(--approx); }
+  .bignum.disp { border-left: 4px solid #9b8cff; }
+  .bignum.env { border-left: 4px solid #6aa84f; }
+  .stat { display: flex; justify-content: space-between; padding: 3px 0; border-bottom: 1px dashed var(--line); }
+  .stat:last-child { border-bottom: 0; }
+  .stat .k { color: var(--muted); }
+  .bars { margin-top: 6px; }
+  .bar-row { margin: 12px 0; }
+  .bar-row .cap { display: flex; justify-content: space-between; font-size: 12.5px; margin-bottom: 4px; }
+  .bar { display: flex; height: 26px; border-radius: 6px; overflow: hidden; border: 1px solid var(--line); }
+  .seg { display: flex; align-items: center; justify-content: center; font-size: 11px; color: #08111a; font-weight: 600; min-width: 0; overflow: hidden; white-space: nowrap; }
+  .legend { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 8px; font-size: 12px; color: var(--muted); }
+  .legend span { display: inline-flex; align-items: center; gap: 5px; }
+  .legend b { color: var(--ink); font-weight: 600; font-variant-numeric: tabular-nums; }
+  .sw { width: 11px; height: 11px; border-radius: 3px; display: inline-block; }
+  .warn { color: var(--warn); font-size: 12.5px; margin-top: 8px; }
+  details { margin-top: 14px; color: var(--muted); font-size: 13px; }
+  details summary { cursor: pointer; color: var(--ink); }
+  details p, details li { max-width: 80ch; }
+  code { background: #0d1117; padding: 1px 4px; border-radius: 4px; }
+  .diff-pill { display: inline-block; padding: 2px 8px; border-radius: 999px; font-weight: 600; font-size: 12px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Modelo de energia do ciclista — aproximado × canônico</h1>
+  <p>Desenhe um perfil de elevação (clique e arraste no gráfico) ou carregue um GPX/FIT, escolha as potências de pedalada por regime,
+     e compare a energia que as pernas gastam segundo o <b>modelo aproximado</b> do Simujaules
+     (<code>E ≈ α·x + β·(h₊ − ε·h₋)</code>) contra um <b>modelo canônico</b> de dinâmica direta
+     (balanço de forças integrado, com frenagem nas descidas). Os dois modelos usam <i>os mesmos</i>
+     parâmetros físicos — assim a diferença isola só as <i>simplificações</i> do modelo, não os parâmetros.</p>
+</header>
+
+<div class="wrap">
+  <!-- ---------------- controls ---------------- -->
+  <div>
+    <div class="panel">
+      <h2>Perfil</h2>
+      <div class="row"><label>Distância</label><input type="number" id="dist" value="5" min="0.5" max="500" step="0.5"><span class="unit">km</span></div>
+      <div class="row"><label>Elevação máx. (eixo)</label><input type="number" id="hmax" value="200" min="20" max="6000" step="10"><span class="unit">m</span></div>
+      <div class="presets">
+        <button class="mini" data-preset="flat">Plano</button>
+        <button class="mini" data-preset="hill">Morro</button>
+        <button class="mini" data-preset="climb">Subida</button>
+        <button class="mini" data-preset="descent">Descida</button>
+        <button class="mini" data-preset="rolling">Ondulado</button>
+        <button class="mini" data-preset="clear">Limpar</button>
+      </div>
+      <div class="hint">Arraste sobre o gráfico para esculpir o relevo.</div>
+      <div class="row" style="margin-top:8px"><label>Carregar GPX/FIT</label><input type="file" id="gpxFile" accept=".gpx,.xml,.fit,application/gpx+xml,application/xml,text/xml,application/octet-stream" style="max-width:158px;font-size:12px"></div>
+      <div class="hint" id="gpxInfo"></div>
+      <div class="row" style="margin-top:8px"><label>Resolução do motor (dx)</label><input type="number" id="engineDx" value="5" min="0" max="500" step="1"><span class="unit">m</span></div>
+      <div class="hint">0 = nativa (GPX: pontos do arquivo). Menor dx = mais fino e lento; reamostra o perfil para o passo do integrador.</div>
+    </div>
+
+    <div class="panel">
+      <h2>Canônico (dinâmica direta)</h2>
+      <div class="row"><label>Potência na subida</label><input type="number" id="pClimb" value="150" min="0" max="800" step="10"><span class="unit">W</span></div>
+      <div class="row"><label>Potência no plano</label><input type="number" id="pFlat" value="90" min="0" max="800" step="10"><span class="unit">W</span></div>
+      <div class="row"><label>Potência na descida</label><input type="number" id="pDescent" value="10" min="0" max="800" step="10"><span class="unit">W</span></div>
+      <div class="row"><label>Limiar subida (Δh/x ≥)</label><input type="number" id="climbThr" value="2" min="0" max="15" step="0.5"><span class="unit">%</span></div>
+      <div class="row"><label>Limiar descida (Δh/x ≤)</label><input type="number" id="descThr" value="-1.5" min="-15" max="0" step="0.5"><span class="unit">%</span></div>
+      <div class="row"><label></label><button class="mini" id="gravThr" title="Subida: gravidade ≥ rolamento+aero (s = α/β). Descida: gravidade ≥ ½(rolamento+aero) (s = −α/2β). Aero ao v_f atual.">limiares: gravidade ≥ 50%</button></div>
+      <div class="row"><label><input type="checkbox" id="autoFitPower" checked style="margin-right:6px;vertical-align:-1px">Potências seguem o FIT/limiares</label></div>
+      <div class="row"><label>Estatística do FIT</label><select id="fitStat"><option value="median">mediana</option><option value="meanNZ">média</option><option value="mean" selected>média com zeros</option></select></div>
+      <div class="row"><label>Vel. máx. segura (freio)</label><input type="number" id="vmax" value="38" min="10" max="90" step="1"><span class="unit">km/h</span></div>
+      <div class="row"><label>Vel. inicial</label><input type="number" id="vstart" value="15" min="1" max="40" step="1"><span class="unit">km/h</span></div>
+    </div>
+
+    <div class="panel">
+      <h2>Aproximado (α, β, ε)</h2>
+      <div class="row"><label>v<sub>f</sub> (vel. de aero)</label><input type="number" id="vf" value="22" min="5" max="60" step="0.5"><span class="unit">km/h</span></div>
+      <div class="row"><label><input type="checkbox" id="autoVf" checked style="margin-right:6px;vertical-align:-1px">auto = equilíbrio no plano @P<sub>plano</sub></label></div>
+      <div class="row"><label>ε recuperação na descida</label><input type="number" id="eps" value="20" min="0" max="100" step="5"><span class="unit">%</span></div>
+      <div class="hint" id="epsHint">—</div>
+      <div class="row"><label></label><button class="mini" id="matchEps">casar ε com a energia das pernas →</button></div>
+      <div class="row"><label></label><button class="mini" id="fitEps" title="Recuperação real na descida do FIT: (α·X₋ − energia das pernas nas descidas)/(β·H₋), ponderada pelo desnível. α usa a vel. de plano MEDIDA no FIT.">ε do FIT (recuperação real) →</button></div>
+      <div class="row"><label title="Aero de α na subida — rolamento sempre cobrado; descidas inalteradas. 'cheia' = v_f (modelo original); '≈0' = zera na subida; 'a v_c' = à velocidade quase-estável de subida k_eff·P/(C_rr·mg·cosθ+mg·sinθ), limitada a v_f.">Aero na subida</label><select id="climbAeroMode"><option value="off">cheia (v_f)</option><option value="zero">≈ 0</option><option value="vc">a v_c</option></select></div>
+      <div class="row"><label>Mostrar termo α / β</label></div>
+      <div class="stat"><span class="k">α (custo horizontal)</span><span id="alphaOut">—</span></div>
+      <div class="stat"><span class="k">β (custo vertical)</span><span id="betaOut">—</span></div>
+    </div>
+
+    <div class="panel">
+      <h2>Física (compartilhada)</h2>
+      <div class="row"><label>Massa (ciclista+bike)</label><input type="number" id="mass" value="75" min="40" max="160" step="1"><span class="unit">kg</span></div>
+      <div class="row"><label>C<sub>rr</sub> (rolamento)</label><input type="number" id="crr" value="0.008" min="0.001" max="0.02" step="0.001"><span class="unit"></span></div>
+      <div class="row"><label>C<sub>d</sub>A (área de arrasto)</label><input type="number" id="cda" value="0.4" min="0.1" max="1.2" step="0.01"><span class="unit">m²</span></div>
+      <div class="row"><label>ρ (densidade do ar)</label><input type="number" id="rho" value="1.1" min="0.8" max="1.4" step="0.01"><span class="unit">kg/m³</span></div>
+      <div class="row"><label>k<sub>eff</sub> (transmissão)</label><input type="number" id="keff" value="0.97" min="0.8" max="1" step="0.01"><span class="unit"></span></div>
+      <div class="row"><label>Vento contrário (+) / a favor (−)</label><input type="number" id="wind" value="0" min="-40" max="120" step="1"><span class="unit">km/h</span></div>
+      <div class="hint">Vel. do ar = vel. no solo + vento. Afeta a aero do canônico e o termo aero de <code>α</code> (via v<sub>f</sub>).</div>
+    </div>
+  </div>
+
+  <!-- ---------------- main ---------------- -->
+  <div>
+    <div class="panel">
+      <h2>Perfil de elevação &amp; velocidade canônica</h2>
+      <canvas id="plot" height="340"></canvas>
+      <div class="legend">
+        <span><i class="sw" style="background:#3a4655"></i> elevação (m)</span>
+        <span><i class="sw" style="background:var(--speed)"></i> velocidade canônica (km/h)</span>
+        <span><i class="sw" style="background:rgba(230,145,56,.5)"></i> zona de frenagem</span>
+        <span style="margin-left:auto">faixa de regime (topo):</span>
+        <span><i class="sw" style="background:rgba(204,102,119,.85)"></i> subida</span>
+        <span><i class="sw" style="background:rgba(120,130,140,.6)"></i> plano</span>
+        <span><i class="sw" style="background:rgba(69,129,142,.9)"></i> descida</span>
+      </div>
+    </div>
+
+    <div class="results">
+      <div class="bignum canon">
+        <div class="lab">Canônico — energia das pernas</div>
+        <div class="val" id="ecanon">—</div>
+        <div class="sub" id="canonSub">—</div>
+      </div>
+      <div class="bignum approx">
+        <div class="lab">Aproximado — <code>α·x + β(h₊−εh₋)</code></div>
+        <div class="val" id="eapprox">—</div>
+        <div class="sub" id="approxSub">—</div>
+      </div>
+      <div class="bignum disp">
+        <div class="lab">Deslocamento — <code>ΔKE + Σ W<sub>resist</sub></code></div>
+        <div class="val" id="edisp">—</div>
+        <div class="sub" id="dispSub">—</div>
+      </div>
+      <div class="bignum env">
+        <div class="lab">Balanço transmitido — <code>desloc + mg·Δh</code></div>
+        <div class="val" id="eenv">—</div>
+        <div class="sub" id="envSub">—</div>
+      </div>
+    </div>
+
+    <div class="panel" style="margin-top:14px">
+      <h2>Diferença &amp; estatísticas</h2>
+      <div class="row" style="margin:2px 0">
+        <label>Aproximado − Canônico</label>
+        <span id="diffPill" class="diff-pill">—</span>
+      </div>
+      <div class="stat"><span class="k">Distância / desnível +/−</span><span id="statGeom">—</span></div>
+      <div class="stat"><span class="k">Resolução do motor (dx)</span><span id="statRes">—</span></div>
+      <div class="stat"><span class="k">Tempo canônico / vel. média</span><span id="statTime">—</span></div>
+      <div class="stat"><span class="k">Tempo aprox. (x*/v<sub>f</sub>) / vel.</span><span id="statTApprox">—</span></div>
+      <div class="stat"><span class="k">Pot. média aprox. (E/t)</span><span id="statPApprox">—</span></div>
+      <div class="stat"><span class="k">k₊ / k₋ (multiplic. de tempo)</span><span id="statK">—</span></div>
+      <div class="stat"><span class="k">Vel. equilíbrio no plano @P<sub>plano</sub></span><span id="statVeq">—</span></div>
+      <div class="stat"><span class="k">Energia dissipada no freio</span><span id="statBrake">—</span></div>
+      <div class="stat"><span class="k">ΔKE (final − inicial)</span><span id="statKE">—</span></div>
+      <div class="stat"><span class="k">PE líquida mg·Δh (fora do deslocamento)</span><span id="statPE">—</span></div>
+      <div class="stat"><span class="k">Deslocamento = ΔKE + rol + aero + freio</span><span id="statDisp">—</span></div>
+      <div class="stat"><span class="k"><b>ε que casa aprox. = pernas</b></span><span id="statEpsMatch">—</span></div>
+      <div id="warnBox"></div>
+    </div>
+
+    <div class="panel bars" style="margin-top:14px">
+      <h2>Decomposição da energia</h2>
+
+      <div class="bar-row">
+        <div class="cap"><span><b style="color:var(--canon)">Canônico</b> — custo bruto na roda (÷k<sub>eff</sub>)</span><span id="canonTot">—</span></div>
+        <div class="bar" id="canonBar"></div>
+      </div>
+      <div class="legend">
+        <span><i class="sw" style="background:var(--roll)"></i> rolamento <b id="legCanRoll">—</b></span>
+        <span><i class="sw" style="background:var(--aero)"></i> aerodinâmica <b id="legCanAero">—</b></span>
+        <span><i class="sw" style="background:var(--climb)"></i> subida mg·h₊ <b id="legCanClimb">—</b></span>
+        <span><i class="sw" style="background:var(--brake)"></i> freio <b id="legCanBrake">—</b></span>
+      </div>
+      <div class="bar-row" style="margin-top:8px">
+        <div class="cap"><span>Descida devolveu (gravidade) — <code>mg·h₋ ÷ k<sub>eff</sub></code></span><span id="concTot">—</span></div>
+        <div class="bar" id="concBar"></div>
+      </div>
+      <div class="hint" id="canonNote">As pernas pagam o <b>bruto − devolução</b>: a descida concede energia que abate o custo.</div>
+
+      <div class="bar-row" style="margin-top:18px">
+        <div class="cap"><span><b style="color:var(--approx)">Aproximado</b> — termos do modelo</span><span id="approxTot">—</span></div>
+        <div class="bar" id="approxBar"></div>
+      </div>
+      <div class="legend">
+        <span><i class="sw" style="background:var(--roll)"></i> rolamento (α) <b id="legApRoll">—</b></span>
+        <span><i class="sw" style="background:var(--aero)"></i> aero (α, v<sub>f</sub> fixo) <b id="legApAero">—</b></span>
+        <span><i class="sw" style="background:var(--climb)"></i> subida β·h₊ <b id="legApClimb">—</b></span>
+        <span><i class="sw" style="background:var(--recov)"></i> crédito −β·ε·h₋ <b id="legApRecov">—</b></span>
+      </div>
+      <div class="hint" id="approxNote">—</div>
+    </div>
+
+    <details>
+      <summary>O que cada modelo assume (e onde divergem)</summary>
+      <p><b>Canônico</b> — simulação de dinâmica direta. A cada passo integra
+      <code>m·dv/ds = k<sub>eff</sub>·P/v − C<sub>rr</sub>mg·cosθ − ½ρC<sub>d</sub>A·v² − mg·sinθ</code>.
+      A potência <code>P</code> de pedalada é escolhida pelo <i>regime</i> de cada trecho — a inclinação local
+      classifica em <b>subida</b> (Δh/x ≥ limiar), <b>plano</b> ou <b>descida</b> (Δh/x ≤ limiar), cada um com sua
+      potência. O ciclista mantém essa potência até a velocidade máxima segura; acima dela alivia o
+      pedal e <i>freia</i> (energia dissipada, nunca devolvida). A energia das pernas é <code>∫P·dt</code>.</p>
+      <p><b>Energia de deslocamento</b> — <code>ΔKE + Σ W<sub>resist</sub></code>: a variação de energia cinética
+      (final − inicial) mais o trabalho das forças resistivas (rolamento + aero + freio). A gravidade é conservativa
+      (seu líquido <code>mg·Δh</code> aparece à parte), então não entra. Vale a identidade
+      <code>pernas·k<sub>eff</sub> = deslocamento + mg·Δh</code> — útil como aferição independente do modelo:
+      no plano ≈ pernas·k<sub>eff</sub>; na subida &lt; pernas (as pernas também erguem a massa);
+      na descida &gt; pernas (a gravidade paga, mas quase tudo vira aero+freio).</p>
+      <p><b>Aproximado</b> — a forma fechada do Simujaules. Rolamento e subida são <i>exatos</i>
+      (<code>C<sub>rr</sub>mg·cosθ·s = C<sub>rr</sub>mg·x</code> e <code>mg·sinθ·s = mg·Δh</code>). As únicas aproximações:
+      (1) a aero é cobrada a uma <i>velocidade de plano fixa</i> v<sub>f</sub> em vez da velocidade real (que cai na subida,
+      dispara na descida); (2) a descida vira um crédito empírico <code>−ε·β·h₋</code> em vez de contabilizar freio+aero;
+      (3) sem termo de energia cinética (aceleração) e sem vento.</p>
+      <ul>
+        <li><b>Subida</b>: o real v→0, aero→0; o aproximado segue cobrando aero a v<sub>f</sub> ⇒ superestima (pouco, pois a gravidade domina).</li>
+        <li><b>Plano</b>: idênticos <i>se</i> v<sub>f</sub> = velocidade de equilíbrio em P<sub>plano</sub> (é o que o modo <i>auto v<sub>f</sub></i> faz).</li>
+        <li><b>Descida</b>: o real desperdiça quase toda a PE em aero+freio; o aproximado credita só a fração ε. Um ε constante
+        não acompanha a dependência com a inclinação (descida suave recupera mais; íngreme, quase nada).</li>
+      </ul>
+      <p style="color:#5a6673">Ferramenta de estudo, fora do PWA — não entra no <code>deploy.sh</code> nem no service worker.</p>
+    </details>
+  </div>
+</div>
+
+<script>
+const G = 9.81;
+const NS = 240;                 // profile samples used for drawing
+let H = new Float64Array(NS);   // elevation (m) per sample
+let lastDraw = null;            // {i, h} for interpolating drags
+let epsStarApply = NaN;         // ε (fraction) that matches approx to leg energy
+let physProfile = null;         // GPX native-resolution {x,h} for physics (null = use drawn H)
+let fitData = null;             // FIT [{x,alt,power}] kept so regime powers re-derive on threshold change
+let lastExtractThr = { c: NaN, d: NaN };  // thresholds the FIT powers were last binned at
+
+const $ = id => document.getElementById(id);
+const num = id => parseFloat($(id).value);
+
+// ---------- physics inputs ----------
+function physParams() {
+  return {
+    m: num('mass'), Crr: num('crr'), CdA: num('cda'), rho: num('rho'),
+    keff: num('keff'), vmax: num('vmax') / 3.6, vstart: num('vstart') / 3.6,
+    wind: num('wind') / 3.6,   // headwind (m/s, + against travel, − tailwind)
+  };
+}
+
+// Flat-equilibrium GROUND speed at pedal power P: solve
+//   (Crr·mg + ½ρCdA·(v+w)²)·v = keff·P   (air speed v+w; headwind lowers v)
+function flatEqSpeed(P, p) {
+  const a = p.Crr * p.m * G, b = 0.5 * p.rho * p.CdA, w = p.wind || 0;
+  let lo = 0, hi = 40;
+  for (let k = 0; k < 60; k++) {
+    const v = (lo + hi) / 2;
+    const wheel = (a + b * (v + w) * (v + w)) * v;
+    if (wheel < p.keff * P) lo = v; else hi = v;
+  }
+  return (lo + hi) / 2;
+}
+
+// ---------- resample drawn profile to engine grid dx ----------
+function resample(Dm, dx) {
+  const n = Math.max(2, Math.round(Dm / dx) + 1);
+  const x = new Float64Array(n), h = new Float64Array(n);
+  for (let i = 0; i < n; i++) {
+    const xx = (i / (n - 1)) * Dm;
+    const t = (xx / Dm) * (NS - 1);
+    const j = Math.min(NS - 2, Math.floor(t)), f = t - j;
+    x[i] = xx;
+    h[i] = H[j] * (1 - f) + H[j + 1] * f;
+  }
+  return { x, h };
+}
+
+// Resamples an arbitrary {x,h} profile (e.g. the GPX native track) onto a
+// uniform dx grid — lets the engine resolution be set without losing the source.
+function resampleProfile(src, dx) {
+  const total = src.x[src.x.length - 1];
+  const n = Math.max(2, Math.round(total / dx) + 1);
+  const x = new Float64Array(n), h = new Float64Array(n);
+  let j = 0;
+  for (let i = 0; i < n; i++) {
+    const d = i === n - 1 ? total : total * i / (n - 1);
+    while (j < src.x.length - 2 && src.x[j + 1] < d) j++;
+    const seg = src.x[j + 1] - src.x[j], f = seg > 1e-9 ? (d - src.x[j]) / seg : 0;
+    x[i] = d; h[i] = src.h[j] * (1 - f) + src.h[j + 1] * f;
+  }
+  return { x, h };
+}
+
+// ---------- canonical forward simulation ----------
+// Distance-marching with adaptive sub-steps and a SEMI-IMPLICIT propulsion update:
+// the stiff term F_prop = keff*P/v is evaluated at the NEW speed, which is stable
+// at any step (even the ~0.2 km/h creep of an underpowered steep climb) and
+// conserves energy exactly — so leg energy can never fall below the work done.
+// `pw` carries regime powers + slope thresholds; the pedal power for each
+// profile segment is chosen by its local grade (climb / flat / descent).
+function canonical(prof, pw, p) {
+  const { m, Crr, CdA, rho, keff, vmax } = p;
+  const xs = prof.x, hs = prof.h, n = xs.length;
+  const DT_MAX = 0.25, DS_MIN = 0.2;
+  const KEinit = 0.5 * m * p.vstart * p.vstart;
+  let KE = KEinit;
+  let legE = 0, t = 0, Wrr = 0, Waero = 0, Wgrav = 0, Wbrake = 0;
+  const speed = new Float64Array(n), brk = new Uint8Array(n), regime = new Int8Array(n);
+  speed[0] = Math.sqrt(2 * KE / m);
+  let minV = speed[0];
+  const keCap = 0.5 * m * vmax * vmax;
+  for (let i = 1; i < n; i++) {
+    const dx = xs[i] - xs[i - 1], dh = hs[i] - hs[i - 1];
+    const slope = dh / dx, sec = Math.sqrt(1 + slope * slope);
+    const cos = 1 / sec, sin = slope / sec;
+    const Frr = Crr * m * G * cos, Fgrav = m * G * sin;
+    // regime + pedal power by local grade
+    let reg, P;
+    if (slope >= pw.climbThr) { reg = 1; P = pw.climb; }
+    else if (slope <= pw.descThr) { reg = -1; P = pw.descent; }
+    else { reg = 0; P = pw.flat; }
+    regime[i] = reg;
+    let remaining = dx * sec, braked = 0;
+    while (remaining > 1e-9) {
+      const v = Math.sqrt(2 * KE / m);
+      const dsSub = Math.min(remaining, Math.max(v * DT_MAX, DS_MIN));
+      const rel = v + p.wind;                          // air speed (headwind adds)
+      const Faero = 0.5 * rho * CdA * rel * Math.abs(rel);
+      const R = Frr + Faero + Fgrav;
+      const Pleg = (v >= vmax) ? Math.min(Math.max(R * v / keff, 0), P) : P;
+      // Solve KE' = KE + (keff·Pleg/v' − R)·ds with v' = √(2KE'/m): g(u)=u−A/√u−B=0.
+      // Monotone-increasing g ⇒ safeguarded Newton (bisection bracket) — robust and
+      // stable for the stiff keff·P/v at low v, with no energy-injecting clamp.
+      const A = keff * Pleg * dsSub * Math.sqrt(m / 2), B = KE - R * dsSub;
+      let KEn;
+      if (A > 0) {
+        let lo = 1e-12, hi = Math.max(KE, B, 1) + A + 1;
+        while (hi - A / Math.sqrt(hi) - B <= 0) hi *= 2;       // bracket the root: g(hi)>0
+        KEn = (KE > lo && KE < hi) ? KE : 0.5 * (lo + hi);
+        for (let it = 0; it < 40; it++) {
+          const root = Math.sqrt(KEn), g = KEn - A / root - B;
+          g > 0 ? hi = KEn : lo = KEn;
+          let next = KEn - g / (1 + 0.5 * A / (KEn * root));    // Newton; bisect if it escapes
+          if (!(next > lo && next < hi)) next = 0.5 * (lo + hi);
+          if (Math.abs(next - KEn) <= 1e-9 * KEn + 1e-12) { KEn = next; break; }
+          KEn = next;
+        }
+      } else KEn = Math.max(B, 1e-12);
+      const vNew = Math.sqrt(2 * KEn / m), dt = dsSub / vNew;   // Fp & dt both at v' ⇒ balance exact
+      legE += Pleg * dt; t += dt;
+      Wrr += Frr * dsSub; Waero += Faero * dsSub; Wgrav += Fgrav * dsSub;
+      KE = KEn;
+      if (KE > keCap) { Wbrake += KE - keCap; KE = keCap; braked = 1; }
+      remaining -= dsSub;
+    }
+    const v = Math.sqrt(2 * KE / m);
+    speed[i] = v; brk[i] = braked; if (v < minV) minV = v;
+  }
+  const dist = xs[n - 1] - xs[0];
+  // Displacement energy: ΔKE + work of the resistive forces (rolling + aero +
+  // braking). Gravity is conservative (its net mg·Δh is tracked separately in
+  // Wgrav) so it is NOT a resistive term. Identity: legE·keff = dispE + Wgrav.
+  const dKE = KE - KEinit;
+  const dispE = dKE + Wrr + Waero + Wbrake;
+  return { legE, t, Wrr, Waero, Wgrav, Wbrake, speed, brk, regime,
+           avgV: dist / t, minV, KEinit, KEfin: KE, dKE, dispE };
+}
+
+// ---------- approximate model (closed form + engine clamp check) ----------
+// Climb-aero correction (opts.climbAeroMode, see notas.md) on segments steeper
+// than opts.climbThr — rolling stays on all x, descents untouched:
+//   'off'  full flat-speed aero (v_f) everywhere — the original model
+//   'zero' aero set to 0 on climbs
+//   'vc'   aero at the quasi-steady climb speed v_c ≈ keff·P/(Crr·mg·cosθ+mg·sinθ),
+//          capped at v_f — the "near-exact" variant (needs opts.climbPower)
+function approximate(prof, p, vf, eps, opts) {
+  const beta = p.m * G / p.keff, mg = p.m * G, w = p.wind;
+  const aeroSpd = vf + w;                                 // air speed on the flat
+  const aRoll = mg * p.Crr / p.keff;                      // per-metre rolling (all x)
+  const aAero = 0.5 * p.rho * p.CdA * aeroSpd * Math.abs(aeroSpd) / p.keff;  // per-metre flat aero
+  const mode = (opts && opts.climbAeroMode) || 'off';
+  const climbThr = opts && opts.climbThr != null ? opts.climbThr : 0.02;
+  const Pc = (opts && opts.climbPower) || 0;
+  const xs = prof.x, hs = prof.h;
+  let X = 0, hplus = 0, hminus = 0, aeroSum = 0, clamped = 0;
+  for (let i = 1; i < xs.length; i++) {
+    const dx = xs[i] - xs[i - 1], dh = hs[i] - hs[i - 1], slope = dh / dx;
+    X += dx;
+    let aeroDx = aAero;                                   // per-metre aero for this segment
+    if (mode !== 'off' && slope >= climbThr) {
+      if (mode === 'zero') aeroDx = 0;
+      else {                                              // 'vc' — aero at the climb speed
+        const sec = Math.sqrt(1 + slope * slope), sin = slope / sec, cos = 1 / sec;
+        const vc = Pc > 0 ? Math.min(vf, p.keff * Pc / (p.Crr * mg * cos + mg * sin)) : 0;
+        aeroDx = 0.5 * p.rho * p.CdA * (vc + w) * Math.abs(vc + w) / p.keff;
+      }
+    }
+    const segAero = aeroDx * dx; aeroSum += segAero;
+    const alphaSeg = aRoll * dx + segAero;                // α·dx for this segment
+    if (dh >= 0) { hplus += dh; clamped += alphaSeg + beta * dh; }
+    else { hminus += -dh; clamped += Math.max(0, alphaSeg - eps * beta * (-dh)); }
+  }
+  const roll = aRoll * X, aero = aeroSum, climb = beta * hplus, recov = -eps * beta * hminus;
+  return {
+    E: roll + aero + climb + recov, clamped, alpha: aRoll + aAero, beta, X, hplus, hminus,
+    roll, aero, climb, recov,
+  };
+}
+
+// ---------- approximate TIME model (notas.md "effective flat distance") ----------
+// t = x*/v_f with x* = x + k₊·h₊ − k₋·h₋, computed per-segment as Σ ds/v(s): climb at
+// v_c ≈ keff·P/(Crr·mg·cosθ+mg·sinθ) capped at v_f, flat at v_f, descent at the
+// P_desc+gravity equilibrium capped at v_max. Reports the effective k₊ (clean ≈
+// v_f·mg/keff·P_climb) and k₋ (lumped — the time-twin of ε).
+function approxTime(prof, p, vf, pw) {
+  const mg = p.m * G, w = p.wind, vmax = p.vmax, xs = prof.x, hs = prof.h;
+  let t = 0, X = 0, hplus = 0, hminus = 0, tClimb = 0, xClimb = 0, hpC = 0, tDesc = 0, xDesc = 0, hmD = 0;
+  for (let i = 1; i < xs.length; i++) {
+    const dx = xs[i] - xs[i - 1], dh = hs[i] - hs[i - 1], slope = dh / dx;
+    const sec = Math.sqrt(1 + slope * slope), sin = slope / sec, cos = 1 / sec, ds = dx * sec;
+    X += dx; if (dh > 0) hplus += dh; else hminus += -dh;
+    let v;
+    if (slope >= pw.climbThr) {                          // climb: v_c capped at v_f
+      v = pw.climb > 0 ? Math.min(vf, p.keff * pw.climb / (p.Crr * mg * cos + mg * sin)) : 0.05;
+      tClimb += ds / v; xClimb += dx; hpC += dh;
+    } else if (slope <= pw.descThr) {                     // descent: equilibrium, capped at v_max
+      let lo = 0.05, hi = 45;
+      for (let k = 0; k < 28; k++) {
+        const vv = 0.5 * (lo + hi);
+        const f = 0.5 * p.rho * p.CdA * (vv + w) * Math.abs(vv + w) + p.Crr * mg * cos + mg * sin - p.keff * pw.descent / vv;
+        f < 0 ? lo = vv : hi = vv;
+      }
+      v = Math.min(vmax, Math.max(0.5, 0.5 * (lo + hi)));
+      tDesc += ds / v; xDesc += dx; hmD += -dh;
+    } else v = vf;                                        // flat
+    t += ds / Math.max(v, 0.02);
+  }
+  const kPlus = hpC > 0 ? (vf * tClimb - xClimb) / hpC : NaN;    // effective climb multiplier
+  const kMinus = hmD > 0 ? (xDesc - vf * tDesc) / hmD : NaN;     // effective descent multiplier (time-ε)
+  return { t, X, hplus, hminus, kPlus, kMinus };
+}
+
+// ---------- GPX import: build H[] from a track's elevation ----------
+function haversine(a, b) {
+  const R = 6371000, toR = Math.PI / 180;
+  const dLat = (b.lat - a.lat) * toR, dLon = (b.lon - a.lon) * toR;
+  const s = Math.sin(dLat / 2) ** 2 + Math.cos(a.lat * toR) * Math.cos(b.lat * toR) * Math.sin(dLon / 2) ** 2;
+  return 2 * R * Math.asin(Math.min(1, Math.sqrt(s)));
+}
+function parseGPX(text) {
+  const doc = new DOMParser().parseFromString(text, 'application/xml');
+  if (doc.getElementsByTagName('parsererror').length) throw new Error('XML inválido');
+  let nodes = [...doc.getElementsByTagName('trkpt')];
+  if (!nodes.length) nodes = [...doc.getElementsByTagName('rtept')];
+  const pts = [];
+  for (const p of nodes) {
+    const lat = parseFloat(p.getAttribute('lat')), lon = parseFloat(p.getAttribute('lon'));
+    const e = p.getElementsByTagName('ele')[0];
+    if (isFinite(lat) && isFinite(lon)) pts.push({ lat, lon, ele: e ? parseFloat(e.textContent) : NaN });
+  }
+  return pts;
+}
+// Shared builder: cumulative horizontal distance distArr (m) + raw elevation
+// eleArr (m, NaN allowed) → NATIVE-resolution physics profile (what the
+// integrator and h₊/h₋ use — no downsampling) AND a downsampled H[240] for the
+// canvas. Near-duplicate points (Δdist < 0.5 m) are dropped so no segment has dx=0.
+function buildProfile(distArr, eleArr) {
+  const X = [distArr[0]], E = [eleArr[0]];
+  for (let i = 1; i < distArr.length; i++) {
+    if (distArr[i] - X[X.length - 1] < 0.5 && i < distArr.length - 1) continue;
+    X.push(distArr[i]); E.push(eleArr[i]);
+  }
+  const base = X[0]; for (let i = 0; i < X.length; i++) X[i] -= base;   // start at 0
+  const n = X.length, total = X[n - 1];
+  if (n < 2 || !(total > 0)) throw new Error('distância nula');
+  const first = E.findIndex(e => Number.isFinite(e));
+  if (first < 0) throw new Error('faixa sem elevação');
+  for (let i = 0; i < first; i++) E[i] = E[first];
+  let last = first;
+  for (let i = first + 1; i < n; i++) {
+    if (Number.isFinite(E[i])) {
+      for (let k = last + 1; k < i; k++) E[k] = E[last] + (E[i] - E[last]) * (k - last) / (i - last);
+      last = i;
+    }
+  }
+  for (let i = last + 1; i < n; i++) E[i] = E[last];
+  let minE = Infinity, maxE = -Infinity;
+  for (const e of E) { if (e < minE) minE = e; if (e > maxE) maxE = e; }
+  const px = new Float64Array(n), ph = new Float64Array(n);
+  for (let i = 0; i < n; i++) { px[i] = X[i]; ph[i] = E[i] - minE; }
+  physProfile = { x: px, h: ph };
+  let j = 0;
+  for (let s = 0; s < NS; s++) {
+    const d = total * s / (NS - 1);
+    while (j < n - 2 && X[j + 1] < d) j++;
+    const seg = X[j + 1] - X[j], f = seg > 1e-9 ? (d - X[j]) / seg : 0;
+    H[s] = ph[j] * (1 - f) + ph[j + 1] * f;
+  }
+  const sm = H.slice();
+  for (let s = 1; s < NS - 1; s++) H[s] = (sm[s - 1] + 2 * sm[s] + sm[s + 1]) / 4;
+  return { total, range: maxE - minE, n };
+}
+function profileFromGPX(pts) {
+  if (pts.length < 2) throw new Error('GPX com poucos pontos');
+  const dist = [0], ele = [pts[0].ele];
+  for (let i = 1; i < pts.length; i++) { dist.push(dist[i - 1] + haversine(pts[i - 1], pts[i])); ele.push(pts[i].ele); }
+  return buildProfile(dist, ele);
+}
+
+// ---------- FIT import (Garmin/Wahoo binary) ----------
+// Minimal parser of `record` messages (global msg 20): distance, altitude,
+// lat/lon, power. Honors per-definition endianness, compressed-timestamp
+// headers and developer fields. Not a full SDK, but covers standard rides.
+function parseFIT(buffer) {
+  const dv = new DataView(buffer);
+  if (buffer.byteLength < 14) throw new Error('FIT muito curto');
+  const headerSize = dv.getUint8(0), dataSize = dv.getUint32(4, true);
+  if (String.fromCharCode(dv.getUint8(8), dv.getUint8(9), dv.getUint8(10), dv.getUint8(11)) !== '.FIT')
+    throw new Error('assinatura .FIT ausente');
+  const end = Math.min(headerSize + dataSize, buffer.byteLength);
+  let pos = headerSize;
+  const defs = {}, records = [];
+  const read = (p, bt, little) => {                 // value, or undefined if FIT-invalid
+    switch (bt & 0x1F) {
+      case 0x01: { const v = dv.getInt8(p); return v === 0x7F ? undefined : v; }
+      case 0x00: case 0x02: case 0x0A: case 0x0D: { const v = dv.getUint8(p); return v === 0xFF ? undefined : v; }
+      case 0x03: { const v = dv.getInt16(p, little); return v === 0x7FFF ? undefined : v; }
+      case 0x04: case 0x0B: { const v = dv.getUint16(p, little); return v === 0xFFFF ? undefined : v; }
+      case 0x05: { const v = dv.getInt32(p, little); return v === 0x7FFFFFFF ? undefined : v; }
+      case 0x06: case 0x0C: { const v = dv.getUint32(p, little) >>> 0; return v === 0xFFFFFFFF ? undefined : v; }
+      case 0x08: return dv.getFloat32(p, little);
+      case 0x09: return dv.getFloat64(p, little);
+      default: return undefined;                    // strings / 64-bit ignored
+    }
+  };
+  while (pos < end) {
+    const rh = dv.getUint8(pos); pos++;
+    let local, isDef = false, hasDev = false;
+    if (rh & 0x80) local = (rh >> 5) & 0x03;          // compressed-timestamp data msg
+    else { local = rh & 0x0F; isDef = !!(rh & 0x40); hasDev = !!(rh & 0x20); }
+    if (isDef) {
+      pos++;                                          // reserved
+      const little = dv.getUint8(pos) === 0; pos++;   // architecture
+      const gmn = dv.getUint16(pos, little); pos += 2;
+      const nf = dv.getUint8(pos); pos++;
+      const fields = [];
+      for (let i = 0; i < nf; i++) { fields.push({ num: dv.getUint8(pos), size: dv.getUint8(pos + 1), bt: dv.getUint8(pos + 2) }); pos += 3; }
+      let devSize = 0;
+      if (hasDev) { const nd = dv.getUint8(pos); pos++; for (let i = 0; i < nd; i++) { devSize += dv.getUint8(pos + 1); pos += 3; } }
+      defs[local] = { gmn, little, fields, devSize };
+    } else {
+      const def = defs[local];
+      if (!def) throw new Error('FIT corrompido (dado sem definição)');
+      let p = pos; const rec = {};
+      for (const f of def.fields) {
+        if (def.gmn === 20) {
+          const v = read(p, f.bt, def.little);
+          if (v !== undefined) {
+            if (f.num === 0) rec.lat = v * (180 / 2147483648);
+            else if (f.num === 1) rec.lon = v * (180 / 2147483648);
+            else if (f.num === 2) { if (rec.alt === undefined) rec.alt = v / 5 - 500; }
+            else if (f.num === 78) rec.alt = v / 5 - 500;   // enhanced altitude (preferred)
+            else if (f.num === 5) rec.dist = v / 100;
+            else if (f.num === 6) { if (rec.speed === undefined) rec.speed = v / 1000; }  // m/s
+            else if (f.num === 73) rec.speed = v / 1000;   // enhanced_speed (preferred)
+            else if (f.num === 7) rec.power = v;
+            else if (f.num === 253) rec.time = v;          // seconds (FIT epoch)
+          }
+        }
+        p += f.size;
+      }
+      pos = p + def.devSize;
+      if (def.gmn === 20) records.push(rec);
+    }
+  }
+  return records;
+}
+// TIME-WEIGHTED power statistics per regime. Each sample (FIT record) is binned
+// by its grade over a 30 m distance WINDOW — needed because 0.2 m altitude
+// quantization over ~5 m/record makes the raw per-record grade quantize to ~4%
+// (noise near the ±2% thresholds). Each sample is weighted by its Δt (pts[i].dt,
+// clamped for pauses) so non-1 Hz / paused recordings stay honest. Returns both
+// the weighted MEAN and weighted MEDIAN per regime; inference uses the median.
+function extractRegimePowers(pts, climbThr, descThr) {
+  const W = 30;
+  const bins = [[], [], []];                          // [descent, flat, climb] → {p, w}
+  const VSTOP = 0.5 / 3.6;                             // skip samples below 0.5 km/h (stopped)
+  for (let i = 0; i < pts.length; i++) {
+    if (pts[i].power === undefined) continue;
+    if (pts[i].v !== undefined && pts[i].v < VSTOP) continue;
+    let j = i; while (j < pts.length - 1 && pts[j].x - pts[i].x < W) j++;
+    const dd = pts[j].x - pts[i].x;
+    let grade;
+    if (dd > 1) grade = (pts[j].alt - pts[i].alt) / dd;
+    else { let k = i; while (k > 0 && pts[i].x - pts[k].x < W) k--; const db = pts[i].x - pts[k].x; grade = db > 1 ? (pts[i].alt - pts[k].alt) / db : 0; }
+    const r = grade >= climbThr ? 2 : grade <= descThr ? 0 : 1;
+    bins[r].push({ p: pts[i].power, w: pts[i].dt || 1 });
+  }
+  const stat = b => {
+    if (!b.length) return { mean: null, meanNZ: null, median: null, time: 0, n: 0 };
+    let sw = 0, swp = 0, swNZ = 0, swpNZ = 0;
+    for (const s of b) { sw += s.w; swp += s.w * s.p; if (s.p > 0) { swNZ += s.w; swpNZ += s.w * s.p; } }
+    b.sort((a, c) => a.p - c.p);                       // weighted median (incl zeros)
+    let acc = 0, median = b[b.length - 1].p;
+    for (const s of b) { acc += s.w; if (acc >= sw / 2) { median = s.p; break; } }
+    return { mean: sw ? swp / sw : null, meanNZ: swNZ ? swpNZ / swNZ : null, median, time: sw, n: b.length };
+  };
+  return { descent: stat(bins[0]), flat: stat(bins[1]), climb: stat(bins[2]) };
+}
+
+// Descent-height-weighted recovery ε this FIT actually exhibited:
+//   ε(s) = (α·dx − E_legs)/(β·h₋) per descent cell, weighted by drop h₋, so the
+//   aggregate is ε = (α·X₋ − E_legs₋)/(β·H₋). Uses a 30 m grid so 0.2 m altitude
+//   quantization doesn't inflate H₋. α uses the ride's MEASURED flat speed (the
+//   honest "real" baseline) — not the model's predicted v_f. Returns {eps, vf}.
+function epsFromFIT(pts, p) {
+  if (!pts || pts.length < 2) return null;
+  const mg = p.m * G, beta = mg / p.keff;
+  const x0 = pts[0].x, totalM = pts[pts.length - 1].x - x0, DX = 30, nc = Math.floor(totalM / DX);
+  if (nc < 2) return null;
+  let j = 0;
+  const altAt = d => { while (j < pts.length - 2 && pts[j + 1].x < d) j++; const seg = pts[j + 1].x - pts[j].x, f = seg > 1e-9 ? (d - pts[j].x) / seg : 0; return pts[j].alt * (1 - f) + pts[j + 1].alt * f; };
+  const cellAlt = new Float64Array(nc + 1);
+  for (let k = 0; k <= nc; k++) cellAlt[k] = altAt(x0 + k * DX);   // increasing d ⇒ j advances monotonically
+  const cellE = new Float64Array(nc), cellVs = new Float64Array(nc), cellVt = new Float64Array(nc);
+  for (const r of pts) {
+    const k = Math.floor((r.x - x0) / DX); if (k < 0 || k >= nc) continue;
+    const w = r.dt || 1;
+    if (r.power !== undefined) cellE[k] += r.power * w;
+    if (r.v !== undefined) { cellVs[k] += r.v * w; cellVt[k] += w; }
+  }
+  // v_f = time-weighted mean GROUND speed on flat cells (|grade| < 1%)
+  let sv = 0, sw = 0;
+  for (let k = 0; k < nc; k++) { const gr = (cellAlt[k + 1] - cellAlt[k]) / DX; if (Math.abs(gr) < 0.01 && cellVt[k] > 0) { sv += cellVs[k]; sw += cellVt[k]; } }
+  const vf = sw > 0 ? sv / sw : 5, aeroSpd = vf + p.wind;
+  const alpha = (p.Crr * mg + 0.5 * p.rho * p.CdA * aeroSpd * Math.abs(aeroSpd)) / p.keff;
+  let Xd = 0, Hd = 0, Ed = 0;
+  for (let k = 0; k < nc; k++) { const dh = cellAlt[k + 1] - cellAlt[k]; if (dh < 0) { Xd += DX; Hd -= dh; Ed += cellE[k]; } }
+  return Hd < 1 ? null : { eps: (alpha * Xd - Ed) / (beta * Hd), vf };
+}
+
+// ---------- track loaders (shared by the file input) ----------
+function afterTrackLoad(info, msg) {
+  $('dist').value = (info.total / 1000).toFixed(2);
+  $('hmax').value = Math.max(20, Math.ceil(info.range * 1.1 / 10) * 10);
+  $('gpxInfo').textContent = msg;
+  recompute();
+}
+function loadGPXText(text, name) {
+  fitData = null;                                  // GPX carries no power
+  const info = profileFromGPX(parseGPX(text));
+  afterTrackLoad(info, `${name} · ${(info.total / 1000).toFixed(1)} km · ${info.n} pts (nativa) · amplitude ${info.range.toFixed(0)} m`);
+}
+function fitStatKey() { const v = $('fitStat').value; return (v === 'mean' || v === 'meanNZ') ? v : 'median'; }
+const FIT_STAT_LABEL = { median: 'mediana', meanNZ: 'média', mean: 'média c/ zeros' };
+function applyRegimePowers(rp) {                    // write chosen stat (mean/median) per regime
+  const k = fitStatKey();
+  if (rp.climb[k] != null) $('pClimb').value = Math.round(rp.climb[k]);
+  if (rp.flat[k] != null) $('pFlat').value = Math.round(rp.flat[k]);
+  if (rp.descent[k] != null) $('pDescent').value = Math.round(rp.descent[k]);
+}
+function loadFIT(buffer, name) {
+  const recs = parseFIT(buffer);
+  if (recs.length < 2) throw new Error('FIT sem registros (record)');
+  const pts = [];
+  if (recs.some(r => r.dist !== undefined)) {
+    for (const r of recs) if (r.dist !== undefined && r.alt !== undefined) pts.push({ x: r.dist, alt: r.alt, power: r.power, t: r.time, v: r.speed });
+  } else {
+    const geo = recs.filter(r => r.lat !== undefined && r.lon !== undefined && r.alt !== undefined);
+    if (geo.length < 2) throw new Error('FIT sem distância nem GPS');
+    let cum = 0; pts.push({ x: 0, alt: geo[0].alt, power: geo[0].power, t: geo[0].time, v: geo[0].speed });
+    for (let i = 1; i < geo.length; i++) { cum += haversine(geo[i - 1], geo[i]); pts.push({ x: cum, alt: geo[i].alt, power: geo[i].power, t: geo[i].time, v: geo[i].speed }); }
+  }
+  if (pts.length < 2) throw new Error('FIT sem altitude/distância');
+  for (let i = 0; i < pts.length; i++) {             // time weight per sample (clamp pauses) + speed fallback
+    let w = 1;
+    if (i > 0 && pts[i].t !== undefined && pts[i - 1].t !== undefined) w = Math.min(Math.max(pts[i].t - pts[i - 1].t, 0), 10);
+    pts[i].dt = w;
+    if (pts[i].v === undefined && i > 0 && w > 0) pts[i].v = (pts[i].x - pts[i - 1].x) / w;   // derive from dx/dt
+  }
+  const info = buildProfile(pts.map(p => p.x), pts.map(p => p.alt));
+  const ct = num('climbThr') / 100, dt = num('descThr') / 100;
+  const rp = extractRegimePowers(pts, ct, dt);
+  const hasPow = rp.climb.median != null || rp.flat.median != null || rp.descent.median != null;
+  fitData = hasPow ? pts : null;                    // retain for live re-binning on threshold change
+  const fmt = v => v == null ? '—' : Math.round(v);
+  const k = fitStatKey(), lab = FIT_STAT_LABEL[k];
+  let pmsg = ' · sem dados de potência';
+  if (hasPow && $('autoFitPower').checked) {
+    applyRegimePowers(rp);
+    lastExtractThr = { c: ct, d: dt };
+    pmsg = ` · ${lab} sub/plano/desc ${fmt(rp.climb[k])}/${fmt(rp.flat[k])}/${fmt(rp.descent[k])} W (segue os limiares)`;
+  } else {
+    lastExtractThr = { c: NaN, d: NaN };            // so turning the toggle on later re-bins
+    if (hasPow) pmsg = ` · FIT: ${lab} ${fmt(rp.climb[k])}/${fmt(rp.flat[k])}/${fmt(rp.descent[k])} W (ajuste desligado)`;
+  }
+  afterTrackLoad(info, `${name} · ${(info.total / 1000).toFixed(1)} km · ${info.n} pts · amplitude ${info.range.toFixed(0)} m${pmsg}`);
+}
+
+// ε that makes the ENGINE (per-edge clamped) approximate energy equal `target`.
+// clamped sum is monotone non-increasing in ε, so bisect. Returns NaN if no ε
+// in a sane range reaches it (target below the all-descent-clamped floor).
+function epsForClampedMatch(prof, p, vf, target, opts) {
+  const f = e => approximate(prof, p, vf, e, opts).clamped;
+  if (f(0) <= target) return 0;            // even with no credit it's already ≤ target
+  let lo = 0, hi = 1;
+  while (f(hi) > target && hi < 8) hi *= 2;
+  if (f(hi) > target) return NaN;          // unreachable (clamp floor above target)
+  for (let k = 0; k < 50; k++) { const e = (lo + hi) / 2; if (f(e) > target) lo = e; else hi = e; }
+  return (lo + hi) / 2;
+}
+
+// ---------- rendering ----------
+const cv = $('plot'), ctx = cv.getContext('2d');
+function fitCanvas() {
+  const dpr = window.devicePixelRatio || 1;
+  cv.style.height = '340px';
+  const w = cv.clientWidth;
+  cv.width = w * dpr; cv.height = 340 * dpr;
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+}
+const PAD = { l: 44, r: 46, t: 14, b: 26 };
+function plotDims() { return { w: cv.clientWidth, h: 340, iw: cv.clientWidth - PAD.l - PAD.r, ih: 340 - PAD.t - PAD.b }; }
+
+function draw(result, prof) {
+  const { w, h, iw, ih } = plotDims();
+  const Hmax = num('hmax');
+  const Dm = prof ? prof.x[prof.x.length - 1] : num('dist') * 1000;  // physics total
+  const vmaxKmh = num('vmax');
+  ctx.clearRect(0, 0, w, h);
+
+  const xPix = f => PAD.l + f * iw;                     // f in [0,1]
+  const hPix = m => PAD.t + ih - (m / Hmax) * ih;
+  const vPix = kmh => PAD.t + ih - (kmh / (vmaxKmh * 1.05)) * ih;
+
+  // grid
+  ctx.strokeStyle = '#1d2630'; ctx.lineWidth = 1; ctx.fillStyle = '#5a6673'; ctx.font = '11px system-ui';
+  ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+  for (let k = 0; k <= 4; k++) {
+    const ym = Hmax * k / 4, y = hPix(ym);
+    ctx.beginPath(); ctx.moveTo(PAD.l, y); ctx.lineTo(w - PAD.r, y); ctx.stroke();
+    ctx.fillText(ym.toFixed(0), PAD.l - 6, y);
+  }
+  ctx.textAlign = 'left'; ctx.fillStyle = '#7a5a2a';
+  for (let k = 0; k <= 4; k++) {
+    const vk = vmaxKmh * 1.05 * k / 4;
+    ctx.fillText(vk.toFixed(0), w - PAD.r + 6, vPix(vk));
+  }
+  ctx.textAlign = 'center'; ctx.textBaseline = 'top'; ctx.fillStyle = '#5a6673';
+  for (let k = 0; k <= 4; k++) ctx.fillText((Dm / 1000 * k / 4).toFixed(1) + ' km', xPix(k / 4), h - PAD.b + 7);
+  ctx.save(); ctx.translate(13, PAD.t + ih / 2); ctx.rotate(-Math.PI / 2);
+  ctx.textAlign = 'center'; ctx.fillStyle = '#3a4655'; ctx.fillText('elevação (m)', 0, 0); ctx.restore();
+
+  // braking shading — positioned by the physics profile's real x-coordinates
+  if (result && prof) {
+    const brk = result.brk, n = brk.length, X = prof.x;
+    ctx.fillStyle = 'rgba(230,145,56,.20)';
+    for (let i = 1; i < n; i++) if (brk[i]) {
+      const x0 = xPix(X[i - 1] / Dm), x1 = xPix(X[i] / Dm);
+      ctx.fillRect(x0, PAD.t, x1 - x0 + 1, ih);
+    }
+  }
+
+  // elevation fill
+  ctx.beginPath();
+  ctx.moveTo(PAD.l, hPix(0));
+  for (let i = 0; i < NS; i++) ctx.lineTo(xPix(i / (NS - 1)), hPix(H[i]));
+  ctx.lineTo(w - PAD.r, hPix(0)); ctx.closePath();
+  ctx.fillStyle = 'rgba(58,70,85,.55)'; ctx.fill();
+  ctx.beginPath();
+  for (let i = 0; i < NS; i++) { const X = xPix(i / (NS - 1)), Y = hPix(H[i]); i ? ctx.lineTo(X, Y) : ctx.moveTo(X, Y); }
+  ctx.strokeStyle = '#7d8b99'; ctx.lineWidth = 1.5; ctx.stroke();
+
+  // speed profile — positioned by real x-coordinates
+  if (result && prof) {
+    const sp = result.speed, n = sp.length, X = prof.x;
+    ctx.beginPath();
+    for (let i = 0; i < n; i++) { const px = xPix(X[i] / Dm), py = vPix(sp[i] * 3.6); i ? ctx.lineTo(px, py) : ctx.moveTo(px, py); }
+    ctx.strokeStyle = '#ffd166'; ctx.lineWidth = 2; ctx.stroke();
+  }
+
+  // regime strip at the top edge: which pedal power applies per local grade
+  if (result && result.regime && prof) {
+    const rg = result.regime, n = rg.length, X = prof.x;
+    const col = r => r > 0 ? 'rgba(204,102,119,.85)' : r < 0 ? 'rgba(69,129,142,.9)' : 'rgba(120,130,140,.5)';
+    for (let i = 1; i < n; i++) {
+      ctx.fillStyle = col(rg[i]);
+      ctx.fillRect(xPix(X[i - 1] / Dm), PAD.t, xPix(X[i] / Dm) - xPix(X[i - 1] / Dm) + 1, 5);
+    }
+  }
+}
+
+function seg(bar, label, val, total, color) {
+  if (val <= 0 || total <= 0) return;
+  const d = document.createElement('div');
+  d.className = 'seg'; d.style.background = color;
+  d.style.flex = (val / total) + ' 0 0';
+  const pct = val / total;
+  d.title = `${label}: ${(val / 1000).toFixed(1)} kJ`;
+  if (pct > 0.08) d.textContent = (val / 1000).toFixed(0);
+  bar.appendChild(d);
+}
+
+function recompute() {
+  const p = physParams();
+  // FIT loaded + toggle on: re-bin recorded power into climb/flat/descent
+  // whenever a threshold moves (must run BEFORE reading the power inputs below).
+  if (fitData && $('autoFitPower').checked) {
+    const ct = num('climbThr') / 100, dt = num('descThr') / 100;
+    if (ct !== lastExtractThr.c || dt !== lastExtractThr.d) {
+      applyRegimePowers(extractRegimePowers(fitData, ct, dt));
+      lastExtractThr = { c: ct, d: dt };
+    }
+  }
+  $('fitEps').disabled = !fitData;                   // ε-do-FIT needs power+geometry from a FIT
+  const pw = {
+    climb: num('pClimb'), flat: num('pFlat'), descent: num('pDescent'),
+    climbThr: num('climbThr') / 100, descThr: num('descThr') / 100,
+  };
+  // auto v_f: track the flat-equilibrium speed at the flat power, unless the
+  // toggle is off (then v_f is whatever the user typed).
+  const autoVf = $('autoVf').checked;
+  $('vf').disabled = autoVf;
+  if (autoVf) $('vf').value = (flatEqSpeed(pw.flat, p) * 3.6).toFixed(1);
+  const vf = num('vf') / 3.6, eps = num('eps') / 100;
+  // Engine resolution dx (0 = native): GPX native points or drawn 240-grid,
+  // otherwise resample the source onto a uniform dx grid.
+  const dx = num('engineDx');
+  let prof;
+  if (physProfile) prof = dx > 0 ? resampleProfile(physProfile, dx) : physProfile;
+  else { const Dm = num('dist') * 1000; prof = resample(Dm, dx > 0 ? dx : Dm / (NS - 1)); }
+  const c = canonical(prof, pw, p);
+  const aeroOpts = { climbAeroMode: $('climbAeroMode').value, climbThr: num('climbThr') / 100, climbPower: num('pClimb') };
+  const a = approximate(prof, p, vf, eps, aeroOpts);
+  const veq = flatEqSpeed(pw.flat, p);
+
+  // big numbers
+  $('ecanon').textContent = (c.legE / 1000).toFixed(0) + ' kJ';
+  const avgP = c.t > 0 ? c.legE / c.t : 0;   // time-averaged leg power (E/t)
+  $('canonSub').textContent = `${avgP.toFixed(0)} W médios (E/t) · ${(c.legE / 1000 / 4.184).toFixed(0)} kcal · P ${pw.climb}/${pw.flat}/${pw.descent}`;
+  $('eapprox').textContent = (a.E / 1000).toFixed(0) + ' kJ';
+  const clampNote = (a.clamped < a.E - 1) ? ` · com clamp/aresta: ${(a.clamped / 1000).toFixed(0)} kJ` : '';
+  $('approxSub').textContent = `α=${(a.alpha / 1000).toFixed(4)} kJ/m · β=${(a.beta / 1000).toFixed(3)} kJ/m${clampNote}`;
+  $('alphaOut').textContent = (a.alpha / 1000).toFixed(4) + ' kJ/m';
+  $('betaOut').textContent = (a.beta / 1000).toFixed(3) + ' kJ/m';
+  // displacement energy
+  $('edisp').textContent = (c.dispE / 1000).toFixed(0) + ' kJ';
+  $('dispSub').textContent = `ΔKE ${(c.dKE / 1000).toFixed(1)} + rol ${(c.Wrr / 1000).toFixed(0)} + aero ${(c.Waero / 1000).toFixed(0)} + freio ${(c.Wbrake / 1000).toFixed(0)} kJ`;
+  // balance of transmitted energy: displacement + gravitational PE.
+  // Work-energy identity ⟹ equals the leg energy delivered at the wheel (pernas·k_eff):
+  // what the rider put into the world = ΔKE + dissipation (rol+aero+freio) + net PE.
+  const eenv = c.dispE + c.Wgrav, diss = c.Wrr + c.Waero + c.Wbrake;
+  $('eenv').textContent = (eenv / 1000).toFixed(0) + ' kJ';
+  $('envSub').textContent = `= pernas·k_eff ${(c.legE * p.keff / 1000).toFixed(0)} · dissipado ${(diss / 1000).toFixed(0)} + ΔKE ${(c.dKE / 1000).toFixed(0)} + PE ${(c.Wgrav / 1000).toFixed(0)} kJ`;
+
+  // diff pill
+  const diff = (a.E - c.legE) / c.legE * 100;
+  const pill = $('diffPill');
+  pill.textContent = (diff >= 0 ? '+' : '') + diff.toFixed(0) + '%';
+  const mag = Math.min(Math.abs(diff) / 30, 1);
+  pill.style.background = `rgba(${Math.round(95 + 160 * mag)},${Math.round(179 - 120 * mag)},${Math.round(255 - 180 * mag)},.22)`;
+  pill.style.color = mag > .5 ? '#ffb454' : '#5fb3ff';
+
+  // stats
+  $('statGeom').textContent = `${(a.X / 1000).toFixed(2)} km · +${a.hplus.toFixed(0)} / −${a.hminus.toFixed(0)} m`;
+  $('statRes').textContent = `${prof.x.length} pts · ${(prof.x[prof.x.length - 1] / (prof.x.length - 1)).toFixed(1)} m/passo${dx > 0 ? '' : ' (nativa)'}`;
+  $('statTime').textContent = `${(c.t / 60).toFixed(1)} min · ${(c.avgV * 3.6).toFixed(1)} km/h`;
+  const at = approxTime(prof, p, vf, pw);
+  $('statTApprox').textContent = `${(at.t / 60).toFixed(1)} min · ${(at.X / at.t * 3.6).toFixed(1)} km/h`;
+  $('statPApprox').textContent = `${(a.E / at.t).toFixed(0)} W`;
+  $('statK').textContent = `${isFinite(at.kPlus) ? at.kPlus.toFixed(1) : '—'} / ${isFinite(at.kMinus) ? at.kMinus.toFixed(2) : '—'}`;
+  $('statVeq').textContent = `${(veq * 3.6).toFixed(1)} km/h  (atual v_f = ${num('vf').toFixed(1)})`;
+  $('statBrake').textContent = `${(c.Wbrake / 1000).toFixed(1)} kJ`;
+  $('statKE').textContent = `${(c.dKE / 1000).toFixed(1)} kJ  (${(c.KEinit / 1000).toFixed(1)} → ${(c.KEfin / 1000).toFixed(1)})`;
+  $('statPE').textContent = `${(c.Wgrav / 1000).toFixed(1)} kJ`;
+  $('statDisp').textContent = `${(c.dispE / 1000).toFixed(1)} kJ  ·  desloc + PE = pernas·k_eff: ${((c.dispE + c.Wgrav) / 1000).toFixed(1)} ≈ ${(c.legE * p.keff / 1000).toFixed(1)}`;
+
+  // ε* that makes the closed-form approximate energy equal the leg energy:
+  //   E(ε) = αX + βh₊ − ε·βh₋  ⟹  ε* = (αX + βh₊ − E_canon)/(βh₋)
+  epsStarApply = NaN;
+  if (a.hminus < 1e-6) {
+    $('statEpsMatch').innerHTML = 'sem descida — ε não afeta';
+    $('epsHint').innerHTML = 'sem descida — ε não muda o resultado';
+  } else {
+    const epsStar = (a.roll + a.aero + a.climb - c.legE) / (a.beta * a.hminus);   // E(ε=0) − legE
+    const pct = (epsStar * 100).toFixed(1);
+    if (epsStar < 0) {
+      $('statEpsMatch').innerHTML = `${pct}% &lt; 0 — o aproximado já subestima com ε=0`;
+      $('epsHint').innerHTML = `casaria em ε = ${pct}% (&lt; 0: aprox. já subestima)`;
+    } else if (epsStar > 1) {
+      epsStarApply = epsStar;
+      $('statEpsMatch').innerHTML = `${pct}% &gt; 100% — fora da faixa física (nem ε=1 basta)`;
+      $('epsHint').innerHTML = `casaria em ε = ${pct}% (&gt; 100%, fora da faixa)`;
+    } else {
+      epsStarApply = epsStar;
+      let extra = '';
+      const eClamp = epsForClampedMatch(prof, p, vf, c.legE, aeroOpts);   // engine per-edge clamp
+      if (isFinite(eClamp) && Math.abs(eClamp - epsStar) > 0.01) extra = ` · clamp ${(eClamp * 100).toFixed(1)}%`;
+      $('statEpsMatch').innerHTML = `<b>${pct}%</b>${extra}`;
+      $('epsHint').innerHTML = `→ casa com as pernas em <b>ε = ${pct}%</b>${extra}`;
+    }
+  }
+  $('warnBox').innerHTML = '';
+  if (!autoVf && Math.abs((num('vf') / 3.6) - veq) / veq > 0.12)
+    $('warnBox').innerHTML = '<div class="warn">ℹ v_f difere da velocidade de equilíbrio no plano em P<sub>plano</sub> — os planos não vão bater. Ligue o <i>auto v<sub>f</sub></i>.</div>';
+
+  // breakdown bars — canonical gross pedal-energy budget (÷keff), with the
+  // gross climbing cost (mg·h₊) and the descent concession (mg·h₋) shown apart.
+  const climbWheel = p.m * G * a.hplus, descWheel = p.m * G * a.hminus;
+  const cb = $('canonBar'); cb.innerHTML = '';
+  const canTot = (c.Wrr + c.Waero + climbWheel + c.Wbrake) / p.keff;
+  seg(cb, 'rolamento', c.Wrr / p.keff, canTot, 'var(--roll)');
+  seg(cb, 'aero', c.Waero / p.keff, canTot, 'var(--aero)');
+  seg(cb, 'subida mg·h₊', climbWheel / p.keff, canTot, 'var(--climb)');
+  seg(cb, 'freio', c.Wbrake / p.keff, canTot, 'var(--brake)');
+  $('legCanRoll').textContent = `${(c.Wrr / p.keff / 1000).toFixed(0)} kJ`;
+  $('legCanAero').textContent = `${(c.Waero / p.keff / 1000).toFixed(0)} kJ`;
+  $('legCanClimb').textContent = `${(climbWheel / p.keff / 1000).toFixed(0)} kJ`;
+  $('legCanBrake').textContent = `${(c.Wbrake / p.keff / 1000).toFixed(0)} kJ`;
+  $('canonTot').textContent = `${(canTot / 1000).toFixed(0)} kJ bruto`;
+  // descent concession, drawn at the same scale so its share is legible
+  const conc = $('concBar'); conc.innerHTML = '';
+  seg(conc, 'devolução', descWheel / p.keff, canTot, 'var(--recov)');
+  $('concTot').textContent = `${(descWheel / p.keff / 1000).toFixed(0)} kJ`;
+  const liquid = (canTot - descWheel / p.keff) / 1000;
+  $('canonNote').innerHTML = `Subiu <b>${(climbWheel / p.keff / 1000).toFixed(0)}</b> kJ, descida devolveu <b>${(descWheel / p.keff / 1000).toFixed(0)}</b> kJ. Pernas ≈ bruto − devolução = ${(canTot / 1000).toFixed(0)} − ${(descWheel / p.keff / 1000).toFixed(0)} = <b>${liquid.toFixed(0)} kJ</b> (pernas ${(c.legE / 1000).toFixed(0)}; resto = ΔKE/k<sub>eff</sub>).`;
+
+  const ab = $('approxBar'); ab.innerHTML = '';
+  const apTot = a.roll + a.aero + a.climb + Math.abs(a.recov);
+  seg(ab, 'rolamento', a.roll, apTot, 'var(--roll)');
+  seg(ab, 'aero', a.aero, apTot, 'var(--aero)');
+  seg(ab, 'subida', a.climb, apTot, 'var(--climb)');
+  seg(ab, 'crédito descida', Math.abs(a.recov), apTot, 'var(--recov)');
+  $('legApRoll').textContent = `${(a.roll / 1000).toFixed(0)} kJ`;
+  $('legApAero').textContent = `${(a.aero / 1000).toFixed(0)} kJ`;
+  $('legApClimb').textContent = `${(a.climb / 1000).toFixed(0)} kJ`;
+  $('legApRecov').textContent = `−${(Math.abs(a.recov) / 1000).toFixed(0)} kJ`;
+  $('approxTot').textContent = `${(a.roll + a.aero + a.climb) / 1000 | 0} − ${Math.abs(a.recov) / 1000 | 0} = ${(a.E / 1000).toFixed(0)} kJ`;
+  // descent PE split: recovered ε·mg·h₋ vs excess (1−ε)·mg·h₋ (lost to aero+freio)
+  const peDown = p.m * G * a.hminus, excess = (1 - eps) * peDown;
+  $('approxNote').innerHTML = `Descida: PE <code>mg·h₋</code> = ${(peDown / 1000).toFixed(0)} kJ → recuperado <code>ε·mg·h₋</code> = ${(eps * peDown / 1000).toFixed(0)} · <b>excesso <code>(1−ε)·mg·h₋</code> = ${(excess / 1000).toFixed(0)} kJ</b> (perdido em aero+freio).`;
+
+  draw(c, prof);
+}
+
+// ---------- presets ----------
+const PRESETS = {
+  flat:    () => H.fill(20),
+  hill:    () => { const Hm = num('hmax'); for (let i = 0; i < NS; i++) { const x = i / (NS - 1); H[i] = 20 + (Hm * .75 - 20) * Math.exp(-((x - .5) ** 2) / (2 * .12 ** 2)); } },
+  climb:   () => { const Hm = num('hmax'); for (let i = 0; i < NS; i++) H[i] = 15 + (Hm * .8 - 15) * (i / (NS - 1)); },
+  descent: () => { const Hm = num('hmax'); for (let i = 0; i < NS; i++) H[i] = 15 + (Hm * .8 - 15) * (1 - i / (NS - 1)); },
+  rolling: () => { const Hm = num('hmax'); for (let i = 0; i < NS; i++) { const x = i / (NS - 1); H[i] = Hm * .35 + Hm * .22 * Math.sin(x * Math.PI * 6) + Hm * .1 * Math.sin(x * Math.PI * 13); } },
+  clear:   () => H.fill(10),
+};
+function applyPreset(name) {
+  physProfile = null; fitData = null; $('gpxInfo').textContent = ''; $('gpxFile').value = '';
+  (PRESETS[name] || PRESETS.clear)(); recompute();
+}
+
+// ---------- drawing on canvas ----------
+function canvasToProfile(ev) {
+  const r = cv.getBoundingClientRect();
+  const px = (ev.touches ? ev.touches[0].clientX : ev.clientX) - r.left;
+  const py = (ev.touches ? ev.touches[0].clientY : ev.clientY) - r.top;
+  const { iw, ih } = plotDims();
+  const f = Math.max(0, Math.min(1, (px - PAD.l) / iw));
+  const Hmax = num('hmax');
+  let m = Hmax * (1 - (py - PAD.t) / ih);
+  m = Math.max(0, Math.min(Hmax, m));
+  return { i: Math.round(f * (NS - 1)), h: m };
+}
+let drawing = false;
+function paint(ev) {
+  if (!drawing) return;
+  ev.preventDefault();
+  if (physProfile) { physProfile = null; fitData = null; $('gpxInfo').textContent = ''; $('gpxFile').value = ''; }  // hand-edit ⇒ drop track
+  const { i, h } = canvasToProfile(ev);
+  if (lastDraw && Math.abs(i - lastDraw.i) > 1) {
+    const a = lastDraw.i < i ? lastDraw : { i, h }, b = lastDraw.i < i ? { i, h } : lastDraw;
+    for (let k = a.i; k <= b.i; k++) { const t = (k - a.i) / (b.i - a.i); H[k] = a.h * (1 - t) + b.h * t; }
+  } else H[i] = h;
+  lastDraw = { i, h };
+  recompute();
+}
+cv.addEventListener('mousedown', e => { drawing = true; lastDraw = null; paint(e); });
+cv.addEventListener('mousemove', paint);
+window.addEventListener('mouseup', () => { drawing = false; lastDraw = null; });
+cv.addEventListener('touchstart', e => { drawing = true; lastDraw = null; paint(e); }, { passive: false });
+cv.addEventListener('touchmove', paint, { passive: false });
+window.addEventListener('touchend', () => { drawing = false; lastDraw = null; });
+
+// ---------- wiring ----------
+document.querySelectorAll('[data-preset]').forEach(b => b.onclick = () => applyPreset(b.dataset.preset));
+$('matchEps').onclick = () => { if (isFinite(epsStarApply)) { $('eps').value = Math.max(0, Math.min(100, epsStarApply * 100)).toFixed(1); recompute(); } };
+$('fitStat').addEventListener('change', () => { lastExtractThr = { c: NaN, d: NaN }; recompute(); });  // mean/median switch re-bins
+$('climbAeroMode').addEventListener('change', recompute);
+$('fitEps').onclick = () => {                        // ε the loaded FIT actually exhibited
+  if (!fitData) return;
+  const r = epsFromFIT(fitData, physParams());
+  if (r && isFinite(r.eps)) { $('eps').value = Math.max(0, Math.min(100, r.eps * 100)).toFixed(1); recompute(); }
+};
+$('gravThr').onclick = () => {                       // thresholds where gravity dominates (50%)
+  const p = physParams(), aeroSpd = num('vf') / 3.6 + p.wind;
+  const ab = Math.max(0, p.Crr + 0.5 * p.rho * p.CdA * aeroSpd * Math.abs(aeroSpd) / (p.m * G));  // α/β (grade)
+  $('climbThr').value = Math.min(15, +(100 * ab).toFixed(1));   // gravity ≥ rolling+aero
+  $('descThr').value = Math.max(-15, +(-50 * ab).toFixed(1));   // gravity ≥ ½(rolling+aero)
+  recompute();
+};
+$('gpxFile').addEventListener('change', ev => {
+  const f = ev.target.files && ev.target.files[0];
+  if (!f) return;
+  const isFit = /\.fit$/i.test(f.name);
+  const fr = new FileReader();
+  fr.onload = () => {
+    try { isFit ? loadFIT(fr.result, f.name) : loadGPXText(fr.result, f.name); }
+    catch (e) { $('gpxInfo').textContent = '⚠ ' + e.message; }
+  };
+  isFit ? fr.readAsArrayBuffer(f) : fr.readAsText(f);
+});
+document.querySelectorAll('input').forEach(inp => inp.addEventListener('input', recompute));
+document.querySelectorAll('input').forEach(inp => inp.addEventListener('change', recompute));
+window.addEventListener('resize', () => { fitCanvas(); recompute(); });
+
+fitCanvas();
+applyPreset('hill');
+</script>
+</body>
+</html>
