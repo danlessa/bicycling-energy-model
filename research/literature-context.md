@@ -12,6 +12,13 @@ published research. For each piece this note names the **closest prior art** and
 > prior art** — the search did **not** sweep the full transportation, operations-research, or
 > sports-physiology literatures, so read it as "no precedent located in the nearest corpus",
 > not "provably first".
+>
+> **Follow-up run (2nd harness pass, 103 agents).** A targeted novelty-priority search *outside*
+> the cycling-power corpus — electric-vehicle & e-bike energy/regeneration, electric/green
+> vehicle-routing (OR), and hiking "equivalent flat distance" time models (Naismith/Tobler) —
+> extended the coverage. It **confirmed** no precedent for the lumped route-level ε or the ε↔k₋
+> duality (strengthening those), but surfaced a real precedent for the **ascent half** of the time
+> model — see §2f.
 
 ---
 
@@ -59,6 +66,15 @@ open reference implementation and as the **shared-constants control** for §2c.
   to **per-grade steady-state speed choice**, never to a **route-level closed-form
   `ε ≈ clamp(min(1, α/β·s̄) − 0.13)`**. *So the idle-limit idea exists; the closed-form route-level
   ε aggregation, and its validation against power, do not.* → **genuinely additive.**
+- **Follow-up (EV / e-bike / OR corpus): still no lumped ε — claim strengthened.** Extending the
+  search to electric-vehicle and e-bike energy and electric/green vehicle-routing, descent recovery
+  is *always* one of: a **per-instant / per-speed-range regen efficiency** (Yuan 2024; Liu 2017;
+  Perger & Auer 2020), a **separate symmetric `mgΔh`** term with no fraction (Yuan 2024), **per-edge
+  negative arc costs** solved numerically (Bellman-Ford / energy-optimal A*; Perger & Auer 2020;
+  Ahmadi 2026), or absent (Burani 2022 sets the gravity force to 0 on descents). The closest
+  structural cousin is Ahmadi 2026's path-independent potential `(M+m)g·ΔH` — but that is the
+  **symmetric** PE (same factor up and down), used to reweight a graph, **not** a calibrated recovery
+  `ε<1`. No lumped closed-form route-level ε∈[0,1] was found anywhere.
 
 ### 2c. Parameter-shared closed-form-vs-simulation comparison — **incremental (additive framing)**
 Dahmen-Saupe 2011 is the methodological cousin: least-squares-calibrate **one** shared model to
@@ -83,11 +99,25 @@ is **Gebhard 2016** (WeBike e-bikes + OSM), but it predicts **battery range, not
 — is additive. (Read against Martin's R²=0.97 / SE 2.7 W: ours is *looser, but on far harder data*.
 Note: the ~4–7 % figure is the repo's self-report, not re-derived by the verifier.)
 
-### 2f. Energy↔time duality (`k₋` mirrors `ε`) — **novel (no located precedent, medium confidence)**
-No nearby work ties a *time* coefficient to descent recovery; several drop time entirely
-(Dahmen-Saupe: "we eliminate the time"). Bigazzi-Lindsey has time **and** energy but as *separate*
-additive utility terms, not a duality. *Additive* — but this is a **negative existence claim** over
-the nearest corpus only, so the honest strength is "no precedent located", not "first".
+### 2f. Energy↔time duality `x* = x + k₊·h₊ − k₋·h₋` (`k₋` mirrors `ε`) — **mixed: ascent half standard, duality novel**
+- ⚠️ **Concession (follow-up).** The **ascent half** `x + k₊·h₊` — an *"equivalent flat distance"*
+  charging extra horizontal distance per metre climbed — is **well-established, with a direct
+  *cycling* precedent**: **Scarf & Grehan (2005)** ("equivalent distance = horizontal + 8× vertical",
+  a cycling Naismith, 1 m climb ≈ 8 m flat), plus **Scarf (2007)** (Naismith time-equivalence,
+  1 m ascent ≈ 7.92 m horizontal) and **Norman (2004)** (uphill-running ratios). Our `k₊` is
+  structurally the same coefficient-on-vertical-gain. **So the ascent half is *not* novel** — we
+  should cite Scarf and frame `x*` as extending the equivalent-flat-distance idea, not inventing it.
+- **The descent time-credit `k₋` and the `ε↔k₋` duality have no located precedent.** Every
+  Naismith-family model is a *one-sided ascent penalty* with no descent term; no located work pairs an
+  energy recovery factor with a *mirrored* descent time-credit. Several energy/route models drop time
+  entirely (Dahmen-Saupe: "we eliminate the time") or treat time and energy as *separate* additive
+  objectives (Bigazzi-Lindsey; Perger & Auer 2020) — never a duality.
+- **Caveat — verify before claiming the `k₋` half is first:** hiking models **do** give descent time
+  *credits* — **Langmuir (1984)** corrections and **Tobler's hiking function** — which the harness
+  flagged but did **not** examine as primary sources. So a standalone descent-time-credit precedent
+  probably exists in pedestrian routing; what remains unmatched is the **duality** itself (deriving
+  `k₋` from the *same descent power* as the energy `ε`). Net: **ascent half standard; descent-credit
+  half plausibly has a hiking precedent (unchecked); the ε↔k₋ duality is the novel piece.**
 
 ### 2g. The ε / k_DEM inference machinery — **incremental (Chung-adjacent)**
 `epsFromFIT` (solve the descent energy balance for ε) and `k_DEM` (fit a per-source ascent
@@ -126,13 +156,15 @@ what the applied literature omits.
   the nearest idle-limit precedent** and position ε as the route-level closed-form aggregation they
   did not take. Target: *Findings*, *PLOS One*, or a sports-/transport-engineering venue.
 - **Second note:** `k_smooth` / fractal-ascent-in-a-closed-form-law (§2d), next to Rapaport 2011.
-- **Open questions surfaced (worth a follow-up search before claiming priority):**
-  1. Does any **e-bike-energy or operations-research** paper (outside the road-cycling-power corpus)
-     already publish a route-level descent-recovery factor or an energy↔time descent duality?
-     The §2b/§2f negatives are bounded by the searched corpus.
-  2. Is ~4–7 % median ∫P·dt **competitive** with any *integrated-route-energy* validation? No
+- **Open questions (after the follow-up search):**
+  1. ✅ *Resolved:* the EV / e-bike / OR / hiking corpora were searched (§2b, §2f) — **no** route-level
+     lumped ε and **no** ε↔k₋ duality found; the **ascent half** has a precedent (Scarf cycling-Naismith).
+  2. **Verify the `k₋` residual:** read **Langmuir (1984)** and **Tobler's hiking function** as primary
+     sources — do they give a route-level descent *time-credit*, and is it ever *derived from* an
+     energy recovery factor (the duality), or always a standalone additive correction?
+  3. Is ~4–7 % median ∫P·dt **competitive** with any *integrated-route-energy* validation? No
      apples-to-apples benchmark was located (Martin is instantaneous power; Gebhard is battery range).
-  3. Has a `k_smooth`-style deadband been formalized **inside an energy law** in GPS-track-energy /
+  4. Has a `k_smooth`-style deadband been formalized **inside an energy law** in GPS-track-energy /
      Strava-elevation-correction work, vs. as a profile-averaging operation (Rapaport)?
 
 ---
@@ -189,3 +221,18 @@ what the applied literature omits.
   <https://valhalla.github.io/valhalla/sif/elevation_costing/>
 - **Frontiers (2025)**, GA pacing optimization on a Martin-1998 power model —
   <https://www.frontiersin.org/journals/physiology/articles/10.3389/fphys.2025.1683815/full>
+
+*Follow-up corpus (EV / e-bike / OR / hiking) — §2b, §2f:*
+
+- **Scarf & Grehan (2005)**, *An empirical basis for route choice in cycling*, J. Sports Sci. 23(9) —
+  PMID **16195043** (cycling "equivalent distance", 1 m climb ≈ 8 m flat); **Scarf (2007)**, Naismith's
+  rule, J. Sports Sci. 25(6) — PMID **17454539**; **Norman (2004)**, uphill-running equivalences,
+  J. Oper. Res. Soc. 55(3) — the *equivalent-flat-distance* precedent for the `k₊` ascent half.
+- **Ahmadi et al. (2026)**, energy-optimal EV routing (per-edge quadratic-in-grade cost + path-
+  independent potential `(M+m)gΔH`) — <https://arxiv.org/pdf/2411.12964>; **Perger & Auer (2020)**,
+  EV routing with regenerated (negative) edge energy, Energy Efficiency 13:1705 —
+  <https://link.springer.com/article/10.1007/s12053-020-09900-5>
+- **Yuan et al. (2024)**, EV energy-consumption model (symmetric `mgΔh` + per-instant regen
+  efficiency) — <https://www.sciencedirect.com/science/article/pii/S2666389924000497>
+- **Langmuir (1984)** descent corrections & **Tobler's hiking function** — hiking descent time-credit
+  precedents flagged but **not yet examined** as primary sources (open question 2).
