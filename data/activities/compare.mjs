@@ -497,8 +497,12 @@ for (const e of inputs) {
     // same engines on the elevation-deadband-SMOOTHED profile (same pw, vf, params)
     const profS = { x: prof.x, h: deadband(prof.h, TAU_SMOOTH) };
     const aOffS = approximate(profS, p, vf, e.eps, opt('off'));
-    const aCfS = approximate(profS, p, vf, e.eps, opt('zero'));
+    const aCfS = approximate(profS, p, vf, e.eps, opt('zero'));         // SMOOTHENED: cf + real deadband
     const cS = canonical(profS, pw, p);
+    // k_smooth: poor-man's deadband — scale the RAW-profile gravity term by the scalar
+    // k_smooth = 1 - c·x/h+ (c=3 m/km), instead of actually running the deadband (notas v2).
+    const km = aCf.hplus > 0 ? Math.max(0, 1 - 3 * (prof.x[prof.x.length - 1] / 1000) / aCf.hplus) : 1;
+    const eKsmooth = aCf.roll + aCf.aero + km * (aCf.climb + aCf.recov);   // J
     const emp = empiricalKJ(pts);                               // kJ
     const empReg = empiricalByRegime(pts, CLIMB_THR, DESC_THR);
     for (const rg of ['climb', 'flat', 'descent']) {
@@ -535,6 +539,7 @@ for (const e of inputs) {
       canon_vs_emp: dlt(c.legE), off_vs_emp: dlt(aOff.E), cf_vs_emp: dlt(aCf.E), vc_vs_emp: dlt(aVc.E),
       cfsheet_vs_emp: dlt(aCfSheet.E), cfmeas_vs_emp: dlt(aCfMeas.E),
       canonS_vs_emp: dlt(cS.legE), offS_vs_emp: dlt(aOffS.E), cfS_vs_emp: dlt(aCfS.E),
+      ksmooth_vs_emp: dlt(eKsmooth),
       p_avg: pAvg, wmes: e.wmes, pflat_extracted: pw.flat, pflat_sheet: pFlatSheet,
       data_ratio: e.wmes ? pw.flat / e.wmes : null, sheet_ratio: e.pflat_pavg,  // both flat/<W>_mes
       vf_kmh: vf * 3.6, vf_sheet_kmh: vfSheet * 3.6, vf_meas_kmh: vfMeas * 3.6,
@@ -649,8 +654,20 @@ console.log(`  k_h(sustained) = (measured − roll − aero) / gravity = ${f((SC
 const khs = SC.perRide.map(r=>r.kh).filter(Number.isFinite).sort((a,b)=>a-b);
 console.log(`  per-ride k_h(sustained): median ${f(med(khs),2)}  [${f(khs[0],2)}–${f(khs[khs.length-1],2)}]`);
 
+// ---- cross-comparison: canonical vs smoothened vs k_smooth (benchmark = empirical ∫P·dt ≈ sheet Work Bike) ----
+console.log('\n' + '='.repeat(64));
+console.log('CROSS-COMPARISON vs empirical ∫P·dt (≈ sheet Work Bike), 44 rides');
+console.log(`${'model'.padEnd(34)}${'n'.padStart(3)}${'med|Δ%|'.padStart(9)}${'medΔ%'.padStart(8)}${'meanΔ%'.padStart(8)}`);
+for (const [lab, key] of [
+  ['canonical (forward sim)', 'canon_vs_emp'],
+  ['smoothened (cf + real 2 m deadband)', 'cfS_vs_emp'],
+  ['k_smooth (cf + scalar, no smoothing)', 'ksmooth_vs_emp']]) {
+  const s = stats(key);
+  console.log(`${lab.padEnd(34)}${String(s.n).padStart(3)}${f(s.medAbs,1).padStart(9)}${f(s.medSigned,1).padStart(8)}${f(s.mean,1).padStart(8)}`);
+}
+
 // csv
-const cols = ['ride','source','dist_km','climb_frac','empirical','canonical','approx_off','approx_cf','approx_vc','approx_cf_sheet','canon_vs_emp','off_vs_emp','cf_vs_emp','vc_vs_emp','cfsheet_vs_emp','cfmeas_vs_emp','p_avg','wmes','pflat_extracted','pflat_sheet','data_ratio','sheet_ratio','vf_kmh','vf_sheet_kmh','vf_meas_kmh','pClimb','pFlat','pDescent','error'];
+const cols = ['ride','source','dist_km','climb_frac','empirical','canonical','approx_off','approx_cf','approx_vc','approx_cf_sheet','canon_vs_emp','off_vs_emp','cf_vs_emp','vc_vs_emp','cfsheet_vs_emp','cfmeas_vs_emp','cfS_vs_emp','canonS_vs_emp','ksmooth_vs_emp','p_avg','wmes','pflat_extracted','pflat_sheet','data_ratio','sheet_ratio','vf_kmh','vf_sheet_kmh','vf_meas_kmh','pClimb','pFlat','pDescent','error'];
 const csv = [cols.join(',')].concat(good.concat(rows.filter(r=>r.error)).map(r =>
   cols.map(c => { const v = r[c]; return v == null ? '' : (typeof v === 'number' ? (Number.isInteger(v)?v:v.toFixed(2)) : `"${v}"`); }).join(','))).join('\n');
 fs.writeFileSync(path.join(HERE, 'model_comparison.csv'), csv + '\n');

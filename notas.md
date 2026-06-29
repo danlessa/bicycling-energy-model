@@ -21,7 +21,8 @@ $$\beta := \frac{m g}{k_{eff}}$$
 Two refinements to v1, each removing a systematic bias measured against power-meter
 rides (see `data/MODEL_COMPARISON_JOURNAL.md`):
 
-$$E \approx \alpha_r\, x + \alpha_a\, x_{flat} + k_h\,\beta\,(h_+ - \epsilon\, h_-)$$
+$$E \approx \alpha_r\, x + \alpha_a\, x_{flat} + k_h\,k_{smooth}\,\beta\,(h_+ - \epsilon\, h_-),
+  \qquad k_h = 1$$
 
 **(i) Split $\alpha$, charge aero only off the climbs.** v1 bills the aero part of
 $\alpha$ at the flat speed $v_f$ over the whole distance, but the rider climbs far
@@ -38,35 +39,36 @@ This is the closed-form twin of the per-segment correction derived in [Correctin
 climb aero over-charge](#correcting-the-climb-aero-over-charge); the *near-exact* variant
 there charges climb aero at the quasi-steady climb speed $v_c$ instead of zeroing it.
 
-**(ii) Correct the DEM/track ascent for noise — $k_h$.** Elevation from a DEM or a
-GPS/baro track carries sub-metre jitter (altitude quantisation + dense sampling), so the
-raw ascent $h_+$ over-counts the real climbing. Because the climb term $\beta h_+$ is
-**linear** in $h_+$, that noise inflates $E$ directly (it explained ~all of the residual
-climb over-prediction). $k_h \in (0,1]$ rescales the raw $h_+$ (and $h_-$) to the
-de-noised value:
+**(ii) $k_h = 1$, with a roller/noise smoothing $k_{smooth}$.** On the **sustained** climbs
+(mean slope $> 3\%$ over $> 100$ m, where there is no momentum recovery and aero is small)
+the rider pays the **full** $mg\,\Delta h/k_{eff}$: measured $\int P\,dt$ equals the expected
+gravity+rolling+aero to within 3% (journal Entry 7, 2535 sections over 44 rides). So the
+gravity coefficient is **$k_h = 1$** — $\beta h_+$ is correct on real climbing; there is no
+uniform discount.
 
-$$k_h := \frac{h_+^{\text{smoothed}}}{h_+^{\text{raw}}},$$
+What makes the *raw* $h_+$ over-count $E$ is **not** the real climbs but the rest: short
+**rollers** (the preceding descent's momentum carries the rider over the next rise without
+paying $mg\,h$) and sub-metre **noise** (altitude jitter, not real climbing). $k_{smooth}
+\in(0,1]$ removes that part while keeping sustained climbs intact.
 
-realised by a hysteresis/deadband filter on the elevation profile (ignore moves below a
-few metres before summing $h_+$, $h_-$). Empirically $k_h \approx 0.7$–$0.8$ on these
-tracks ($\approx 0.74$ at a 2 m deadband).
+The **right** realisation is a per-segment **deadband** ($\approx 2$ m) on the profile: it
+keeps a 100 m climb at full strength and trims sub-$\tau$ undulations — then $h_\pm$ are the
+smoothed sums and $k_{smooth}=1$.
 
-**Low-compute form (no profile).** When only the totals $h_+$, $x$ are available — the
-closed form's whole point is to run with little data and no per-segment pass — the noise
-needs no filter, just a subtraction. The spurious ascent is a per-sample jitter that
-accumulates with *distance*, not with terrain, so it is a near-constant **rate** $c$:
-
+The **poor man's** version — estimate the smoothing *without* doing it, for the closed form's
+low-compute case (only the totals $h_+,h_-,x$, no per-segment pass) — is a scalar
+$$k_{smooth} := \frac{h_+^{\text{smoothed}}}{h_+^{\text{raw}}} \approx 0.74\ (\text{2 m deadband}).$$
+With only totals, the cheapest estimate is the constant-rate form (spurious ascent is a
+per-sample jitter accumulating with *distance*, not terrain):
 $$h_+^{\text{corr}} = \max(0,\; h_+ - c\,x), \qquad
-  k_h = 1 - \frac{c\,x}{h_+}, \qquad c \approx 3\ \text{m/km}$$
+  k_{smooth} = 1 - \frac{c\,x}{h_+}, \qquad c \approx 3\ \text{m/km}$$
+(measured 3.2 m/km, IQR 2.7–3.8 — calibrate per source). It **auto-adapts**: $\approx 0.89$
+on a flat ride (30 m/km, noise floor a big share) and $\approx 0.98$ on a hilly one
+(150 m/km, real ascent dominates). Apply the same to $h_-$.
 
-(measured 3.2 m/km, IQR 2.7–3.8, on these FIT/DEM tracks — calibrate per source). This
-beats a flat $k_h$ because it **auto-adapts**: $k_h \approx 0.89$ on a flat ride (30 m/km
-of climbing, where the noise floor is a big share) and $\approx 0.98$ on a hilly one
-(150 m/km, where real ascent dominates). Apply the same subtraction to $h_-$.
-
-**$k_h$ applies to the approximate model only** — the canonical simulation's energy is
-$\sim$ distance $\times$ power and is nearly immune to ascent noise, so smoothing its
-elevation is mildly counter-productive.
+**$k_{smooth}$ applies to the approximate model only** — the canonical simulation tracks
+kinetic energy, so it already pays the rollers' momentum correctly and needs no smoothing
+(smoothing its elevation is mildly counter-productive).
 
 
 ## Recovery factor $\epsilon$

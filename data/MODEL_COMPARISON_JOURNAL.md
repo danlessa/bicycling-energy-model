@@ -19,9 +19,10 @@ Running scoreboard — median |Δ%| vs empirical `∫P·dt` over 44 power rides 
 
 | model / variant | median \|Δ%\| | median Δ% | entry |
 |---|--:|--:|:--:|
-| **approximate `cf` + 2 m elev smooth** | **3.4** | +2.2 | 5 |
+| **approximate `cf` + 2 m elev smooth** (deadband) | **3.4** | +2.2 | 5 |
 | canonical (forward sim) | 5.1 | −1.7 | 2 |
 | canonical + 2 m elev smooth | 5.6 | −3.6 | 5 |
+| approximate `cf` + scalar `k_smooth` (no smoothing) | 5.8 | −0.7 | 7 |
 | approximate `cf` + sheet `v_f` (`P_flat/P_avg`) | 7.2 | −0.5 | 4 |
 | approximate `cf` + measured `v_f` | 7.5 | +2.7 | 4 |
 | approximate + climb-fraction (`cf`) | 8.7 | +8.5 | 3 |
@@ -74,7 +75,20 @@ aero is small, so the rider must pay ≈ `mg·Δh/k_eff` + rolling. Over the 44 
   a bare-earth DEM's sustained Δh is marginally higher — a second-order refinement.)
 
 **Resolution of the Entry-6 TODO:** keep `β·h₊` at full strength on sustained climbs; realise
-`k_h` as a **deadband (~2 m)**, not a scalar.
+the roller/noise correction as a **deadband (~2 m)**, not a scalar.
+
+**Cross-check — the three v2 realisations vs the empirical `∫P·dt` (≈ sheet `Work Bike`):**
+
+| model | median \|Δ%\| | median Δ% |
+|---|--:|--:|
+| **smoothened** (cf + real 2 m deadband, `k_smooth=1`) | **3.4** | +2.2 |
+| canonical (forward sim) | 5.1 | −1.7 |
+| **k_smooth** (cf + scalar `1 − c·x/h₊`, no smoothing) | 5.8 | −0.7 |
+
+The **real deadband is best** (3.4 %); the **scalar `k_smooth` is unbiased (−0.7 %) but ~2×
+the scatter** — a constant rate can't match each ride's roller mix — landing alongside the
+canonical forward-sim. So: use the deadband when you have the profile; the scalar `k_smooth`
+is the cheap, unbiased fallback for the low-compute closed form.
 
 ---
 
