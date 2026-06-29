@@ -17,8 +17,9 @@ published research. For each piece this note names the **closest prior art** and
 > the cycling-power corpus — electric-vehicle & e-bike energy/regeneration, electric/green
 > vehicle-routing (OR), and hiking "equivalent flat distance" time models (Naismith/Tobler) —
 > extended the coverage. It **confirmed** no precedent for the lumped route-level ε or the ε↔k₋
-> duality (strengthening those), but surfaced a real precedent for the **ascent half** of the time
-> model — see §2f.
+> duality (strengthening those), and found precedents for **both halves of the time model** (ascent:
+> equivalent-flat-distance / cycling-Naismith; descent: Langmuir/Tobler hiking time-credits) — so the
+> novelty there narrows precisely to the **duality** itself. See §2f.
 
 ---
 
@@ -112,12 +113,18 @@ Note: the ~4–7 % figure is the repo's self-report, not re-derived by the verif
   energy recovery factor with a *mirrored* descent time-credit. Several energy/route models drop time
   entirely (Dahmen-Saupe: "we eliminate the time") or treat time and energy as *separate* additive
   objectives (Bigazzi-Lindsey; Perger & Auer 2020) — never a duality.
-- **Caveat — verify before claiming the `k₋` half is first:** hiking models **do** give descent time
-  *credits* — **Langmuir (1984)** corrections and **Tobler's hiking function** — which the harness
-  flagged but did **not** examine as primary sources. So a standalone descent-time-credit precedent
-  probably exists in pedestrian routing; what remains unmatched is the **duality** itself (deriving
-  `k₋` from the *same descent power* as the energy `ε`). Net: **ascent half standard; descent-credit
-  half plausibly has a hiking precedent (unchecked); the ε↔k₋ duality is the novel piece.**
+- **Residual closed — the descent-credit half also has precedent.** Pedestrian routing has carried a
+  route-level descent *time-credit* for decades: **Langmuir (1984)** corrects Naismith by
+  *subtracting* 10 min per 300 m of descent on **gentle** slopes (5–12°) and *adding* 10 min per
+  300 m on **steep** ones (>12°); **Tobler's hiking function (1993)** `V = 6·e^(−3.5|S+0.05|)` peaks
+  on a gentle downhill (−2.86°), making gentle descents *faster* than flat. Both are genuine
+  `k₋`-style descent time-credits — and Langmuir's *gentle-credit / steep-penalty* split is the **same
+  asymmetry** our `ε` and brake-cap encode (gentle descent recovers, steep descent costs). **So
+  neither half of `x*` is novel as a time concept.**
+- **What *is* novel: the `ε↔k₋` duality.** Langmuir and Tobler are **empirical time fits**, never tied
+  to an energy budget; no located work *derives* the descent time-credit `k₋` from the **same descent
+  power** as an energy recovery factor `ε`, presenting energy and time as two faces of one descent
+  physics. *That linkage — not the individual terms — is the genuinely additive contribution.*
 
 ### 2g. The ε / k_DEM inference machinery — **incremental (Chung-adjacent)**
 `epsFromFIT` (solve the descent energy balance for ε) and `k_DEM` (fit a per-source ascent
@@ -159,9 +166,9 @@ what the applied literature omits.
 - **Open questions (after the follow-up search):**
   1. ✅ *Resolved:* the EV / e-bike / OR / hiking corpora were searched (§2b, §2f) — **no** route-level
      lumped ε and **no** ε↔k₋ duality found; the **ascent half** has a precedent (Scarf cycling-Naismith).
-  2. **Verify the `k₋` residual:** read **Langmuir (1984)** and **Tobler's hiking function** as primary
-     sources — do they give a route-level descent *time-credit*, and is it ever *derived from* an
-     energy recovery factor (the duality), or always a standalone additive correction?
+  2. ✅ *Resolved:* Langmuir (1984) and Tobler (1993) **do** give route-level descent time-credits, but
+     as **empirical, standalone** corrections — never derived from an energy budget. So the `k₋` term
+     is *not* novel; only the **ε↔k₋ duality** (energy and time from one descent-power physics) is.
   3. Is ~4–7 % median ∫P·dt **competitive** with any *integrated-route-energy* validation? No
      apples-to-apples benchmark was located (Martin is instantaneous power; Gebhard is battery range).
   4. Has a `k_smooth`-style deadband been formalized **inside an energy law** in GPS-track-energy /
@@ -234,5 +241,8 @@ what the applied literature omits.
   <https://link.springer.com/article/10.1007/s12053-020-09900-5>
 - **Yuan et al. (2024)**, EV energy-consumption model (symmetric `mgΔh` + per-instant regen
   efficiency) — <https://www.sciencedirect.com/science/article/pii/S2666389924000497>
-- **Langmuir (1984)** descent corrections & **Tobler's hiking function** — hiking descent time-credit
-  precedents flagged but **not yet examined** as primary sources (open question 2).
+- **Langmuir (1984)**, *Mountaincraft and Leadership* — descent corrections to Naismith (−10 min/300 m
+  on gentle descents 5–12°, +10 min/300 m on steep >12°); **Tobler (1993)** hiking function
+  `V = 6·e^(−3.5|S+0.05|)` (speed peak at −2.86°) — the route-level descent **time-credit** precedents
+  for the `k₋` half (empirical, not energy-derived) —
+  <https://en.wikipedia.org/wiki/Naismith's_rule> · <https://en.wikipedia.org/wiki/Tobler's_hiking_function>
