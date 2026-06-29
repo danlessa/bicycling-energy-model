@@ -37,7 +37,63 @@ Running scoreboard — median |Δ%| vs empirical `∫P·dt` over 44 power rides 
   `k_h` wired into the app/`notas.md` in `7e46fab`
 - **Entry 6** (DEM/IGC comparison, `research/dem/`) — `7d958ca`; IGC 5 m + `k_DEM`/`k_h`
   split in `3f98465`, `a184286`
-- **Entry 7** (sustained-climb `k_h` fit, `climbBalance` in `compare.mjs`) — this commit
+- **Entry 7** (sustained-climb `k_h` fit, `climbBalance` in `compare.mjs`) — [`9135ab9`](../data/activities/compare.mjs)
+- **Entry 8** (closed-form `ε` hypothesis + test, [`eps_hypothesis.mjs`](activities/eps_hypothesis.mjs)) — this commit
+
+---
+
+## 2026-06-28 — Entry 8: a closed form for ε from route geometry
+
+*Prompt (Danilo): hypothesise a closed form for ε from each activity's details. Intuitions:
+long descents → a non-zero floor tied to max safe speed; close/low rollers and flat terrain
+→ ε→1; tight curves → lower ε; off-road → lower ε.*
+
+**Hypothesis.** On any descent where the legs are idle (coast *or* brake — both save the
+same `α·dx`), `ε(s) = (α·dx − E_legs)/(β·h₋)` collapses to a function of grade alone:
+
+```text
+ε_coast(s) = min(1, α/(β·s)),   α/β = Crr + ½ρCdA(v_f+w)²/(mg)
+ε ≈ clamp[0,1]( ε_coast − c_κ·κ − c_u·f_unpaved )     (+ braking penalties)
+```
+
+drop-weighted over the descent profile (or lumped with `s̄ = H₋/X₋`). Tested against the
+per-ride **descent-energy-balance ε** (`epsFromBalance`, the app's `epsFromFIT`: 30 m cells,
+`ε = (α·X₋ − E_legs,₋)/(β·H₋)`, α at the *measured* flat speed) over the 44 power rides.
+Tool: [data/activities/eps_hypothesis.mjs](activities/eps_hypothesis.mjs) (κ = curviness in
+rad/km from the GPS, `f_unpaved` = sheet col I).
+
+**The grade core holds — but only where ε carries energy:**
+
+| view | corr(ε_coast, ε_bal) | bias (ε_bal − ε_coast) |
+|---|--:|--:|
+| all 44 rides (unweighted) | 0.38 | −0.18 |
+| weighted by descent energy `β·H₋` | **0.65** | −0.19 |
+| real descents, `s̄ ≥ 3.0%` (n=22) | **0.83** | −0.13 |
+| real descents, `s̄ ≥ 3.5%` (n=15) | **0.87** | −0.13 |
+
+- **Validated estimator:** `ε ≈ clamp[0,1]( ε_coast − 0.13 )`. The −0.13 is a near-constant
+  offset (residual descent pedalling/braking the coasting ideal ignores); it turns the
+  `s̄≥3%` median ε_coast 0.39 → 0.26, matching the measured 0.27.
+- **"Flat → ε→1" is *reversed* by the data** (intuitions #2/#3). Gentle rides are pedalled
+  *through* the dips, so measured ε→0, not 1 (NS3 Caracaí: predicted ≈0.9, measured **0.01**).
+  This is the whole −0.18 unweighted bias — but it is **harmless**, because those rides carry
+  `β·H₋ ≈ 0` descent energy (hence energy-weighting alone lifts corr 0.38 → 0.65).
+- **Curve / off-road penalties fail** (intuitions #4/#5): κ and `f_unpaved` fit with the
+  **wrong sign** (+0.03, +0.14). They are confounded with *mountainous terrain* — twisty/rough
+  rides are exactly the ones with real sustained descents, which recover *more*. The
+  braking-loss effect is real but swamped.
+- **Descent intuition #1 is the load-bearing one and it holds.** The remaining scatter is
+  rider *behaviour* — several rides have measured ε < 0 (pedalling downhill, `E_legs > α·X₋`),
+  which no route-geometry term can predict.
+
+*Worked example (RMC200 Mogi):* α/β = 0.0202, s̄ = 3.4% ⇒ min(1, 0.0202/0.0341) = 0.59;
+minus 0.13 ⇒ **0.46**, vs. measured **0.47**.
+
+Net: a one-parameter `min(1, α/β·s̄) − 0.13`, computable from activity details (Crr, CdA,
+v_f, descent-grade distribution), beats the sheet's flat 0.23/0.27 constant on real-descent
+rides. Written up in [notas.md](../notas.md) (*Closed form: predicting ε from the route*) and
+wired into the app as an auto-ε option. The closed form does **not** replace the per-ride
+`epsFromFIT` where a power track exists — it is for *planning* (no track, geometry only).
 
 ---
 

@@ -129,6 +129,7 @@
       <div class="hint" id="epsHint">—</div>
       <div class="row"><label></label><button class="mini" id="matchEps">casar ε com a energia das pernas →</button></div>
       <div class="row"><label></label><button class="mini" id="fitEps" title="Recuperação real na descida do FIT: (α·X₋ − energia das pernas nas descidas)/(β·H₋), ponderada pelo desnível. α usa a vel. de plano MEDIDA no FIT.">ε do FIT (recuperação real) →</button></div>
+      <div class="row"><label></label><button class="mini" id="geomEps" title="ε estimado só pela GEOMETRIA (fórmula fechada, notas.md): ε ≈ clamp(Σ h₋·min(1, α/β·s)/H₋ − 0.13), ponderado pelo desnível em células de 30 m. Usa a vel. de plano do MODELO — dispensa potência. Para PLANEJAMENTO; com FIT carregado, prefira 'ε do FIT'.">ε da geometria (fórmula fechada) →</button></div>
       <div class="row"><label title="Aero de α na subida — rolamento sempre cobrado; descidas inalteradas. 'cheia' = v_f (modelo original); '≈0' = zera na subida; 'a v_c' = à velocidade quase-estável de subida k_eff·P/(C_rr·mg·cosθ+mg·sinθ), limitada a v_f.">Aero na subida</label><select id="climbAeroMode"><option value="off">cheia (v_f)</option><option value="zero">≈ 0</option><option value="vc">a v_c</option></select></div>
       <div class="row"><label>Mostrar termo α / β</label></div>
       <div class="stat"><span class="k">α (custo horizontal)</span><span id="alphaOut">—</span></div>
@@ -700,6 +701,28 @@ function epsFromFIT(pts, p) {
   return Hd < 1 ? null : { eps: (alpha * Xd - Ed) / (beta * Hd), vf };
 }
 
+// Geometry-only closed-form ε (notas.md "Closed form: predicting ε"; Journal Entry 8).
+// Coasting limit of ε(s): with idle legs ε(s)=min(1, α/(β·s)), drop-weighted over 30 m
+// descent cells, then a constant −0.13 (residual descent pedalling/braking) calibrated
+// against the measured descent-balance ε. α uses the MODEL v_f, so it needs NO power
+// track — a planning estimate. Validated on real descents (corr 0.83–0.87 at s̄ ≥ 3%);
+// scatters ±~0.1, and tends high on near-flat rides (which carry ~no descent energy).
+function epsGeom(prof, p, vf) {
+  const mg = p.m * G, beta = mg / p.keff, aeroSpd = vf + p.wind;
+  const alpha = (p.Crr * mg + 0.5 * p.rho * p.CdA * aeroSpd * Math.abs(aeroSpd)) / p.keff;
+  const ab = alpha / beta;                                   // flat-resistance grade α/β
+  const x0 = prof.x[0], totalM = prof.x[prof.x.length - 1] - x0, DX = 30, nc = Math.floor(totalM / DX);
+  if (nc < 2) return NaN;
+  let j = 0;
+  const hAt = d => { while (j < prof.x.length - 2 && prof.x[j + 1] < d) j++; const seg = prof.x[j + 1] - prof.x[j], f = seg > 1e-9 ? (d - prof.x[j]) / seg : 0; return prof.h[j] * (1 - f) + prof.h[j + 1] * f; };
+  const cellH = new Float64Array(nc + 1);
+  for (let k = 0; k <= nc; k++) cellH[k] = hAt(x0 + k * DX);
+  let Hd = 0, epsW = 0;
+  for (let k = 0; k < nc; k++) { const dh = cellH[k + 1] - cellH[k]; if (dh < 0) { const drop = -dh; Hd += drop; epsW += drop * Math.min(1, ab / (drop / DX)); } }
+  if (Hd < 1) return NaN;
+  return Math.max(0, Math.min(1, epsW / Hd - 0.13));
+}
+
 // ---------- track loaders (shared by the file input) ----------
 function afterTrackLoad(info, msg) {
   $('dist').value = (info.total / 1000).toFixed(2);
@@ -1066,6 +1089,15 @@ $('fitEps').onclick = () => {                        // ε the loaded FIT actual
   if (!fitData) return;
   const r = epsFromFIT(fitData, physParams());
   if (r && isFinite(r.eps)) { $('eps').value = Math.max(0, Math.min(100, r.eps * 100)).toFixed(1); recompute(); }
+};
+$('geomEps').onclick = () => {                        // ε from route geometry alone (closed form)
+  const p = physParams(), dx = num('engineDx');
+  let prof;
+  if (physProfile) prof = dx > 0 ? resampleProfile(physProfile, dx) : physProfile;
+  else { const Dm = num('dist') * 1000; prof = resample(Dm, dx > 0 ? dx : Dm / (NS - 1)); }
+  const vf = $('autoVf').checked ? flatEqSpeed(num('pFlat'), p) : num('vf') / 3.6;
+  const e = epsGeom(prof, p, vf);
+  if (isFinite(e)) { $('eps').value = (e * 100).toFixed(1); recompute(); }
 };
 $('gravThr').onclick = () => {                       // thresholds where gravity dominates (50%)
   const p = physParams(), aeroSpd = num('vf') / 3.6 + p.wind;

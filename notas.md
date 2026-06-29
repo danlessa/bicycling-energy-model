@@ -1,38 +1,72 @@
-
-
 ## Energy Model
+
+### Current (v2)
+
+The required energy for the wheels to ride a route with distance $x$, total ascent $h_+$ and total descent $h_-$ is given by:
+
+$$
+E_{wheel} \approx x (\alpha_{r}  +\alpha_{a} (1 - f_+))+\beta (h_+ -\epsilon h_-)
+$$
+
+It is assumed that the elevation profile that gives $h_+$ and $h_-$ is filtered out for short climbs up to 2m. For state of the art DEMs, the following approximation can be used in place of smoothening:
+
+$$
+E_{wheel} \approx x (\alpha_{r}  +\alpha_{a} (1 - f_+))+\beta k_{s} (h_+ -\epsilon h_-)
+$$
+
+The parameters can then be described as follows
+
+- $f_+ := \frac{x_+}{x}$
+- $\alpha_r := mg C_{rr}$
+- $\alpha_a := \frac{C_d A \rho v_f^2}{2}$
+- $\beta := mg$
+- $k_s$: typically 0.74 for FABDEM / IGC-SP 2010.
+- $\epsilon$: typically between 10% and 30%
+  - Can be estimated by $\epsilon \approx \min(1, \frac{\alpha}{\beta \bar{s}})-0.13 \pm 0.1$ 
+
+$E_{leg} = E_{wheel} k_{eff}$
 
 ### v1
 
-
 The energy transmitted from a cyclist to the wheels during a segment is approximately:
-$$E \approx \alpha x + \beta (h_+ - \epsilon h_-)$$
 
-Where $k_{eff}$ the chain efficiency, x is the horizontal distance, and $h_+$ and $h_-$ are ascent and descent distance. $\alpha$ expresses energy spent per horizontal distance., and $\beta$ expresses energy spent per vertical distance. $\epsilon$ represents how much energy is recovered during descents after excess losses due to wind speed and braking. 
+$$
+E \approx \alpha x + \beta (h_+ - \epsilon h_-)
+$$
 
-$$\alpha := \frac{m g C_{rr} + \frac{C_d A \rho v_f^2}{2}}{k_{eff}}$$
+Where $k_{eff}$ the chain efficiency, x is the horizontal distance, and $h_+$ and $h_-$ are ascent and descent distance. $\alpha$ expresses energy spent per horizontal distance., and $\beta$ expresses energy spent per vertical distance. $\epsilon$ represents how much energy is recovered during descents after excess losses due to wind speed and braking.
+
+$$
+\alpha := \frac{m g C_{rr} + \frac{C_d A \rho v_f^2}{2}}{k_{eff}}
+$$
 
 $m$ is the bicycle+rider mass, g is the gravitational constant, $C_{rr}$ is the rolling resistance, $C_d$ is the drag coefficient, $A$ is the effective frontal area, $\rho$ is the air density and $v_f$ is an estimate of rider speed on pure flats.
 
-$$\beta := \frac{m g}{k_{eff}}$$
+$$
+\beta := \frac{m g}{k_{eff}}
+$$
 
 ### v2
 
 Two refinements to v1, each removing a systematic bias measured against power-meter
 rides (see `data/MODEL_COMPARISON_JOURNAL.md`):
 
-$$E \approx \alpha_r\, x + \alpha_a\, x_{flat} + k_h\,k_{smooth}\,\beta\,(h_+ - \epsilon\, h_-),
-  \qquad k_h = 1$$
+$$
+E \approx \alpha_r\, x + \alpha_a\, x_{flat} + k_h\,k_{smooth}\,\beta\,(h_+ - \epsilon\, h_-),
+  \qquad k_h = 1
+$$
 
 **(i) Split $\alpha$, charge aero only off the climbs.** v1 bills the aero part of
 $\alpha$ at the flat speed $v_f$ over the whole distance, but the rider climbs far
 slower, so v1 over-charges climbing aero (the dominant error — almost entirely on
 climbs). Keep rolling over all of $x$, apply aero only over the non-climbing fraction:
 
-$$\alpha_r := \frac{m g\, C_{rr}}{k_{eff}}, \qquad
+$$
+\alpha_r := \frac{m g\, C_{rr}}{k_{eff}}, \qquad
   \alpha_a := \frac{C_d A\, \rho\, v_f^2}{2\, k_{eff}}, \qquad
   x_{flat} := x\,(1 - f_{climb}), \qquad
-  f_{climb} := \frac{x_+}{x},$$
+  f_{climb} := \frac{x_+}{x},
+$$
 
 with $x_+$ the horizontal distance on climbing segments (grade $\ge$ a climb threshold).
 This is the closed-form twin of the per-segment correction derived in [Correcting the
@@ -57,11 +91,19 @@ smoothed sums and $k_{smooth}=1$.
 
 The **poor man's** version — estimate the smoothing *without* doing it, for the closed form's
 low-compute case (only the totals $h_+,h_-,x$, no per-segment pass) — is a scalar
-$$k_{smooth} := \frac{h_+^{\text{smoothed}}}{h_+^{\text{raw}}} \approx 0.74\ (\text{2 m deadband}).$$
+
+$$
+k_{smooth} := \frac{h_+^{\text{smoothed}}}{h_+^{\text{raw}}} \approx 0.74\ (\text{2 m deadband}).
+$$
+
 With only totals, the cheapest estimate is the constant-rate form (spurious ascent is a
 per-sample jitter accumulating with *distance*, not terrain):
-$$h_+^{\text{corr}} = \max(0,\; h_+ - c\,x), \qquad
-  k_{smooth} = 1 - \frac{c\,x}{h_+}, \qquad c \approx 0.003\ \ (=3\ \text{m/km})$$
+
+$$
+h_+^{\text{corr}} = \max(0,\; h_+ - c\,x), \qquad
+  k_{smooth} = 1 - \frac{c\,x}{h_+}, \qquad c \approx 0.003\ \ (=3\ \text{m/km})
+$$
+
 where **$x$ and $h_+$ are both in metres** (as in $\alpha x$), so $c$ is **dimensionless** —
 a $\approx 0.3\%$ "noise grade" the DEM/track adds. (Measured 3.2 m/km, IQR 2.7–3.8 —
 calibrate per source.) It **auto-adapts**: $k_{smooth} \approx 0.89$ on a flat ride
@@ -72,7 +114,6 @@ one ($\approx 150$ m/km, where real ascent dominates). Apply the same to $h_-$.
 kinetic energy, so it already pays the rollers' momentum correctly and needs no smoothing
 (smoothing its elevation is mildly counter-productive).
 
-
 ## Recovery factor $\epsilon$
 
 $\epsilon$ lumps the descent-specific losses that $\alpha$ — charged at the flat
@@ -80,12 +121,16 @@ speed $v_f$ — does not carry: the *excess* aerodynamic drag from descending fa
 than $v_f$, plus braking. For a descent of grade $s$, define the **local** recovery
 as the fraction of that descent's potential energy $\beta h_-$ that is *not* wasted:
 
-$$\epsilon(s) := 1 - \frac{(\text{aero excess} + \text{braking}) \text{ at the speed reached on grade } s}{m g\, h_- / k_{eff}}$$
+$$
+\epsilon(s) := 1 - \frac{(\text{aero excess} + \text{braking}) \text{ at the speed reached on grade } s}{m g\, h_- / k_{eff}}
+$$
 
 Equivalently, from the segment energy balance (neglecting the kinetic term, which
 telescopes over a rest-to-rest ride),
 
-$$\epsilon(s) = \frac{\alpha\, dx - E_{legs}}{\beta\, h_-},$$
+$$
+\epsilon(s) = \frac{\alpha\, dx - E_{legs}}{\beta\, h_-},
+$$
 
 i.e. the leg energy the descent saves versus riding the same horizontal distance
 $dx$ on the flat, as a fraction of the released potential energy $\beta h_-$.
@@ -95,8 +140,10 @@ A **single** $\epsilon$ for a whole ride is fixed by where $\epsilon$ enters the
 Matching that total to the sum of the per-descent recoveries gives the
 **descent-height-weighted average**:
 
-$$\epsilon = \frac{\sum_i \epsilon(s_i)\, h_{-,i}}{\sum_i h_{-,i}}
-          = \frac{1}{H_-}\int_{\text{descents}} \epsilon\big(s(x)\big)\,\big|h'(x)\big|\,dx .$$
+$$
+\epsilon = \frac{\sum_i \epsilon(s_i)\, h_{-,i}}{\sum_i h_{-,i}}
+          = \frac{1}{H_-}\int_{\text{descents}} \epsilon\big(s(x)\big)\,\big|h'(x)\big|\,dx .
+$$
 
 The weight is the **vertical drop** $h_-$ (not distance or time), because $\epsilon$
 multiplies $\beta h_-$. Steeper, faster descents have lower $\epsilon(s)$ *and*
@@ -105,9 +152,58 @@ for the total credit but blurs the per-grade spread. Aggregated over a ride it r
 to $\epsilon = \big(\alpha\,X_- - E_{legs,-}\big) / (\beta\,H_-)$, where $X_-$, $E_{legs,-}$
 and $H_-$ are the horizontal distance, leg energy and drop summed over descent segments.
 
+### Closed form: predicting $\epsilon$ from the route ($\epsilon_{coast}$)
+
+The leg energy on a descent is bounded — the legs can never *return* energy
+($E_{legs}\ge 0$) and the recovery can never exceed the released drop ($\epsilon\le 1$).
+Setting $E_{legs}=0$ (the rider freewheels, or brakes — both leave the legs idle, and
+both give the *same* leg saving $\alpha\,dx$) collapses $\epsilon(s)$ to a function of
+**grade alone**:
+
+$$
+\epsilon_{coast}(s) = \min\!\Big(1,\ \frac{\alpha\,dx}{\beta\,h_-}\Big) = \min\!\Big(1,\ \frac{\alpha}{\beta\,s}\Big),
+\qquad \frac{\alpha}{\beta} = C_{rr} + \frac{\tfrac12\rho C_dA\,(v_f+w)^2}{mg}.
+$$
+
+$\alpha/\beta$ is the **flat-resistance grade** — the slope whose gravity exactly balances
+flat rolling+aero (so flat riding "feels like" climbing $\alpha/\beta$). The clamp at $1$
+is the gentle-descent case $s<\alpha/\beta$: there the rider pedals lightly to hold $v_f$,
+saving exactly the gravity assist, so $\epsilon=1$ (not more). Drop-weighted over the
+profile, or from totals only:
+
+$$
+\epsilon_{coast} = \frac{1}{H_-}\sum_{\text{desc}} h_{-,i}\,\min\!\Big(1,\tfrac{\alpha}{\beta s_i}\Big)
+\qquad\text{or, lumped,}\qquad \epsilon_{coast}\approx \min\!\Big(1,\tfrac{\alpha}{\beta\,\bar s}\Big),\ \ \bar s=\tfrac{H_-}{X_-}.
+$$
+
+**Empirical test** (44 power rides, predictor vs. the measured
+$\epsilon=(\alpha X_- - E_{legs,-})/(\beta H_-)$ on 30 m cells with $\alpha$ at the
+*measured* flat speed — `data/activities/eps_hypothesis.mjs`, Journal Entry 8):
+
+- **The grade law holds where $\epsilon$ matters.** Correlation with the measured
+  $\epsilon$ climbs from $0.38$ over all rides to $0.83$ on $\bar s\ge 3\%$ and $0.87$ on
+  $\bar s\ge 3.5\%$; descent-energy-weighted ($w=\beta H_-$) it is $0.65$.
+- **A near-constant $-0.13$ offset** (residual descent pedalling/braking the coasting
+  ideal omits) calibrates it. Working estimator:
+
+$$
+\boxed{\ \epsilon \approx \mathrm{clamp}_{[0,1]}\big(\epsilon_{coast} - 0.13\big)\ }
+$$
+
+- **The clamp-to-$1$ limit is reversed on flat terrain.** Gentle rides are pedalled
+  *through* the dips, so the measured $\epsilon\to 0$, not $1$ (NS3 Caracaí: predicted
+  $\approx0.9$, measured $0.01$). Harmless: those rides carry $\beta H_-\approx 0$ descent
+  energy, which is why energy-weighting alone lifts the correlation $0.38\to0.65$.
+- **Braking penalties don't survive.** Curviness $\kappa$ (rad/km) and unpaved fraction
+  fit with the *wrong sign* — twisty/rough rides are the mountainous ones with real
+  sustained descents, so they recover *more*, swamping the corner-braking loss. $\epsilon$'s
+  remaining scatter is rider behaviour (pedalling downhill gives measured $\epsilon<0$ on a
+  few rides), not route geometry.
+
+*Worked example* (RMC200 Mogi): $\alpha/\beta=0.0202$, $\bar s=3.4\%$ ⇒
+$\min(1,\,0.0202/0.0341)=0.59$; minus $0.13$ ⇒ $\mathbf{0.46}$, vs. measured $0.47$.
 
 ---
-
 
 ## Correcting the climb aero over-charge
 
@@ -119,13 +215,17 @@ distance, but the rider climbs far slower than $v_f$, so the real climbing aero
 Only the **aero** part of $\alpha$ is wrong, and only **on climbs** — the rolling
 part $C_{rr}mg\cos\theta\,s = C_{rr}mg\,x$ is exact on any grade. So split
 
-$$\alpha = \alpha_r + \alpha_a,\qquad \alpha_r = \frac{C_{rr}mg}{k_{eff}},\qquad \alpha_a = \frac{\tfrac12 \rho C_d A\, v_f^2}{k_{eff}},$$
+$$
+\alpha = \alpha_r + \alpha_a,\qquad \alpha_r = \frac{C_{rr}mg}{k_{eff}},\qquad \alpha_a = \frac{\tfrac12 \rho C_d A\, v_f^2}{k_{eff}},
+$$
 
 keep the rolling term over all of $x$, and apply the aero term only over the
 **non-climbing** fraction of the distance:
 
-$$E \approx \alpha_r\,x \;+\; \alpha_a\,x\,f_{\text{flat}} \;+\; \beta\big(h_+ - \epsilon h_-\big),
-\qquad f_{\text{flat}} = 1 - \frac{x_+}{x},$$
+$$
+E \approx \alpha_r\,x \;+\; \alpha_a\,x\,f_{\text{flat}} \;+\; \beta\big(h_+ - \epsilon h_-\big),
+\qquad f_{\text{flat}} = 1 - \frac{x_+}{x},
+$$
 
 where $x_+$ is the horizontal distance spent climbing (summed directly from the profile,
 or estimated as $x_+ \approx h_+/\bar g$ with a typical climb grade $\bar g$). This zeroes
@@ -136,8 +236,10 @@ aero is a small share of the total either way.
 the quasi-steady climb speed. On a climb gravity dominates the resistance, so
 $v_c \approx k_{eff}P_{climb}/(mg\,s)$, and per uphill metre
 
-$$\text{aero}_{\text{climb}} = \tfrac12 \rho C_d A\, v_c^2\,dx
-\;\approx\; \tfrac12 \rho C_d A\, \frac{(k_{eff}P_{climb})^2}{(mg\,s)^2}\,dx ,$$
+$$
+\text{aero}_{\text{climb}} = \tfrac12 \rho C_d A\, v_c^2\,dx
+\;\approx\; \tfrac12 \rho C_d A\, \frac{(k_{eff}P_{climb})^2}{(mg\,s)^2}\,dx ,
+$$
 
 which captures the $(v_c/v_f)^2$ reduction grade-by-grade (steeper $\Rightarrow$ slower
 $\Rightarrow$ even less aero), at the cost of one extra input $P_{climb}$. In practice
@@ -149,7 +251,6 @@ speed) keeps the full flat aero instead of an over-large $v_c$.
 on descents the air resistance is paid by gravity, not the legs, and is already accounted
 for inside $(1-\epsilon)\,\beta h_-$. Down-weighting $\alpha_a$ there would double-count.
 
-
 ## Time, and the "effective flat distance"
 
 Energy alone can't forecast **time**: $t = E/P$ is degenerate on a descent, where the leg
@@ -157,14 +258,18 @@ energy $E\to 0$ *and* the descent power $P\to 0$. Time is $\int ds/v$, a differe
 so it needs its own model. Define an **effective flat distance** $x^*$ and read the time off
 the flat speed, $t = x^*/v_f$, with the same skeleton as the energy law:
 
-$$x^* := x + k_+\,h_+ - k_-\,h_- .$$
+$$
+x^* := x + k_+\,h_+ - k_-\,h_- .
+$$
 
 **Climb term — clean and grade-independent.** On a climb almost all power goes into lifting,
 $k_{eff}P_{climb}\approx mg\,v\sin\theta = mg\,\dfrac{dh}{dt}$, so the climb time is just
 potential energy over power, $dt = mg\,dh/(k_{eff}P_{climb})$ — it depends on the **vertical
 gain, not the road length**. Hence
 
-$$k_+ = \frac{v_f\, m g}{k_{eff}P_{climb}} = \frac{v_f\,\beta}{P_{climb}}$$
+$$
+k_+ = \frac{v_f\, m g}{k_{eff}P_{climb}} = \frac{v_f\,\beta}{P_{climb}}
+$$
 
 (the *energy* coefficient $\beta$ rescaled into time by $v_f/P_{climb}$). A single $k_+$
 reproduces total climb time exactly regardless of the grade mix. *(Small caveat: a constant
@@ -179,10 +284,11 @@ descent grade, $k_- \approx (1 - v_f/v_{desc})/\bar s$, so $k_-$ is a **lumped, 
 parameter** — exactly the role $\epsilon$ plays for energy. The two models line up
 term-for-term:
 
-| | clean (climb) | lumped (descent) |
-|---|---|---|
-| **energy** $\;\alpha x + \beta h_+ - \epsilon\,\beta h_-$ | $\beta = mg/k_{eff}$ | $\epsilon$ |
-| **time** $\;x + k_+ h_+ - k_- h_-$ | $k_+ = v_f\beta/P_{climb}$ | $k_-$ |
+
+|                                                           | clean (climb)              | lumped (descent) |
+| --------------------------------------------------------- | -------------------------- | ---------------- |
+| **energy** $\;\alpha x + \beta h_+ - \epsilon\,\beta h_-$ | $\beta = mg/k_{eff}$       | $\epsilon$       |
+| **time** $\;x + k_+ h_+ - k_- h_-$                        | $k_+ = v_f\beta/P_{climb}$ | $k_-$            |
 
 because climbing is gravity-determined (clean physics) and descending is loss-determined
 (messy) in **both** domains. With $t = x^*/v_f$ in hand, the average power $\bar P = E/t$
@@ -204,22 +310,30 @@ fudge, and $\text{power} = \text{energy}/\text{time}$ is the exchange rate betwe
 Both encode the same hidden descent speed $v_{desc}$, read off two ways. From the **time**
 side, the descent's effective distance $x_-(1 - k_- s)$ must take the real time $x_-/v_{desc}$:
 
-$$v_{desc} = \frac{v_f}{1 - k_- s}.$$
+$$
+v_{desc} = \frac{v_f}{1 - k_- s}.
+$$
 
 From the **energy** side, the model's descent leg-energy per horizontal metre is
 $\alpha - \epsilon\,\beta s$, and average power is energy $\times$ speed:
 
-$$\bar P_{desc} = (\alpha - \epsilon\,\beta s)\,v_{desc} \;\Rightarrow\; v_{desc} = \frac{\bar P_{desc}}{\alpha - \epsilon\,\beta s}.$$
+$$
+\bar P_{desc} = (\alpha - \epsilon\,\beta s)\,v_{desc} \;\Rightarrow\; v_{desc} = \frac{\bar P_{desc}}{\alpha - \epsilon\,\beta s}.
+$$
 
 Equating the two gives the single relation that ties them together,
 
-$$\frac{v_f}{1 - k_- s} = \frac{\bar P_{desc}}{\alpha - \epsilon\,\beta\,s},$$
+$$
+\frac{v_f}{1 - k_- s} = \frac{\bar P_{desc}}{\alpha - \epsilon\,\beta\,s},
+$$
 
 so, given $\bar P_{desc}$ and the grade $s$,
 
-$$k_- = \frac{1}{s}\!\left[1 - \frac{v_f}{\bar P_{desc}}(\alpha - \epsilon\,\beta s)\right],
+$$
+k_- = \frac{1}{s}\!\left[1 - \frac{v_f}{\bar P_{desc}}(\alpha - \epsilon\,\beta s)\right],
 \qquad
-\epsilon = \frac{1}{\beta s}\!\left[\alpha - \frac{\bar P_{desc}}{v_f}(1 - k_- s)\right].$$
+\epsilon = \frac{1}{\beta s}\!\left[\alpha - \frac{\bar P_{desc}}{v_f}(1 - k_- s)\right].
+$$
 
 **Degenerate case — a pure coast.** Set $\bar P_{desc} = 0$: the bridge forces
 $\alpha - \epsilon\,\beta s = 0$, i.e. $\epsilon = \alpha/(\beta s)$ — pinned by grade alone,
@@ -227,4 +341,3 @@ independent of speed — while $v_{desc}$ (hence $k_-$) is set entirely by the t
 coasting speed, which $\epsilon$ says nothing about. With no power to bridge them the two
 **decouple**: $\epsilon$ becomes purely geometric, $k_-$ purely aerodynamic. They are
 inter-derivable only once the legs do measurable work on the descent.
-
