@@ -17,6 +17,7 @@ COORDS, TILES = sys.argv[1], sys.argv[2]
 IGC = sys.argv[3] if len(sys.argv) > 3 else None
 IGC_BBOX = (-47.457, -24.126, -45.609, -23.058)   # WGS84 lon_min, lat_min, lon_max, lat_max
 DEMS = {"fabdem": ("fabdem", "tif"), "srtm": ("srtm", "hgt"), "cop30": ("cop30", "tif")}
+K_H_BARO = 0.74   # model (energy-effective) k_h on the baro, calibrated in journal Entry 5
 
 def tile(lat, lon):
     la, lo = math.floor(lat), math.floor(lon)
@@ -109,10 +110,33 @@ def main():
         b3 = sum(r["rec3"] for r in ig); braw = sum(r["rec_raw"] for r in ig)
         print(f"\nTABLE 2 — IGC 5 m DTM as reference, over {len(ig)} covered rides (h+ 3 m-hyst)")
         print(f"  IGC (5 m, bilinear)     {I3:>6.0f} m   = reference")
-        print(f"  recorded baro (3 m)     {b3:>6.0f} m   {b3/I3*100-100:+.0f}% vs IGC   (raw {braw:.0f}, {braw/I3*100-100:+.0f}%)   k_h=IGC/baro {I3/b3:.2f}")
+        print(f"  recorded baro (3 m)     {b3:>6.0f} m   {b3/I3*100-100:+.0f}% vs IGC   (raw {braw:.0f}, {braw/I3*100-100:+.0f}%)")
         for d in DEMS:
             h3 = sum(r[d + "_hp3"] for r in ig)
-            print(f"  {d:8} (30 m, bilinear) {h3:>6.0f} m   {h3/I3*100-100:+.0f}% vs IGC                       k_h=IGC/{d[:5]} {I3/h3:.2f}")
+            print(f"  {d:8} (30 m, bilinear) {h3:>6.0f} m   {h3/I3*100-100:+.0f}% vs IGC")
+
+        # Table 3 — k_DEM (geometric, source -> IGC truth) and model k_h (energy-effective)
+        print(f"\nTABLE 3 — k for all elevation sources   (k_DEM = IGC/source ;  "
+              f"k_h ≈ {K_H_BARO}·baro/source, anchored to the baro k_h, Entry 5)")
+        print(f"  {'source':16}{'Σh+ 3m':>8}{'k_DEM':>8}{'k_h':>8}")
+        srcs = [("recorded baro", b3), ("IGC 5 m", I3)] + [(d, sum(r[d + "_hp3"] for r in ig)) for d in DEMS]
+        for name, h in srcs:
+            print(f"  {name:16}{h:>8.0f}{I3/h:>8.2f}{K_H_BARO*b3/h:>8.2f}")
+
+        # Per-ride k_DEM = IGC / source (geometric) — to see the spread / terrain dependence
+        try:
+            labels = {e["id"]: e["label"] for e in __import__("json").load(
+                open(os.path.join(os.path.dirname(__file__), "..", "..", "data", "activities", "manifest.json"))) if e.get("id")}
+        except Exception:
+            labels = {}
+        keyed = [("baro", "rec3"), ("fabdem", "fabdem_hp3"), ("srtm", "srtm_hp3"), ("cop30", "cop30_hp3")]
+        print(f"\nPER-RIDE k_DEM = IGC 5 m / source (geometric), {len(ig)} rides")
+        print(f"  {'ride':24}" + "".join(f"{n:>8}" for n, _ in keyed))
+        for r in ig:
+            print(f"  {labels.get(r['id'], r['id'])[:23]:24}" + "".join(f"{r['igc_hp3']/r[k]:>8.2f}" for _, k in keyed))
+        print(f"  {'-'*23:24}" + "".join(f"{'':>8}" for _ in keyed))
+        for stat, fn in [("median", statistics.median), ("min", min), ("max", max)]:
+            print(f"  {stat:24}" + "".join(f"{fn([r['igc_hp3']/r[k] for r in ig]):>8.2f}" for _, k in keyed))
 
 if __name__ == "__main__":
     main()

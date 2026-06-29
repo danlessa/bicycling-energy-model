@@ -72,43 +72,47 @@ The recorded **barometric** elevation measures the **road altitude directly**, s
 inherently smooth and gives the lowest, most road-realistic ascent — even after the
 sampling method is fixed.
 
-## Result 3 — k_h for DEM-derived h₊ and h₋
+## Result 3 — k_DEM (geometric) per elevation source
 
-The model's `k_h` ([../notas.md](../notas.md) v2) is "the factor that adjusts DEM height
-variation vs empirical." Quantifying it as `k_h = recorded-baro / source` (bilinear,
-3 m-hyst), the scalar that brings a source-derived ascent/descent back to the road
-reference — including the **IGC-SP 2010 5 m DTM** (bare-earth aerophotogrammetry, covers 10
-of the 12 rides):
+`k_DEM = IGC / source` is the **geometric** correction (source → 5 m survey truth), over the
+10 IGC-covered rides (h₊ 3 m-hyst, bilinear). It is the solid result here:
 
-| source | res | shape RMS | Σ h₊ vs rec | k_h(h₊) | k_h(h₋) |
-|---|--|--:|--:|--:|--:|
-| SRTM (DSM) | 30 m | 7.6 m | +71 % | 0.59 | 0.58 |
-| COP30 (DSM) | 30 m | 7.7 m | +50 % | 0.67 | 0.66 |
-| FABDEM (bare-earth) | 30 m | 7.1 m | +35 % | 0.74 | 0.73 |
-| **IGC (bare-earth)** | **5 m** | **6.4 m** | **+8 %** | **0.92** | **0.92** |
+| source | Σ h₊ | vs IGC | **k_DEM** |
+|---|--:|--:|--:|
+| recorded baro | 13 622 (raw 15 292) | −21 % (raw −11 %) | 1.26 |
+| **IGC** 5 m (bare-earth) | **17 162** | reference | 1.00 |
+| FABDEM 30 m (bare-earth) | 18 160 | +6 % | 0.95 |
+| COP30 30 m (DSM) | 20 310 | +18 % | 0.84 |
+| SRTM 30 m (DSM) | 22 951 | +34 % | 0.75 |
 
-- **`k_h(h₊) ≈ k_h(h₋)`** for every source — symmetric, so one factor corrects both.
-- The table above is `k_h` **relative to the baro**, and the baro is **not** ground truth: it
-  lags and smooths, so short climbs read as ~null grade. Taking the **5 m IGC DTM as the
-  reference** instead (the bare-earth survey), the picture *inverts* — the baro is the LOW
-  outlier (over the 10 IGC-covered rides, h₊ 3 m-hyst):
+**Per-ride `k_DEM`** (= IGC/source per ride) — the spread shows its terrain dependence:
 
-| source | Σ h₊ vs IGC 5 m | k_h = IGC/source |
+| source | median | min–max |
 |---|--:|--:|
-| recorded baro (3 m) | −21 % (raw −11 %) | 1.26 |
-| FABDEM 30 m | +6 % | 0.95 |
-| COP30 30 m | +18 % | 0.84 |
-| SRTM 30 m | +34 % | 0.75 |
+| recorded baro | 1.23 | 1.10–1.54 |
+| FABDEM 30 m | 0.93 | 0.81–1.09 |
+| COP30 30 m | 0.84 | 0.79–0.95 |
+| SRTM 30 m | 0.72 | 0.59–0.90 |
 
-- **The two bare-earth sources agree** (IGC 5 m ≈ FABDEM 30 m, within 6 %, ~17–18 km) — a
-  strong cross-check on the real terrain ascent.
-- **No source is ground truth.** The baro *under*-records (lag / missed climbs) yet is
-  correct at **bridges and tunnels**, which the DTMs cannot see (a bridge dips into the
-  spanned valley, a tunnel climbs over the pierced ridge → the DTM over-records there). The
-  truth is bracketed — baro low, DTM high.
-- These DEM `k_h` correct *geometry*; the **model's** `k_h` (notas v2) is different — it maps
-  geometry to *pedalling energy*, which is lower still because momentum carries the rider
-  over rollers without paying `mg·h` (journal Entry 6). Don't conflate them.
+- **FABDEM is tight and ≈ the 5 m truth** (0.93 ± ~15 %) — the best, most consistent 30 m
+  source; its geometric error is small (matching first-principles intuition).
+- **The baro's under-recording is terrain-dependent** (1.10–1.54×): worst on rough/gravel
+  rides (r2 arrochai 1.54, Cantareira 2 1.46), where the altimeter smooths most.
+- **SRTM is the noisiest** (0.59–0.90), worst on gravel (canopy/roughness).
+
+**No source is ground truth.** The two bare-earth sources agree (IGC 5 m ≈ FABDEM 30 m, within
+6 %) — a strong cross-check. The recorded baro *under*-records but is correct at **bridges and
+tunnels**, which the DTMs cannot see (a bridge dips into the spanned valley, a tunnel climbs
+over the pierced ridge → the DTM over-records there). The DSMs *over*-record (canopy). Truth
+bracketed — baro low, DTM high.
+
+**The model's energy `k_h` is a separate, milder correction — not yet cleanly measured.** It
+maps geometry → *pedalling energy* (lower, because momentum carries the rider over rollers
+without paying `mg·h`). An earlier estimate (`k_h(FABDEM) ≈ 0.56`) **over-stated it** — it
+scaled from the baro's Entry-5 `k_h ≈ 0.74`, which is entangled with the `v_f` error (Entry 4)
+and a different pipeline. With small `k_DEM` + a mild momentum term, bare-earth `k_h` should be
+**~0.8–0.9**. **TODO:** fit `k_h` per source by running the approximate (with corrected `v_f`)
+against the empirical `∫P·dt`. (The canonical needs no `k_h` — it handles momentum via KE.)
 
 ## Implications for the energy model
 

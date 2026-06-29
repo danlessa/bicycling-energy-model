@@ -59,7 +59,7 @@ A later check added the **IGC-SP 2010 5 m aerophotogrammetric DTM** (bare-earth,
 of the 12 rides) and it shows **no single source is ground truth for ascent — they bracket
 it.** Σ h₊ (3 m-hyst, bilinear) over the 10 IGC-covered rides, IGC as reference:
 
-| source | res | Σ h₊ | vs IGC | k_h = IGC/src |
+| source | res | Σ h₊ (3 m) | vs IGC | **k_DEM** |
 |---|--|--:|--:|--:|
 | recorded baro | — | 13 622 (raw 15 292) | −21 % (raw −11 %) | 1.26 |
 | **IGC** (bare-earth) | **5 m** | **17 162** | reference | 1.00 |
@@ -67,23 +67,35 @@ it.** Σ h₊ (3 m-hyst, bilinear) over the 10 IGC-covered rides, IGC as referen
 | COP30 (DSM) | 30 m | 20 310 | +18 % | 0.84 |
 | SRTM (DSM) | 30 m | 22 951 | +34 % | 0.75 |
 
-- **The two bare-earth sources agree (~17–18 km, within 6 %)** — IGC 5 m and FABDEM 30 m
-  cross-check the real terrain ascent.
+**`k_DEM = IGC / source`** is the **geometric** correction (source → 5 m survey truth), and it
+is the solid result here. `k_DEM(h₊) ≈ k_DEM(h₋)` (symmetric). It is **small for bare-earth
+sources** — FABDEM is within 5 % of the 5 m truth — confirming the DEM *geometry* error is
+minor (the DSMs over-record via canopy/buildings; the baro under-records via lag).
+
+Per-ride `k_DEM` (median, min–max over the 10 rides): **FABDEM 0.93 (0.81–1.09, tight)**,
+COP30 0.84 (0.79–0.95), SRTM 0.72 (0.59–0.90, noisiest), baro 1.23 (1.10–1.54 — terrain-
+dependent, worst on rough/gravel: r2 arrochai 1.54, Cantareira 2 1.46).
+
+- **The two bare-earth sources agree (~17–18 km, within 6 %)** — IGC 5 m ≈ FABDEM 30 m,
+  cross-checking the real terrain ascent.
 - **The recorded baro *under*-records** (−11 % raw, −21 % smoothed): the altimeter lags and
   smooths, so short climbs read as ~null grade (Danilo's observation). It is the LOW
   outlier — **not** ground truth (correcting an earlier overstatement). The DSMs *over*-record
-  (canopy/buildings; SRTM +34 %).
+  (SRTM +34 %).
 - **But DTMs/DEMs miss bridges and tunnels** — a bridge dips the surface into the spanned
   valley, a tunnel climbs it over the pierced ridge — so they over-record exactly where the
   baro is right. The truth is bracketed: baro low, DTM high.
-- **k_h(h₊) ≈ k_h(h₋)** throughout (symmetric), so one factor per source corrects both.
 
-**This geometric k_h is NOT the model's k_h.** The energy model (Entry 5) wanted h₊ *below*
-even the raw baro, because `β·h₊` over-charges climb energy: on rollers the rider's momentum
-from the preceding descent carries them over the next rise without paying `mg·h`. So the
-*energy-effective* ascent (notas-v2 `k_h ≈ 0.74` vs the baro) sits below the *geometric*
-ascent (IGC/FABDEM, above the baro). The DEM `k_h` here maps geometry → survey truth; the
-model `k_h` maps geometry → pedalling energy — different corrections, don't conflate.
+**The model's energy `k_h` is a *separate*, milder correction — and not yet cleanly measured
+per source.** It maps geometry → pedalling energy (lower, because momentum carries the rider
+over rollers without paying `mg·h`). An earlier estimate here (`k_h(FABDEM) ≈ 0.56`) **over-
+stated it**: it scaled from the baro's Entry-5 `k_h ≈ 0.74`, but that 0.74 is entangled with
+the `v_f` error (Entry 4: fixing `v_f` alone cut the over-prediction +8.5 % → +2.7 %, so the
+*true* `h₊` smoothing is small, baro `k_h ~0.9`) and uses a different pipeline. From first
+principles — small `k_DEM` + a mild momentum term — bare-earth `k_h` should be **~0.8–0.9**.
+**TODO:** fit `k_h` per source by running the approximate (with the corrected `v_f`) against
+the empirical `∫P·dt` with each source's profile. (The canonical needs no `k_h` — it handles
+momentum explicitly via KE.)
 
 ---
 
