@@ -61,10 +61,12 @@ $$k_{smooth} := \frac{h_+^{\text{smoothed}}}{h_+^{\text{raw}}} \approx 0.74\ (\t
 With only totals, the cheapest estimate is the constant-rate form (spurious ascent is a
 per-sample jitter accumulating with *distance*, not terrain):
 $$h_+^{\text{corr}} = \max(0,\; h_+ - c\,x), \qquad
-  k_{smooth} = 1 - \frac{c\,x}{h_+}, \qquad c \approx 3\ \text{m/km}$$
-(measured 3.2 m/km, IQR 2.7–3.8 — calibrate per source). It **auto-adapts**: $\approx 0.89$
-on a flat ride (30 m/km, noise floor a big share) and $\approx 0.98$ on a hilly one
-(150 m/km, real ascent dominates). Apply the same to $h_-$.
+  k_{smooth} = 1 - \frac{c\,x}{h_+}, \qquad c \approx 0.003\ \ (=3\ \text{m/km})$$
+where **$x$ and $h_+$ are both in metres** (as in $\alpha x$), so $c$ is **dimensionless** —
+a $\approx 0.3\%$ "noise grade" the DEM/track adds. (Measured 3.2 m/km, IQR 2.7–3.8 —
+calibrate per source.) It **auto-adapts**: $k_{smooth} \approx 0.89$ on a flat ride
+($h_+/x \approx 30$ m/km, where the noise floor is a big share) and $\approx 0.98$ on a hilly
+one ($\approx 150$ m/km, where real ascent dominates). Apply the same to $h_-$.
 
 **$k_{smooth}$ applies to the approximate model only** — the canonical simulation tracks
 kinetic energy, so it already pays the rollers' momentum correctly and needs no smoothing
