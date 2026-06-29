@@ -9,7 +9,7 @@ import { fileURLToPath } from 'node:url';
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const ACT = path.join(HERE, '..', '..', 'data', 'activities');
 const OUTDIR = process.argv[2] || path.join(HERE, 'coords');   // where to write per-ride coord CSVs
-const STEP = 50;   // downsample: keep a point roughly every STEP metres
+const STEP = +(process.argv[3] || 50);   // downsample: keep a point roughly every STEP metres
 
 // --- parseFIT, ported verbatim from energy-model-comparison.html (record msg 20) ---
 function parseFIT(buffer) {

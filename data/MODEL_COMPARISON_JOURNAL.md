@@ -34,8 +34,47 @@ Running scoreboard — median |Δ%| vs empirical `∫P·dt` over 44 power rides 
   climb-fraction, P_flat/P_avg) — [`797173f`](../data/activities/compare.mjs)
 - **Entry 5** (per-regime, elevation noise, deadband filter, τ=2) — `cd2f549`; the filter +
   `k_h` wired into the app/`notas.md` in `7e46fab`
-- **Entry 6** (DEM/IGC comparison, `research/dem/`) — `7d958ca`; extended with the IGC 5 m
-  DTM in the following commit
+- **Entry 6** (DEM/IGC comparison, `research/dem/`) — `7d958ca`; IGC 5 m + `k_DEM`/`k_h`
+  split in `3f98465`, `a184286`
+- **Entry 7** (sustained-climb `k_h` fit, `climbBalance` in `compare.mjs`) — this commit
+
+---
+
+## 2026-06-28 — Entry 7: fitting k_h on sustained climbs (the clean way)
+
+*Prompt (Danilo): fit k_h by taking sustained ascent sections (mean slope > 3 % over
+> 100 m) and comparing measured energy output to expected.*
+
+This isolates the climb physics: on a *sustained* climb there is no momentum recovery and
+aero is small, so the rider must pay ≈ `mg·Δh/k_eff` + rolling. Over the 44 power rides,
+**2535** such sections (≥ 3 %, ≥ 100 m), summed:
+
+| | kJ |
+|---|--:|
+| measured Σ∫P·dt on climbs | 41 790 |
+| expected (grav 37 366 + roll 4 424 + aero 1 424) | 43 214 |
+| **measured / expected** | **0.97** |
+| **k_h(sustained) = (measured − roll − aero)/gravity** | **0.96** |
+
+(per-ride median 1.03, range 0.57–1.23.)
+
+- **On real sustained climbs `k_h ≈ 1`** — the rider pays the full `mg·Δh`, so the model's
+  gravity term `β·h₊` is correct there. This settles the earlier 0.56-vs-0.9 confusion:
+  there is **no uniform discount** on real climbing.
+- **Sustained climbs are only 54 % of total ascent.** The other 46 % is rollers / gentle
+  grades / noise — and *that* is where the aggregate `k_h < 1` comes from (momentum carries
+  the rider over a roller without paying `mg·h`; noise isn't real climbing at all).
+- **So a *uniform* scalar `k_h` (the earlier 0.56) is the wrong model.** The right correction
+  is "pay full on sustained climbs, discount the rollers" — exactly what the per-segment
+  **deadband** (notas v2's `k_h`, Entry 5) does: it keeps a 100 m+ climb intact and removes
+  sub-τ undulations. The scalar crudely lumped the two and over-corrected the real climbs.
+- **For the DEM sources:** sustained climbs are big features all sources capture similarly,
+  so `k_h(sustained) ≈ 1` for FABDEM/IGC too; the per-source difference (Entry 6's `k_DEM`)
+  lives in the rollers/noise, not the real climbs. (The baro lags slightly even on climbs, so
+  a bare-earth DEM's sustained Δh is marginally higher — a second-order refinement.)
+
+**Resolution of the Entry-6 TODO:** keep `β·h₊` at full strength on sustained climbs; realise
+`k_h` as a **deadband (~2 m)**, not a scalar.
 
 ---
 

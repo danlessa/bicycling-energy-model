@@ -380,6 +380,41 @@ function climbFraction(prof, thr) {
   for (let i = 1; i < xs.length; i++) { const dx = xs[i] - xs[i - 1]; X += dx; if ((hs[i] - hs[i - 1]) / dx >= thr) Xc += dx; }
   return X > 0 ? Xc / X : 0;
 }
+// Sustained-climb energy balance (Danilo's method for fitting k_h cleanly).
+// Find sections climbing >= CLIMB_PCT over >= MINLEN m (no momentum recovery, aero
+// small), and on each compare the MEASURED Σ P·dt to the EXPECTED gravity + rolling
+// + aero. On a real sustained climb the rider must pay ~mg·Δh/k_eff, so
+//   k_h(sustained) = (measured − rolling − aero) / (mg·Δh/k_eff)
+// should be ~1 — isolating the climb physics from the roller/noise effect that drags
+// the whole-ride h₊ down. Returns kJ sums + Δh accounting.
+function climbBalance(pts, p, CLIMB_PCT = 0.03, MINLEN = 100) {
+  const mg = p.m * G, w = p.wind, out = { emeas: 0, egrav: 0, eroll: 0, eaero: 0, dh: 0, L: 0, n: 0, totalAsc: 0 };
+  for (let i = 1; i < pts.length; i++) { const d = pts[i].alt - pts[i - 1].alt; if (d > 0) out.totalAsc += d; }
+  const climbing = new Uint8Array(pts.length);
+  let j = 0;
+  for (let i = 0; i < pts.length; i++) {
+    while (j < pts.length - 1 && pts[j].x - pts[i].x < MINLEN) j++;
+    const dd = pts[j].x - pts[i].x;
+    if (dd > 1 && (pts[j].alt - pts[i].alt) / dd >= CLIMB_PCT) climbing[i] = 1;
+  }
+  let s = -1;
+  for (let i = 0; i <= pts.length; i++) {
+    if (i < pts.length && climbing[i]) { if (s < 0) s = i; continue; }
+    if (s < 0) continue;
+    const a = s, b = i - 1; s = -1;
+    const L = pts[b].x - pts[a].x, dh = pts[b].alt - pts[a].alt;
+    if (L < MINLEN || dh <= 0) continue;
+    let emeas = 0, time = 0;
+    for (let k = a; k <= b; k++) { if (pts[k].power !== undefined) emeas += pts[k].power * (pts[k].dt || 0); time += pts[k].dt || 0; }
+    const v = time > 0 ? L / time : 0, slope = dh / L, cos = 1 / Math.sqrt(1 + slope * slope);
+    out.emeas += emeas / 1000;
+    out.egrav += mg * dh / p.keff / 1000;
+    out.eroll += p.Crr * mg * cos * L / p.keff / 1000;
+    out.eaero += 0.5 * p.rho * p.CdA * (v + w) * Math.abs(v + w) * L / p.keff / 1000;
+    out.dh += dh; out.L += L; out.n++;
+  }
+  return out;
+}
 // Cumulative ascent of an elevation array with a hysteresis threshold tau (m):
 // tau=0 sums every positive step (max noise); tau>0 commits a gain only after a
 // net rise of tau, rejecting sub-tau jitter. The raw->tau shrink quantifies noise.
@@ -427,6 +462,7 @@ const TAUS = [0, 1, 2, 3, 5, 10];
 const ELEV = { h: Object.fromEntries(TAUS.map(t => [t, 0])), eng: 0, engS: 0, gravRaw: 0, grav3: 0,
                bySrc: { rwgps_trip: { raw: 0, h3: 0 }, strava: { raw: 0, h3: 0 } } };
 const KH = [];   // per-ride {xkm, hpRaw, hpSm, c=spurious/km, kh, hilly=hpRaw/km} for the heuristic study
+const SC = { emeas: 0, egrav: 0, eroll: 0, eaero: 0, dh: 0, L: 0, n: 0, totalAsc: 0, perRide: [] };  // sustained-climb energy balance
 for (const e of inputs) {
   if (!e.file || !e.has_power) continue;
   try {
@@ -483,6 +519,10 @@ for (const e of inputs) {
     ELEV.gravRaw += beta * hRaw / 1000; ELEV.grav3 += beta * h3 / 1000;
     const hpSm = ascentHyst(deadband(hN, TAU_SMOOTH), 0), xkm = prof.x[prof.x.length - 1] / 1000;
     KH.push({ ride: e.label, xkm, hpRaw: hRaw, hpSm, c: (hRaw - hpSm) / xkm, kh: hpSm / hRaw, hilly: hRaw / xkm });
+    // sustained-climb energy balance (Danilo's k_h fit)
+    const cb = climbBalance(pts, p);
+    for (const k of ['emeas', 'egrav', 'eroll', 'eaero', 'dh', 'L', 'n', 'totalAsc']) SC[k] += cb[k];
+    if (cb.egrav > 0) SC.perRide.push({ ride: e.label, kh: (cb.emeas - cb.eroll - cb.eaero) / cb.egrav, frac: cb.dh / cb.totalAsc });
     const sk = e.source === 'strava' ? 'strava' : 'rwgps_trip';
     if (ELEV.bySrc[sk]) { ELEV.bySrc[sk].raw += hRaw; ELEV.bySrc[sk].h3 += h3; }
     const kj = j => j / 1000, dlt = j => (kj(j) - emp) / emp * 100;
@@ -596,6 +636,18 @@ console.log(`\nheuristic h+_corr vs true smoothed h+ — median |rel err|:`);
 console.log(`  (A) constant k_h = ${f(khMed,2)}                 : ${f(med(errConstKh)*100,1)}%`);
 console.log(`  (B) subtract rate: h+ - ${f(cMed,1)}·x_km        : ${f(med(errRate)*100,1)}%   <- physics-based`);
 console.log(`implied k_h(hilliness) = 1 - c/(h+/x):  flat ride 30 m/km -> ${f(1-cMed/30,2)},  hilly 150 m/km -> ${f(1-cMed/150,2)}`);
+
+// ---- sustained-climb energy balance (the clean k_h fit) ----
+console.log('\n' + '='.repeat(64));
+console.log('SUSTAINED-CLIMB ENERGY BALANCE — sections ≥3% over ≥100 m (measured vs expected)');
+const SCexp = SC.egrav + SC.eroll + SC.eaero;
+console.log(`  ${SC.n} climb sections over ${SC.perRide.length} rides; sustained Δh = ${f(SC.dh,0)} m = ${f(SC.dh/SC.totalAsc*100,0)}% of total ascent`);
+console.log(`  measured Σ∫P·dt on climbs : ${f(SC.emeas,0)} kJ`);
+console.log(`  expected (grav+roll+aero) : ${f(SCexp,0)} kJ   (grav ${f(SC.egrav,0)} + roll ${f(SC.eroll,0)} + aero ${f(SC.eaero,0)})`);
+console.log(`  measured / expected       : ${f(SC.emeas/SCexp,2)}`);
+console.log(`  k_h(sustained) = (measured − roll − aero) / gravity = ${f((SC.emeas-SC.eroll-SC.eaero)/SC.egrav,2)}`);
+const khs = SC.perRide.map(r=>r.kh).filter(Number.isFinite).sort((a,b)=>a-b);
+console.log(`  per-ride k_h(sustained): median ${f(med(khs),2)}  [${f(khs[0],2)}–${f(khs[khs.length-1],2)}]`);
 
 // csv
 const cols = ['ride','source','dist_km','climb_frac','empirical','canonical','approx_off','approx_cf','approx_vc','approx_cf_sheet','canon_vs_emp','off_vs_emp','cf_vs_emp','vc_vs_emp','cfsheet_vs_emp','cfmeas_vs_emp','p_avg','wmes','pflat_extracted','pflat_sheet','data_ratio','sheet_ratio','vf_kmh','vf_sheet_kmh','vf_meas_kmh','pClimb','pFlat','pDescent','error'];
