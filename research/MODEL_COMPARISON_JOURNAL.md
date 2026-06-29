@@ -40,7 +40,51 @@ Running scoreboard — median |Δ%| vs empirical `∫P·dt` over 44 power rides 
 - **Entry 7** (sustained-climb `k_h` fit, `climbBalance` in `compare.mjs`) — [`9135ab9`](../data/activities/compare.mjs)
 - **Entry 8** (closed-form `ε` hypothesis + test, [`eps_hypothesis.mjs`](../data/activities/eps_hypothesis.mjs)) — [`6640780`](../data/activities/eps_hypothesis.mjs)
 - **Entry 9** (censo-hidrográfico urban rides, [`fetch_censo.py`](../data/activities/fetch_censo.py) +
-  [`censo_compare.mjs`](../data/activities/censo_compare.mjs)) — this commit
+  [`censo_compare.mjs`](../data/activities/censo_compare.mjs)) — [`9fc247b`](../data/activities/censo_compare.mjs)
+- **Entry 10** (São Paulo ε hypothesis test, [`eps_sp_test.mjs`](../data/activities/eps_sp_test.mjs)) — this commit
+
+---
+
+## 2026-06-29 — Entry 10: is São Paulo's ε a braking-driven quantity? (no — it's a constant)
+
+*Prompt (Danilo): hypothesise how to estimate ε for São Paulo. Hypothesis tested: urban
+stop-go suppresses descent recovery below the free-coasting closed form, so*
+`ε_SP = clamp(ε_coast − Δε_brake)`, *with* `Δε_brake = (1/(g·H₋))·Σ_descent ½·Δ(v²)` *at forced
+decelerations — readable from the speed trace (post-hoc) or a route's signal/stop/corner density
+(planning).*
+
+Tested on **59 clean censo rides** (power → true descent-balance ε via `epsFromFIT`; speed →
+braking density), α at the *measured* flat speed, assumed rider. Tool:
+[data/activities/eps_sp_test.mjs](../data/activities/eps_sp_test.mjs). Medians: ε_true **0.14**,
+ε_coast **0.35**, gap **0.17** (sd 0.10).
+
+**Refuted — the gap does not track stop-go density:**
+
+| predictor for the gap (ε_coast − ε_true) | corr | R² |
+|---|--:|--:|
+| Δε_brake (descent ½Δv²) | 0.08 | 0.01 |
+| hard-brake (>1 m/s, descent) | −0.18 | 0.03 |
+| all-decel ½Δv² | 0.23 | 0.05 |
+| stops/km | −0.28 | 0.08 |
+| v_f | 0.05 | 0.00 |
+
+Two predictors point the **wrong way**; none explain the per-ride gap. The mechanistic
+`ε_coast − Δε_brake` *over*-corrects (Δε_brake median 0.34 ≫ gap 0.17 → RMS 0.15, **worse** than
+a flat constant). Estimator RMS vs ε_true: flat **ε=0.20 → 0.10**; `ε_coast − 0.13` → 0.12;
+mechanistic → 0.15; ε_coast (no penalty) → 0.22.
+
+**Why it fails — Entry 8's logic biting back.** Braking is *invisible* to ε (coast or brake,
+the legs are idle: `E_legs=0`). The cost is *re-acceleration* — but on a **descent, gravity
+re-supplies the braked-away speed**, so the re-accel is nearly free in leg terms. The KE shed at
+a red light is handed back by the ongoing descent, not by extra pedalling. So urban stop-go does
+**not** suppress descent-ε; the intuition mispriced where the energy goes.
+
+**Conclusion — São Paulo's ε is a constant, not a route-specific braking term.** The over-credit
+of ε_coast (~0.17, just above the open-road 0.13 of Entry 8) is a roughly *constant* offset that
+scales with nothing measurable here. Practical rule: **ε ≈ 0.20** for the model (the Entry 9
+energy-sweep optimum), or pure descent-balance ε ≈ **0.14** (likely deflated by the assumed
+`C_rr = 0.008` being low for rough city asphalt). `ε_coast − 0.15` works about as well and still
+adapts to route steepness — but **drop the braking correction**.
 
 ---
 
