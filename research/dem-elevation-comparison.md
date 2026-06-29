@@ -2,7 +2,7 @@
 
 Does an external DEM give a better elevation/ascent than the device's recorded track?
 This bears directly on the `k_h` ascent-noise work
-([../data/MODEL_COMPARISON_JOURNAL.md](../data/MODEL_COMPARISON_JOURNAL.md) Entry 5,
+([MODEL_COMPARISON_JOURNAL.md](MODEL_COMPARISON_JOURNAL.md) Entry 5,
 [../notas.md](../notas.md) v2): the closed-form climb term `β·h₊` is linear in ascent, so
 the *ascent source* matters a lot. Three 30 m global DEMs — and a 5 m local DTM — were
 sampled at every track point and compared to the recorded barometric elevation.

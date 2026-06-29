@@ -2,7 +2,7 @@
 
 A second, independent check of the three energy models — **canonical**, **smooth
 approximate**, **poor-man's approximate** — on the collective's *own* rides, distinct from
-the 44 long power-meter rides used in [../data/MODEL_COMPARISON_JOURNAL.md](../data/MODEL_COMPARISON_JOURNAL.md)
+the 44 long power-meter rides used in [MODEL_COMPARISON_JOURNAL.md](MODEL_COMPARISON_JOURNAL.md)
 Entries 1–8. Full log: Journal **Entry 9**. Harness:
 [../data/activities/censo_compare.mjs](../data/activities/censo_compare.mjs); downloader
 [../data/activities/fetch_censo.py](../data/activities/fetch_censo.py).
@@ -16,7 +16,8 @@ used. 87 links → 70 downloadable (16 are other riders' Strava, not exportable)
 → **62 after a physical-plausibility cut**.
 
 These are short **urban São Paulo social rides**: median **33 km / 454 m climb / 16.5 km/h /
-~14 m·km⁻¹** — much gentler and slower than the long rides, which is the point of the cross-check.
+~14 m·km⁻¹** — hilly but **stop-go** (traffic lights, intersections, corners), and slower than
+the long open rides. That contrast is the point of the cross-check.
 
 ## Method
 
@@ -56,10 +57,12 @@ cadence coverage → a fuller sensor dropout.) Excluded from the headline either
    (3.9 % vs 6.5 %). The low-compute shortcut costs nothing on real urban rides.
 3. **Descent recovery is real and needed** — ε = 0 over-predicts +7…+10 %. The error floor sits
    at **ε ≈ 0.15–0.20**; ε-sensitivity is ~12–14 pp across the full 0–0.29 ladder.
-4. **The geometry closed-form ε_geom (median 0.29) runs high on this gentle terrain**, causing
-   ~3–5 % under-prediction. This *independently re-confirms* the Entry 8 caveat: ε_geom drifts
-   toward 1 on gentle descents where riders pedal through, over-crediting recovery. **Use ε_geom
-   on hilly routes; a flat ε ≈ 0.20 on gentle urban ones.**
+4. **The geometry closed-form ε_geom (median 0.29) over-credits descent recovery here**, causing
+   ~3–5 % under-prediction. ε_geom assumes *free coasting*, but São Paulo's riding is **stop-go** —
+   constant braking for traffic, lights and corners suppresses recovery below the coasting ideal.
+   That is the **braking penalty** (Entry 8's intuition #4) the open rural rides couldn't isolate.
+   **Use ε_geom (or higher) on open routes you can coast; a flat ε ≈ 0.20 on urban stop-go ones.**
+   (A slightly low assumed C_rr for rough city asphalt may also contribute.)
 
 ## Privacy
 

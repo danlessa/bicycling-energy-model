@@ -8,12 +8,12 @@ last (oldest) entry. Three energies per ride, all in kJ:
 - **canonical** — `canonical().legE`, the forward-dynamics model's `∫P·dt`
 - **approximate** — `approximate().E`, the closed-form `α·x + β(h₊ − ε·h₋)`
 
-Tooling: [data/activities/build_model_inputs.py](activities/build_model_inputs.py)
-(per-ride parameters from the sheet) → [data/activities/compare.mjs](activities/compare.mjs)
+Tooling: [data/activities/build_model_inputs.py](../data/activities/build_model_inputs.py)
+(per-ride parameters from the sheet) → [data/activities/compare.mjs](../data/activities/compare.mjs)
 (runs the **real** engines, ported verbatim from `energy-model-comparison.html`).
 Output: `data/activities/model_comparison.csv` (gitignored). Dataset & verification:
-[data/activities/README.md](activities/README.md),
-[data/VERIFICATION_NOTES.md](VERIFICATION_NOTES.md).
+[data/activities/README.md](../data/activities/README.md),
+[VERIFICATION_NOTES.md](VERIFICATION_NOTES.md).
 
 Running scoreboard — median |Δ%| vs empirical `∫P·dt` over 44 power rides (best first):
 
@@ -38,9 +38,9 @@ Running scoreboard — median |Δ%| vs empirical `∫P·dt` over 44 power rides 
 - **Entry 6** (DEM/IGC comparison, `research/dem/`) — `7d958ca`; IGC 5 m + `k_DEM`/`k_h`
   split in `3f98465`, `a184286`
 - **Entry 7** (sustained-climb `k_h` fit, `climbBalance` in `compare.mjs`) — [`9135ab9`](../data/activities/compare.mjs)
-- **Entry 8** (closed-form `ε` hypothesis + test, [`eps_hypothesis.mjs`](activities/eps_hypothesis.mjs)) — [`6640780`](../data/activities/eps_hypothesis.mjs)
-- **Entry 9** (censo-hidrográfico urban rides, [`fetch_censo.py`](activities/fetch_censo.py) +
-  [`censo_compare.mjs`](activities/censo_compare.mjs)) — this commit
+- **Entry 8** (closed-form `ε` hypothesis + test, [`eps_hypothesis.mjs`](../data/activities/eps_hypothesis.mjs)) — [`6640780`](../data/activities/eps_hypothesis.mjs)
+- **Entry 9** (censo-hidrográfico urban rides, [`fetch_censo.py`](../data/activities/fetch_censo.py) +
+  [`censo_compare.mjs`](../data/activities/censo_compare.mjs)) — this commit
 
 ---
 
@@ -52,8 +52,8 @@ collective's own rides (`censo-hidrografico.xlsx`, Strava/RWGPS links), assuming
 activities — never the censo's own energy columns.*
 
 **A different dataset from the `longoes` rides above** — 62 short **urban São Paulo** social
-rides (median 33 km, 454 m climb, **16.5 km/h**, ~14 m/km — gentle), vs. the 44 long
-power-meter rides of Entries 1–8. Pipeline: 87 activity links (cols Q/R, RWGPS preferred) →
+rides (median 33 km, 454 m climb, **16.5 km/h**, ~14 m/km — hilly but **stop-go**: traffic
+lights, intersections, corners), vs. the 44 long, openable power-meter rides of Entries 1–8. Pipeline: 87 activity links (cols Q/R, RWGPS preferred) →
 70 downloadable (16 are other riders' Strava, not exportable by the owner's cookie) → 69 with
 power → **62 after a physical-plausibility cut**. Everything factual is derived from the track
 (geometry, FIT-extracted regime powers, v_f, ∫P·dt); the sheet supplies only the links.
@@ -91,13 +91,16 @@ wreck the mean.
   low-compute closed form.
 - **ε ≈ 0.15–0.20 is the sweet spot** (med \|Δ%\| floor ~4 %); `ε=0` over-predicts +7…+10 %, so
   descent recovery is real and needed. ε-sensitivity is ~12–14 pp across the full ladder.
-- **`ε_geom` (median 0.29) runs high on this gentle terrain → ~3–5 % under-prediction.** This
-  *independently re-confirms Entry 8's caveat*: the closed-form ε drifts toward 1 on gentle
-  descents where riders actually pedal through, so it over-credits recovery. `ε_geom` is the
-  right tool on hilly rides; a flat **ε ≈ 0.20** constant is better on gentle urban ones.
+- **`ε_geom` (median 0.29) over-credits descent recovery here → ~3–5 % under-prediction.**
+  `ε_geom` assumes *free coasting*, but São Paulo's riding is **stop-go** — constant braking
+  for traffic, lights and corners suppresses recovery well below the coasting ideal. This is
+  the **braking penalty** (Entry 8's intuition #4) that the open rural rides couldn't isolate
+  — the urban set surfaces it. So: `ε_geom` (or higher) on open routes you can actually coast;
+  a flat **ε ≈ 0.20** on urban stop-go ones. (A slightly low assumed `C_rr` for rough city
+  asphalt may also nudge the under-prediction.)
 
-Tooling: [data/activities/fetch_censo.py](activities/fetch_censo.py) (RWGPS-preferred
-downloader) → [data/activities/censo_compare.mjs](activities/censo_compare.mjs). Output
+Tooling: [data/activities/fetch_censo.py](../data/activities/fetch_censo.py) (RWGPS-preferred
+downloader) → [data/activities/censo_compare.mjs](../data/activities/censo_compare.mjs). Output
 `censohidrografico/censo_comparison.csv` (gitignored, like the tracks and the sheet).
 
 ---
@@ -119,7 +122,7 @@ same `α·dx`), `ε(s) = (α·dx − E_legs)/(β·h₋)` collapses to a function
 drop-weighted over the descent profile (or lumped with `s̄ = H₋/X₋`). Tested against the
 per-ride **descent-energy-balance ε** (`epsFromBalance`, the app's `epsFromFIT`: 30 m cells,
 `ε = (α·X₋ − E_legs,₋)/(β·H₋)`, α at the *measured* flat speed) over the 44 power rides.
-Tool: [data/activities/eps_hypothesis.mjs](activities/eps_hypothesis.mjs) (κ = curviness in
+Tool: [data/activities/eps_hypothesis.mjs](../data/activities/eps_hypothesis.mjs) (κ = curviness in
 rad/km from the GPS, `f_unpaved` = sheet col I).
 
 **The grade core holds — but only where ε carries energy:**
@@ -215,7 +218,7 @@ what is k_h for h₊/h₋ derived from a DEM?*
 
 Sampled three independent 30 m DEMs at every track point for the 12 rides inside the São
 Paulo tile S24W047, vs the recorded barometric track. Full write-up:
-[../research/dem-elevation-comparison.md](../research/dem-elevation-comparison.md).
+[dem-elevation-comparison.md](dem-elevation-comparison.md).
 
 **Headline.** DEMs are accurate *terrain* models (elevation shape matches the recorded
 track to ~7–8 m RMS; SRTM sits ~7 m above FABDEM = the canopy/buildings FABDEM strips).

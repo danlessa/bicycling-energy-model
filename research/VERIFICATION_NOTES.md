@@ -3,12 +3,12 @@
 These notes record how the per-ride dataset derived from `longoes.xlsx`
 (sheet **`Atividades v2`**) was cross-checked against the downloaded activity
 tracks, and what the check found. The dataset, downloader and verifier live in
-[data/activities/](data/activities/); this file is the human-readable summary.
+[data/activities/](../data/activities/); this file is the human-readable summary.
 
-- **What was checked:** the values in [longoes.csv](data/activities/longoes.csv)
+- **What was checked:** the values in [longoes.csv](../data/activities/longoes.csv)
   (transcribed from the spreadsheet) against the file-derivable quantities
   recomputed from each ride's track.
-- **Tool:** [data/activities/verify.py](data/activities/verify.py) — a
+- **Tool:** [data/activities/verify.py](../data/activities/verify.py) — a
   dependency-free multi-format track reader (RideWithGPS/Strava `.fit`, `.gpx`).
   Run `python3 verify.py`; per-ride detail lands in `longoes_verify.csv`.
 - **Date of run:** 2026-06-28.

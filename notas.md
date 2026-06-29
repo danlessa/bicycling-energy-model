@@ -49,7 +49,7 @@ $$
 ### v2
 
 Two refinements to v1, each removing a systematic bias measured against power-meter
-rides (see `data/MODEL_COMPARISON_JOURNAL.md`):
+rides (see `research/MODEL_COMPARISON_JOURNAL.md`):
 
 $$
 E \approx \alpha_r\, x + \alpha_a\, x_{flat} + k_h\,k_{smooth}\,\beta\,(h_+ - \epsilon\, h_-),

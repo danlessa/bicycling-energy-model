@@ -4,7 +4,7 @@ A literature survey to put **priors** on the two parameters the energy model is 
 sensitive to — rolling-resistance coefficient `C_rr` and drag area `CdA` — and to sanity-
 check the values used in `longoes.xlsx` against published data. Written for the
 Pedal Hidrográfico [bicycling-energy-model](../energy-model-comparison.html); see also
-[../data/MODEL_COMPARISON_JOURNAL.md](../data/MODEL_COMPARISON_JOURNAL.md).
+[MODEL_COMPARISON_JOURNAL.md](MODEL_COMPARISON_JOURNAL.md).
 
 > **Why this matters for *both* models.** `C_rr` and `CdA` enter the closed-form
 > `α = (C_rr·mg + ½ρCdA·(v_f+wind)²)/k_eff` directly — but they also drive the
@@ -208,7 +208,7 @@ choice matters far less than how the rider sits.
 **The `CdA` tension (and how the rides adjudicate it).** Literature says ~0.30–0.34 on the
 hoods for this rider, vs the sheet's 0.36–0.40 — suggesting the sheet `CdA` is slightly
 high. *But* the model's behaviour pointed the other way: in
-[Entry 4](../data/MODEL_COMPARISON_JOURNAL.md) the simulated flat speed (23.4 km/h) ran
+[Entry 4](MODEL_COMPARISON_JOURNAL.md) the simulated flat speed (23.4 km/h) ran
 ~6% **above** the measured flat speed (22.1), which means total flat resistance is slightly
 **under**-estimated — the opposite of "CdA too high." The most likely reconciliation is
 that the *extracted* flat power (0.94× the rider's average) is **too high** (it includes
