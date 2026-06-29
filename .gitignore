@@ -10,6 +10,13 @@ data/activities/strava/
 data/activities/*.json
 data/activities/*.csv
 
+# Censo Hidrográfico activity tracks (Strava/RWGPS originals) — GPS, never commit.
+# Whole dir: raw tracks + manifest.json + any derived csv.
+data/activities/censohidrografico/
+
+# The censo spreadsheet itself carries activity links / attendance — keep local.
+data/censo-hidrografico.xlsx
+
 # OS / editor cruft
 .DS_Store
 .vscode/

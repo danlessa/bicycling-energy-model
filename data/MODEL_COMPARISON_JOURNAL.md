@@ -38,7 +38,67 @@ Running scoreboard — median |Δ%| vs empirical `∫P·dt` over 44 power rides 
 - **Entry 6** (DEM/IGC comparison, `research/dem/`) — `7d958ca`; IGC 5 m + `k_DEM`/`k_h`
   split in `3f98465`, `a184286`
 - **Entry 7** (sustained-climb `k_h` fit, `climbBalance` in `compare.mjs`) — [`9135ab9`](../data/activities/compare.mjs)
-- **Entry 8** (closed-form `ε` hypothesis + test, [`eps_hypothesis.mjs`](activities/eps_hypothesis.mjs)) — this commit
+- **Entry 8** (closed-form `ε` hypothesis + test, [`eps_hypothesis.mjs`](activities/eps_hypothesis.mjs)) — [`6640780`](../data/activities/eps_hypothesis.mjs)
+- **Entry 9** (censo-hidrográfico urban rides, [`fetch_censo.py`](activities/fetch_censo.py) +
+  [`censo_compare.mjs`](activities/censo_compare.mjs)) — this commit
+
+---
+
+## 2026-06-28 — Entry 9: closed-form models vs the Pedal Hidrográfico urban rides
+
+*Prompt (Danilo): verify canonical / smooth-approximate / poor-man's-approximate against the
+collective's own rides (`censo-hidrografico.xlsx`, Strava/RWGPS links), assuming the rider
+(78 kg, CdA 0.40, C_rr 0.008, 100 % paved) and sweeping ε. Only **derived** metrics from the
+activities — never the censo's own energy columns.*
+
+**A different dataset from the `longoes` rides above** — 62 short **urban São Paulo** social
+rides (median 33 km, 454 m climb, **16.5 km/h**, ~14 m/km — gentle), vs. the 44 long
+power-meter rides of Entries 1–8. Pipeline: 87 activity links (cols Q/R, RWGPS preferred) →
+70 downloadable (16 are other riders' Strava, not exportable by the owner's cookie) → 69 with
+power → **62 after a physical-plausibility cut**. Everything factual is derived from the track
+(geometry, FIT-extracted regime powers, v_f, ∫P·dt); the sheet supplies only the links.
+
+**Physical floor — drop the not-fully-pedalled rides.** Pedalling energy must cover the
+(momentum-corrected, 2 m-deadband) climbing PE `mg·h₊_sm/k_eff`; **7 rides measure below it**
+(down to 53 %) — impossible for a fully-pedalled ride. *Why?* The clean test is **cadence**
+(Danilo: pedalling ⇔ cadence > 0). On 6 of the 7, cadence coverage is 73–100 % and the
+walking signal — moving < 4 km/h **with cadence 0** — is only **~1 %**. So the riders were
+*pedalling, not walking*; the deficit is a **power-channel problem** (power dropping out while
+cadence kept logging, or an under-reading meter). The 7th (Mirantes, 31 % cadence coverage) is
+a fuller sensor dropout. Walking does happen on these rides in general, but for *these* it is
+ruled out — and the floor excludes them either way. They over-predict by +79…+373 % and would
+wreck the mean.
+
+**Result on the 62 clean rides** — Δ% vs measured ∫P·dt, ε swept:
+
+| model | med \|Δ%\| | medΔ% | meanΔ% |
+|---|--:|--:|--:|
+| canonical (fed ride powers) | 6.5 | −3.4 | −0.8 |
+| smooth approx · ε=0.10 | 4.5 | +3.4 | +5.7 |
+| smooth approx · ε=0.15 | 4.9 | +1.3 | +3.4 |
+| smooth approx · ε=0.20 | 4.7 | −0.8 | +1.2 |
+| **poor-man's · ε=0.20** | **3.9** | +1.1 | +4.6 |
+| poor-man's · ε=0.25 | 4.8 | −1.2 | +2.0 |
+| poor-man's · ε=geom (0.29) | 6.4 | −3.3 | +1.1 |
+| smooth approx · ε=geom (0.29) | 7.6 | −4.9 | −2.0 |
+| (ε=0.00, both) | 7.5 / 10.5 | +7.4 / +10.5 | — |
+
+- **All three models reproduce measured energy to ~4–7 %** — and with a *generic assumed
+  rider*, not per-ride fitted params. So as a **planning tool** (know mass/CdA/C_rr, run the
+  closed form) the model lands within ~5 % on real rides.
+- **The poor-man's scalar `k_smooth` is as good as the full simulation** (3.9 % vs canonical
+  6.5 %). The `k_smooth = 1 − 0.003·x/h₊` shortcut loses nothing here — strong support for the
+  low-compute closed form.
+- **ε ≈ 0.15–0.20 is the sweet spot** (med \|Δ%\| floor ~4 %); `ε=0` over-predicts +7…+10 %, so
+  descent recovery is real and needed. ε-sensitivity is ~12–14 pp across the full ladder.
+- **`ε_geom` (median 0.29) runs high on this gentle terrain → ~3–5 % under-prediction.** This
+  *independently re-confirms Entry 8's caveat*: the closed-form ε drifts toward 1 on gentle
+  descents where riders actually pedal through, so it over-credits recovery. `ε_geom` is the
+  right tool on hilly rides; a flat **ε ≈ 0.20** constant is better on gentle urban ones.
+
+Tooling: [data/activities/fetch_censo.py](activities/fetch_censo.py) (RWGPS-preferred
+downloader) → [data/activities/censo_compare.mjs](activities/censo_compare.mjs). Output
+`censohidrografico/censo_comparison.csv` (gitignored, like the tracks and the sheet).
 
 ---
 
