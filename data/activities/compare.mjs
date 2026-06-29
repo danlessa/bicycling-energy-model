@@ -451,6 +451,33 @@ function measuredFlatSpeed(pts) {
   for (let k = 0; k < nc; k++) { const gr = (cellAlt[k + 1] - cellAlt[k]) / DX; if (Math.abs(gr) < 0.01 && sw[k] > 0) { SV += sv[k]; SW += sw[k]; } }
   return SW > 0 ? SV / SW : null;
 }
+// Descent-energy-balance ε (ported from the app's epsFromFIT): 30 m cells,
+//   ε = (α·X₋ − E_legs,₋) / (β·H₋),  α using the MEASURED flat speed.
+// Local to descents — not polluted by climb/aero errors, so far more stable per ride.
+function epsFromBalance(pts, p) {
+  if (!pts || pts.length < 2) return NaN;
+  const mg = p.m * G, beta = mg / p.keff;
+  const x0 = pts[0].x, totalM = pts[pts.length - 1].x - x0, DX = 30, nc = Math.floor(totalM / DX);
+  if (nc < 2) return NaN;
+  let j = 0;
+  const altAt = d => { while (j < pts.length - 2 && pts[j + 1].x < d) j++; const seg = pts[j + 1].x - pts[j].x, f = seg > 1e-9 ? (d - pts[j].x) / seg : 0; return pts[j].alt * (1 - f) + pts[j + 1].alt * f; };
+  const cellAlt = new Float64Array(nc + 1);
+  for (let k = 0; k <= nc; k++) cellAlt[k] = altAt(x0 + k * DX);
+  const cellE = new Float64Array(nc), cellVs = new Float64Array(nc), cellVt = new Float64Array(nc);
+  for (const r of pts) {
+    const k = Math.floor((r.x - x0) / DX); if (k < 0 || k >= nc) continue;
+    const w = r.dt || 1;
+    if (r.power !== undefined) cellE[k] += r.power * w;
+    if (r.v !== undefined) { cellVs[k] += r.v * w; cellVt[k] += w; }
+  }
+  let sv = 0, sw = 0;   // v_f = time-weighted mean GROUND speed on flat cells (|grade| < 1%)
+  for (let k = 0; k < nc; k++) { const gr = (cellAlt[k + 1] - cellAlt[k]) / DX; if (Math.abs(gr) < 0.01 && cellVt[k] > 0) { sv += cellVs[k]; sw += cellVt[k]; } }
+  const vf = sw > 0 ? sv / sw : 5, aeroSpd = vf + p.wind;
+  const alpha = (p.Crr * mg + 0.5 * p.rho * p.CdA * aeroSpd * Math.abs(aeroSpd)) / p.keff;
+  let Xd = 0, Hd = 0, Ed = 0;
+  for (let k = 0; k < nc; k++) { const dh = cellAlt[k + 1] - cellAlt[k]; if (dh < 0) { Xd += DX; Hd -= dh; Ed += cellE[k]; } }
+  return Hd < 1 ? NaN : (alpha * Xd - Ed) / (beta * Hd);
+}
 
 const inputs = JSON.parse(fs.readFileSync(path.join(HERE, 'model_inputs.json'), 'utf8'));
 const rows = [];
@@ -504,6 +531,11 @@ for (const e of inputs) {
     const km = aCf.hplus > 0 ? Math.max(0, 1 - 3 * (prof.x[prof.x.length - 1] / 1000) / aCf.hplus) : 1;
     const eKsmooth = aCf.roll + aCf.aero + km * (aCf.climb + aCf.recov);   // J
     const emp = empiricalKJ(pts);                               // kJ
+    // fit ε per ride against the SMOOTHENED model (k_h=1, deadband h±): solve
+    //   E = roll + aero + β·h₊ − ε·β·h₋ = empirical  ⇒  ε* = (roll+aero+β·h₊ − emp)/(β·h₋)
+    const betaR = e.m * G / e.keff, bHm = betaR * aCfS.hminus;
+    const epsFit = bHm > 1e-6 ? (aCfS.roll + aCfS.aero + aCfS.climb - emp * 1000) / bHm : NaN;
+    const epsBal = epsFromBalance(pts, p);   // descent-energy-balance ε (stable, local to descents)
     const empReg = empiricalByRegime(pts, CLIMB_THR, DESC_THR);
     for (const rg of ['climb', 'flat', 'descent']) {
       REG[rg].emp += empReg[rg] / 1000;
@@ -539,7 +571,7 @@ for (const e of inputs) {
       canon_vs_emp: dlt(c.legE), off_vs_emp: dlt(aOff.E), cf_vs_emp: dlt(aCf.E), vc_vs_emp: dlt(aVc.E),
       cfsheet_vs_emp: dlt(aCfSheet.E), cfmeas_vs_emp: dlt(aCfMeas.E),
       canonS_vs_emp: dlt(cS.legE), offS_vs_emp: dlt(aOffS.E), cfS_vs_emp: dlt(aCfS.E),
-      ksmooth_vs_emp: dlt(eKsmooth),
+      ksmooth_vs_emp: dlt(eKsmooth), eps_sheet: e.eps, eps_fit: epsFit, eps_bal: epsBal,
       p_avg: pAvg, wmes: e.wmes, pflat_extracted: pw.flat, pflat_sheet: pFlatSheet,
       data_ratio: e.wmes ? pw.flat / e.wmes : null, sheet_ratio: e.pflat_pavg,  // both flat/<W>_mes
       vf_kmh: vf * 3.6, vf_sheet_kmh: vfSheet * 3.6, vf_meas_kmh: vfMeas * 3.6,
@@ -665,6 +697,15 @@ for (const [lab, key] of [
   const s = stats(key);
   console.log(`${lab.padEnd(34)}${String(s.n).padStart(3)}${f(s.medAbs,1).padStart(9)}${f(s.medSigned,1).padStart(8)}${f(s.mean,1).padStart(8)}`);
 }
+
+// ---- fitted ε per ride (smoothened model) vs the sheet's g_d_eff ----
+console.log('\n' + '='.repeat(64));
+console.log('ε per ride: sheet g_d_eff · whole-ride fit (smoothened) · descent-energy-balance (epsFromFIT)');
+console.log(`${'ride'.padEnd(26)}${'sheet'.padStart(7)}${'fit'.padStart(7)}${'balance'.padStart(9)}`);
+for (const r of good) console.log(`${r.ride.slice(0,25).padEnd(26)}${f(r.eps_sheet,2).padStart(7)}${f(r.eps_fit,2).padStart(7)}${f(r.eps_bal,2).padStart(9)}`);
+const efit = good.map(r => r.eps_fit).filter(Number.isFinite).sort((a,b)=>a-b);
+const ebal = good.map(r => r.eps_bal).filter(Number.isFinite).sort((a,b)=>a-b);
+console.log(`median: sheet ${f(med(good.map(r=>r.eps_sheet)),2)}  fit ${f(med(efit),2)} [${f(efit[0],2)}..${f(efit[efit.length-1],2)}]  balance ${f(med(ebal),2)} [${f(ebal[0],2)}..${f(ebal[ebal.length-1],2)}]`);
 
 // csv
 const cols = ['ride','source','dist_km','climb_frac','empirical','canonical','approx_off','approx_cf','approx_vc','approx_cf_sheet','canon_vs_emp','off_vs_emp','cf_vs_emp','vc_vs_emp','cfsheet_vs_emp','cfmeas_vs_emp','cfS_vs_emp','canonS_vs_emp','ksmooth_vs_emp','p_avg','wmes','pflat_extracted','pflat_sheet','data_ratio','sheet_ratio','vf_kmh','vf_sheet_kmh','vf_meas_kmh','pClimb','pFlat','pDescent','error'];
