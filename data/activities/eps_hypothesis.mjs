@@ -336,3 +336,12 @@ for (const [lab, fx] of models) {
   console.log(`  ${lab.padEnd(24)} R²=${f2(o.r2)}  RMS=${f2(o.rms)}   ${terms}`);
 }
 console.log('\n(signs to expect if the hypothesis holds: ε_coast coeff > 0; κ and unpaved coeffs < 0)');
+
+// ---- per-ride CSV (for research/figs/make_figures.py; no GPS, gitignored like the others) ----
+const csvHead = 'ride,epsBal,epsCoast,epsLump,sbar,bHminus,kappa,unpaved,sheet';
+const csvRows = good.map(r => [
+  JSON.stringify(r.ride), r.epsBal, r.epsCoast, r.epsLump, r.sbar, r.bHd,
+  r.kappa == null ? '' : r.kappa, r.unpaved == null ? '' : r.unpaved, r.sheet == null ? '' : r.sheet
+].join(','));
+fs.writeFileSync(path.join(HERE, 'eps_hypothesis.csv'), csvHead + '\n' + csvRows.join('\n') + '\n');
+console.log(`\nwrote eps_hypothesis.csv (${good.length} rides)`);
