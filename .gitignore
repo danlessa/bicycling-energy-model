@@ -14,6 +14,11 @@ data/activities/*.csv
 # Whole dir: raw tracks + manifest.json + any derived csv.
 data/activities/censohidrografico/
 
+# P. Paz's Strava history export (second rider, shared with consent) — GPS +
+# third-party personal data, never commit. Whole dir: fit.gz/gpx originals +
+# any manifest/derived files.
+data/activities/strava_ppaz/
+
 # The censo spreadsheet itself carries activity links / attendance — keep local.
 data/censo-hidrografico.xlsx
 
