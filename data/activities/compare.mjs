@@ -734,7 +734,7 @@ console.log('CROSS-COMPARISON vs empirical ∫P·dt (≈ sheet Work Bike), 44 ri
 console.log(`${'model'.padEnd(34)}${'n'.padStart(3)}${'med|Δ%|'.padStart(9)}${'medΔ%'.padStart(8)}${'meanΔ%'.padStart(8)}`);
 for (const [lab, key] of [
   ['canonical (forward sim)', 'canon_vs_emp'],
-  ['smoothened (cf + real 2 m deadband)', 'cfS_vs_emp'],
+  [`smoothened (cf + real ${TAU_SMOOTH} m deadband)`, 'cfS_vs_emp'],
   ['k_smooth (cf + scalar, no smoothing)', 'ksmooth_vs_emp']]) {
   const s = stats(key);
   console.log(`${lab.padEnd(34)}${String(s.n).padStart(3)}${f(s.medAbs,1).padStart(9)}${f(s.medSigned,1).padStart(8)}${f(s.mean,1).padStart(8)}`);

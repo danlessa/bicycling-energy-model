@@ -110,7 +110,7 @@ function ptsFromFIT(recs) {
   const pts = [];
   if (recs.some(r => r.dist !== undefined)) {
     const di = [], dv = [];
-    recs.forEach((r, i) => { if (r.dist !== undefined) { di.push(i); dv.push(r.dist); } });
+    recs.forEach((r, i) => { if (r.dist !== undefined) { di.push(i); dv.push(dv.length ? Math.max(r.dist, dv[dv.length - 1]) : r.dist); } });   // clip non-monotone device distance
     let lastAlt, k = 0;
     for (let i = 0; i < recs.length; i++) {
       if (recs[i].alt !== undefined) lastAlt = recs[i].alt;
