@@ -269,5 +269,40 @@ def fig5():
     f.save('fig5-censo-sweep.svg')
 
 
+# ---- Figure 6: the SECOND-RIDER ε test (estimators frozen from rider 1) ----
+def fig6():
+    path6 = os.path.join(ACT, 'ppaz_comparison.csv')
+    if not os.path.exists(path6):
+        print('skip fig6 (no ppaz_comparison.csv — run ppaz_compare.mjs)')
+        return
+    rows = load(path6)
+    P = []
+    for r in rows:
+        ec, eb, sb, hd = num(r['epsCoast']), num(r['epsBal']), num(r['sbar']), num(r['Hd'])
+        if None in (ec, eb, sb, hd):
+            continue
+        P.append((ec, eb, sb, hd))
+    hmax = max(p[3] for p in P)
+    xr, yr = (0, 1), (-0.4, 1.2)
+    f = Fig(440, 400, pad=(40, 18, 46, 54))
+    f.frame(xr, yr, 'ε_coast  (geometry-only prediction)', 'ε_bal  (power-measured, rider 2)',
+            xticks=[0, .25, .5, .75, 1], yticks=[-.25, 0, .25, .5, .75, 1],
+            title='Second rider (441 rides) — calibration frozen from rider 1')
+    f.line([(0, 0), (1, 1)], xr, yr, GREY, 1.2, dash='4 3')            # y = x
+    f.line([(0.13, 0), (1, 0.87)], xr, yr, GREEN, 2.0)                 # y = x − 0.13 (FROZEN)
+    for ec, eb, sb, hd in P:
+        r = 2.2 + 5.5 * math.sqrt(hd / hmax)      # area ∝ descent drop H₋
+        real = sb >= 0.03
+        f.dot(ec, min(eb, 1.2), xr, yr, r, VERM if real else GREY, 0.45 if real else 0.22,
+              stroke='none')
+    f.body.append(f'<text x="{f.x1-10:.0f}" y="{f.y0+18:.0f}" text-anchor="end" {FONT} '
+                  f'font-size="11" fill="{GREEN}">ε = ε_coast − 0.13 (frozen)</text>')
+    f.legend([('real descents (s̄ ≥ 3%, n = 156)', VERM), ('gentle rides', GREY)],
+             f.x0 + 12, f.y1 - 40)
+    f.body.append(f'<text x="{f.x0+12:.0f}" y="{f.y1-4:.0f}" {FONT} font-size="10" '
+                  f'fill="{GREY}">point area ∝ descent drop H₋</text>')
+    f.save('fig6-ppaz-eps.svg')
+
+
 if __name__ == '__main__':
-    fig1(); fig2(); fig3(); fig4(); fig5()
+    fig1(); fig2(); fig3(); fig4(); fig5(); fig6()

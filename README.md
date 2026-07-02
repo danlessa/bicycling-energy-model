@@ -47,11 +47,13 @@ empirical-ε and statistics work; no GPS coordinates). Raw `*.fit` tracks, the
 per-rider spreadsheets, and the downloaded activity dirs under `data/activities/`
 are **gitignored** — they carry GPS tracks and private activity links.
 
-The model has been validated against power-meter rides (44 long "longões" +
-62 urban "censo" rides): the harnesses live in `data/activities/` (`compare.mjs`,
-`censo_compare.mjs`, `eps_hypothesis.mjs`, `eps_sp_test.mjs`) and the write-ups —
-including a draft paper — live in **`research/`** (`MODEL_COMPARISON_JOURNAL.md`,
-`article-draft.md`, `literature-context.md`, …).
+The model has been validated against power-meter rides from two riders (44 long
+"longões" + 62 urban "censo" rides from rider 1, and 441 rides from a second
+rider on whom the ε calibration was confirmed *frozen* — nothing refit): the
+harnesses live in `data/activities/` (`compare.mjs`, `censo_compare.mjs`,
+`eps_hypothesis.mjs`, `eps_sp_test.mjs`, `ppaz_inventory.mjs`, `ppaz_compare.mjs`)
+and the write-ups — including a draft paper — live in **`research/`**
+(`MODEL_COMPARISON_JOURNAL.md`, `article-draft.md`, `literature-context.md`, …).
 
 ---
 

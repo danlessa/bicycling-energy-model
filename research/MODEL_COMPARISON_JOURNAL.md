@@ -48,7 +48,88 @@ changed. See Entry 11.)*
   [`censo_compare.mjs`](../data/activities/censo_compare.mjs)) — [`9fc247b`](../data/activities/censo_compare.mjs)
 - **Entry 10** (São Paulo ε hypothesis test, [`eps_sp_test.mjs`](../data/activities/eps_sp_test.mjs)) — `707c584`
 - **Entry 11** (general review: code fixes + honesty corrections across engines, parsers, and
-  every downstream number) — this commit
+  every downstream number) — `906de11`
+- **Entry 12** (second rider: P. Paz's Strava export, [`ppaz_inventory.mjs`](../data/activities/ppaz_inventory.mjs) +
+  [`ppaz_compare.mjs`](../data/activities/ppaz_compare.mjs)) — this commit
+
+---
+
+## 2026-07-02 — Entry 12: a second rider — the frozen ε estimator survives the transfer
+
+*Prompt (Danilo): P. Paz shared their full Strava history export (`data/activities/strava_ppaz/`,
+gitignored — third-party GPS, shared with consent). Incorporate it into the analysis.*
+
+**This is the external-validity test §10.4 named as the deepest limitation** — until now every
+number came from one rider and one power meter. P. Paz is a different rider, on a different
+meter, with a different riding profile (median v_f **26.6 km/h** vs Danilo's 16.5 urban /
+23.4 longões — a faster, open-road rider).
+
+**Inventory** ([`ppaz_inventory.mjs`](../data/activities/ppaz_inventory.mjs)): 1 054 FIT files
+parsed, 0 errors, 2023-10 → 2026-07. 1 052 rides, **753 with power** (>50% coverage), 493 of
+them ≥ 20 km. After the harness filters (altitude ≥ 99%, not-Zwift via FIT `file_id`
+manufacturer — **45 virtual rides excluded** — and power present): **441 usable rides**, none
+excluded by the physical floor (P. Paz's meter shows no censo-style dropouts).
+
+**Implied mass, not assumed** ([`ppaz_compare.mjs`](../data/activities/ppaz_compare.mjs) pass A).
+We don't know P. Paz's mass, so it is *inverted from the sustained-climb energy balance* (the
+Entry 7 machinery): on climbs ≥ 3% over ≥ 100 m, measured ≈ (grav+roll)·(m/m₀) + aero. Over
+**10 124 sections, 209 km of sustained Δh**: global m̂ = 75.6 kg; **per-ride median m̂ = 74.3 kg**
+[IQR 69.0–78.2, n = 247 rides with ≥ 200 m sustained] — physically plausible for rider+bike+gear,
+and tight. CdA 0.40 / C_rr 0.008 / ρ 1.13 assumed as in the censo run.
+
+**Energy scoreboard on 441 clean rides** (medians: 58.2 km, 566 m h₊, ε_geom 0.54):
+
+| model | med \|Δ%\| | medΔ% | meanΔ% |
+|---|--:|--:|--:|
+| **poor-man's · ε=geom** | **4.9** | **+0.6** | +0.8 |
+| smooth approx · ε=geom | 5.8 | +4.3 | +3.9 |
+| poor-man's · ε=0.25 | 6.3 | +4.1 | +4.7 |
+| canonical (fed ride powers) | 6.8 | +5.0 | +5.1 |
+| poor-man's · ε=0.20 | 6.8 | +5.4 | +6.0 |
+| smooth approx · ε=0.20 | 10.1 | +10.0 | +10.0 |
+| (ε=0.00: smooth 14.2 / poor-man's 9.8) | — | — | — |
+
+- **All models land within ~5–7% median with fully assumed physics** (only mass data-implied) —
+  the censo-level result reproduces on a rider we know nothing about a priori.
+- **`ε_geom` is the *best* variant here (+0.6% bias)** — the reverse of the censo, and exactly
+  what the corpus-bounded rule predicts: P. Paz's riding is open and coastable (median ride
+  58 km at 26.6 km/h), so the free-coasting geometry applies; flat ε = 0.20 *under*-credits
+  recovery on this corpus (+5…+10% over-prediction). The censo/longões rule — `ε_geom` on open
+  routes, flat ≈ 0.20 on urban stop-go — is confirmed from the other side.
+
+**The ε second-rider test — nothing refit.** Per-ride descent-balance ε_bal vs geometric
+ε_coast on 30 m cells (α at P. Paz's measured flat speed), with every estimator **frozen from
+rider 1**:
+
+| estimator (frozen) | RMS, all n=436 | RMS, s̄ ≥ 3% (n=156) |
+|---|--:|--:|
+| **`clamp01(ε_coast − 0.13)`** | **0.280** | **0.091** |
+| flat ε = 0.20 | 0.484 | 0.227 |
+| flat ε = 0.23 | 0.464 | 0.204 |
+| *in-sample* flat = median ε_bal | 0.356 | 0.139 |
+
+- **The frozen rider-1 estimator beats even P. Paz's own best flat constant by ~35%**
+  (0.091 vs 0.139 at s̄ ≥ 3%, n = 156 — seven times the n=22 subset it was calibrated on) — and,
+  unlike on rider 1, it wins on *all* rides too (0.280 vs 0.356), because this rider's gentle
+  rides still coast.
+- **The −0.13 offset reproduces independently**: P. Paz's measured gap med(ε_coast) − med(ε_bal)
+  at s̄ ≥ 3% is **0.12** (0.48 − 0.36). Two riders, two meters, same near-constant offset.
+- **Mass-insensitivity**: rerunning with m ∈ {70, 74.3, 78} kg moves the frozen-estimator RMS
+  only 0.096/0.091/0.088 (in-sample flat 0.147/0.139/0.133) — the conclusion does not depend on
+  the in-sample mass calibration. (`PPAZ_M=<kg> node ppaz_compare.mjs`.)
+- corr(ε_coast, ε_bal) = 0.81 at s̄ ≥ 3% — but as always (Entry 11) that correlation is
+  part–whole; the frozen-vs-flat RMS comparison above is the honest statistic, and it is the
+  out-of-sample one.
+
+**Caveats, honestly.** Same collective and city region (shared riding culture and roads —
+some rides may even be the same group events, though measured on an independent body and
+meter); rider-2 CdA/C_rr still assumed, mass calibrated in-sample from climbs (ε result shown
+insensitive); the ε evaluation shares its *method* (30 m cells, measured flat speed) with
+rider 1, so a method-level artifact would not be caught by this test. n(riders) = 2 — but the
+step from 1 to 2 is the big one.
+
+Tooling: `node ppaz_inventory.mjs && node ppaz_compare.mjs` (reads the gitignored export;
+writes `strava_ppaz_manifest.json` + `ppaz_comparison.csv`, both gitignored).
 
 ---
 

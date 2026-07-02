@@ -25,15 +25,19 @@ home of the *derivation* (`notas.md`) and the side-by-side comparison.
   bridge through descent power. **Keep it in sync with the code** — a model
   change lands in both.
 - `data/` — `sample.gpx` (synthetic) and `flecha_power.csv` (no GPS) committed;
-  all `*.fit`, the `data/activities/{rwgps,strava,censohidrografico}/` track dirs,
-  `data/longoes.xlsx` and `data/censo-hidrografico.xlsx` are **gitignored** (GPS /
-  private activity links / physiology). `data/longoes.xlsx` was purged from history
-  (2026-07) after an accidental commit — never re-add it.
+  all `*.fit`, the `data/activities/{rwgps,strava,censohidrografico,strava_ppaz}/` track
+  dirs, `data/longoes.xlsx` and `data/censo-hidrografico.xlsx` are **gitignored** (GPS /
+  private activity links / physiology / third-party data). `data/longoes.xlsx` was purged
+  from history (2026-07) after an accidental commit — never re-add it. `strava_ppaz/` is
+  a second rider's full Strava export, shared with consent — never commit any of it.
 - `data/activities/` — the validation harnesses (committable; the tracks they read are
   not): `compare.mjs` (44 longões power rides), `censo_compare.mjs` (62 censo urban
   rides), `eps_hypothesis.mjs` (ε closed-form test), `eps_sp_test.mjs` (São Paulo ε),
+  `ppaz_inventory.mjs` + `ppaz_compare.mjs` (441 second-rider rides: implied-mass
+  inversion + frozen-ε transfer test; `PPAZ_M=<kg>` env for mass sensitivity),
   plus `fetch*.py` / `build_model_inputs.py` / `verify.py`. Each `.mjs` ports the app's
-  engine + FIT parser verbatim — **keep the four copies in sync** (they drifted before).
+  engine + FIT parser verbatim — **keep all copies in sync** (app + five harnesses +
+  `ppaz_inventory`'s parser; they drifted before).
 - `research/` — the write-ups: `MODEL_COMPARISON_JOURNAL.md` (numbered entries, newest
   first), `literature-context.md` (positioning), `article-draft.md` + `article-draft.pt-BR.md`
   (the draft paper, EN + pt-BR), `crr-cda-typical-values.md`, `dem-elevation-comparison.md`,
@@ -111,7 +115,7 @@ No build, no CI. Verify by:
   `node eps_hypothesis.mjs`, `node eps_sp_test.mjs`. Diff the numbers against the journal
   entries and `research/article-draft.md`; a doc-visible number that moves must be updated
   in both. A change to the engine or FIT parser must be applied to **all** copies (the app
-  + the four `.mjs`) or they drift.
+  + the five harness `.mjs` + `ppaz_inventory.mjs`'s parser) or they drift.
 - **Sanity cases** for an engine change: flat (canonical ≈ approximate at auto v_f),
   pure climb (`legE ≥ PE`), pure descent (≈ coast), and P=0 (the bike must *stall*, not
   gain energy — no KE floor).
