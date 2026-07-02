@@ -728,21 +728,21 @@ console.log(`  k_h(sustained) = (measured − roll − aero) / gravity = ${f((SC
 const khs = SC.perRide.map(r=>r.kh).filter(Number.isFinite).sort((a,b)=>a-b);
 console.log(`  per-ride k_h(sustained): median ${f(med(khs),2)}  [${f(khs[0],2)}–${f(khs[khs.length-1],2)}]`);
 
-// ---- cross-comparison: canonical vs smoothened vs k_smooth (benchmark = empirical ∫P·dt ≈ sheet Work Bike) ----
+// ---- cross-comparison: canonical vs smoothed vs k_smooth (benchmark = empirical ∫P·dt ≈ sheet Work Bike) ----
 console.log('\n' + '='.repeat(64));
 console.log('CROSS-COMPARISON vs empirical ∫P·dt (≈ sheet Work Bike), 44 rides');
 console.log(`${'model'.padEnd(34)}${'n'.padStart(3)}${'med|Δ%|'.padStart(9)}${'medΔ%'.padStart(8)}${'meanΔ%'.padStart(8)}`);
 for (const [lab, key] of [
   ['canonical (forward sim)', 'canon_vs_emp'],
-  [`smoothened (cf + real ${TAU_SMOOTH} m deadband)`, 'cfS_vs_emp'],
+  [`smoothed (cf + real ${TAU_SMOOTH} m deadband)`, 'cfS_vs_emp'],
   ['k_smooth (cf + scalar, no smoothing)', 'ksmooth_vs_emp']]) {
   const s = stats(key);
   console.log(`${lab.padEnd(34)}${String(s.n).padStart(3)}${f(s.medAbs,1).padStart(9)}${f(s.medSigned,1).padStart(8)}${f(s.mean,1).padStart(8)}`);
 }
 
-// ---- fitted ε per ride (smoothened model) vs the sheet's g_d_eff ----
+// ---- fitted ε per ride (smoothed model) vs the sheet's g_d_eff ----
 console.log('\n' + '='.repeat(64));
-console.log('ε per ride: sheet g_d_eff · whole-ride fit (smoothened) · descent-energy-balance (epsFromFIT)');
+console.log('ε per ride: sheet g_d_eff · whole-ride fit (smoothed) · descent-energy-balance (epsFromFIT)');
 console.log(`${'ride'.padEnd(26)}${'sheet'.padStart(7)}${'fit'.padStart(7)}${'balance'.padStart(9)}`);
 for (const r of good) console.log(`${r.ride.slice(0,25).padEnd(26)}${f(r.eps_sheet,2).padStart(7)}${f(r.eps_fit,2).padStart(7)}${f(r.eps_bal,2).padStart(9)}`);
 const efit = good.map(r => r.eps_fit).filter(Number.isFinite).sort((a,b)=>a-b);
