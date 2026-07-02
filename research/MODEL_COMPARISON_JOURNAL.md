@@ -19,15 +19,20 @@ Running scoreboard — median |Δ%| vs empirical `∫P·dt` over 44 power rides 
 
 | model / variant | median \|Δ%\| | median Δ% | entry |
 |---|--:|--:|:--:|
-| **approximate `cf` + 2 m elev smooth** (deadband) | **3.4** | +2.2 | 5 |
+| **approximate `cf` + 2 m elev smooth** (deadband) | **3.6** | +2.2 | 5 |
 | canonical (forward sim) | 5.1 | −1.7 | 2 |
-| canonical + 2 m elev smooth | 5.6 | −3.6 | 5 |
-| approximate `cf` + scalar `k_smooth` (no smoothing) | 5.8 | −0.7 | 7 |
+| canonical + 2 m elev smooth | 5.6 | −3.5 | 5 |
+| approximate `cf` + scalar `k_smooth` (no smoothing) | 5.8 | −0.5 | 7 |
 | approximate `cf` + sheet `v_f` (`P_flat/P_avg`) | 7.2 | −0.5 | 4 |
-| approximate `cf` + measured `v_f` | 7.5 | +2.7 | 4 |
-| approximate + climb-fraction (`cf`) | 8.7 | +8.5 | 3 |
-| approximate `off` + 2 m elev smooth | 10.0 | +9.8 | 5 |
-| approximate `off` (baseline) | 19.2 | +19.2 | 2 |
+| approximate `cf` + measured `v_f` | 8.2 | +6.7 | 4 |
+| approximate + climb-fraction (`cf`) | 8.7 | +8.6 | 3 |
+| approximate `off` + 2 m elev smooth | 10.2 | +9.9 | 5 |
+| approximate `off` (baseline) | 19.3 | +19.3 | 2 |
+
+*(Entry 11, 2026-07: a general review turned up several small code bugs — a gated flat-speed
+computation, compressed-timestamp FIT recovery, a signed-drag fix — that shifted these numbers by
+≤0.3 pp, except "measured `v_f`" which moved more (7.5→8.2) because the flat-speed gate itself
+changed. See Entry 11.)*
 
 **Code provenance** — the commit holding each entry's analysis code:
 
@@ -41,7 +46,83 @@ Running scoreboard — median |Δ%| vs empirical `∫P·dt` over 44 power rides 
 - **Entry 8** (closed-form `ε` hypothesis + test, [`eps_hypothesis.mjs`](../data/activities/eps_hypothesis.mjs)) — [`6640780`](../data/activities/eps_hypothesis.mjs)
 - **Entry 9** (censo-hidrográfico urban rides, [`fetch_censo.py`](../data/activities/fetch_censo.py) +
   [`censo_compare.mjs`](../data/activities/censo_compare.mjs)) — [`9fc247b`](../data/activities/censo_compare.mjs)
-- **Entry 10** (São Paulo ε hypothesis test, [`eps_sp_test.mjs`](../data/activities/eps_sp_test.mjs)) — this commit
+- **Entry 10** (São Paulo ε hypothesis test, [`eps_sp_test.mjs`](../data/activities/eps_sp_test.mjs)) — `707c584`
+- **Entry 11** (general review: code fixes + honesty corrections across engines, parsers, and
+  every downstream number) — this commit
+
+---
+
+## 2026-07 — Entry 11: general review — code fixes, and what they moved
+
+*Prompt (Danilo): a general review over the results, methodology, codebase, and data.*
+
+A 13-agent adversarially-verified review (findings independently re-checked against the files
+before being reported) surfaced one urgent privacy issue (fixed separately: `data/longoes.xlsx`
+was purged from git history) and a set of code bugs and methodological overclaims. Every finding
+below was verified by re-running the harnesses; the numbers in this entry and retroactively in
+Entries 7–10 are the corrected, re-run values.
+
+**Code fixes (no published headline conclusion reverses; several numbers shift by ≤0.3 pp, one
+by more):**
+
+- **A latent KE-floor bug in `canonical()`.** The zero-propulsion branch kept a `Math.max(B, 1e-12)`
+  floor on kinetic energy — exactly the energy-injecting bug the repo's own invariant forbids
+  (`CLAUDE.md`: "do not reintroduce a VMIN/KE floor"). It was unreachable by any of the 44+62
+  benchmark rides (none has a zero-power regime), so **no published number was affected**, but it
+  was live code. Fixed: the zero-power branch now solves the exact linear-KE equation and halts
+  the bike (`stalled` flag) rather than flooring — in the app and both `.mjs` copies.
+- **`measuredFlatSpeed`/`epsFromBalance` didn't gate out stopped samples** (`extractRegimePowers`,
+  one function above, already did). Including v≈0 samples in the "flat speed" average deflates
+  `v_f` and hence `α` and `ε` on any ride with stops. Fixed (VSTOP = 0.5 km/h gate) in the app and
+  all four `.mjs` harnesses. This is the one fix with a real, disclosed effect: on the São Paulo
+  censo set (stop-go riding), the descent-balance `ε_true` moves **0.14 → 0.23** (Entry 10, revised
+  below) — because those rides have the most stopped time to have been wrongly averaged in.
+- **Compressed-timestamp FIT records got no timestamp**, defaulting `dt=1 s` downstream; harmless
+  *only* because the affected devices happened to log at exactly 1 Hz. Fixed: the 5-bit
+  timestamp-offset header is now decoded (as `data/activities/verify.py` already did), in the app
+  and all four `.mjs` copies.
+- **`flatEqSpeed` used unsigned drag** while both engines use signed `rel·|rel|` — broke the
+  flat-match anchor under a strong tailwind (not triggered by any current ride). Fixed with a
+  monotone-safe bisection.
+- **`loadFIT` in the app couldn't load 3 of the 44 rides** (interleaved dist/alt records) — the
+  harnesses already had the index-interpolation fix; ported it to the app.
+- Smaller robustness fixes (harnesses only, no number changes): `Buffer` pool hazard on small FIT
+  reads, `parseFIT` throwing consistently instead of silently truncating on 3 of 4 copies, a
+  final-point profile-dedup edge case that could create `dx≈0`, non-monotone device-distance
+  clipping, and a machine-checked per-ride conservation-identity assert (`compare.mjs` now prints
+  the worst residual — **1.77e-8**, comfortably under the 1e-6 bar).
+
+**Methodological honesty corrections (documentation, no code change):**
+
+- **The ε correlations (0.83/0.87) are part–whole, not independent validation.** `ε_bal` (the
+  "truth") and `ε_coast` (the predictor) share their dominant geometry term *and* the same per-ride
+  `α`; at `s̄ ≥ 3%` the shared term `α/(β·s̄)` *alone* correlates **0.72** with `ε_bal` (re-measured;
+  it correlates 0.99 with `ε_coast` — they are nearly the same quantity). The honest statistic is
+  the **RMS error reduction vs. a flat-constant baseline**: at `s̄ ≥ 3%`, `ε_coast − 0.13` reaches
+  RMS 0.08 against a flat-median baseline of RMS 0.13 — a genuine **37% RMS reduction**, which is
+  the number to lead with, not the correlation. (New `eps_hypothesis.mjs` output section
+  "ESTIMATOR SKILL".)
+- **`E_leg = E_wheel · k_eff` in `notas.md` had the efficiency on the wrong side** (should be
+  `E_wheel / k_eff` — the legs supply *more* than the wheel receives). Fixed.
+- **k₋ is a free parameter, not a fitted one** — the energy↔time duality (`x* = x + k₊·h₊ − k₋·h₋`)
+  has never been checked against measured ride *times* anywhere in this repo; only the *energy* law
+  is validated. `notas.md` and the article now say so explicitly.
+- Assorted smaller corrections: the article's §3 named the wrong `climbAeroMode` for its own
+  headline (`'off'` → should be `'zero'`); two censo-scoreboard rows (the `ε=0.00` variants for
+  "smooth" and "poor-man's") were transposed; the excluded-rides discussion said "6 of 7" had high
+  cadence coverage — it's **5 of 7** (Cânions da Brasilandia's 56% coverage is genuinely ambiguous,
+  not clearly pedalled); `k_s ≈ 0.74` was stated as measured for FABDEM/IGC-SP when it is only
+  measured for the recorded-barometric deadband ratio (the DEM value remains an open TODO, ~0.8–0.9
+  estimated); the sampasimu cost table in the article dropped the climb-threshold condition on the
+  uphill aero term.
+
+Revised Entry 8/9/10 numbers are folded into those entries below (marked where they moved).
+**Entries 2–6 are left as originally written** (a historical record of the code at the time) — the
+same code fixes shift their embedded numbers too, but only by ≤0.6 pp (e.g. Entry 2's `approx off`
+19.2%→19.3%, Entry 3's climb-fraction 8.5%→8.6%, Entry 4's measured-`v_f` 22.1→22.8 km/h and its
+associated 2.7%→6.7% residual — a real, larger shift from the same VSTOP gate as Entry 8/10, since
+Entry 4 also uses the measured flat speed). None of these reverse a conclusion; re-run
+`compare.mjs` for the exact current values rather than trusting the historical prose figures.
 
 ---
 
@@ -55,23 +136,31 @@ decelerations — readable from the speed trace (post-hoc) or a route's signal/s
 
 Tested on **59 clean censo rides** (power → true descent-balance ε via `epsFromFIT`; speed →
 braking density), α at the *measured* flat speed, assumed rider. Tool:
-[data/activities/eps_sp_test.mjs](../data/activities/eps_sp_test.mjs). Medians: ε_true **0.14**,
-ε_coast **0.35**, gap **0.17** (sd 0.10).
+[data/activities/eps_sp_test.mjs](../data/activities/eps_sp_test.mjs). Medians: ε_true **0.23**,
+ε_coast **0.40**, gap **0.15** (sd 0.08).
+
+*(Revised by Entry 11's `measuredFlatSpeed`/`epsFromBalance` VSTOP fix — stopped samples were
+deflating the flat speed on this stop-go corpus more than on the open longões rides; ε_true moved
+from an originally-reported 0.14. The refutation below is unchanged in substance and, if anything,
+stronger: ε_coast − 0.13 now ties the flat constant instead of losing to it.)*
 
 **Refuted — the gap does not track stop-go density:**
 
 | predictor for the gap (ε_coast − ε_true) | corr | R² |
 |---|--:|--:|
-| Δε_brake (descent ½Δv²) | 0.08 | 0.01 |
-| hard-brake (>1 m/s, descent) | −0.18 | 0.03 |
-| all-decel ½Δv² | 0.23 | 0.05 |
-| stops/km | −0.28 | 0.08 |
-| v_f | 0.05 | 0.00 |
+| Δε_brake (descent ½Δv²) | 0.11 | 0.01 |
+| hard-brake (>1 m/s, descent) | −0.16 | 0.02 |
+| all-decel ½Δv² | 0.24 | 0.06 |
+| stops/km | −0.26 | 0.07 |
+| v_f | 0.37 | 0.14 |
 
-Two predictors point the **wrong way**; none explain the per-ride gap. The mechanistic
-`ε_coast − Δε_brake` *over*-corrects (Δε_brake median 0.34 ≫ gap 0.17 → RMS 0.15, **worse** than
-a flat constant). Estimator RMS vs ε_true: flat **ε=0.20 → 0.10**; `ε_coast − 0.13` → 0.12;
-mechanistic → 0.15; ε_coast (no penalty) → 0.22.
+None of the stop-go/braking predictors explain the per-ride gap (R² ≤ 0.07, two wrong-signed).
+`v_f` alone now shows the strongest (still modest) association, R²=0.14 — plausibly because
+faster-descending rides simply have less braking to reconcile, not a stop-go effect per se; it
+does not change the refutation. The mechanistic `ε_coast − Δε_brake` still *over*-corrects
+(Δε_brake median 0.34 ≫ gap 0.15 → RMS 0.19, **worse** than a flat constant). Estimator RMS vs
+ε_true: flat **ε=0.20 → 0.08**; `ε_coast − 0.13` → **0.08** (now *tied* with the flat constant,
+previously it lost 0.12 vs 0.10); mechanistic → 0.19; ε_coast (no penalty) → 0.18.
 
 **Why it fails — Entry 8's logic biting back.** Braking is *invisible* to ε (coast or brake,
 the legs are idle: `E_legs=0`). The cost is *re-acceleration* — but on a **descent, gravity
@@ -80,11 +169,12 @@ a red light is handed back by the ongoing descent, not by extra pedalling. So ur
 **not** suppress descent-ε; the intuition mispriced where the energy goes.
 
 **Conclusion — São Paulo's ε is a constant, not a route-specific braking term.** The over-credit
-of ε_coast (~0.17, just above the open-road 0.13 of Entry 8) is a roughly *constant* offset that
-scales with nothing measurable here. Practical rule: **ε ≈ 0.20** for the model (the Entry 9
-energy-sweep optimum), or pure descent-balance ε ≈ **0.14** (likely deflated by the assumed
-`C_rr = 0.008` being low for rough city asphalt). `ε_coast − 0.15` works about as well and still
-adapts to route steepness — but **drop the braking correction**.
+of ε_coast (gap median 0.15, close to the open-road −0.13 offset of Entry 8) is a roughly
+*constant* offset that scales with nothing measurable here. Practical rule: **ε ≈ 0.20** for the
+model (the Entry 9 energy-sweep optimum), or pure descent-balance ε ≈ **0.23** (the assumed
+`C_rr = 0.008` may still be a touch low for rough city asphalt). With the Entry 11 fix,
+`ε_coast − 0.13` now performs *as well as* the flat 0.20 constant (both RMS 0.08) — so the rural
+offset transfers to São Paulo essentially unchanged; **drop the braking correction** regardless.
 
 ---
 
@@ -105,13 +195,13 @@ power → **62 after a physical-plausibility cut**. Everything factual is derive
 **Physical floor — drop the not-fully-pedalled rides.** Pedalling energy must cover the
 (momentum-corrected, 2 m-deadband) climbing PE `mg·h₊_sm/k_eff`; **7 rides measure below it**
 (down to 53 %) — impossible for a fully-pedalled ride. *Why?* The clean test is **cadence**
-(Danilo: pedalling ⇔ cadence > 0). On 6 of the 7, cadence coverage is 73–100 % and the
-walking signal — moving < 4 km/h **with cadence 0** — is only **~1 %**. So the riders were
+(Danilo: pedalling ⇔ cadence > 0). On **5 of the 7**, cadence coverage is 73–100 % and the
+walking signal — moving < 4 km/h **with cadence 0** — is only **~1 %**. So those riders were
 *pedalling, not walking*; the deficit is a **power-channel problem** (power dropping out while
-cadence kept logging, or an under-reading meter). The 7th (Mirantes, 31 % cadence coverage) is
-a fuller sensor dropout. Walking does happen on these rides in general, but for *these* it is
-ruled out — and the floor excludes them either way. They over-predict by +79…+373 % and would
-wreck the mean.
+cadence kept logging, or an under-reading meter). The other 2 (Mirantes, 31 % cadence coverage;
+Cânions da Brasilandia, 56 %) have low enough cadence coverage that walking is not ruled out —
+genuinely ambiguous, likely a fuller sensor dropout for Mirantes at least. Either way the floor
+excludes all 7. They over-predict by +79…+373 % and would wreck the mean.
 
 **Result on the 62 clean rides** — Δ% vs measured ∫P·dt, ε swept:
 
@@ -119,13 +209,14 @@ wreck the mean.
 |---|--:|--:|--:|
 | canonical (fed ride powers) | 6.5 | −3.4 | −0.8 |
 | smooth approx · ε=0.10 | 4.5 | +3.4 | +5.7 |
-| smooth approx · ε=0.15 | 4.9 | +1.3 | +3.4 |
-| smooth approx · ε=0.20 | 4.7 | −0.8 | +1.2 |
-| **poor-man's · ε=0.20** | **3.9** | +1.1 | +4.6 |
-| poor-man's · ε=0.25 | 4.8 | −1.2 | +2.0 |
-| poor-man's · ε=geom (0.29) | 6.4 | −3.3 | +1.1 |
-| smooth approx · ε=geom (0.29) | 7.6 | −4.9 | −2.0 |
-| (ε=0.00, both) | 7.5 / 10.5 | +7.4 / +10.5 | — |
+| smooth approx · ε=0.15 | 5.0 | +1.3 | +3.5 |
+| smooth approx · ε=0.20 | 4.6 | −0.8 | +1.2 |
+| **poor-man's · ε=0.20** | **3.9** | +1.1 | +4.7 |
+| poor-man's · ε=0.25 | 4.8 | −1.2 | +2.1 |
+| poor-man's · ε=geom (0.29) | 6.3 | −3.2 | +1.1 |
+| smooth approx · ε=geom (0.29) | 7.6 | −4.9 | −1.9 |
+| smooth approx · ε=0.00 | 7.6 | +7.4 | +10.2 |
+| poor-man's · ε=0.00 | 10.5 | +10.5 | +15.1 |
 
 - **All three models reproduce measured energy to ~4–7 %** — and with a *generic assumed
   rider*, not per-ride fitted params. So as a **planning tool** (know mass/CdA/C_rr, run the
@@ -169,24 +260,34 @@ per-ride **descent-energy-balance ε** (`epsFromBalance`, the app's `epsFromFIT`
 Tool: [data/activities/eps_hypothesis.mjs](../data/activities/eps_hypothesis.mjs) (κ = curviness in
 rad/km from the GPS, `f_unpaved` = sheet col I).
 
-**The grade core holds — but only where ε carries energy:**
+**The grade core holds where ε carries energy — but read the correlations with care (see Entry 11):**
 
 | view | corr(ε_coast, ε_bal) | bias (ε_bal − ε_coast) |
 |---|--:|--:|
-| all 44 rides (unweighted) | 0.38 | −0.18 |
-| weighted by descent energy `β·H₋` | **0.65** | −0.19 |
-| real descents, `s̄ ≥ 3.0%` (n=22) | **0.83** | −0.13 |
-| real descents, `s̄ ≥ 3.5%` (n=15) | **0.87** | −0.13 |
+| all 44 rides (unweighted) | 0.30 | −0.17 |
+| weighted by descent energy `β·H₋` | **0.60** | −0.18 |
+| real descents, `s̄ ≥ 3.0%` (n=22) | **0.77** | −0.12 |
+| real descents, `s̄ ≥ 3.5%` (n=15) | **0.82** | −0.12 |
+
+*(Re-run under Entry 11's `measuredFlatSpeed` VSTOP fix; correlations moved down slightly from an
+originally-reported 0.38/0.65/0.83/0.87 — same qualitative picture. More importantly: these
+correlations are **part–whole**, not an independent check — `ε_bal` and `ε_coast` share their
+dominant geometry term and the same per-ride α, so at `s̄≥3%` the shared term `α/(β·s̄)` *alone*
+already correlates 0.72 with `ε_bal` (and 0.99 with `ε_coast` itself). The better statistic is the
+**RMS error reduction vs. a flat-constant baseline**: at `s̄≥3%`, `ε_coast − 0.13` reaches RMS 0.08
+against a flat-median baseline of RMS 0.13 — a **37% RMS reduction**. Over *all* 44 rides the
+calibrated estimator actually *loses* to the flat median (skill −0.38) because of the flat-terrain
+reversal below — restrict to real descents before using it.)*
 
 - **Validated estimator:** `ε ≈ clamp[0,1]( ε_coast − 0.13 )`. The −0.13 is a near-constant
   offset (residual descent pedalling/braking the coasting ideal ignores); it turns the
   `s̄≥3%` median ε_coast 0.39 → 0.26, matching the measured 0.27.
 - **"Flat → ε→1" is *reversed* by the data** (intuitions #2/#3). Gentle rides are pedalled
   *through* the dips, so measured ε→0, not 1 (NS3 Caracaí: predicted ≈0.9, measured **0.01**).
-  This is the whole −0.18 unweighted bias — but it is **harmless**, because those rides carry
-  `β·H₋ ≈ 0` descent energy (hence energy-weighting alone lifts corr 0.38 → 0.65).
+  This is most of the unweighted bias — but it is **harmless**, because those rides carry
+  `β·H₋ ≈ 0` descent energy (hence energy-weighting alone lifts corr 0.30 → 0.60).
 - **Curve / off-road penalties fail** (intuitions #4/#5): κ and `f_unpaved` fit with the
-  **wrong sign** (+0.03, +0.14). They are confounded with *mountainous terrain* — twisty/rough
+  **wrong sign**. They are confounded with *mountainous terrain* — twisty/rough
   rides are exactly the ones with real sustained descents, which recover *more*. The
   braking-loss effect is real but swamped.
 - **Descent intuition #1 is the load-bearing one and it holds.** The remaining scatter is
@@ -194,7 +295,7 @@ rad/km from the GPS, `f_unpaved` = sheet col I).
   which no route-geometry term can predict.
 
 *Worked example (RMC200 Mogi):* α/β = 0.0202, s̄ = 3.4% ⇒ min(1, 0.0202/0.0341) = 0.59;
-minus 0.13 ⇒ **0.46**, vs. measured **0.47**.
+minus 0.13 ⇒ **0.46**, vs. measured **0.47**. (Unaffected by the Entry 11 fixes — confirmed on re-run.)
 
 Net: a one-parameter `min(1, α/β·s̄) − 0.13`, computable from activity details (Crr, CdA,
 v_f, descent-grade distribution), beats the sheet's flat 0.23/0.27 constant on real-descent
@@ -216,11 +317,13 @@ aero is small, so the rider must pay ≈ `mg·Δh/k_eff` + rolling. Over the 44 
 | | kJ |
 |---|--:|
 | measured Σ∫P·dt on climbs | 41 790 |
-| expected (grav 37 366 + roll 4 424 + aero 1 424) | 43 214 |
-| **measured / expected** | **0.97** |
+| expected (grav 37 366 + roll 4 424 + aero 1 544) | 43 333 |
+| **measured / expected** | **0.96** |
 | **k_h(sustained) = (measured − roll − aero)/gravity** | **0.96** |
 
-(per-ride median 1.03, range 0.57–1.23.)
+(per-ride median 1.02, range 0.57–1.23. *Aero and the ratio shifted marginally on Entry 11's
+re-run — v within climb sections is now derived from the unclamped Δt — the headline `k_h≈1`
+conclusion is unchanged.)*
 
 - **On real sustained climbs `k_h ≈ 1`** — the rider pays the full `mg·Δh`, so the model's
   gravity term `β·h₊` is correct there. This settles the earlier 0.56-vs-0.9 confusion:
@@ -244,11 +347,11 @@ the roller/noise correction as a **deadband (~2 m)**, not a scalar.
 
 | model | median \|Δ%\| | median Δ% |
 |---|--:|--:|
-| **smoothened** (cf + real 2 m deadband, `k_smooth=1`) | **3.4** | +2.2 |
+| **smoothened** (cf + real 2 m deadband, `k_smooth=1`) | **3.6** | +2.2 |
 | canonical (forward sim) | 5.1 | −1.7 |
-| **k_smooth** (cf + scalar `1 − c·x/h₊`, no smoothing) | 5.8 | −0.7 |
+| **k_smooth** (cf + scalar `1 − c·x/h₊`, no smoothing) | 5.8 | −0.5 |
 
-The **real deadband is best** (3.4 %); the **scalar `k_smooth` is unbiased (−0.7 %) but ~2×
+The **real deadband is best** (3.6 %); the **scalar `k_smooth` is unbiased (−0.5 %) but ~2×
 the scatter** — a constant rate can't match each ride's roller mix — landing alongside the
 canonical forward-sim. So: use the deadband when you have the profile; the scalar `k_smooth`
 is the cheap, unbiased fallback for the low-compute closed form.

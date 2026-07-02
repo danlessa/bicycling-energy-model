@@ -108,9 +108,9 @@ Note: the ~4–7 % figure is the repo's self-report, not re-derived by the verif
   1 m ascent ≈ 7.92 m horizontal) and **Norman (2004)** (uphill-running ratios). Our `k₊` is
   structurally the same coefficient-on-vertical-gain. **So the ascent half is *not* novel** — we
   should cite Scarf and frame `x*` as extending the equivalent-flat-distance idea, not inventing it.
-- **The descent time-credit `k₋` and the `ε↔k₋` duality have no located precedent.** Every
-  Naismith-family model is a *one-sided ascent penalty* with no descent term; no located work pairs an
-  energy recovery factor with a *mirrored* descent time-credit. Several energy/route models drop time
+- **Only the `ε↔k₋` duality has no located precedent** (the descent time-credit `k₋` on its own
+  *does* — see the next bullet). No located work pairs an energy recovery factor with a *mirrored*
+  descent time-credit derived from the same descent power. Several energy/route models drop time
   entirely (Dahmen-Saupe: "we eliminate the time") or treat time and energy as *separate* additive
   objectives (Bigazzi-Lindsey; Perger & Auer 2020) — never a duality.
 - **Residual closed — the descent-credit half also has precedent.** Pedestrian routing has carried a

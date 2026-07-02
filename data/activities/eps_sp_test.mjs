@@ -33,6 +33,7 @@ function parseFIT(buffer) {
   if (String.fromCharCode(dv.getUint8(8), dv.getUint8(9), dv.getUint8(10), dv.getUint8(11)) !== '.FIT') throw new Error('no .FIT');
   const end = Math.min(headerSize + dataSize, buffer.byteLength);
   let pos = headerSize; const defs = {}, records = [];
+  let lastTs;   // running timestamp for compressed-timestamp headers (5-bit offset, 32 s rollover)
   const read = (p, bt, little) => { switch (bt & 0x1F) {
     case 0x01: { const v = dv.getInt8(p); return v === 0x7F ? undefined : v; }
     case 0x00: case 0x02: case 0x0A: case 0x0D: { const v = dv.getUint8(p); return v === 0xFF ? undefined : v; }
@@ -45,8 +46,9 @@ function parseFIT(buffer) {
     default: return undefined; } };
   while (pos < end) {
     const rh = dv.getUint8(pos); pos++;
-    let local, isDef = false, hasDev = false;
-    if (rh & 0x80) local = (rh >> 5) & 0x03; else { local = rh & 0x0F; isDef = !!(rh & 0x40); hasDev = !!(rh & 0x20); }
+    let local, isDef = false, hasDev = false, tsOffset;
+    if (rh & 0x80) { local = (rh >> 5) & 0x03; tsOffset = rh & 0x1F; }
+    else { local = rh & 0x0F; isDef = !!(rh & 0x40); hasDev = !!(rh & 0x20); }
     if (isDef) {
       pos++; const little = dv.getUint8(pos) === 0; pos++;
       const gmn = dv.getUint16(pos, little); pos += 2;
@@ -57,7 +59,8 @@ function parseFIT(buffer) {
       if (hasDev) { const nd = dv.getUint8(pos); pos++; for (let i = 0; i < nd; i++) { devSize += dv.getUint8(pos + 1); pos += 3; } }
       defs[local] = { gmn, little, fields, devSize };
     } else {
-      const def = defs[local]; if (!def) break;
+      const def = defs[local];
+      if (!def) throw new Error('FIT corrompido (dado sem definição)');
       let p = pos; const rec = {};
       for (const f of def.fields) {
         if (def.gmn === 20) { const v = read(p, f.bt, def.little);
@@ -72,9 +75,20 @@ function parseFIT(buffer) {
             else if (f.num === 7) rec.power = v;
             else if (f.num === 253) rec.time = v;
           } }
+        else if (f.num === 253) {   // any message's timestamp advances the running clock
+          const v = read(p, f.bt, def.little);
+          if (v !== undefined) rec.time = v;
+        }
         p += f.size;
       }
       pos = p + def.devSize;
+      // compressed-timestamp header: reconstruct the time from the 5-bit offset
+      if (tsOffset !== undefined && rec.time === undefined && lastTs !== undefined) {
+        let ts = (lastTs & ~31) | tsOffset;
+        if (ts < lastTs) ts += 32;
+        rec.time = ts;
+      }
+      if (rec.time !== undefined) lastTs = rec.time;
       if (def.gmn === 20) records.push(rec);
     }
   }
@@ -82,10 +96,13 @@ function parseFIT(buffer) {
 }
 function finishPts(pts) {
   for (let i = 0; i < pts.length; i++) {
-    let w = 1;
-    if (i > 0 && pts[i].t !== undefined && pts[i - 1].t !== undefined) w = Math.min(Math.max(pts[i].t - pts[i - 1].t, 0), 10);
+    const raw = (i > 0 && pts[i].t !== undefined && pts[i - 1].t !== undefined) ? pts[i].t - pts[i - 1].t : undefined;
+    const w = raw !== undefined ? Math.min(Math.max(raw, 0), 10) : 1;
     pts[i].dt = w;
-    if (pts[i].v === undefined && i > 0 && w > 0) pts[i].v = (pts[i].x - pts[i - 1].x) / w;
+    if (pts[i].v === undefined && i > 0) {
+      const dtv = raw !== undefined && raw > 0 ? raw : w;   // speed from the UNCLAMPED interval
+      if (dtv > 0) pts[i].v = (pts[i].x - pts[i - 1].x) / dtv;
+    }
   }
 }
 function ptsFromFIT(buffer) {
@@ -125,8 +142,9 @@ function epsCells(pts, p) {
   const cellAlt = new Float64Array(nc + 1);
   for (let k = 0; k <= nc; k++) cellAlt[k] = altAt(x0 + k * DX);
   const cellE = new Float64Array(nc), cellVs = new Float64Array(nc), cellVt = new Float64Array(nc);
+  const VSTOP = 0.5 / 3.6;   // 0.5 km/h — gate stopped samples out of the flat speed, as extractRegimePowers does
   for (const r of pts) { const k = Math.floor((r.x - x0) / DX); if (k < 0 || k >= nc) continue; const w = r.dt || 1;
-    if (r.power !== undefined) cellE[k] += r.power * w; if (r.v !== undefined) { cellVs[k] += r.v * w; cellVt[k] += w; } }
+    if (r.power !== undefined) cellE[k] += r.power * w; if (r.v !== undefined && r.v >= VSTOP) { cellVs[k] += r.v * w; cellVt[k] += w; } }
   let sv = 0, sw = 0;
   for (let k = 0; k < nc; k++) { const gr = (cellAlt[k + 1] - cellAlt[k]) / DX; if (Math.abs(gr) < 0.01 && cellVt[k] > 0) { sv += cellVs[k]; sw += cellVt[k]; } }
   const vf = sw > 0 ? sv / sw : 5, aeroSpd = vf + p.wind;
@@ -165,7 +183,8 @@ for (const e of man) {
   const fp = path.join(HERE, e.file);
   if (!fs.existsSync(fp)) continue;
   try {
-    const pts = ptsFromFIT(fs.readFileSync(fp).buffer);
+    // NB: slice, not .buffer — Node pools small reads, so .buffer may be the shared pool
+    const pts = ptsFromFIT((b => b.buffer.slice(b.byteOffset, b.byteOffset + b.byteLength))(fs.readFileSync(fp)));
     if (!pts.some(q => q.power !== undefined)) continue;
     const p = { ...ASSUMED };
     const c = epsCells(pts, p); if (!c) continue;

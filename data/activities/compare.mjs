@@ -33,11 +33,16 @@ function haversine(a, b) {
 }
 function flatEqSpeed(P, p) {
   const a = p.Crr * p.m * G, b = 0.5 * p.rho * p.CdA, w = p.wind || 0;
-  let lo = 0, hi = 40;
+  // SIGNED drag (a tailwind pushes: rel < 0), matching the engines' rel·|rel|.
+  // wheel(v) is only guaranteed monotone for airspeed rel = v+w ≥ 0, so under a
+  // tailwind bisect the monotone branch [−w, 40] first and fall back to [0, −w].
+  const wheel = v => { const rel = v + w; return (a + b * rel * Math.abs(rel)) * v; };
+  const target = p.keff * P;
+  let lo = Math.max(0, -w), hi = 40;
+  if (wheel(lo) > target) { hi = lo; lo = 0; }
   for (let k = 0; k < 60; k++) {
     const v = (lo + hi) / 2;
-    const wheel = (a + b * (v + w) * (v + w)) * v;
-    if (wheel < p.keff * P) lo = v; else hi = v;
+    if (wheel(v) < target) lo = v; else hi = v;
   }
   return (lo + hi) / 2;
 }
@@ -66,6 +71,7 @@ function canonical(prof, pw, p) {
   speed[0] = Math.sqrt(2 * KE / m);
   let minV = speed[0];
   const keCap = 0.5 * m * vmax * vmax;
+  let stalled = false;   // P=0 with resistance > KE: the bike halts (no KE floor — it would inject energy)
   for (let i = 1; i < n; i++) {
     const dx = xs[i] - xs[i - 1], dh = hs[i] - hs[i - 1];
     const slope = dh / dx, sec = Math.sqrt(1 + slope * slope);
@@ -98,7 +104,16 @@ function canonical(prof, pw, p) {
           if (Math.abs(next - KEn) <= 1e-9 * KEn + 1e-12) { KEn = next; break; }
           KEn = next;
         }
-      } else KEn = Math.max(B, 1e-12);
+      } else {
+        // A = 0 (no propulsion): exact linear-KE solution — NO floor (a floor injects energy).
+        KEn = B;
+        if (KEn <= 0) {   // resistance exhausts the KE inside this substep: finite stop, halt
+          const dsStop = R > 0 ? KE / R : 0;
+          t += R > 0 ? Math.sqrt(2 * m * Math.max(KE, 0)) / R : 0;
+          Wrr += Frr * dsStop; Waero += Faero * dsStop; Wgrav += Fgrav * dsStop;
+          KE = 0; stalled = true; break;
+        }
+      }
       const vNew = Math.sqrt(2 * KEn / m), dt = dsSub / vNew;
       legE += Pleg * dt; legER[reg + 1] += Pleg * dt; t += dt;
       Wrr += Frr * dsSub; Waero += Faero * dsSub; Wgrav += Fgrav * dsSub;
@@ -108,11 +123,12 @@ function canonical(prof, pw, p) {
     }
     const v = Math.sqrt(2 * KE / m);
     speed[i] = v; brk[i] = braked; if (v < minV) minV = v;
+    if (stalled) break;   // cannot proceed at zero power — return the partial, conservative leg
   }
   const dist = xs[n - 1] - xs[0];
   const dKE = KE - KEinit;
   const dispE = dKE + Wrr + Waero + Wbrake;
-  return { legE, t, Wrr, Waero, Wgrav, Wbrake, speed, brk, regime,
+  return { legE, t, Wrr, Waero, Wgrav, Wbrake, speed, brk, regime, stalled,
            legEByReg: { descent: legER[0], flat: legER[1], climb: legER[2] },
            avgV: dist / t, minV, KEinit, KEfin: KE, dKE, dispE };
 }
@@ -155,8 +171,10 @@ function approximate(prof, p, vf, eps, opts) {
 function buildProfile(distArr, eleArr) {
   const X = [distArr[0]], E = [eleArr[0]];
   for (let i = 1; i < distArr.length; i++) {
-    if (distArr[i] - X[X.length - 1] < 0.5 && i < distArr.length - 1) continue;
-    X.push(distArr[i]); E.push(eleArr[i]);
+    const close = distArr[i] - X[X.length - 1] < 0.5;
+    if (close && i < distArr.length - 1) continue;
+    if (close) { X[X.length - 1] = distArr[i]; E[E.length - 1] = eleArr[i]; }   // final point: replace, never create dx≈0
+    else { X.push(distArr[i]); E.push(eleArr[i]); }
   }
   const base = X[0]; for (let i = 0; i < X.length; i++) X[i] -= base;
   const n = X.length, total = X[n - 1];
@@ -224,6 +242,7 @@ function parseFIT(buffer) {
   const end = Math.min(headerSize + dataSize, buffer.byteLength);
   let pos = headerSize;
   const defs = {}, records = [];
+  let lastTs;   // running timestamp for compressed-timestamp headers (5-bit offset, 32 s rollover)
   const read = (p, bt, little) => {
     switch (bt & 0x1F) {
       case 0x01: { const v = dv.getInt8(p); return v === 0x7F ? undefined : v; }
@@ -239,8 +258,8 @@ function parseFIT(buffer) {
   };
   while (pos < end) {
     const rh = dv.getUint8(pos); pos++;
-    let local, isDef = false, hasDev = false;
-    if (rh & 0x80) local = (rh >> 5) & 0x03;
+    let local, isDef = false, hasDev = false, tsOffset;
+    if (rh & 0x80) { local = (rh >> 5) & 0x03; tsOffset = rh & 0x1F; }
     else { local = rh & 0x0F; isDef = !!(rh & 0x40); hasDev = !!(rh & 0x20); }
     if (isDef) {
       pos++;
@@ -270,10 +289,21 @@ function parseFIT(buffer) {
             else if (f.num === 7) rec.power = v;
             else if (f.num === 253) rec.time = v;
           }
+        } else if (f.num === 253) {   // any message's timestamp advances the running clock
+          const v = read(p, f.bt, def.little);
+          if (v !== undefined) rec.time = v;
         }
         p += f.size;
       }
       pos = p + def.devSize;
+      // compressed-timestamp header: reconstruct the time from the 5-bit offset
+      // (verify.py does the same; without this, dt defaults to 1 s downstream)
+      if (tsOffset !== undefined && rec.time === undefined && lastTs !== undefined) {
+        let ts = (lastTs & ~31) | tsOffset;
+        if (ts < lastTs) ts += 32;
+        rec.time = ts;
+      }
+      if (rec.time !== undefined) lastTs = rec.time;
       if (def.gmn === 20) records.push(rec);
     }
   }
@@ -293,7 +323,7 @@ function ptsFromFIT(buffer) {
     // x rises smoothly and every altitude sample is kept. For normal files
     // (dist on every record) this reproduces the raw distance exactly.
     const di = [], dv = [];
-    recs.forEach((r, i) => { if (r.dist !== undefined) { di.push(i); dv.push(r.dist); } });
+    recs.forEach((r, i) => { if (r.dist !== undefined) { di.push(i); dv.push(dv.length ? Math.max(r.dist, dv[dv.length - 1]) : r.dist); } });   // clip non-monotone device distance
     let lastAlt, k = 0;
     for (let i = 0; i < recs.length; i++) {
       if (recs[i].alt !== undefined) lastAlt = recs[i].alt;
@@ -338,10 +368,13 @@ function ptsFromGPX(text) {
 }
 function finishPts(pts) {   // dt weight (clamp pauses) + speed fallback — as loadFIT
   for (let i = 0; i < pts.length; i++) {
-    let w = 1;
-    if (i > 0 && pts[i].t !== undefined && pts[i - 1].t !== undefined) w = Math.min(Math.max(pts[i].t - pts[i - 1].t, 0), 10);
+    const raw = (i > 0 && pts[i].t !== undefined && pts[i - 1].t !== undefined) ? pts[i].t - pts[i - 1].t : undefined;
+    const w = raw !== undefined ? Math.min(Math.max(raw, 0), 10) : 1;
     pts[i].dt = w;
-    if (pts[i].v === undefined && i > 0 && w > 0) pts[i].v = (pts[i].x - pts[i - 1].x) / w;
+    if (pts[i].v === undefined && i > 0) {
+      const dtv = raw !== undefined && raw > 0 ? raw : w;   // speed from the UNCLAMPED interval (clamped Δt overstates v across pauses)
+      if (dtv > 0) pts[i].v = (pts[i].x - pts[i - 1].x) / dtv;
+    }
   }
 }
 
@@ -438,15 +471,18 @@ function deadband(h, tau) {
   }
   return out;
 }
-// MEASURED flat ground speed (m/s): time-weighted mean speed on near-flat 30 m
-// cells (|grade| < 1%) — the v_f definition from epsFromFIT in the app.
+// MEASURED flat ground speed (m/s): time-weighted mean MOVING speed on near-flat
+// 30 m cells (|grade| < 1%) — the v_f definition from epsFromFIT in the app.
+// Stopped samples (v < 0.5 km/h) are gated out, same as extractRegimePowers:
+// including them deflates v_f (hence α and ε) on stop-go rides.
 function measuredFlatSpeed(pts) {
   const DX = 30, x0 = pts[0].x, total = pts[pts.length - 1].x - x0, nc = Math.floor(total / DX);
+  const VSTOP = 0.5 / 3.6;
   if (nc < 2) return null;
   let j = 0; const altAt = d => { while (j < pts.length - 2 && pts[j + 1].x < d) j++; const seg = pts[j + 1].x - pts[j].x, f = seg > 1e-9 ? (d - pts[j].x) / seg : 0; return pts[j].alt * (1 - f) + pts[j + 1].alt * f; };
   const cellAlt = new Float64Array(nc + 1); for (let k = 0; k <= nc; k++) cellAlt[k] = altAt(x0 + k * DX);
   const sv = new Float64Array(nc), sw = new Float64Array(nc);
-  for (const r of pts) { const k = Math.floor((r.x - x0) / DX); if (k < 0 || k >= nc) continue; const w = r.dt || 1; if (r.v !== undefined) { sv[k] += r.v * w; sw[k] += w; } }
+  for (const r of pts) { const k = Math.floor((r.x - x0) / DX); if (k < 0 || k >= nc) continue; const w = r.dt || 1; if (r.v !== undefined && r.v >= VSTOP) { sv[k] += r.v * w; sw[k] += w; } }
   let SV = 0, SW = 0;
   for (let k = 0; k < nc; k++) { const gr = (cellAlt[k + 1] - cellAlt[k]) / DX; if (Math.abs(gr) < 0.01 && sw[k] > 0) { SV += sv[k]; SW += sw[k]; } }
   return SW > 0 ? SV / SW : null;
@@ -456,7 +492,7 @@ function measuredFlatSpeed(pts) {
 // Local to descents — not polluted by climb/aero errors, so far more stable per ride.
 function epsFromBalance(pts, p) {
   if (!pts || pts.length < 2) return NaN;
-  const mg = p.m * G, beta = mg / p.keff;
+  const mg = p.m * G, beta = mg / p.keff, VSTOP = 0.5 / 3.6;
   const x0 = pts[0].x, totalM = pts[pts.length - 1].x - x0, DX = 30, nc = Math.floor(totalM / DX);
   if (nc < 2) return NaN;
   let j = 0;
@@ -468,9 +504,9 @@ function epsFromBalance(pts, p) {
     const k = Math.floor((r.x - x0) / DX); if (k < 0 || k >= nc) continue;
     const w = r.dt || 1;
     if (r.power !== undefined) cellE[k] += r.power * w;
-    if (r.v !== undefined) { cellVs[k] += r.v * w; cellVt[k] += w; }
+    if (r.v !== undefined && r.v >= VSTOP) { cellVs[k] += r.v * w; cellVt[k] += w; }   // moving samples only
   }
-  let sv = 0, sw = 0;   // v_f = time-weighted mean GROUND speed on flat cells (|grade| < 1%)
+  let sv = 0, sw = 0;   // v_f = time-weighted mean MOVING ground speed on flat cells (|grade| < 1%)
   for (let k = 0; k < nc; k++) { const gr = (cellAlt[k + 1] - cellAlt[k]) / DX; if (Math.abs(gr) < 0.01 && cellVt[k] > 0) { sv += cellVs[k]; sw += cellVt[k]; } }
   const vf = sw > 0 ? sv / sw : 5, aeroSpd = vf + p.wind;
   const alpha = (p.Crr * mg + 0.5 * p.rho * p.CdA * aeroSpd * Math.abs(aeroSpd)) / p.keff;
@@ -489,14 +525,16 @@ const TAUS = [0, 1, 2, 3, 5, 10];
 const ELEV = { h: Object.fromEntries(TAUS.map(t => [t, 0])), eng: 0, engS: 0, gravRaw: 0, grav3: 0,
                bySrc: { rwgps_trip: { raw: 0, h3: 0 }, strava: { raw: 0, h3: 0 } } };
 const KH = [];   // per-ride {xkm, hpRaw, hpSm, c=spurious/km, kh, hilly=hpRaw/km} for the heuristic study
+const CONS = { max: 0, ride: null };   // worst per-ride conservation residual (must stay ≤ 1e-6)
 const SC = { emeas: 0, egrav: 0, eroll: 0, eaero: 0, dh: 0, L: 0, n: 0, totalAsc: 0, perRide: [] };  // sustained-climb energy balance
 for (const e of inputs) {
   if (!e.file || !e.has_power) continue;
   try {
     const fp = path.join(HERE, e.file);
+    // NB: slice, not .buffer — Node pools small reads, so .buffer may be the shared pool
     const pts = e.file.endsWith('.gpx')
       ? ptsFromGPX(fs.readFileSync(fp, 'utf8'))
-      : ptsFromFIT(fs.readFileSync(fp).buffer);
+      : ptsFromFIT((b => b.buffer.slice(b.byteOffset, b.byteOffset + b.byteLength))(fs.readFileSync(fp)));
     buildProfile(pts.map(q => q.x), pts.map(q => q.alt));   // sets physProfile
     const prof = resampleProfile(physProfile, ENGINE_DX);
     const rp = extractRegimePowers(pts, CLIMB_THR, DESC_THR);
@@ -521,6 +559,10 @@ for (const e of inputs) {
     const vfMeas = measuredFlatSpeed(pts) || vf;                        // measured flat ground speed
     const aCfMeas = approximate(prof, p, vfMeas, e.eps, opt('zero'));   // cf + measured v_f
     const c = canonical(prof, pw, p);
+    // machine-check the conservation identity k_eff·legE = ΔKE + W_rr + W_aero + W_grav + W_brake per ride
+    const consResid = Math.abs(p.keff * c.legE - (c.dKE + c.Wrr + c.Waero + c.Wgrav + c.Wbrake)) / Math.max(1, p.keff * c.legE);
+    if (consResid > 1e-6) console.error(`CONSERVATION VIOLATION ${e.label}: rel resid ${consResid.toExponential(2)}`);
+    if (consResid > CONS.max) { CONS.max = consResid; CONS.ride = e.label; }
     // same engines on the elevation-deadband-SMOOTHED profile (same pw, vf, params)
     const profS = { x: prof.x, h: deadband(prof.h, TAU_SMOOTH) };
     const aOffS = approximate(profS, p, vf, e.eps, opt('off'));
@@ -605,7 +647,7 @@ const stats = (key) => {
 console.log('='.repeat(64));
 console.log(`${'model vs empirical'.padEnd(30)}${'n'.padStart(4)}${'med|Δ%|'.padStart(9)}${'medΔ%'.padStart(8)}${'meanΔ%'.padStart(8)}`);
 for (const [lab, key] of [['canonical (forward sim)','canon_vs_emp'],['approx off (current)','off_vs_emp'],['approx climb-fraction (cf)','cf_vs_emp'],['approx near-exact v_c','vc_vs_emp'],['approx cf + sheet v_f','cfsheet_vs_emp'],['approx cf + measured v_f','cfmeas_vs_emp'],
-  ['canonical + 3 m smooth','canonS_vs_emp'],['approx off + 3 m smooth','offS_vs_emp'],['approx cf + 3 m smooth','cfS_vs_emp']]) {
+  [`canonical + ${TAU_SMOOTH} m smooth`,'canonS_vs_emp'],[`approx off + ${TAU_SMOOTH} m smooth`,'offS_vs_emp'],[`approx cf + ${TAU_SMOOTH} m smooth`,'cfS_vs_emp']]) {
   const s = stats(key);
   console.log(`${lab.padEnd(30)}${String(s.n).padStart(4)}${f(s.medAbs,1).padStart(9)}${f(s.medSigned,1).padStart(8)}${f(s.mean,1).padStart(8)}`);
 }
@@ -713,3 +755,4 @@ const csv = [cols.join(',')].concat(good.concat(rows.filter(r=>r.error)).map(r =
   cols.map(c => { const v = r[c]; return v == null ? '' : (typeof v === 'number' ? (Number.isInteger(v)?v:v.toFixed(2)) : `"${v}"`); }).join(','))).join('\n');
 fs.writeFileSync(path.join(HERE, 'model_comparison.csv'), csv + '\n');
 console.log(`\nwrote model_comparison.csv (${good.length} rides)`);
+console.log(`conservation identity: worst per-ride rel residual ${CONS.max.toExponential(2)} (${CONS.ride ?? '—'}) — must stay ≤ 1e-6`);

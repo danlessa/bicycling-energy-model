@@ -20,11 +20,15 @@ The parameters can then be described as follows
 - $\alpha_r := mg C_{rr}$
 - $\alpha_a := \frac{C_d A \rho v_f^2}{2}$
 - $\beta := mg$
-- $k_s$: typically 0.74 for FABDEM / IGC-SP 2010.
+- $k_s$ (smoothing): $\approx 0.74$ is the **measured 2 m-deadband ratio on recorded
+  barometric profiles**. The value for a DEM source (FABDEM / IGC-SP 2010) is not yet measured
+  — a first-principles estimate is $\approx 0.8$–$0.9$ (see `research/dem-elevation-comparison.md`).
 - $\epsilon$: typically between 10% and 30%
-  - Can be estimated by $\epsilon \approx \min(1, \frac{\alpha}{\beta \bar{s}})-0.13 \pm 0.1$ 
+  - Rough geometric estimate $\epsilon \approx \min(1, \frac{\alpha}{\beta \bar{s}})-0.13 \pm 0.1$
+    (the $-0.13$ offset is calibrated in-sample on the 44 power rides; on the quasi-independent
+    censo set a flat $\epsilon\approx0.20$ did as well or better — see the journal).
 
-$E_{leg} = E_{wheel} k_{eff}$
+$E_{leg} = E_{wheel} / k_{eff}$  (the legs supply more than the wheel receives; $\alpha_r,\alpha_a,\beta$ above are wheel quantities)
 
 ### v1
 
@@ -280,9 +284,11 @@ on steep climbs.)*
 **Descent term — the time-twin of $\epsilon$.** Descent time is *speed*-limited, not
 gravity-limited: $t = x_-/v_{desc}$, set by horizontal distance and the (grade-dependent,
 $v_{max}$-capped) descent speed. Pinning it to $h_-$ forces $k_-$ to absorb the typical
-descent grade, $k_- \approx (1 - v_f/v_{desc})/\bar s$, so $k_-$ is a **lumped, fitted
-parameter** — exactly the role $\epsilon$ plays for energy. The two models line up
-term-for-term:
+descent grade, $k_- \approx (1 - v_f/v_{desc})/\bar s$, so $k_-$ is a **lumped, free
+parameter** — exactly the role $\epsilon$ plays for energy. (This time model is theory
+only: nothing here calibrates $k_-$ against measured ride *times*, so $k_-$ is *free*,
+not fitted — the validation in the journal is of the *energy* law, not the time twin.)
+The two models line up term-for-term:
 
 
 |                                                           | clean (climb)              | lumped (descent) |
@@ -295,7 +301,7 @@ because climbing is gravity-determined (clean physics) and descending is loss-de
 finally behaves everywhere — $\to 0$ on a coasting descent ($E\to0,\,t>0$), and exactly
 $\alpha v_f$ (the flat power) on the flat.
 
-If a fitted $k_-$ is unwanted, a **hybrid** keeps both coefficients physical at the cost of
+If a free $k_-$ is unwanted, a **hybrid** keeps both coefficients physical at the cost of
 the symmetry: $x^* = x_{\text{flat}} + k_+ h_+ + (v_f/v_{desc})\,x_-$ (climb on vertical,
 descent on horizontal). And with the full profile, the exact form is just the per-segment
 integral $t = \sum dx / v(s)$.

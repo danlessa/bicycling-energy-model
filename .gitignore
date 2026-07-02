@@ -17,6 +17,14 @@ data/activities/censohidrografico/
 # The censo spreadsheet itself carries activity links / attendance — keep local.
 data/censo-hidrografico.xlsx
 
+# The longões spreadsheet carries private activity links + physiology (weight/HR).
+# It was purged from history (2026-07); it must NEVER be re-committed. fetch.py /
+# build_model_inputs.py read it from this path locally.
+data/longoes.xlsx
+
+# Per-ride lon/lat coordinate CSVs written by research/dem/extract_coords.mjs — GPS.
+research/dem/coords/
+
 # OS / editor cruft
 .DS_Store
 .vscode/

@@ -7,6 +7,8 @@ Entries 1–8. Full log: Journal **Entry 9**. Harness:
 [../data/activities/censo_compare.mjs](../data/activities/censo_compare.mjs); downloader
 [../data/activities/fetch_censo.py](../data/activities/fetch_censo.py).
 
+*(Corrected per Journal Entry 11's code-fix pass: "6 of 7" → "5 of 7" cadence-clear rides below.)*
+
 ## Dataset
 
 Activity links come from `censo-hidrografico.xlsx` (columns *Ativ. Strava* / *Ativ. RWGPS*),
@@ -32,11 +34,12 @@ the long open rides. That contrast is the point of the cross-check.
 
 Pedalling energy must cover the (momentum-corrected) climbing PE `mg·h₊_sm/k_eff`. **7 rides
 measure below it** (down to 53 %) — impossible for a fully-pedalled ride. Using **cadence** as
-the test (pedalling ⇔ cadence > 0): on 6 of the 7, cadence coverage is 73–100 % and the
-walking signal (moving < 4 km/h **with cadence 0**) is only **~1 %**. So the riders were
+the test (pedalling ⇔ cadence > 0): on **5 of the 7**, cadence coverage is 73–100 % and the
+walking signal (moving < 4 km/h **with cadence 0**) is only **~1 %**. So those riders were
 *pedalling, not walking* — the deficit is a **power-channel problem** (power dropping out while
-cadence kept logging, or an under-reading meter), not the bike being pushed. (The 7th has 31 %
-cadence coverage → a fuller sensor dropout.) Excluded from the headline either way.
+cadence kept logging, or an under-reading meter), not the bike being pushed. The other 2
+(cadence coverage 31 % and 56 %) are genuinely ambiguous — low enough that walking isn't ruled
+out, likely a fuller sensor dropout for at least one. Excluded from the headline either way.
 
 ## Result — 62 clean rides, Δ% vs measured ∫P·dt
 

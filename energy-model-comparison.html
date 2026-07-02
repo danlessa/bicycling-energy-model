@@ -296,11 +296,16 @@ function physParams() {
 //   (Crr·mg + ½ρCdA·(v+w)²)·v = keff·P   (air speed v+w; headwind lowers v)
 function flatEqSpeed(P, p) {
   const a = p.Crr * p.m * G, b = 0.5 * p.rho * p.CdA, w = p.wind || 0;
-  let lo = 0, hi = 40;
+  // Arrasto ASSINADO (rel·|rel|, como nos motores): vento de cauda empurra (rel<0).
+  // wheel(v) só é monotônica para rel = v+w ≥ 0 — sob vento de cauda forte,
+  // bisseta primeiro o ramo monotônico [−w, 40] e recua para [0, −w] se preciso.
+  const wheel = v => { const rel = v + w; return (a + b * rel * Math.abs(rel)) * v; };
+  const target = p.keff * P;
+  let lo = Math.max(0, -w), hi = 40;
+  if (wheel(lo) > target) { hi = lo; lo = 0; }
   for (let k = 0; k < 60; k++) {
     const v = (lo + hi) / 2;
-    const wheel = (a + b * (v + w) * (v + w)) * v;
-    if (wheel < p.keff * P) lo = v; else hi = v;
+    if (wheel(v) < target) lo = v; else hi = v;
   }
   return (lo + hi) / 2;
 }
@@ -371,6 +376,7 @@ function canonical(prof, pw, p) {
   speed[0] = Math.sqrt(2 * KE / m);
   let minV = speed[0];
   const keCap = 0.5 * m * vmax * vmax;
+  let stalled = false;   // P=0 com resistência > KE: a bicicleta PARA — nunca "pisar" a KE (injetaria energia)
   for (let i = 1; i < n; i++) {
     const dx = xs[i] - xs[i - 1], dh = hs[i] - hs[i - 1];
     const slope = dh / dx, sec = Math.sqrt(1 + slope * slope);
@@ -407,7 +413,17 @@ function canonical(prof, pw, p) {
           if (Math.abs(next - KEn) <= 1e-9 * KEn + 1e-12) { KEn = next; break; }
           KEn = next;
         }
-      } else KEn = Math.max(B, 1e-12);
+      } else {
+        // A = 0 (sem propulsão): solução exata, KE cai linearmente com a distância — SEM piso
+        // (um piso de KE injeta energia: exatamente o bug que o invariante proíbe).
+        KEn = B;
+        if (KEn <= 0) {   // a resistência esgota a KE dentro do sub-passo: parada em tempo finito
+          const dsStop = R > 0 ? KE / R : 0;
+          t += R > 0 ? Math.sqrt(2 * m * Math.max(KE, 0)) / R : 0;
+          Wrr += Frr * dsStop; Waero += Faero * dsStop; Wgrav += Fgrav * dsStop;
+          KE = 0; stalled = true; break;
+        }
+      }
       const vNew = Math.sqrt(2 * KEn / m), dt = dsSub / vNew;   // Fp & dt both at v' ⇒ balance exact
       legE += Pleg * dt; t += dt;
       Wrr += Frr * dsSub; Waero += Faero * dsSub; Wgrav += Fgrav * dsSub;
@@ -417,6 +433,7 @@ function canonical(prof, pw, p) {
     }
     const v = Math.sqrt(2 * KE / m);
     speed[i] = v; brk[i] = braked; if (v < minV) minV = v;
+    if (stalled) break;   // sem potência não há como prosseguir — retorna a perna parcial
   }
   const dist = xs[n - 1] - xs[0];
   // Displacement energy: ΔKE + work of the resistive forces (rolling + aero +
@@ -424,7 +441,7 @@ function canonical(prof, pw, p) {
   // Wgrav) so it is NOT a resistive term. Identity: legE·keff = dispE + Wgrav.
   const dKE = KE - KEinit;
   const dispE = dKE + Wrr + Waero + Wbrake;
-  return { legE, t, Wrr, Waero, Wgrav, Wbrake, speed, brk, regime,
+  return { legE, t, Wrr, Waero, Wgrav, Wbrake, speed, brk, regime, stalled,
            avgV: dist / t, minV, KEinit, KEfin: KE, dKE, dispE };
 }
 
@@ -529,8 +546,10 @@ function parseGPX(text) {
 function buildProfile(distArr, eleArr) {
   const X = [distArr[0]], E = [eleArr[0]];
   for (let i = 1; i < distArr.length; i++) {
-    if (distArr[i] - X[X.length - 1] < 0.5 && i < distArr.length - 1) continue;
-    X.push(distArr[i]); E.push(eleArr[i]);
+    const close = distArr[i] - X[X.length - 1] < 0.5;
+    if (close && i < distArr.length - 1) continue;
+    if (close) { X[X.length - 1] = distArr[i]; E[E.length - 1] = eleArr[i]; }   // último ponto: substitui, nunca cria dx≈0
+    else { X.push(distArr[i]); E.push(eleArr[i]); }
   }
   const base = X[0]; for (let i = 0; i < X.length; i++) X[i] -= base;   // start at 0
   const n = X.length, total = X[n - 1];
@@ -582,6 +601,7 @@ function parseFIT(buffer) {
   const end = Math.min(headerSize + dataSize, buffer.byteLength);
   let pos = headerSize;
   const defs = {}, records = [];
+  let lastTs;   // relógio corrente p/ headers compressed-timestamp (offset de 5 bits, rollover de 32 s)
   const read = (p, bt, little) => {                 // value, or undefined if FIT-invalid
     switch (bt & 0x1F) {
       case 0x01: { const v = dv.getInt8(p); return v === 0x7F ? undefined : v; }
@@ -597,8 +617,8 @@ function parseFIT(buffer) {
   };
   while (pos < end) {
     const rh = dv.getUint8(pos); pos++;
-    let local, isDef = false, hasDev = false;
-    if (rh & 0x80) local = (rh >> 5) & 0x03;          // compressed-timestamp data msg
+    let local, isDef = false, hasDev = false, tsOffset;
+    if (rh & 0x80) { local = (rh >> 5) & 0x03; tsOffset = rh & 0x1F; }   // compressed-timestamp data msg
     else { local = rh & 0x0F; isDef = !!(rh & 0x40); hasDev = !!(rh & 0x20); }
     if (isDef) {
       pos++;                                          // reserved
@@ -628,10 +648,21 @@ function parseFIT(buffer) {
             else if (f.num === 7) rec.power = v;
             else if (f.num === 253) rec.time = v;          // seconds (FIT epoch)
           }
+        } else if (f.num === 253) {   // timestamp de QUALQUER mensagem avança o relógio corrente
+          const v = read(p, f.bt, def.little);
+          if (v !== undefined) rec.time = v;
         }
         p += f.size;
       }
       pos = p + def.devSize;
+      // header compressed-timestamp: reconstrói o tempo a partir do offset de 5 bits
+      // (sem isso, dt cai no default de 1 s e a pausa/energia ficam erradas a ≠1 Hz)
+      if (tsOffset !== undefined && rec.time === undefined && lastTs !== undefined) {
+        let ts = (lastTs & ~31) | tsOffset;
+        if (ts < lastTs) ts += 32;
+        rec.time = ts;
+      }
+      if (rec.time !== undefined) lastTs = rec.time;
       if (def.gmn === 20) records.push(rec);
     }
   }
@@ -685,13 +716,14 @@ function epsFromFIT(pts, p) {
   const cellAlt = new Float64Array(nc + 1);
   for (let k = 0; k <= nc; k++) cellAlt[k] = altAt(x0 + k * DX);   // increasing d ⇒ j advances monotonically
   const cellE = new Float64Array(nc), cellVs = new Float64Array(nc), cellVt = new Float64Array(nc);
+  const VSTOP = 0.5 / 3.6;   // amostras paradas deflacionam v_f (e logo α e ε) — descartadas, como em extractRegimePowers
   for (const r of pts) {
     const k = Math.floor((r.x - x0) / DX); if (k < 0 || k >= nc) continue;
     const w = r.dt || 1;
     if (r.power !== undefined) cellE[k] += r.power * w;
-    if (r.v !== undefined) { cellVs[k] += r.v * w; cellVt[k] += w; }
+    if (r.v !== undefined && r.v >= VSTOP) { cellVs[k] += r.v * w; cellVt[k] += w; }
   }
-  // v_f = time-weighted mean GROUND speed on flat cells (|grade| < 1%)
+  // v_f = time-weighted mean MOVING ground speed on flat cells (|grade| < 1%)
   let sv = 0, sw = 0;
   for (let k = 0; k < nc; k++) { const gr = (cellAlt[k + 1] - cellAlt[k]) / DX; if (Math.abs(gr) < 0.01 && cellVt[k] > 0) { sv += cellVs[k]; sw += cellVt[k]; } }
   const vf = sw > 0 ? sv / sw : 5, aeroSpd = vf + p.wind;
@@ -748,7 +780,23 @@ function loadFIT(buffer, name) {
   if (recs.length < 2) throw new Error('FIT sem registros (record)');
   const pts = [];
   if (recs.some(r => r.dist !== undefined)) {
-    for (const r of recs) if (r.dist !== undefined && r.alt !== undefined) pts.push({ x: r.dist, alt: r.alt, power: r.power, t: r.time, v: r.speed });
+    // Alguns dispositivos gravam distância e altitude em records SEPARADOS (nunca no
+    // mesmo). Exigir ambos por record descartaria tudo — interpola a distância pelo
+    // índice do record entre âncoras de dist (monotônicas), mantendo toda altitude.
+    // Para arquivos normais (dist em todo record) reproduz a distância crua exata.
+    const di = [], dvals = [];
+    recs.forEach((r, i) => { if (r.dist !== undefined) { di.push(i); dvals.push(dvals.length ? Math.max(r.dist, dvals[dvals.length - 1]) : r.dist); } });
+    let lastAlt, k = 0;
+    for (let i = 0; i < recs.length; i++) {
+      if (recs[i].alt !== undefined) lastAlt = recs[i].alt;
+      if (lastAlt === undefined) continue;
+      while (k < di.length - 1 && di[k + 1] <= i) k++;
+      let x;
+      if (i <= di[0]) x = dvals[0];
+      else if (i >= di[di.length - 1]) x = dvals[dvals.length - 1];
+      else { const f = (i - di[k]) / (di[k + 1] - di[k]); x = dvals[k] + (dvals[k + 1] - dvals[k]) * f; }
+      pts.push({ x, alt: lastAlt, power: recs[i].power, t: recs[i].time, v: recs[i].speed });
+    }
   } else {
     const geo = recs.filter(r => r.lat !== undefined && r.lon !== undefined && r.alt !== undefined);
     if (geo.length < 2) throw new Error('FIT sem distância nem GPS');
@@ -757,10 +805,13 @@ function loadFIT(buffer, name) {
   }
   if (pts.length < 2) throw new Error('FIT sem altitude/distância');
   for (let i = 0; i < pts.length; i++) {             // time weight per sample (clamp pauses) + speed fallback
-    let w = 1;
-    if (i > 0 && pts[i].t !== undefined && pts[i - 1].t !== undefined) w = Math.min(Math.max(pts[i].t - pts[i - 1].t, 0), 10);
+    const raw = (i > 0 && pts[i].t !== undefined && pts[i - 1].t !== undefined) ? pts[i].t - pts[i - 1].t : undefined;
+    const w = raw !== undefined ? Math.min(Math.max(raw, 0), 10) : 1;
     pts[i].dt = w;
-    if (pts[i].v === undefined && i > 0 && w > 0) pts[i].v = (pts[i].x - pts[i - 1].x) / w;   // derive from dx/dt
+    if (pts[i].v === undefined && i > 0) {
+      const dtv = raw !== undefined && raw > 0 ? raw : w;   // velocidade do intervalo SEM clamp (o clamp superestima v em pausas)
+      if (dtv > 0) pts[i].v = (pts[i].x - pts[i - 1].x) / dtv;
+    }
   }
   const info = buildProfile(pts.map(p => p.x), pts.map(p => p.alt));
   const ct = num('climbThr') / 100, dt = num('descThr') / 100;

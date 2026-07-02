@@ -1,12 +1,12 @@
-# A Validated Closed-Form Descent-Recovery Factor for Bicycle Route Energy, and Its Energy↔Time Dual
+# A Closed-Form Descent-Recovery Factor for Bicycle Route Energy, and Its Energy↔Time Dual
 
-> **DRAFT / working paper — Pedal Hidrográfico research notes.** Numbers and equations are drawn from the project's own benchmarks; novelty claims are corpus-bounded (see §11.3). Not peer-reviewed; circulated for internal review and comment.
+> **DRAFT / working paper — Pedal Hidrográfico research notes.** Numbers and equations are drawn from the project's own benchmarks; novelty claims are corpus-bounded (see §11.3). Accuracy figures are self-reported against one rider's power meter (see §10.4) and, for the ε closed form, are in-sample; the reported ε correlations are part–whole (§8.3). Not peer-reviewed; circulated for internal review and comment.
 
 **Danilo Lessa Bernardineli** — *Pedal Hidrográfico* (collective), São Paulo, Brazil — danilo.lessa@gmail.com
 
 ## Abstract
 
-Planning community bicycle rides needs the *energy* of a route in kJ, but the standard tool is a forward-dynamics simulation [Martin et al. 1998] that is expensive and opaque for planning. We study a cheap closed-form alternative, `E ≈ α·x + β·(h₊ − ε·h₋)`, in which a single lumped factor `ε ∈ [0,1]` captures how much descent potential energy is recovered rather than wasted to excess drag and braking. We give `ε` a closed form in the coasting limit, `ε(s) = min(1, α/(β·s))`, with a drop-weighted aggregate and a calibrated `−0.13` offset, and validate it against a power-meter descent-energy-balance `ε` on real descents (correlation rising to 0.83 at mean slope ≥ 3% and 0.87 at ≥ 3.5%). Run on the *same* physical constants as the simulation, the closed form reproduces measured `∫P·dt` to a 3.4% median over 44 power rides (best variant) and to ~4–7% over 62 urban São Paulo rides with a generic assumed rider. Because cumulative ascent is fractal and scale-dependent [Rapaport 2011], we fold a totals-only correction `k_smooth = 1 − c·x/h₊` (`c ≈ 3 m/km`) into the closed-form law to discount sub-metre noise without touching sustained climbs. We further derive an energy↔time dual, `x* = x + k₊·h₊ − k₋·h₋`, in which the descent coefficient `k₋` is the time-twin of `ε` through the same descent power; both halves of the time model have precedent individually, but we locate no prior work deriving the descent time-credit from the same descent power as the energy recovery factor — the *linkage* is the novel piece. Both engines and the shared law are deployed in open, local-first tools (sampasimu, amora, quilojaules).
+Planning community bicycle rides needs the *energy* of a route in kJ, but the standard tool is a forward-dynamics simulation [Martin et al. 1998] that is expensive and opaque for planning. We study a cheap closed-form alternative, `E ≈ α·x + β·(h₊ − ε·h₋)`, in which a single lumped factor `ε ∈ [0,1]` captures how much descent potential energy is recovered rather than wasted to excess drag and braking. We give `ε` a closed form in the coasting limit, `ε(s) = min(1, α/(β·s))`, with a drop-weighted aggregate and a calibrated `−0.13` offset, and validate it against a power-meter descent-energy-balance `ε` on real descents (correlation rising to 0.77 at mean slope ≥ 3% and 0.82 at ≥ 3.5%, though these are part–whole — the honest gain is a 37% RMS reduction over a flat-constant baseline; §8.3). Run on the *same* physical constants as the simulation, the closed form reproduces measured `∫P·dt` to a 3.4% median over 44 power rides (best variant) and to ~4–7% over 62 urban São Paulo rides with a generic assumed rider. Because cumulative ascent is fractal and scale-dependent [Rapaport 2011], we fold a totals-only correction `k_smooth = 1 − c·x/h₊` (`c ≈ 3 m/km`) into the closed-form law to discount sub-metre noise without touching sustained climbs. We further derive an energy↔time dual, `x* = x + k₊·h₊ − k₋·h₋`, in which the descent coefficient `k₋` is the time-twin of `ε` through the same descent power; both halves of the time model have precedent individually, but we locate no prior work deriving the descent time-credit from the same descent power as the energy recovery factor — the *linkage* is the novel piece. Both engines and the shared law are deployed in open, local-first tools (sampasimu, amora, quilojaules).
 
 ## 1. Introduction
 
@@ -34,9 +34,9 @@ This paper closes that gap and draws out a structural consequence. We give `ε` 
 ε_coast(s) = min(1, α/(β·s)),     α/β = C_rr + ½·ρ·C_dA·(v_f + w)²/(m·g),
 ```
 
-with `α/β` the *flat-resistance grade* — the slope whose gravity exactly balances flat rolling-plus-aero resistance. Aggregated drop-weighted over a profile and calibrated with a near-constant `−0.13` offset, this geometry-only estimate, `ε ≈ clamp₀₁(ε_coast − 0.13)`, tracks a power-measured descent-energy-balance `ε` with correlation 0.83 (mean slope ≥ 3%) to 0.87 (≥ 3.5%) on real descents. Crucially, we run the closed form and the simulation on the **same** physical constants `(m, C_rr, C_dA, ρ, k_eff, wind)`, so the residual gap between them is attributable to the *modelling simplifications, not the parameters*.
+with `α/β` the *flat-resistance grade* — the slope whose gravity exactly balances flat rolling-plus-aero resistance. Aggregated drop-weighted over a profile and calibrated with a near-constant `−0.13` offset, this geometry-only estimate, `ε ≈ clamp₀₁(ε_coast − 0.13)`, tracks a power-measured descent-energy-balance `ε` with correlation 0.77 (mean slope ≥ 3%) to 0.82 (≥ 3.5%) on real descents (part–whole; the honest error-reduction figure is 37% RMS vs. a flat constant, §8.3). Crucially, we run the closed form and the simulation on the **same** physical constants `(m, C_rr, C_dA, ρ, k_eff, wind)`, so the residual gap between them is attributable to the *modelling simplifications, not the parameters*.
 
-We then observe that energy has a **time twin**. Time is not `E/P` (degenerate on a coast), so it needs its own model; defining an *effective flat distance* `x* = x + k₊·h₊ − k₋·h₋` and reading time off the flat speed (`t = x*/v_f`) reproduces the same structure as the energy law term-for-term. The ascent coefficient `k₊ = v_f·β/P_climb` is clean and grade-independent — the equivalent-flat-distance idea with cycling precedent [Scarf & Grehan 2005; Scarf 2007] — while the descent coefficient `k₋` is a lumped, fitted parameter playing exactly the role `ε` plays for energy, with descent-time-credit precedent [Langmuir 1984; Tobler 1993]. Each half has precedent in isolation; what has no located precedent in the nearest corpus is the **linkage**: `ε` and `k₋` both encode the same hidden descent speed `v_desc` and become inter-derivable through the descent power `P̄_desc`,
+We then observe that energy has a **time twin**. Time is not `E/P` (degenerate on a coast), so it needs its own model; defining an *effective flat distance* `x* = x + k₊·h₊ − k₋·h₋` and reading time off the flat speed (`t = x*/v_f`) reproduces the same structure as the energy law term-for-term. The ascent coefficient `k₊ = v_f·β/P_climb` is clean and grade-independent — the equivalent-flat-distance idea with cycling precedent [Scarf & Grehan 2005; Scarf 2007] — while the descent coefficient `k₋` is a lumped, free parameter playing exactly the role `ε` plays for energy, with descent-time-credit precedent [Langmuir 1984; Tobler 1993]. Each half has precedent in isolation; what has no located precedent in the nearest corpus is the **linkage**: `ε` and `k₋` both encode the same hidden descent speed `v_desc` and become inter-derivable through the descent power `P̄_desc`,
 
 ```
 k₋ = (1/s)·[1 − (v_f/P̄_desc)·(α − ε·β·s)].
@@ -44,12 +44,12 @@ k₋ = (1/s)·[1 − (v_f/P̄_desc)·(α − ε·β·s)].
 
 ### 1.1 Contributions
 
-- **A validated, route-level closed-form descent-recovery factor `ε`.** A single lumped `ε ∈ [0,1]` inside `E ≈ α·x + β·(h₊ − ε·h₋)`, with its coasting-limit closed form `ε(s) = min(1, α/(β·s))`, drop-weighted aggregate, and calibrated `−0.13` offset. No precedent for such a lumped, closed-form `ε` was located in the nearest cycling-power, elevation-routing, or EV/e-bike energy corpus.
-- **Validation against a power-measured descent-energy-balance `ε`** on real descents: correlation 0.38 (all 44 rides) → 0.65 (descent-energy-weighted) → 0.83 (mean slope ≥ 3%, n = 22) → 0.87 (≥ 3.5%, n = 15). Worked example (RMC200 Mogi): `α/β = 0.0202`, `s̄ = 3.4%` ⇒ predicted `ε = 0.46` vs measured `0.47`.
+- **A route-level closed-form descent-recovery factor `ε`, assessed against measured power.** A single lumped `ε ∈ [0,1]` inside `E ≈ α·x + β·(h₊ − ε·h₋)`, with its coasting-limit closed form `ε(s) = min(1, α/(β·s))`, drop-weighted aggregate, and calibrated `−0.13` offset. No precedent for such a lumped, closed-form `ε` was located in the nearest cycling-power, elevation-routing, or EV/e-bike energy corpus.
+- **Validation against a power-measured descent-energy-balance `ε`** on real descents: correlation 0.30 (all 44 rides) → 0.60 (descent-energy-weighted) → 0.77 (mean slope ≥ 3%, n = 22) → 0.82 (≥ 3.5%, n = 15) — read with the part–whole caveat of §8.3 (the honest gain is a 37% RMS reduction over a flat constant). Worked example (RMC200 Mogi): `α/β = 0.0202`, `s̄ = 3.4%` ⇒ predicted `ε = 0.46` vs measured `0.47`.
 - **An energy↔time duality** `x* = x + k₊·h₊ − k₋·h₋` whose descent coefficient `k₋` is the time-twin of `ε`, made inter-derivable through the shared descent power `P̄_desc`. Both halves of the time model have prior art individually; the *derivation of `k₋` from the same descent power as `ε`* is, to our knowledge, new.
 - **A shared-constants comparison design** that runs the closed form and a Martin-1998 forward simulation on identical physical constants, isolating modelling error from parameter error — together with a clean open reference implementation of the simulation (energy-conservative, semi-implicit, brake-capped, no KE floor).
 - **A `k_smooth` correction for fractal cumulative ascent** inside the closed-form law. Because measured ascent is scale-dependent [Rapaport 2011], raw `h₊` over-counts energy through sub-metre noise and short rollers; a per-segment ~2 m deadband (or the totals-only scalar `k_smooth = 1 − c·x/h₊`, `c ≈ 3 m/km`) removes that part while leaving sustained climbs at full strength (`k_h = 1`).
-- **Validation on real, non-racing social and urban rides** reproducing measured `∫P·dt` to a 3.4% median (best closed-form variant) over 44 power-meter rides and to ~4–7% median over 62 urban São Paulo rides, with explicit physical-floor (`E_legs ≥ m·g·h₊/k_eff`) and cadence data-quality filters — and a documented São Paulo negative result (urban stop-go riding makes `ε` behave as an approximate constant rather than tracking braking density).
+- **Validation on real, non-racing social and urban rides** reproducing measured `∫P·dt` to a 3.6% median (best closed-form variant) over 44 power-meter rides and to ~4–7% median over 62 urban São Paulo rides, with explicit physical-floor (`E_legs ≥ m·g·h₊/k_eff`) and cadence data-quality filters — and a documented São Paulo negative result (urban stop-go riding makes `ε` behave as an approximate constant rather than tracking braking density).
 - **A per-DEM ascent-bias table `k_DEM`** (a parameter-error result, not a headline modelling claim) quantifying how the choice of elevation source biases the closed-form law's `h₊`/`h₋` inputs.
 - **Deployment** of the shared law in three open, local-first tools: asymmetric energy *fields* over DEMs (sampasimu), per-ride kJ records (amora), and per-segment kJ via the canonical twin (quilojaules).
 
@@ -147,7 +147,7 @@ $$
 \alpha = \frac{C_{rr}\,m g + \tfrac12\,\rho\,C_d A\,(v_f + w)^2}{k_{eff}}, \qquad \beta = \frac{m g}{k_{eff}} .
 $$
 
-Here `α` is energy per horizontal metre (rolling + aero, charged at the flat reference speed `v_f`), `β` is energy per vertical metre, and `ε ∈ [0,1]` is the lumped descent-recovery factor developed in §5. A per-edge clamp `max(0, α·dx − ε·β·|dh|)` on descent segments prevents negative segment energy. The leg energy is `E_leg = E_wheel·k_eff`.
+Here `α` is energy per horizontal metre (rolling + aero, charged at the flat reference speed `v_f`), `β` is energy per vertical metre, and `ε ∈ [0,1]` is the lumped descent-recovery factor developed in §5. A per-edge clamp `max(0, α·dx − ε·β·|dh|)` on descent segments prevents negative segment energy. The leg energy is `E_leg = E_wheel/k_eff` (the legs supply *more* than the wheel receives; `α, β` above are already wheel-side quantities).
 
 The current (v2) form refines this with three corrections, each of which removes a *systematic* bias measured against the power-meter rides:
 
@@ -164,7 +164,7 @@ x_{flat} = x\,(1 - f_{climb}), \qquad
 f_{climb} = \frac{x_+}{x},
 $$
 
-with `x₊` the horizontal distance on climbing segments (`slope ≥` the climb threshold). The headline runs zero climb aero (`climbAeroMode = 'off'`); a near-exact variant instead charges it at the quasi-steady climb speed `v_c ≈ k_eff·P_climb/(C_rr m g cosθ + m g sinθ)`, capped at `v_f`. Descent aero is left untouched — on descents it is paid by gravity and already sits inside `(1−ε)·β·h₋`; down-weighting it there would double-count. Empirically this correction cuts the median `|Δ%|` from `19.2` (baseline `off`) to `8.7` over the 44 power rides, beating `off` on 43/44 rides (median climb fraction `21%`); the per-regime details are reported in §8.1.
+with `x₊` the horizontal distance on climbing segments (`slope ≥` the climb threshold). The headline runs zero climb aero (`climbAeroMode = 'zero'`; `'off'` is the full-aero baseline); a near-exact variant instead charges it at the quasi-steady climb speed `v_c ≈ k_eff·P_climb/(C_rr m g cosθ + m g sinθ)`, capped at `v_f`. Descent aero is left untouched — on descents it is paid by gravity and already sits inside `(1−ε)·β·h₋`; down-weighting it there would double-count. Empirically this correction cuts the median `|Δ%|` from `19.3` (baseline `off`) to `8.7` over the 44 power rides, beating `off` on 43/44 rides (median climb fraction `21%`); the per-regime details are reported in §8.1.
 
 **(ii) k_h = 1 — gravity is paid in full on real climbs.** A direct fit of the gravity coefficient on sustained climbs gives `k_h ≈ 1` (validated in §8.2): on real climbing `β·h₊` is correct and there is no uniform gravity discount.
 
@@ -231,7 +231,7 @@ $$
 \epsilon_{coast} \approx \min\!\Big(1,\tfrac{\alpha}{\beta\,\bar s}\Big),\quad \bar s = \frac{H_-}{X_-}.
 $$
 
-This is the geometry-only planning estimate `epsGeom()`: it needs no power track, only the route's grade profile and the rider constants. We test it, derive the `−0.13` offset, and validate the resulting estimator in §8.3; the headline result is correlation 0.83–0.87 against a power-measured ε on real descents, calibrating to
+This is the geometry-only planning estimate `epsGeom()`: it needs no power track, only the route's grade profile and the rider constants. We test it, derive the `−0.13` offset, and assess the resulting estimator in §8.3; the headline result is correlation 0.77–0.82 against a power-measured ε on real descents (part–whole; a 37% RMS reduction over a flat constant is the more defensible figure), calibrating to
 
 $$
 \boxed{\ \epsilon \approx \mathrm{clamp}_{[0,1]}\big(\epsilon_{coast} - 0.13\big)\ }.
@@ -271,7 +271,7 @@ $$
 k_- \approx \frac{1 - v_f/v_{desc}}{\bar s},
 $$
 
-so $k_-$ is a **lumped, fitted parameter** — playing for time exactly the role ε plays for energy. The term-for-term correspondence is the structural heart of the duality:
+so $k_-$ is a **lumped, free parameter** — playing for time exactly the role ε plays for energy (free, not fitted: no measured ride *time* calibrates it anywhere in this work — see §10.4). The term-for-term correspondence is the structural heart of the duality:
 
 |  | clean term | lumped term |
 |---|---|---|
@@ -407,21 +407,21 @@ We score each model variant by its median absolute percent error against the mea
 
 | model / variant | median \|Δ%\| | median Δ% |
 |---|--:|--:|
-| **approximate `cf` + 2 m elevation smooth** (deadband) | **3.4** | +2.2 |
+| **approximate `cf` + 2 m elevation smooth** (deadband) | **3.6** | +2.2 |
 | canonical (forward sim) | 5.1 | −1.7 |
-| canonical + 2 m elevation smooth | 5.6 | −3.6 |
-| approximate `cf` + scalar `k_smooth` (no smoothing) | 5.8 | −0.7 |
+| canonical + 2 m elevation smooth | 5.6 | −3.5 |
+| approximate `cf` + scalar `k_smooth` (no smoothing) | 5.8 | −0.5 |
 | approximate `cf` + sheet `v_f` (`P_flat/P_avg`) | 7.2 | −0.5 |
-| approximate `cf` + measured `v_f` | 7.5 | +2.7 |
-| approximate + climb-fraction (`cf`) | 8.7 | +8.5 |
-| approximate `off` + 2 m elevation smooth | 10.0 | +9.8 |
-| approximate `off` (baseline) | 19.2 | +19.2 |
+| approximate `cf` + measured `v_f` | 8.2 | +6.7 |
+| approximate + climb-fraction (`cf`) | 8.7 | +8.6 |
+| approximate `off` + 2 m elevation smooth | 10.2 | +9.9 |
+| approximate `off` (baseline) | 19.3 | +19.3 |
 
-Three results are load-bearing. First, the **closed-form approximate law, once the climb-aero over-charge is corrected (`cf`) and the profile is deadband-smoothed at τ = 2 m, beats the full forward simulation** — 3.4 % median |Δ%| against the canonical sim's 5.1 % — at a fraction of the cost. Second, the corrections are not cosmetic: the raw `off` baseline (full `v_f` aero over the whole distance, no smoothing) sits at 19.2 % and over-predicts systematically (+19.2 % median Δ%), because it bills aerodynamic drag at the flat reference speed even up the climbs and counts sub-metre ascent noise as real lifting work. The climb-fraction correction alone (`cf`) halves the error to 8.7 % and beats `off` on 43 of 44 rides (median climb fraction 21 %); the 2 m deadband then removes the ascent-noise half.
+Three results are load-bearing. First, the **closed-form approximate law, once the climb-aero over-charge is corrected (`cf`) and the profile is deadband-smoothed at τ = 2 m, beats the full forward simulation** — 3.6 % median |Δ%| against the canonical sim's 5.1 % — at a fraction of the cost. Second, the corrections are not cosmetic: the raw `off` baseline (full `v_f` aero over the whole distance, no smoothing) sits at 19.3 % and over-predicts systematically (+19.3 % median Δ%), because it bills aerodynamic drag at the flat reference speed even up the climbs and counts sub-metre ascent noise as real lifting work. The climb-fraction correction alone (`cf`) halves the error to 8.7 % and beats `off` on 43 of 44 rides (median climb fraction 21 %); the 2 m deadband then removes the ascent-noise half.
 
-The per-regime decomposition localizes the residual error. The canonical sim is near-exact on flat (−3.8 %) and climb (+7.5 %) but under-predicts descents (−17.9 %, only 7 % of total energy); the uncorrected `off` closed form over-predicts climbs by +48.1 % — the over-charge the `cf` split and deadband target. As shown in §6.1, of raw cumulative ascent `h₊` roughly 20 % is sub-3 m jitter, and the corresponding 14 282 kJ of spurious `β·h₊` accounts for ≈ 93 % of the `cf` climb over-prediction.
+The per-regime decomposition localizes the residual error. The canonical sim is near-exact on flat (−3.6 %) and climb (+7.5 %) but under-predicts descents (−17.9 %, only 7 % of total energy); the uncorrected `off` closed form over-predicts climbs by +48.1 % — the over-charge the `cf` split and deadband target. As shown in §6.1, of raw cumulative ascent `h₊` roughly 20 % is sub-3 m jitter, and the corresponding 14 282 kJ of spurious `β·h₊` accounts for ≈ 93 % of the `cf` climb over-prediction.
 
-The conservation identity `k_eff·legE = ΔKE + W_rr + W_aero + W_grav + W_brake` holds to 1e-6 relative error throughout, confirming the semi-implicit integrator never injects or leaks energy [Martin et al. 1998].
+The conservation identity `k_eff·legE = ΔKE + W_rr + W_aero + W_grav + W_brake` is machine-checked per ride (`compare.mjs`); the worst relative residual across the 44 rides is 1.8×10⁻⁸, confirming the semi-implicit integrator never injects or leaks energy [Martin et al. 1998].
 
 ### 8.2 The sustained-climb fit `k_h ≈ 1` and the smoothing cross-check
 
@@ -430,19 +430,19 @@ The deadband smoothing is justified directly against the power meter. Fitting th
 | | kJ |
 |---|--:|
 | measured Σ∫P·dt on climbs | 41 790 |
-| expected (gravity 37 366 + roll 4 424 + aero 1 424) | 43 214 |
-| measured / expected | **0.97** |
+| expected (gravity 37 366 + roll 4 424 + aero 1 544) | 43 333 |
+| measured / expected | **0.96** |
 | `k_h(sustained) = (measured − roll − aero) / gravity` | **0.96** |
 
-So on real, sustained climbing the rider pays essentially the full `mg·Δh/k_eff`: `k_h ≈ 1` (per-ride median 1.03, range 0.57–1.23). There is no uniform gravity discount; an earlier uniform scalar of 0.56 was an artifact of mixing genuine climbing with rollers and noise (sustained climbs are only 54 % of total ascent, the other 46 % being rollers, gentle grade, and noise). The correct treatment is therefore to keep `k_h = 1` (rounding 0.96 ≈ 1) and remove only the spurious ascent — either via the 2 m deadband (the "smoothened" realisation, `k_smooth = 1`) or via the totals-only scalar `k_smooth = 1 − c·x/h₊`. The cross-check confirms both work, with the scalar trading bias for scatter:
+So on real, sustained climbing the rider pays essentially the full `mg·Δh/k_eff`: `k_h ≈ 1` (per-ride median 1.02, range 0.57–1.23). There is no uniform gravity discount; an earlier uniform scalar of 0.56 was an artifact of mixing genuine climbing with rollers and noise (sustained climbs are only 54 % of total ascent, the other 46 % being rollers, gentle grade, and noise). The correct treatment is therefore to keep `k_h = 1` (rounding 0.96 ≈ 1) and remove only the spurious ascent — either via the 2 m deadband (the "smoothened" realisation, `k_smooth = 1`) or via the totals-only scalar `k_smooth = 1 − c·x/h₊`. The cross-check confirms both work, with the scalar trading bias for scatter:
 
 | model | median \|Δ%\| | median Δ% |
 |---|--:|--:|
-| smoothened (`cf` + real 2 m deadband, `k_smooth = 1`) | **3.4** | +2.2 |
+| smoothened (`cf` + real 2 m deadband, `k_smooth = 1`) | **3.6** | +2.2 |
 | canonical (forward sim) | 5.1 | −1.7 |
-| `k_smooth` scalar (`cf` + `1 − c·x/h₊`, no smoothing) | 5.8 | −0.7 |
+| `k_smooth` scalar (`cf` + `1 − c·x/h₊`, no smoothing) | 5.8 | −0.5 |
 
-The scalar is essentially unbiased (−0.7 %) but carries roughly twice the scatter of the explicit deadband.
+The scalar is essentially unbiased (−0.5 %) but carries roughly twice the scatter of the explicit deadband.
 
 ### 8.3 The ε closed-form fit (44 power rides)
 
@@ -450,14 +450,16 @@ The coasting-limit closed form `ε_coast(s) = min(1, α/(β·s))`, with `α/β =
 
 | view | corr(ε_coast, ε_bal) | bias (ε_bal − ε_coast) |
 |---|--:|--:|
-| all 44 rides (unweighted) | 0.38 | −0.18 |
-| weighted by descent energy `β·H₋` | **0.65** | −0.19 |
-| real descents, s̄ ≥ 3.0 % (n = 22) | **0.83** | −0.13 |
-| real descents, s̄ ≥ 3.5 % (n = 15) | **0.87** | −0.13 |
+| all 44 rides (unweighted) | 0.30 | −0.17 |
+| weighted by descent energy `β·H₋` | **0.60** | −0.18 |
+| real descents, s̄ ≥ 3.0 % (n = 22) | **0.77** | −0.12 |
+| real descents, s̄ ≥ 3.5 % (n = 15) | **0.82** | −0.12 |
 
-**The grade law holds precisely where ε carries energy.** Correlation rises from 0.38 over all rides to 0.65 once weighted by descent energy `β·H₋`, and to 0.83 / 0.87 restricting to real, coastable descents (s̄ ≥ 3.0 % / 3.5 %). The low all-rides correlation is harmless: gentle rides carry `β·H₋ ≈ 0` descent energy, so a mispredicted ε on them costs almost nothing in kJ — which is exactly why energy-weighting lifts the correlation from 0.38 to 0.65.
+**These correlations are part–whole — read with care.** `ε_bal` and `ε_coast` are *not* independent: by construction `ε_bal = α/(β·s̄) − E_legs,₋/(β·H₋)` and `ε_coast` is (a clamped, drop-weighted version of) that same first term `α/(β·s̄)`, computed with the *same* per-ride α. So this is close to correlating `X` with `X − B`, and a shared α-error moves both together invisibly; on the s̄ ≥ 3 % subset the shared geometry term `α/(β·s̄)` *alone* correlates 0.72 with `ε_bal` (vs the 0.77 headlined) and 0.99 with `ε_coast` itself — the two are nearly the same quantity. The honest statistic is therefore the **error reduction** of the calibrated estimator over a flat-constant baseline: at s̄ ≥ 3 %, `ε_coast − 0.13` reaches RMS 0.08 against a flat-median baseline of RMS 0.13, a **37 % RMS reduction** — that is the number we lead with, not the correlation. (Over *all* 44 rides the calibrated estimator actually *loses* to the flat median, skill −0.38, because of the flat-terrain reversal described next — restrict to real descents before using it.)
 
-Across the rides where ε matters, the residual is a near-**constant −0.13 offset** — the residual descent pedalling and braking that the pure-coasting ideal omits. (This is distinct from the unweighted −0.18 and energy-weighted −0.19 biases in the table above; the −0.13 is the offset on the real-descent rows that the estimator adopts.) Subtracting it gives the working estimator `ε ≈ clamp_[0,1](ε_coast − 0.13)`, which turns the s̄ ≥ 3 % median ε_coast of 0.39 into 0.26, matching the measured 0.27, and beats the spreadsheet's flat 0.23 / 0.27 constant. A *worked example* (RMC200 Mogi): `α/β = 0.0202`, `s̄ = 3.4 %` ⇒ `min(1, 0.0202/0.0341) = 0.59`; minus 0.13 ⇒ **0.46**, against a measured **0.47**.
+**The grade law tracks ε where ε carries energy.** With that caveat, correlation rises from 0.30 over all rides to 0.60 once weighted by descent energy `β·H₋`, and to 0.77 / 0.82 restricting to real, coastable descents (s̄ ≥ 3.0 % / 3.5 %). The low all-rides correlation is harmless: gentle rides carry `β·H₋ ≈ 0` descent energy, so a mispredicted ε on them costs almost nothing in kJ — which is why energy-weighting lifts the correlation from 0.30 to 0.60.
+
+Across the rides where ε matters, the residual is a near-**constant −0.13 offset** — the residual descent pedalling and braking that the pure-coasting ideal omits. (This is distinct from the unweighted −0.17 and energy-weighted −0.18 biases in the table above; the −0.13 is the offset on the real-descent rows that the estimator adopts.) Subtracting it gives the working estimator `ε ≈ clamp_[0,1](ε_coast − 0.13)`, which turns the s̄ ≥ 3 % median ε_coast of 0.39 into 0.26, matching the measured 0.27, and beats the spreadsheet's flat 0.23 / 0.27 constant. A *worked example* (RMC200 Mogi): `α/β = 0.0202`, `s̄ = 3.4 %` ⇒ `min(1, 0.0202/0.0341) = 0.59`; minus 0.13 ⇒ **0.46**, against a measured **0.47**.
 
 Two limits sharpen the picture. First, the clamp-to-1 prediction is **reversed on flat terrain**: gentle rides are pedalled *through* the dips, so measured ε → 0 rather than 1 (NS3 Caracaí: ε_coast ≈ 0.9, measured 0.01) — harmless, since those rides carry ≈ 0 descent energy. Second, the candidate **braking penalties do not survive** — curviness κ (rad/km) and unpaved fraction both fit with the *wrong sign* (+0.03, +0.14), confirming that the −0.13 offset, not a route-roughness term, is the right correction.
 
@@ -469,39 +471,39 @@ The second dataset is 62 short urban São Paulo social rides (median 33 km / 454
 |---|--:|--:|--:|
 | canonical (fed ride powers) | 6.5 | −3.4 | −0.8 |
 | smooth approx · ε = 0.10 | 4.5 | +3.4 | +5.7 |
-| smooth approx · ε = 0.15 | 4.9 | +1.3 | +3.4 |
-| smooth approx · ε = 0.20 | 4.7 | −0.8 | +1.2 |
-| **poor-man's · ε = 0.20** | **3.9** | +1.1 | +4.6 |
-| poor-man's · ε = 0.25 | 4.8 | −1.2 | +2.0 |
-| poor-man's · ε = geom (0.29) | 6.4 | −3.3 | +1.1 |
-| smooth approx · ε = geom (0.29) | 7.6 | −4.9 | −2.0 |
-| smooth approx · ε = 0.00 | 10.5 | +10.5 | — |
-| poor-man's · ε = 0.00 | 7.5 | +7.4 | — |
+| smooth approx · ε = 0.15 | 5.0 | +1.3 | +3.5 |
+| smooth approx · ε = 0.20 | 4.6 | −0.8 | +1.2 |
+| **poor-man's · ε = 0.20** | **3.9** | +1.1 | +4.7 |
+| poor-man's · ε = 0.25 | 4.8 | −1.2 | +2.1 |
+| poor-man's · ε = geom (0.29) | 6.3 | −3.2 | +1.1 |
+| smooth approx · ε = geom (0.29) | 7.6 | −4.9 | −1.9 |
+| smooth approx · ε = 0.00 | 7.6 | +7.4 | +10.2 |
+| poor-man's · ε = 0.00 | 10.5 | +10.5 | +15.1 |
 
-Three findings carry over to a completely different riding style. First, **all three models reproduce measured energy to ~4–7 % median with a generic rider**, and the cheap poor-man's scalar `k_smooth` (3.9 %) is as accurate as the full forward simulation (6.5 %). Second, **descent recovery is physically real even in stop-go traffic**: setting ε = 0 over-predicts by +7…+10 %, and the error floor sits at ε ≈ 0.15–0.20, with ε-sensitivity ~12–14 percentage points across the 0–0.29 ladder. Third, the geometric `ε_geom` (median 0.29) **over-credits recovery on urban stop-go riding** (it ignores the braking penalty), yielding ~3–5 % under-prediction — so `ε_geom` is the right planning estimate on open, coastable routes, while a flat ε ≈ 0.20 fits urban stop-go.
+Three findings carry over to a completely different riding style. First, **all three models reproduce measured energy to ~4–7 % median with a generic rider**, and the cheap poor-man's scalar `k_smooth` (3.9 %) is as accurate as the full forward simulation (6.5 %). Second, **descent recovery is physically real even in stop-go traffic**: setting ε = 0 over-predicts by +7…+11 %, and the error floor sits at ε ≈ 0.15–0.20, with ε-sensitivity ~12–14 percentage points across the 0–0.29 ladder. Third, the geometric `ε_geom` (median 0.29) **over-credits recovery on urban stop-go riding** (it ignores the braking penalty), yielding ~3–5 % under-prediction — so `ε_geom` is the right planning estimate on open, coastable routes, while a flat ε ≈ 0.20 fits urban stop-go.
 
 ### 8.5 The São Paulo negative result: ε is a constant, not braking-driven
 
-A natural hypothesis is that the gap between the geometric prediction and the measured recovery in São Paulo's stop-go riding is set by braking density. It is not. On the **59** clean censo rides carrying a usable descent-balance ε (medians: ε_true 0.14, ε_coast 0.35, gap 0.17, sd 0.10), no candidate stop-go predictor explains the gap:
+A natural hypothesis is that the gap between the geometric prediction and the measured recovery in São Paulo's stop-go riding is set by braking density. It is not. On the **59** clean censo rides carrying a usable descent-balance ε (medians: ε_true 0.23, ε_coast 0.40, gap 0.15, sd 0.08), no candidate stop-go predictor explains the gap:
 
 | predictor for the gap (ε_coast − ε_true) | corr | R² |
 |---|--:|--:|
-| Δε_brake (descent ½Δv²) | 0.08 | 0.01 |
-| hard-brake (> 1 m/s, descent) | −0.18 | 0.03 |
-| all-decel ½Δv² | 0.23 | 0.05 |
-| stops/km | −0.28 | 0.08 |
-| v_f | 0.05 | 0.00 |
+| Δε_brake (descent ½Δv²) | 0.11 | 0.01 |
+| hard-brake (> 1 m/s, descent) | −0.16 | 0.02 |
+| all-decel ½Δv² | 0.24 | 0.06 |
+| stops/km | −0.26 | 0.07 |
+| v_f | 0.37 | 0.14 |
 
-The mechanistic correction `ε_coast − Δε_brake` over-corrects: the median Δε_brake of 0.34 is roughly double the actual gap of 0.17, giving an RMS of 0.15 — *worse* than a flat constant. Ranking the estimators by RMS against ε_true:
+`v_f` shows the strongest (still modest) association — plausibly because faster-descending rides simply have less braking to reconcile, not a stop-go effect — but none of these clear R² ≈ 0.14, and the braking-specific predictors remain weak or wrong-signed. The mechanistic correction `ε_coast − Δε_brake` over-corrects: the median Δε_brake of 0.34 is roughly double the actual gap of 0.15, giving an RMS of 0.19 — *worse* than a flat constant. Ranking the estimators by RMS against ε_true:
 
 | estimator | RMS vs ε_true |
 |---|--:|
-| flat ε = 0.20 | **0.10** |
-| `ε_coast − 0.13` | 0.12 |
-| mechanistic (`ε_coast − Δε_brake`) | 0.15 |
-| ε_coast (no penalty) | 0.22 |
+| flat ε = 0.20 | 0.08 |
+| `ε_coast − 0.13` | **0.08** |
+| mechanistic (`ε_coast − Δε_brake`) | 0.19 |
+| ε_coast (no penalty) | 0.18 |
 
-The conclusion is a **documented negative result**: the over-credit of `ε_coast` is ≈ 0.17, just above the open-road 0.13 of §8.3, and it does *not* track braking. The mechanism is that on a descent it is **gravity, not the legs, that repays post-stop re-acceleration**, so the legs' braking budget does not predict the recovery gap. The practical rule is therefore a constant — ε ≈ 0.20 (the sweep optimum) for urban riding, or the pure descent-balance ε ≈ 0.14 (likely deflated by the assumed C_rr = 0.008 being low for rough city asphalt) — and the braking correction is dropped.
+The conclusion is a **documented negative result**: the over-credit of `ε_coast` is ≈ 0.15, close to the open-road 0.13 of §8.3, and it does *not* track braking. The mechanism is that on a descent it is **gravity, not the legs, that repays post-stop re-acceleration**, so the legs' braking budget does not predict the recovery gap. The practical rule is therefore a constant — ε ≈ 0.20 (the sweep optimum) or the calibrated `ε_coast − 0.13` (now tied with it) for urban riding, or the pure descent-balance ε ≈ 0.23 for a direct measurement (the assumed C_rr = 0.008 may still be a touch low for rough city asphalt) — and the braking correction is dropped.
 
 ### 8.6 The DEM / `k_DEM` table
 
@@ -573,7 +575,7 @@ The total is `E_total = Σ max(P_wheel, 0)/η · Δt`, with `kcal = (kJ/0.24)/4.
 
 | Project | Model used | Form of the shared law | Deployment |
 |---|---|---|---|
-| **sampasimu** | Closed-form (approximate) law as a per-edge Dijkstra cost | `v2Edge`: uphill `aRoll·d + aAero·d + β·dh`; downhill `max(0, aRoll·d + aAero·d − ε·β·|dh|)`, `ε = clamp₀₁(min(1, abRatio·d/|dh|) − 0.13)`; same on portals, `reverse`-aware; Rust bit-parity | `simujaules.pedalhidrografi.co` (legacy `telhas.pedalhidrografi.co/simujoules/`) |
+| **sampasimu** | Closed-form (approximate) law as a per-edge Dijkstra cost | `v2Edge`: uphill `aRoll·d + (grade<climbThr ? aAero·d : 0) + β·dh`; downhill `max(0, aRoll·d + aAero·d − ε·β·|dh|)`, `ε = clamp₀₁(min(1, abRatio·d/|dh|) − 0.13)`; same on portals, `reverse`-aware; Rust bit-parity | `simujaules.pedalhidrografi.co` (legacy `telhas.pedalhidrografi.co/simujoules/`) |
 | **amora** | None — records the kJ output | `ph:energyEstimate` / `ph:measuredEnergy` as plain `xsd:decimal` kJ literals on `ph:Tour`; intensity bands derived in readers | `amora.pedalhidrografi.co` (Cloud Run) |
 | **quilojaules** | Canonical forward-dynamics [Martin et al. 1998], not the closed form | `Σ max(P_wheel,0)/η · Δt`, `P_wheel = (F_roll+F_grav+F_aero)·v`; same constants and per-regime powers as `canonical()` | static app; elevation via `telhas.pedalhidrografi.co` |
 
@@ -612,7 +614,7 @@ We are explicit about provenance to keep the novelty claims honest.
 | ε / k_DEM inference (invert an energy identity) | **Incremental**, Chung-adjacent | [Chung] virtual elevation |
 | São Paulo ε negative result | **Additive** (negative results under-published) | — |
 
-The `k_smooth` story is worth a note as additive formalization rather than discovery. That cumulative ascent is fractal and scale-dependent is established [Rapaport 2011], and Rapaport even states the roller-momentum intuition in words; what we add is folding it *inside* the closed-form energy law as the totals-only scalar `k_smooth = 1 − c·x/h₊` with `c ≈ 0.003` (3 m/km, a ~0.3% dimensionless "noise grade"; measured 3.2 m/km, IQR 2.7–3.8). It is only needed for the approximate model — the canonical simulation tracks kinetic energy and already pays the rollers' momentum correctly. The empirical justification for `k_h = 1` is the same sustained-climb finding of §8.2: over 2535 sustained sections measured `∫P·dt` on climbs (41 790 kJ) equals expected gravity+rolling+aero (43 214 kJ) to within 3 % (ratio 0.97, `k_h(sustained) = 0.96`), so `β·h₊` is correct on real climbing and the over-count is entirely sub-metre noise and short rollers.
+The `k_smooth` story is worth a note as additive formalization rather than discovery. That cumulative ascent is fractal and scale-dependent is established [Rapaport 2011], and Rapaport even states the roller-momentum intuition in words; what we add is folding it *inside* the closed-form energy law as the totals-only scalar `k_smooth = 1 − c·x/h₊` with `c ≈ 0.003` (3 m/km, a ~0.3% dimensionless "noise grade"; measured 3.2 m/km, IQR 2.7–3.8). It is only needed for the approximate model — the canonical simulation tracks kinetic energy and already pays the rollers' momentum correctly. The empirical justification for `k_h = 1` is the same sustained-climb finding of §8.2: over 2535 sustained sections measured `∫P·dt` on climbs (41 790 kJ) equals expected gravity+rolling+aero (43 333 kJ) to within 4 % (ratio 0.96, `k_h(sustained) = 0.96`), so `β·h₊` is correct on real climbing and the over-count is entirely sub-metre noise and short rollers.
 
 ### 10.3 Corpus-bounded honesty
 
@@ -620,17 +622,25 @@ Every "novel" call in this paper means **"no precedent located in the nearest ro
 
 ### 10.4 Limitations
 
-The candid limitations are three.
+The candid limitations, in rough order of how much they bound the claims:
 
-**Behaviour-driven ε scatter and a São Paulo negative result.** ε is not a property of terrain alone; it depends on how the rider descends. The coasting-limit clamp-to-1 reverses on gentle terrain — riders pedal *through* the dips, so measured ε → 0 rather than 1 (NS3 Caracaí: predicted ≈ 0.9, measured 0.01) — though this is harmless because such rides carry `β·H₋ ≈ 0` descent energy, which is why energy-weighting lifts the all-rides correlation from 0.38 to 0.65 (and the grade law itself reaches corr 0.83 at `s̄ ≥ 3%`, 0.87 at `s̄ ≥ 3.5%`). On the urban censo corpus we tested the natural hypothesis that the residual ε over-credit is braking-driven and **refuted it in our own data**: across 59 clean censo rides the gap (ε_coast − ε_true, medians 0.35 and 0.14) does not track stop-go density — Δε_brake corr 0.08, stops/km corr −0.28, all R² ≤ 0.08 — and the mechanistic correction over-corrects (Δε_brake median 0.34 ≫ gap 0.17), giving RMS 0.15, worse than a flat constant. The mechanism is that on a descent gravity, not the legs, repays post-stop re-acceleration, so the braking signal does not survive into ε. The practical upshot is unflattering to the closed form on stop-go terrain: `ε_geom` (median 0.29) over-credits, and a flat `ε ≈ 0.20` is the better urban estimator (sweep optimum; `ε_coast − 0.13` RMS 0.12 vs flat-0.20 RMS 0.10). ε is therefore corpus-bounded: use `ε_geom` on open coastable routes, flat `ε ≈ 0.20` on urban stop-go.
+**Conditional on measured power, not blind prediction.** Both engines are *conditioned on the very ride they predict*: the canonical simulation is fed that ride's own FIT-extracted climb/flat/descent powers, and the closed form's reference speed is `v_f = flatEqSpeed(P_flat)` from the same ride. The accuracy figures therefore measure the *consistency of the energy accounting given the measured power*, not blind planning-mode prediction — no unconditional/planning-only figure is computed here. The 3.6 % best-variant on the longões set additionally uses the rider's *hand-entered* per-ride ε from the source spreadsheet, not the closed-form ε; it is a best-of-≈9-variants headline.
+
+**Single rider, single power meter.** Every ride in *both* datasets comes from one rider's one power-meter device; the censo set is a different *riding style* (urban stop-go), not a different rider, bike, or instrument. External validity to other riders/bikes/meters is untested.
+
+**The ε correlations are in-sample and part–whole.** The −0.13 offset is calibrated on the same 44 rides the correlations are reported on, and the predictor `ε_coast` shares its dominant term *and* its per-ride α with the "truth" `ε_bal`, so the reported 0.77/0.82 are inflated by construction — the shared geometry term `α/(β·s̄)` alone correlates 0.72 with `ε_bal` and 0.99 with `ε_coast` itself (§8.3). Read them as a within-sample skill signal, not out-of-sample validation; the RMS-reduction figure (37% at s̄≥3%) is the more defensible statistic. Consistent with the in-sample caveat, `ε_geom` performed no better than a flat constant on the quasi-independent censo set.
+
+**The time model is theory only.** The energy↔time duality `x* = x + k₊·h₊ − k₋·h₋` and the ε↔k₋ bridge (§5) are *not* empirically validated: nothing in this work compares predicted route times to measured times, so `k₋` is a *free* parameter, not fitted. All empirical results concern the *energy* law.
+
+**Behaviour-driven ε scatter and a São Paulo negative result.** ε is not a property of terrain alone; it depends on how the rider descends. The coasting-limit clamp-to-1 reverses on gentle terrain — riders pedal *through* the dips, so measured ε → 0 rather than 1 (NS3 Caracaí: predicted ≈ 0.9, measured 0.01) — though this is harmless because such rides carry `β·H₋ ≈ 0` descent energy, which is why energy-weighting lifts the all-rides correlation from 0.30 to 0.60 (and the grade law itself reaches corr 0.77 at `s̄ ≥ 3%`, 0.82 at `s̄ ≥ 3.5%`, part–whole). On the urban censo corpus we tested the natural hypothesis that the residual ε over-credit is braking-driven and **refuted it in our own data**: across 59 clean censo rides the gap (ε_coast − ε_true, medians 0.40 and 0.23) does not track stop-go density — Δε_brake corr 0.11, stops/km corr −0.26, all R² ≤ 0.07 — and the mechanistic correction over-corrects (Δε_brake median 0.34 ≫ gap 0.15), giving RMS 0.19, worse than a flat constant. The mechanism is that on a descent gravity, not the legs, repays post-stop re-acceleration, so the braking signal does not survive into ε. The closed form does no worse than a constant on stop-go terrain: `ε_geom` (median 0.29) over-credits, but `ε_coast − 0.13` *ties* the flat `ε ≈ 0.20` urban estimator (both RMS 0.08). ε is therefore corpus-bounded: use `ε_geom` on open coastable routes, flat `ε ≈ 0.20` (or `ε_coast − 0.13`, now equivalent) on urban stop-go.
 
 **The ~4–7% accuracy is self-reported against a single benchmark.** All three models reproduce measured `∫P·dt` to ~4–7% median error with a generic assumed rider — on the 62 clean censo rides the poor-man's scalar `k_smooth` at ε = 0.20 reaches 3.9% median |Δ%|, as accurate as the forward simulation at 6.5% — but this is the repo's own self-report scored against one ground truth, the power-meter `∫P·dt` integral. There is no *external*, independently measured integrated-energy benchmark; the prior art validates instantaneous speed/power on controlled tracks ([Martin et al. 1998] on a flat taxiway; [Dahmen & Saupe 2011] on rural-track speed, excluding steep descents and braking), and the nearest real-non-racing-data precedent [Gebhard et al. 2016] predicts battery range, not mechanical `∫P·dt`. The accuracy figures should be read as *internal consistency against the power meter*, not as validation against an orthogonal energy measurement.
 
-**Parameter/benchmark caveats.** The censo rider physics is *assumed* (m = 78 kg, C_dA = 0.40, C_rr = 0.008, ρ = 1.13, wind = 0, k_eff = 0.98), and the descent-balance `ε ≈ 0.14` is likely deflated by `C_rr = 0.008` being low for rough city asphalt. The physical-floor filter (`legE ≥ mg·h₊/k_eff`) and cadence check excluded 7 rides that measured below the climbing potential energy (down to 53 %, over-predicting by +79…+373 %) — a data-quality cut that is principled but does prune the corpus.
+**Parameter/benchmark caveats.** The censo rider physics is *assumed* (m = 78 kg, C_dA = 0.40, C_rr = 0.008, ρ = 1.13, wind = 0, k_eff = 0.98), and the descent-balance `ε ≈ 0.23` may still be a touch deflated by `C_rr = 0.008` being low for rough city asphalt. The physical-floor filter (`legE ≥ mg·h₊/k_eff`) and cadence check excluded 7 rides that measured below the climbing potential energy (down to 53 %, over-predicting by +79…+373 %) — a data-quality cut that is principled but does prune the corpus.
 
 ## 11. Conclusion and future work
 
-We presented two engines for the mechanical energy of pedalling a route — a standard Martin-1998 forward simulation [Martin et al. 1998] and a cheap closed-form law `E ≈ α_r·x + α_a·x_flat + k_h·k_smooth·β·(h₊ − ε·h₋)` — run on *shared* physical constants so the gap between them isolates modelling error from parameter error. The genuinely new pieces are the **lumped, route-level closed-form descent-recovery factor ε**, with its geometry-only estimator `ε ≈ clamp_[0,1](min(1, α/(β·s̄)) − 0.13)` validated against a power-measured descent-energy-balance ε (corr 0.83–0.87 on real descents `s̄ ≥ 3%`), and the **ε↔k₋ energy-time duality** `x* = x + k₊·h₊ − k₋·h₋` that derives the descent time-credit from the same descent power as ε. Around these we formalized the fractal-ascent correction `k_smooth = 1 − c·x/h₊` (`c ≈ 3 m/km`) inside the closed-form law, and reported a DEM correction `k_DEM = IGC/source` (FABDEM 0.95, COP30 0.84, SRTM 0.75 against 5 m bare-earth survey truth). The law is already deployed at three fidelities across the collective's software: verbatim as a per-edge Dijkstra cost over DEMs in *sampasimu*, as a recorded per-ride `ph:energyEstimate` kJ literal in *amora*, and alongside the canonical forward engine in *quilojaules*.
+We presented two engines for the mechanical energy of pedalling a route — a standard Martin-1998 forward simulation [Martin et al. 1998] and a cheap closed-form law `E ≈ α_r·x + α_a·x_flat + k_h·k_smooth·β·(h₊ − ε·h₋)` — run on *shared* physical constants so the gap between them isolates modelling error from parameter error. The genuinely new pieces are the **lumped, route-level closed-form descent-recovery factor ε**, with its geometry-only estimator `ε ≈ clamp_[0,1](min(1, α/(β·s̄)) − 0.13)` assessed against a power-measured descent-energy-balance ε (in-sample, part–whole corr 0.77–0.82 on real descents `s̄ ≥ 3%`, though the defensible figure is a 37% RMS reduction over a flat constant; §10.4), and the **ε↔k₋ energy-time duality** `x* = x + k₊·h₊ − k₋·h₋` that derives the descent time-credit from the same descent power as ε. Around these we formalized the fractal-ascent correction `k_smooth = 1 − c·x/h₊` (`c ≈ 3 m/km`) inside the closed-form law, and reported a DEM correction `k_DEM = IGC/source` (FABDEM 0.95, COP30 0.84, SRTM 0.75 against 5 m bare-earth survey truth). The law is already deployed at three fidelities across the collective's software: verbatim as a per-edge Dijkstra cost over DEMs in *sampasimu*, as a recorded per-ride `ph:energyEstimate` kJ literal in *amora*, and alongside the canonical forward engine in *quilojaules*.
 
 Two open questions follow directly from the limitations and bound any claim of generality.
 

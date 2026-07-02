@@ -7,9 +7,9 @@ mechanical energy (and time) of pedalling a route:
   asymmetric uphill/downhill cycling-energy law used across the Pedal
   Hidrográfico tools (Simujaules / quilojaules);
 - a **canonical** forward-dynamics simulation — a per-step force balance
-  `m·dv/ds = k_eff·P/v − C_rr·mg·cosθ − ½ρ·CdA·v² − mg·sinθ` with a safe-speed
-  brake cap on descents (semi-implicit, so it stays exact even on near-stall
-  climbs).
+  `m·dv/ds = k_eff·P/v − C_rr·mg·cosθ − ½ρ·CdA·(v+wind)² − mg·sinθ` with a
+  safe-speed brake cap on descents (semi-implicit, so it stays exact even on
+  near-stall climbs).
 
 Both run on the **same physical constants**, so the difference isolates the
 *modelling simplifications* (aero charged at a fixed flat speed, descent losses
@@ -43,9 +43,15 @@ descent power.
 
 `data/` — `sample.gpx` (tiny GPX fixture) and `flecha_power.csv` (per-second
 power / altitude / grade / regime export from a long brevet, used for the
-empirical-ε and statistics work; no GPS coordinates). The raw `flechamista.fit`
-is kept locally but **gitignored** because it carries a GPS track — drop a
-synthetic/anonymised `.fit` in `data/` if you want a committed FIT fixture.
+empirical-ε and statistics work; no GPS coordinates). Raw `*.fit` tracks, the
+per-rider spreadsheets, and the downloaded activity dirs under `data/activities/`
+are **gitignored** — they carry GPS tracks and private activity links.
+
+The model has been validated against power-meter rides (44 long "longões" +
+62 urban "censo" rides): the harnesses live in `data/activities/` (`compare.mjs`,
+`censo_compare.mjs`, `eps_hypothesis.mjs`, `eps_sp_test.mjs`) and the write-ups —
+including a draft paper — live in **`research/`** (`MODEL_COMPARISON_JOURNAL.md`,
+`article-draft.md`, `literature-context.md`, …).
 
 ---
 

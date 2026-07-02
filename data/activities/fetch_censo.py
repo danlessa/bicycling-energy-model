@@ -42,6 +42,9 @@ def main():
             dest = os.path.join(DEST, "rwgps", f"{e['rwgps_id']}.fit")
             if os.path.exists(dest):
                 e["file"] = os.path.relpath(dest, HERE); return (e, "skip", None)
+            # NB: apikey/auth_token in the URL are passed on curl's argv, so they are
+            # visible to a local `ps` while the fetch runs. Fine for a personal machine;
+            # they are read from env (.env), never committed or printed.
             url = f"https://ridewithgps.com/{e['rwgps_kind']}s/{e['rwgps_id']}.fit?apikey={key}&auth_token={tok}"
             code, _ = fetch.curl(url, dest)
             if code != "200" or not os.path.exists(dest) or os.path.getsize(dest) < 200:

@@ -27,6 +27,7 @@ function parseFIT(buffer) {
   if (String.fromCharCode(dv.getUint8(8), dv.getUint8(9), dv.getUint8(10), dv.getUint8(11)) !== '.FIT') throw new Error('no .FIT');
   const end = Math.min(headerSize + dataSize, buffer.byteLength);
   let pos = headerSize; const defs = {}, records = [];
+  let lastTs;   // running timestamp for compressed-timestamp headers (5-bit offset, 32 s rollover)
   const read = (p, bt, little) => { switch (bt & 0x1F) {
     case 0x01: { const v = dv.getInt8(p); return v === 0x7F ? undefined : v; }
     case 0x00: case 0x02: case 0x0A: case 0x0D: { const v = dv.getUint8(p); return v === 0xFF ? undefined : v; }
@@ -39,8 +40,8 @@ function parseFIT(buffer) {
     default: return undefined; } };
   while (pos < end) {
     const rh = dv.getUint8(pos); pos++;
-    let local, isDef = false, hasDev = false;
-    if (rh & 0x80) local = (rh >> 5) & 0x03;
+    let local, isDef = false, hasDev = false, tsOffset;
+    if (rh & 0x80) { local = (rh >> 5) & 0x03; tsOffset = rh & 0x1F; }
     else { local = rh & 0x0F; isDef = !!(rh & 0x40); hasDev = !!(rh & 0x20); }
     if (isDef) {
       pos++; const little = dv.getUint8(pos) === 0; pos++;
@@ -52,7 +53,8 @@ function parseFIT(buffer) {
       if (hasDev) { const nd = dv.getUint8(pos); pos++; for (let i = 0; i < nd; i++) { devSize += dv.getUint8(pos + 1); pos += 3; } }
       defs[local] = { gmn, little, fields, devSize };
     } else {
-      const def = defs[local]; if (!def) break;
+      const def = defs[local];
+      if (!def) throw new Error('FIT corrompido (dado sem definição)');
       let p = pos; const rec = {};
       for (const f of def.fields) {
         if (def.gmn === 20) { const v = read(p, f.bt, def.little);
@@ -67,9 +69,20 @@ function parseFIT(buffer) {
             else if (f.num === 7) rec.power = v;
             else if (f.num === 253) rec.time = v;
           } }
+        else if (f.num === 253) {   // any message's timestamp advances the running clock
+          const v = read(p, f.bt, def.little);
+          if (v !== undefined) rec.time = v;
+        }
         p += f.size;
       }
       pos = p + def.devSize;
+      // compressed-timestamp header: reconstruct the time from the 5-bit offset
+      if (tsOffset !== undefined && rec.time === undefined && lastTs !== undefined) {
+        let ts = (lastTs & ~31) | tsOffset;
+        if (ts < lastTs) ts += 32;
+        rec.time = ts;
+      }
+      if (rec.time !== undefined) lastTs = rec.time;
       if (def.gmn === 20) records.push(rec);
     }
   }
@@ -82,10 +95,13 @@ function haversine(a, b) {
 }
 function finishPts(pts) {
   for (let i = 0; i < pts.length; i++) {
-    let w = 1;
-    if (i > 0 && pts[i].t !== undefined && pts[i - 1].t !== undefined) w = Math.min(Math.max(pts[i].t - pts[i - 1].t, 0), 10);
+    const raw = (i > 0 && pts[i].t !== undefined && pts[i - 1].t !== undefined) ? pts[i].t - pts[i - 1].t : undefined;
+    const w = raw !== undefined ? Math.min(Math.max(raw, 0), 10) : 1;
     pts[i].dt = w;
-    if (pts[i].v === undefined && i > 0 && w > 0) pts[i].v = (pts[i].x - pts[i - 1].x) / w;
+    if (pts[i].v === undefined && i > 0) {
+      const dtv = raw !== undefined && raw > 0 ? raw : w;   // speed from the UNCLAMPED interval
+      if (dtv > 0) pts[i].v = (pts[i].x - pts[i - 1].x) / dtv;
+    }
   }
 }
 // pts (energy) from FIT — interleaved dist/alt handling, as compare.mjs
@@ -173,9 +189,10 @@ function epsAnalysis(pts, p) {
   const altAt = dd => { while (j < pts.length - 2 && pts[j + 1].x < dd) j++; const seg = pts[j + 1].x - pts[j].x, f = seg > 1e-9 ? (dd - pts[j].x) / seg : 0; return pts[j].alt * (1 - f) + pts[j + 1].alt * f; };
   const cellAlt = new Float64Array(nc + 1); for (let k = 0; k <= nc; k++) cellAlt[k] = altAt(x0 + k * DX);
   const cellE = new Float64Array(nc), cellVs = new Float64Array(nc), cellVt = new Float64Array(nc);
+  const VSTOP = 0.5 / 3.6;   // stopped samples deflate v_f (hence α and ε) — gate them, as extractRegimePowers does
   for (const r of pts) { const k = Math.floor((r.x - x0) / DX); if (k < 0 || k >= nc) continue; const w = r.dt || 1;
-    if (r.power !== undefined) cellE[k] += r.power * w; if (r.v !== undefined) { cellVs[k] += r.v * w; cellVt[k] += w; } }
-  let sv = 0, sw = 0;   // measured flat speed
+    if (r.power !== undefined) cellE[k] += r.power * w; if (r.v !== undefined && r.v >= VSTOP) { cellVs[k] += r.v * w; cellVt[k] += w; } }
+  let sv = 0, sw = 0;   // measured MOVING flat speed
   for (let k = 0; k < nc; k++) { const gr = (cellAlt[k + 1] - cellAlt[k]) / DX; if (Math.abs(gr) < 0.01 && cellVt[k] > 0) { sv += cellVs[k]; sw += cellVt[k]; } }
   const vf = sw > 0 ? sv / sw : 5, aeroSpd = vf + p.wind;
   const alpha = (p.Crr * mg + 0.5 * p.rho * p.CdA * aeroSpd * Math.abs(aeroSpd)) / p.keff;
@@ -227,7 +244,7 @@ for (const e of inputs) {
     const fp = path.join(HERE, e.file);
     let pts, geo;
     if (e.file.endsWith('.gpx')) { geo = parseGPX(fs.readFileSync(fp, 'utf8')); pts = ptsFromGeo(geo); }
-    else { const recs = parseFIT(fs.readFileSync(fp).buffer); pts = ptsFromFIT(recs); geo = recs.filter(r => r.lat !== undefined && r.lon !== undefined); }
+    else { const recs = parseFIT((b => b.buffer.slice(b.byteOffset, b.byteOffset + b.byteLength))(fs.readFileSync(fp))); pts = ptsFromFIT(recs); geo = recs.filter(r => r.lat !== undefined && r.lon !== undefined); }
     const p = { m: e.m, Crr: e.crr, CdA: e.cda, rho: e.rho, keff: e.keff, wind: (e.wind_kmh || 0) / 3.6 };
     const a = epsAnalysis(pts, p); if (!a) continue;
     const kappa = curviness(geo);
@@ -275,6 +292,31 @@ for (const thr of [0.025, 0.03, 0.035]) {
   const x = sub.map(r => r.epsCoast), y = sub.map(r => r.epsBal);
   const resid = sub.map(r => r.epsBal - r.epsCoast);
   console.log(`  s̄ ≥ ${(thr * 100).toFixed(1)}%  (n=${sub.length}): corr=${f2(corr(x, y))}  medBias=${f2(med(resid))}  med(ε_bal)=${f2(med(y))} med(ε_coast)=${f2(med(x))}`);
+}
+
+// ---- estimator SKILL (error reduction) + part-whole disclosure ----
+// The correlation headline is part-whole: ε_bal ≡ α/(β·s̄) − E_legs,₋/(β·H₋) EXACTLY,
+// and ε_coast ≈ that same first term (drop-weighted, clamped) with the same per-ride α.
+// So judge the closed form by RMS skill vs the best flat constant, not by corr alone.
+console.log('\n' + '='.repeat(67));
+console.log('ESTIMATOR SKILL — RMS(ε_bal − pred), skill = 1 − RMS/RMS_flat (flat = subset median ε_bal)');
+const clamp01 = v => Math.max(0, Math.min(1, v));
+const rms = xs => Math.sqrt(xs.reduce((s, v) => s + v * v, 0) / xs.length);
+for (const [slab, sub] of [['all rides', good], ['s̄ ≥ 3%', good.filter(r => r.sbar >= 0.03)]]) {
+  const base = med(sub.map(r => r.epsBal));
+  const rmsBase = rms(sub.map(r => r.epsBal - base));
+  console.log(`  -- ${slab} (n=${sub.length}, flat const = ${f2(base)}, RMS_flat = ${f2(rmsBase)}) --`);
+  for (const [lab, fx] of [
+    ['sheet g_d_eff', r => r.sheet],
+    ['ε_coast − 0.13 (clamped)', r => clamp01(r.epsCoast - 0.13)],
+    ['ε_lump − 0.13 (clamped, totals)', r => clamp01(r.epsLump - 0.13)],
+  ]) {
+    const s2 = sub.filter(r => Number.isFinite(fx(r)));
+    const e = rms(s2.map(r => r.epsBal - fx(r)));
+    console.log(`  ${lab.padEnd(32)} RMS=${f2(e)}  skill vs flat=${f2(1 - e / rmsBase)}  (n=${s2.length})`);
+  }
+  const shared = sub.map(r => r.ab / r.sbar);   // the UNclamped shared geometry term α/(β·s̄)
+  console.log(`  part–whole: corr(α/(β·s̄), ε_bal)=${f2(corr(shared, sub.map(r => r.epsBal)))}  corr(α/(β·s̄), ε_coast)=${f2(corr(shared, sub.map(r => r.epsCoast)))}`);
 }
 
 // add the braking penalties: ε_bal ~ ε_coast + κ + unpaved  (need κ & unpaved present)

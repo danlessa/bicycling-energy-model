@@ -33,8 +33,12 @@ function haversine(a, b) {
 }
 function flatEqSpeed(P, p) {
   const a = p.Crr * p.m * G, b = 0.5 * p.rho * p.CdA, w = p.wind || 0;
-  let lo = 0, hi = 40;
-  for (let k = 0; k < 60; k++) { const v = (lo + hi) / 2; const wheel = (a + b * (v + w) * (v + w)) * v; if (wheel < p.keff * P) lo = v; else hi = v; }
+  // SIGNED drag (tailwind pushes); monotone only for v+w ≥ 0, so bisect that branch first
+  const wheel = v => { const rel = v + w; return (a + b * rel * Math.abs(rel)) * v; };
+  const target = p.keff * P;
+  let lo = Math.max(0, -w), hi = 40;
+  if (wheel(lo) > target) { hi = lo; lo = 0; }
+  for (let k = 0; k < 60; k++) { const v = (lo + hi) / 2; if (wheel(v) < target) lo = v; else hi = v; }
   return (lo + hi) / 2;
 }
 function resampleProfile(src, dx) {
@@ -57,6 +61,7 @@ function canonical(prof, pw, p) {
   const KEinit = 0.5 * m * p.vstart * p.vstart;
   let KE = KEinit, legE = 0, t = 0, Wrr = 0, Waero = 0, Wgrav = 0, Wbrake = 0;
   const keCap = 0.5 * m * vmax * vmax;
+  let stalled = false;   // P=0 with resistance > KE: halt, never floor the KE (a floor injects energy)
   for (let i = 1; i < n; i++) {
     const dx = xs[i] - xs[i - 1], dh = hs[i] - hs[i - 1];
     const slope = dh / dx, sec = Math.sqrt(1 + slope * slope);
@@ -86,7 +91,16 @@ function canonical(prof, pw, p) {
           if (Math.abs(next - KEn) <= 1e-9 * KEn + 1e-12) { KEn = next; break; }
           KEn = next;
         }
-      } else KEn = Math.max(B, 1e-12);
+      } else {
+        // A = 0 (no propulsion): exact linear-KE solution — NO floor (a floor injects energy).
+        KEn = B;
+        if (KEn <= 0) {   // resistance exhausts the KE inside this substep: finite stop, halt
+          const dsStop = R > 0 ? KE / R : 0;
+          t += R > 0 ? Math.sqrt(2 * m * Math.max(KE, 0)) / R : 0;
+          Wrr += Frr * dsStop; Waero += Faero * dsStop; Wgrav += Fgrav * dsStop;
+          KE = 0; stalled = true; break;
+        }
+      }
       const vNew = Math.sqrt(2 * KEn / m), dt = dsSub / vNew;
       legE += Pleg * dt; t += dt;
       Wrr += Frr * dsSub; Waero += Faero * dsSub; Wgrav += Fgrav * dsSub;
@@ -94,8 +108,9 @@ function canonical(prof, pw, p) {
       if (KE > keCap) { Wbrake += KE - keCap; KE = keCap; }
       remaining -= dsSub;
     }
+    if (stalled) break;   // cannot proceed at zero power — return the partial, conservative leg
   }
-  return { legE, t };
+  return { legE, t, stalled };
 }
 // approximate with cf (climbAeroMode='zero'): returns components so ε can vary analytically.
 function approxComponents(prof, p, vf, pw) {
@@ -116,7 +131,12 @@ function approxComponents(prof, p, vf, pw) {
 }
 function buildProfile(distArr, eleArr) {
   const X = [distArr[0]], E = [eleArr[0]];
-  for (let i = 1; i < distArr.length; i++) { if (distArr[i] - X[X.length - 1] < 0.5 && i < distArr.length - 1) continue; X.push(distArr[i]); E.push(eleArr[i]); }
+  for (let i = 1; i < distArr.length; i++) {
+    const close = distArr[i] - X[X.length - 1] < 0.5;
+    if (close && i < distArr.length - 1) continue;
+    if (close) { X[X.length - 1] = distArr[i]; E[E.length - 1] = eleArr[i]; }   // final point: replace, never create dx≈0
+    else { X.push(distArr[i]); E.push(eleArr[i]); }
+  }
   const base = X[0]; for (let i = 0; i < X.length; i++) X[i] -= base;
   const n = X.length, total = X[n - 1];
   if (n < 2 || !(total > 0)) throw new Error('distância nula');
@@ -156,6 +176,7 @@ function parseFIT(buffer) {
   if (String.fromCharCode(dv.getUint8(8), dv.getUint8(9), dv.getUint8(10), dv.getUint8(11)) !== '.FIT') throw new Error('no .FIT');
   const end = Math.min(headerSize + dataSize, buffer.byteLength);
   let pos = headerSize; const defs = {}, records = [];
+  let lastTs;   // running timestamp for compressed-timestamp headers (5-bit offset, 32 s rollover)
   const read = (p, bt, little) => { switch (bt & 0x1F) {
     case 0x01: { const v = dv.getInt8(p); return v === 0x7F ? undefined : v; }
     case 0x00: case 0x02: case 0x0A: case 0x0D: { const v = dv.getUint8(p); return v === 0xFF ? undefined : v; }
@@ -168,8 +189,9 @@ function parseFIT(buffer) {
     default: return undefined; } };
   while (pos < end) {
     const rh = dv.getUint8(pos); pos++;
-    let local, isDef = false, hasDev = false;
-    if (rh & 0x80) local = (rh >> 5) & 0x03; else { local = rh & 0x0F; isDef = !!(rh & 0x40); hasDev = !!(rh & 0x20); }
+    let local, isDef = false, hasDev = false, tsOffset;
+    if (rh & 0x80) { local = (rh >> 5) & 0x03; tsOffset = rh & 0x1F; }
+    else { local = rh & 0x0F; isDef = !!(rh & 0x40); hasDev = !!(rh & 0x20); }
     if (isDef) {
       pos++; const little = dv.getUint8(pos) === 0; pos++;
       const gmn = dv.getUint16(pos, little); pos += 2;
@@ -180,7 +202,8 @@ function parseFIT(buffer) {
       if (hasDev) { const nd = dv.getUint8(pos); pos++; for (let i = 0; i < nd; i++) { devSize += dv.getUint8(pos + 1); pos += 3; } }
       defs[local] = { gmn, little, fields, devSize };
     } else {
-      const def = defs[local]; if (!def) break;
+      const def = defs[local];
+      if (!def) throw new Error('FIT corrompido (dado sem definição)');
       let p = pos; const rec = {};
       for (const f of def.fields) {
         if (def.gmn === 20) { const v = read(p, f.bt, def.little);
@@ -196,9 +219,20 @@ function parseFIT(buffer) {
             else if (f.num === 4) rec.cad = v;          // cadence (rpm) — 0 ⇒ not pedalling
             else if (f.num === 253) rec.time = v;
           } }
+        else if (f.num === 253) {   // any message's timestamp advances the running clock
+          const v = read(p, f.bt, def.little);
+          if (v !== undefined) rec.time = v;
+        }
         p += f.size;
       }
       pos = p + def.devSize;
+      // compressed-timestamp header: reconstruct the time from the 5-bit offset
+      if (tsOffset !== undefined && rec.time === undefined && lastTs !== undefined) {
+        let ts = (lastTs & ~31) | tsOffset;
+        if (ts < lastTs) ts += 32;
+        rec.time = ts;
+      }
+      if (rec.time !== undefined) lastTs = rec.time;
       if (def.gmn === 20) records.push(rec);
     }
   }
@@ -206,10 +240,13 @@ function parseFIT(buffer) {
 }
 function finishPts(pts) {
   for (let i = 0; i < pts.length; i++) {
-    let w = 1;
-    if (i > 0 && pts[i].t !== undefined && pts[i - 1].t !== undefined) w = Math.min(Math.max(pts[i].t - pts[i - 1].t, 0), 10);
+    const raw = (i > 0 && pts[i].t !== undefined && pts[i - 1].t !== undefined) ? pts[i].t - pts[i - 1].t : undefined;
+    const w = raw !== undefined ? Math.min(Math.max(raw, 0), 10) : 1;
     pts[i].dt = w;
-    if (pts[i].v === undefined && i > 0 && w > 0) pts[i].v = (pts[i].x - pts[i - 1].x) / w;
+    if (pts[i].v === undefined && i > 0) {
+      const dtv = raw !== undefined && raw > 0 ? raw : w;   // speed from the UNCLAMPED interval
+      if (dtv > 0) pts[i].v = (pts[i].x - pts[i - 1].x) / dtv;
+    }
   }
 }
 function ptsFromFIT(buffer) {
@@ -218,7 +255,7 @@ function ptsFromFIT(buffer) {
   const pts = [];
   if (recs.some(r => r.dist !== undefined)) {
     const di = [], dv = [];
-    recs.forEach((r, i) => { if (r.dist !== undefined) { di.push(i); dv.push(r.dist); } });
+    recs.forEach((r, i) => { if (r.dist !== undefined) { di.push(i); dv.push(dv.length ? Math.max(r.dist, dv[dv.length - 1]) : r.dist); } });   // clip non-monotone device distance
     let lastAlt, k = 0;
     for (let i = 0; i < recs.length; i++) {
       if (recs[i].alt !== undefined) lastAlt = recs[i].alt;
@@ -290,7 +327,8 @@ for (const e of man) {
   const fp = path.join(HERE, e.file);
   if (!fs.existsSync(fp)) continue;
   try {
-    const pts = ptsFromFIT(fs.readFileSync(fp).buffer);
+    // NB: slice, not .buffer — Node pools small reads, so .buffer may be the shared pool
+    const pts = ptsFromFIT((b => b.buffer.slice(b.byteOffset, b.byteOffset + b.byteLength))(fs.readFileSync(fp)));
     if (!hasPower(pts)) continue;                      // benchmark needs power
     buildProfile(pts.map(q => q.x), pts.map(q => q.alt));
     const prof = resampleProfile(physProfile, ENGINE_DX);

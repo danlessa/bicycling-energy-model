@@ -24,8 +24,21 @@ home of the *derivation* (`notas.md`) and the side-by-side comparison.
   over-charge correction; the time model `x* = x + k₊·h₊ − k₋·h₋`; the `ε ↔ k₋`
   bridge through descent power. **Keep it in sync with the code** — a model
   change lands in both.
-- `data/` — `sample.gpx` and `flecha_power.csv` (no GPS) committed;
-  `flechamista.fit` is **gitignored** (carries a GPS track).
+- `data/` — `sample.gpx` (synthetic) and `flecha_power.csv` (no GPS) committed;
+  all `*.fit`, the `data/activities/{rwgps,strava,censohidrografico}/` track dirs,
+  `data/longoes.xlsx` and `data/censo-hidrografico.xlsx` are **gitignored** (GPS /
+  private activity links / physiology). `data/longoes.xlsx` was purged from history
+  (2026-07) after an accidental commit — never re-add it.
+- `data/activities/` — the validation harnesses (committable; the tracks they read are
+  not): `compare.mjs` (44 longões power rides), `censo_compare.mjs` (62 censo urban
+  rides), `eps_hypothesis.mjs` (ε closed-form test), `eps_sp_test.mjs` (São Paulo ε),
+  plus `fetch*.py` / `build_model_inputs.py` / `verify.py`. Each `.mjs` ports the app's
+  engine + FIT parser verbatim — **keep the four copies in sync** (they drifted before).
+- `research/` — the write-ups: `MODEL_COMPARISON_JOURNAL.md` (numbered entries, newest
+  first), `literature-context.md` (positioning), `article-draft.md` + `article-draft.pt-BR.md`
+  (the draft paper, EN + pt-BR), `crr-cda-typical-values.md`, `dem-elevation-comparison.md`,
+  `censo-model-verification.md`, `VERIFICATION_NOTES.md`, and `dem/` (DEM tooling;
+  `dem/coords/` is gitignored — per-ride GPS).
 - `README.md` — user-facing overview.
 
 ## The two models
@@ -82,7 +95,9 @@ k_eff, wind`). That is what makes the comparison meaningful: the gap is the
   ever becomes necessary, CDN + SRI (the ecosystem convention), not a bundler.
 - **Privacy:** never commit a raw `.fit` (GPS track) — `*.fit` is gitignored, and
   the repo may go public under the `pedalhidro` org.
-- **Commits:** only when asked. No remote yet.
+- **Commits:** only when asked. Remote is `origin` → `github.com/danlessa/bicycling-energy-model`
+  (**public**) — so the privacy rules above are load-bearing; nothing with GPS or private
+  activity links may be committed.
 
 ## Verifying a change
 
@@ -90,10 +105,13 @@ No build, no CI. Verify by:
 
 - **Load `energy-model-comparison.html` in a browser** (or headless Chrome
   `--dump-dom` / `--screenshot`) — it surfaces JS errors and shows the result.
-- **Engine change → node.** Extract the pure function
-  (`awk '/^function canonical\(/{p=1} p{print} p&&/^}/{exit}' energy-model-comparison.html`)
-  and run it on small profiles, asserting the **energy balance**
-  (`k_eff·legE = ΔKE + W_rr + W_aero + W_grav + W_brake`) and sanity cases:
-  flat, pure climb (`legE ≥ PE`), pure descent (≈ coast).
-- **Parser change → node.** Parse `data/flechamista.fit` (`DataView`) or
-  `data/sample.gpx` and check record count, distance, and regime powers.
+- **Engine or parser change → re-run the harnesses** (need the local gitignored tracks):
+  from `data/activities/`, `node compare.mjs` (prints the longões scoreboard **and** the
+  worst per-ride conservation residual — must stay ≤ 1e-6), `node censo_compare.mjs`,
+  `node eps_hypothesis.mjs`, `node eps_sp_test.mjs`. Diff the numbers against the journal
+  entries and `research/article-draft.md`; a doc-visible number that moves must be updated
+  in both. A change to the engine or FIT parser must be applied to **all** copies (the app
+  + the four `.mjs`) or they drift.
+- **Sanity cases** for an engine change: flat (canonical ≈ approximate at auto v_f),
+  pure climb (`legE ≥ PE`), pure descent (≈ coast), and P=0 (the bike must *stall*, not
+  gain energy — no KE floor).
