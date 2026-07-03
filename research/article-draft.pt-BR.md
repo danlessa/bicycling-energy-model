@@ -626,17 +626,17 @@ function v2Edge(dist, dh, c) {
 
 O pacote de custos decompõe `α` e `β` exatamente nas constantes da §3:
 
-- `aRoll = m·g·C_rr / k_eff` — J por metro de solo, cobrado em toda a distância;
-- `aAero = ½·ρ·CdA·v_f² / k_eff` — J por metro de solo, cobrado apenas *fora* das subidas;
-- `beta = m·g / k_eff` — J por metro de subida;
-- `abRatio = C_rr + ½ρCdA·v_f²/(m·g)` (= α/β), com `epsOffset = 0.13` e `climbThr ≈ 0.02`.
+- `aRoll = m·g·C_rr / k_eff` — kJ por metro de solo, cobrado em toda a distância;
+- `aAero = ½·ρ·CdA·v_f² / k_eff` — kJ por metro de solo, cobrado apenas *fora* das subidas;
+- `beta = m·g·k_s / k_eff` — kJ por metro de subida, com `k_s` o fator de suavização de perfil (§6.2–6.3; `k_s = 1` o desativa — o motor por aresta já paga o momentum de ondulações implicitamente, então a suavização é opcional);
+- `abRatio = C_rr + ½ρCdA·v_f²/(m·g)` (= α/β, calculado deliberadamente a partir dos coeficientes **não suavizados** mesmo quando `k_s < 1`, já que ε é um fator de geometria de inclinação, não de energia), com `epsOffset = 0.13` e `climbThr ≈ 0.02`.
 
 Por aresta direcionada (`dist` = comprimento de solo em metros, `dh` = subida com sinal):
 
 - **dh ≥ 0** (subida / plano): `aRoll·dist + (grade < climbThr ? aAero·dist : 0) + beta·dh`;
-- **dh < 0** (descida): `max(0, aRoll·dist + aAero·dist − ε·beta·|dh|)`, com o fator de recuperação geométrico `ε = clamp₀₁(min(1, abRatio·dist/|dh|) − 0.13)`.
+- **dh < 0** (descida): `max(0, aRoll·dist + aAero·dist − ε·beta·|dh|)`, com o fator de recuperação geométrico `ε = clamp₀₁(min(1, abRatio·dist/|dh|) − 0.13)` calculado **por aresta** — uma escolha de realização não explicitada em `notas.md` ou §4, que definem o offset de −0,13 sobre o ε **agregado** ponderado pela queda (§4.1, §8.3). As duas coincidem exatamente onde o clamp não atua, e divergem apenas em perfis com parcela substancial de arestas de descida mais íngremes que a inclinação de piso de ε (≈14%), onde a forma por aresta é a mais defensável fisicamente das duas — ela nunca deixa um trecho fácil e suave "compensar na média" um paredão que um ciclista não consegue de fato descer em inércia.
 
-Esta é a realização **assimétrica, com clamp na descida** de `E ≈ α·x + β·(h₊ − ε·h₋)`, com a direcionalidade (uma aresta é barata na descida, cara na subida) que torna o *campo* de energia assimétrico. A expressão idêntica é reutilizada para arestas de portal de ponte/túnel — um atalho de tabuleiro direcionado a `α·deckLenM + β·dh`, com clamp na descida, com a direção `reverse` lendo o custo da direção oposta — construída em paridade de bits entre os motores JS e Rust. **Implantação:** `https://simujaules.pedalhidrografi.co`; o `deploy.sh` e o IRI `@vocab` do RDF retêm deliberadamente o caminho legado `telhas.pedalhidrografi.co/simujoules/` (bucket GCS `gs://telhas/simujoules`, fronteado pelo Cloudflare) para que pacotes exportados anteriormente continuem resolvendo.
+Esta é a realização **assimétrica, com clamp na descida** de `E ≈ α·x + β·(h₊ − ε·h₋)`, com a direcionalidade (uma aresta é barata na descida, cara na subida) que torna o *campo* de energia assimétrico. A expressão `v2Edge` idêntica — com ε geométrico completo e o corte de aero na subida incluídos, não um termo de gravidade nu — é reutilizada para arestas de portal de ponte/túnel sobre `(deckLenM, ±dh)`, com a direção `reverse` lendo o custo da direção oposta — construída em paridade de bits entre os motores JS e Rust. **Implantação:** `https://simujaules.pedalhidrografi.co`; o `deploy.sh` e o IRI `@vocab` do RDF retêm deliberadamente o caminho legado `telhas.pedalhidrografi.co/simujoules/` (bucket GCS `gs://telhas/simujoules`, fronteado pelo Cloudflare) para que pacotes exportados anteriormente continuem resolvendo.
 
 ### 9.2 amora — registrando kJ por pedalada em RDF
 

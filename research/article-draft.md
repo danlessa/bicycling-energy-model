@@ -627,17 +627,17 @@ function v2Edge(dist, dh, c) {
 
 The cost bundle decomposes `α` and `β` into exactly the constants of §3:
 
-- `aRoll = m·g·C_rr / k_eff` — J per ground metre, charged on all distance;
-- `aAero = ½·ρ·CdA·v_f² / k_eff` — J per ground metre, charged only *off* the climbs;
-- `beta = m·g / k_eff` — J per metre of ascent;
-- `abRatio = C_rr + ½ρCdA·v_f²/(m·g)` (= α/β), with `epsOffset = 0.13` and `climbThr ≈ 0.02`.
+- `aRoll = m·g·C_rr / k_eff` — kJ per ground metre, charged on all distance;
+- `aAero = ½·ρ·CdA·v_f² / k_eff` — kJ per ground metre, charged only *off* the climbs;
+- `beta = m·g·k_s / k_eff` — kJ per metre of ascent, with `k_s` the profile-smoothing factor (§6.2–6.3; `k_s = 1` disables it — the per-edge engine already pays roller momentum implicitly, so smoothing is opt-in);
+- `abRatio = C_rr + ½ρCdA·v_f²/(m·g)` (= α/β, deliberately computed from the **un-smoothed** coefficients even when `k_s < 1`, since ε is a grade-geometry factor, not an energy one), with `epsOffset = 0.13` and `climbThr ≈ 0.02`.
 
 Per directed edge (`dist` = ground length in metres, `dh` = signed rise):
 
 - **dh ≥ 0** (uphill / flat): `aRoll·dist + (grade < climbThr ? aAero·dist : 0) + beta·dh`;
-- **dh < 0** (downhill): `max(0, aRoll·dist + aAero·dist − ε·beta·|dh|)`, with the geometric recovery factor `ε = clamp₀₁(min(1, abRatio·dist/|dh|) − 0.13)`.
+- **dh < 0** (downhill): `max(0, aRoll·dist + aAero·dist − ε·beta·|dh|)`, with the geometric recovery factor `ε = clamp₀₁(min(1, abRatio·dist/|dh|) − 0.13)` computed **per edge** — a realisation choice not spelled out in `notas.md` or §4, which define the −0.13 offset on the drop-weighted *aggregate* ε (§4.1, §8.3). The two coincide exactly wherever the clamp doesn't bind, and diverge only on profiles with a substantial share of descent edges steeper than ε's floor grade (≈14%), where the per-edge form is the more physically defensible of the two — it never lets a shallow easy stretch's coasting "average out" a cliff a rider cannot actually coast down.
 
-This is the **asymmetric, downhill-clamped** realisation of `E ≈ α·x + β·(h₊ − ε·h₋)`, with the directionality (an edge is cheap downhill, expensive up) that makes the energy *field* asymmetric. The identical expression is reused for bridge/tunnel portal edges — a directed deck shortcut at `α·deckLenM + β·dh`, downhill-clamped, with the `reverse` direction reading the opposite-direction cost — built at bit-parity between the JS and Rust engines. **Deployment:** `https://simujaules.pedalhidrografi.co`; `deploy.sh` and the RDF `@vocab` IRI deliberately retain the legacy `telhas.pedalhidrografi.co/simujoules/` path (GCS bucket `gs://telhas/simujoules`, fronted by Cloudflare) so previously exported bundles keep resolving.
+This is the **asymmetric, downhill-clamped** realisation of `E ≈ α·x + β·(h₊ − ε·h₋)`, with the directionality (an edge is cheap downhill, expensive up) that makes the energy *field* asymmetric. The identical `v2Edge` expression — full geometric ε and climb-aero gating included, not a bare gravity term — is reused for bridge/tunnel portal edges on `(deckLenM, ±dh)`, with the `reverse` direction reading the opposite-direction cost — built at bit-parity between the JS and Rust engines. **Deployment:** `https://simujaules.pedalhidrografi.co`; `deploy.sh` and the RDF `@vocab` IRI deliberately retain the legacy `telhas.pedalhidrografi.co/simujoules/` path (GCS bucket `gs://telhas/simujoules`, fronted by Cloudflare) so previously exported bundles keep resolving.
 
 ### 9.2 amora — recording per-ride kJ in RDF
 
