@@ -285,9 +285,11 @@ on steep climbs.)*
 gravity-limited: $t = x_-/v_{desc}$, set by horizontal distance and the (grade-dependent,
 $v_{max}$-capped) descent speed. Pinning it to $h_-$ forces $k_-$ to absorb the typical
 descent grade, $k_- \approx (1 - v_f/v_{desc})/\bar s$, so $k_-$ is a **lumped, free
-parameter** — exactly the role $\epsilon$ plays for energy. (This time model is theory
-only: nothing here calibrates $k_-$ against measured ride *times*, so $k_-$ is *free*,
-not fitted — the validation in the journal is of the *energy* law, not the time twin.)
+parameter** — exactly the role $\epsilon$ plays for energy. (The time model is now tested
+against measured ride *times* on all three datasets — `time_compare.mjs`, journal Entry 13.
+Split verdict: the ascent term $k_+$ transfers across riders, but the $\epsilon\!\leftrightarrow\!k_-$
+bridge does *not* predict measured descent speed, so $k_-$ stays **free and corpus-dependent**,
+not derived — real descents are behaviour/$v_{max}$-limited, not equilibrium-limited.)
 The two models line up term-for-term:
 
 

@@ -50,7 +50,104 @@ changed. See Entry 11.)*
 - **Entry 11** (general review: code fixes + honesty corrections across engines, parsers, and
   every downstream number) — `906de11`
 - **Entry 12** (second rider: P. Paz's Strava export, [`ppaz_inventory.mjs`](../data/activities/ppaz_inventory.mjs) +
-  [`ppaz_compare.mjs`](../data/activities/ppaz_compare.mjs)) — this commit
+  [`ppaz_compare.mjs`](../data/activities/ppaz_compare.mjs)) — `2148deb`
+- **Entry 13** (time model tested on all three datasets, [`time_compare.mjs`](../data/activities/time_compare.mjs)) — this commit
+
+---
+
+## 2026-07-02 — Entry 13: the time model, finally tested — ascent half holds, descent bridge does not
+
+*Prompt (Danilo): write a plan to test the time model with the existing datasets; hand to Opus/Sonnet to execute.*
+
+**This retires the standing "time model is theory only" caveat** (§10.4, notas). The energy↔time dual
+`t = x*/v_f`, `x* = x + k₊·h₊ − k₋·h₋` (article §5, the paper's second novel claim) had never been
+compared to a measured ride time. [`time_compare.mjs`](../data/activities/time_compare.mjs) does that
+across all three corpora at once (longões 43 · censo 58 · P. Paz 441 clean rides). Engines are verbatim
+copies (assembled programmatically from `ppaz_compare.mjs` + `compare.mjs`'s `ptsFromGPX` +
+`energy-model-comparison.html`'s `approxTime`); the new pieces are `extractRegimeStats` (per-regime
+moving time/distance/vertical on the same 30 m grade window + VSTOP gate that feeds P̄) and the predictor
+battery. The design was fixed by an adversarial methods review *before* running, and the results by a
+second adversarial review (3 independent agents + synthesis) *before* this write-up — which caught two
+things I had wrong and are corrected below.
+
+**Target.** Measured **moving time over powered segments** `T_mov_bin = t₊ + t_flat + t₋` (points with
+power present and v ≥ 0.5 km/h). The three regime times sum to it by construction (accounting identity
+exact); regime power coverage is a median 99.7% of all moving time (`timeOK ≥ 90%` gates the rest).
+Elapsed time and stop fraction are reported for context but *not* modelled — stops are behaviour, not
+physics (median stop fraction: longões 25%, censo 44%, P. Paz 11%).
+
+**Pre-declared primary endpoint** (fixed before the run, reported whatever it came out): **T1b — the full
+model with power-conditioned v_f and k₋ frozen from longões — median |Δ%| vs T_mov_bin on the 441 P. Paz
+rides.** Result: **6.6%** (signed +3.8), vs the naive `x/v_f` baseline **7.6%**. A **modest but real**
+improvement: T1b beats T0 on **56%** of 433 rides (sign test p = 0.011, Wilcoxon p < 0.001), and the gain
+is mass-robust (6.2 / 6.6 / 7.1% at 70 / 74.3 / 78 kg). It is concentrated exactly where the ascent term
+should matter — on the hilliest P. Paz tercile T0 12.0% → T1b 5.8%, while the flattest tercile is
+unchanged (5.8 → 5.7) — an *exploratory* (pre-motivated, not pre-registered) subgroup.
+
+**The ascent half transfers better than a *fitted* ceiling.** The fair benchmark for the physics-derived
+`k₊ = v_f·β/P_climb − 1/s̄₊` is not a naive regression but the same equivalent-flat-distance model with
+`k₊, k₋` **fitted** on longões (holding the same per-ride v_f), then frozen — call it TF. In-sample TF
+wins (longões 2.0% vs T1b 5.5%), because the physics k₊ under-charges climb time by the roll+aero share
+(the fitted k₊ = 19.5 absorbs it). But **frozen on the genuinely-new rider, the physics beats the fitted
+constant: P. Paz T1b 6.6% vs TF 10.9%** — a single fitted k₊ over-generalizes across riders/speeds where
+a per-ride *physical* k₊ adapts. (A naive absolute-seconds linear fit with no per-ride v_f is far worse
+still, 26.8% frozen — it bakes in one flat pace; that's why per-ride v_f is load-bearing.) On the urban
+censo the fitted ceiling wins (TF 7.4% vs T1b 14.2%), so the physics is **competitive, not dominant**.
+
+**Total-time scoreboard (power-conditioned v_f, median |Δ%| / signed):**
+
+| predictor | longões (fit) | censo (frozen) | P. Paz (frozen) |
+|---|--:|--:|--:|
+| T0 naive `x/v_f` | 16.8 / −16.8 | 20.8 / −20.8 | 7.6 / −0.5 |
+| TS Scarf `k₊=8` | 8.9 | 14.5 | 8.4 |
+| T1a ascent-only (physics k₊) | 5.5 / −5.2 | 14.2 | 6.6 / +3.8 |
+| **T1b full (physics k₊, k₋ frozen)** | **5.5** | **14.2** | **6.6 / +3.8** |
+| T2 approxTime (per-segment) | 4.3 / +0.1 | 11.4 | 7.4 / +6.1 |
+| T3 canonical forward sim | 3.6 / −0.3 | 13.5 | 8.6 / +7.5 |
+| TF fair fitted ceiling (k₊,k₋) | 2.0 | 7.4 | 10.9 |
+
+- **k₋ pins to 0 in power-conditioned mode** (grid boundary) — *not* "descents don't matter." Power-conditioned
+  `v_f = flatEqSpeed(P̄_flat)` slightly *over*-estimates real moving-flat speed (coasting, corners,
+  micro-slowdowns), so T0 under-predicts time (−0.5…−20.8% signed); any k₋ > 0 subtracts more and worsens
+  the median. The **speed-anchored** fit (measured flat speed) disambiguates: there k₋ = 0.3 and, with the
+  flat speed measured, the ascent term clearly helps — P. Paz T0 5.2% → T1a/T1b **2.0%**. But speed-anchored
+  v_f = x_flat/t_flat *shares measured flat time with the target*, so it is **partially in-sample** and
+  reported only as a secondary diagnostic, never as the headline.
+
+**The descent bridge is NOT confirmed.** The ε↔k₋ bridge predicts descent speed `v_desc = P̄_desc/(α − ε·β·s̄₋)`
+(with ε the frozen geometry estimator). Against measured `x₋/t₋` on real descents (s̄₋ ≥ 3%, h₋ ≥ 50 m,
+x₋ ≥ 1 km): correlation **0.59 longões / 0.08 censo / 0.14 P. Paz**, and it systematically **over-predicts**
+(med meas vs pred: 30 vs 38, 16 vs 37, 32 vs 52 km/h). The analytic form is uncapped — near the α = ε·β·s̄
+degeneracy it diverges (unphysical hundreds of km/h) — and even where finite it omits the safe-speed/vmax
+cap the canonical engine applies: real descents are **behaviour- and cap-limited, not aero-gravity-power
+equilibrium-limited**. So the descent credit `k₋` stays a **free, corpus-dependent** coefficient
+(measured median 5.9 rural longões, ≈0/negative −1.4 urban censo, 4.8 P. Paz), *not* pinned by the bridge.
+
+**What is NOT evidence (a correction from the review).** I had proposed a coefficient-level "time" test
+`r₊ = P̄_climb·t₊/(β·h₊)` ≈ 1.26, stable across all three corpora. It is a **near-tautology**: since
+`P̄_climb ≡ E_climb/t₊`, the climb time `t₊` cancels and `r₊ = k_eff·E_climb/(mg·h₊)` — it is exactly the
+Entry-7 *energy* climb over-charge re-expressed, carrying no independent *time* information. Its stability
+(≈1.26 = ~26% of climb pedal energy paying rolling+aero rather than lift) is the stability of the *energy*
+over-charge and is reported as such, not as corroboration of the time law. The honest time evidence is the
+total-time predictors above.
+
+**Verdict — a calibrated split, mirroring the energy ε story.**
+
+- **Ascent half: empirically supported and transfers out-of-sample** — modest in aggregate (6.6% vs 7.6%,
+  significant), concentrated on hilly rides, and beating a *fitted* ceiling on the new rider. The
+  gravity-only climb-time law `k₊ = v_f·β/P_climb` is the real, transferable piece (with a known ~26%
+  roll+aero under-charge on the pure-lift form).
+- **Descent half: not confirmed** — the analytic ε↔k₋ bridge does not predict measured descent speed; `k₋`
+  remains an empirical, corpus-dependent lumped parameter, behaviour/cap-limited.
+
+Caveats: power-conditioned is the clean out-of-sample mode; speed-anchored and the k₋_meas/v_desc
+diagnostics reuse measured time (in-sample). T2/T3 integrate the full geometric profile while the target is
+powered-moving time (≤10% coverage slack; partly explains T2's censo −11% bias). Only T1b-power-P. Paz was
+pre-declared; the terciles, modes, and per-corpus splits are exploratory. Two riders, same collective
+(Entry-12 caveats carry over).
+
+Tooling: `node time_compare.mjs` (reads the three gitignored track sets + manifests; writes
+`time_comparison.csv`, gitignored). `PPAZ_M=<kg> node time_compare.mjs` for the mass sweep.
 
 ---
 

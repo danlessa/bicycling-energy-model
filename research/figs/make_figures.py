@@ -304,5 +304,35 @@ def fig6():
     f.save('fig6-ppaz-eps.svg')
 
 
+# ---- Figure 7: predicted (T1b) vs measured moving time, all three corpora ----
+def fig7():
+    path7 = os.path.join(ACT, 'time_comparison.csv')
+    if not os.path.exists(path7):
+        print('skip fig7 (no time_comparison.csv — run time_compare.mjs)')
+        return
+    rows = [r for r in load(path7) if r['timeOK'] in ('1', 'true', 'True')]
+    col = {'longoes': BLUE, 'censo': VERM, 'ppaz': GREEN}
+    P = []
+    for r in rows:
+        meas, pred = num(r['tMovBin']), num(r['T1b_pred'])
+        if None in (meas, pred):
+            continue
+        P.append((meas / 3600, pred / 3600, r['corpus']))   # hours
+    hi = max(max(p[0], p[1]) for p in P) * 1.04
+    xr = yr = (0, hi)
+    f = Fig(430, 400, pad=(40, 18, 46, 52))
+    f.frame(xr, yr, 'measured moving time  (h)', 'predicted time — T1b  (h)',
+            title='Predicted vs measured moving time')
+    f.line([(0, 0), (hi, hi)], xr, yr, GREY, 1.2, dash='4 3')
+    # draw ppaz first (most points), then censo, then longões on top
+    for corp in ('ppaz', 'censo', 'longoes'):
+        for meas, pred, c in P:
+            if c == corp:
+                f.dot(meas, pred, xr, yr, 3.6, col[corp], 0.6)
+    f.legend([('longões (rider 1, open)', BLUE), ('censo (rider 1, urban)', VERM),
+              ('P. Paz (rider 2)', GREEN), ('perfect (y = x)', GREY)], f.x0 + 12, f.y0 + 16)
+    f.save('fig7-time.svg')
+
+
 if __name__ == '__main__':
-    fig1(); fig2(); fig3(); fig4(); fig5(); fig6()
+    fig1(); fig2(); fig3(); fig4(); fig5(); fig6(); fig7()

@@ -35,8 +35,10 @@ home of the *derivation* (`notas.md`) and the side-by-side comparison.
   rides), `eps_hypothesis.mjs` (ε closed-form test), `eps_sp_test.mjs` (São Paulo ε),
   `ppaz_inventory.mjs` + `ppaz_compare.mjs` (441 second-rider rides: implied-mass
   inversion + frozen-ε transfer test; `PPAZ_M=<kg>` env for mass sensitivity),
+  `time_compare.mjs` (time model `x*=x+k₊h₊−k₋h₋` tested vs measured moving time on all
+  three datasets; ascent transfers, descent bridge doesn't — Entry 13; `PPAZ_M` env),
   plus `fetch*.py` / `build_model_inputs.py` / `verify.py`. Each `.mjs` ports the app's
-  engine + FIT parser verbatim — **keep all copies in sync** (app + five harnesses +
+  engine + FIT parser verbatim — **keep all copies in sync** (app + six harnesses +
   `ppaz_inventory`'s parser; they drifted before).
 - `research/` — the write-ups: `MODEL_COMPARISON_JOURNAL.md` (numbered entries, newest
   first), `literature-context.md` (positioning), `article-draft.md` + `article-draft.pt-BR.md`
@@ -112,10 +114,11 @@ No build, no CI. Verify by:
 - **Engine or parser change → re-run the harnesses** (need the local gitignored tracks):
   from `data/activities/`, `node compare.mjs` (prints the longões scoreboard **and** the
   worst per-ride conservation residual — must stay ≤ 1e-6), `node censo_compare.mjs`,
-  `node eps_hypothesis.mjs`, `node eps_sp_test.mjs`. Diff the numbers against the journal
+  `node eps_hypothesis.mjs`, `node eps_sp_test.mjs`, `node ppaz_compare.mjs`,
+  `node time_compare.mjs`. Diff the numbers against the journal
   entries and `research/article-draft.md`; a doc-visible number that moves must be updated
   in both. A change to the engine or FIT parser must be applied to **all** copies (the app
-  + the five harness `.mjs` + `ppaz_inventory.mjs`'s parser) or they drift.
+  + the six harness `.mjs` + `ppaz_inventory.mjs`'s parser) or they drift.
 - **Sanity cases** for an engine change: flat (canonical ≈ approximate at auto v_f),
   pure climb (`legE ≥ PE`), pure descent (≈ coast), and P=0 (the bike must *stall*, not
   gain energy — no KE floor).

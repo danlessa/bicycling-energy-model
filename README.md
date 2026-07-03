@@ -49,11 +49,14 @@ are **gitignored** — they carry GPS tracks and private activity links.
 
 The model has been validated against power-meter rides from two riders (44 long
 "longões" + 62 urban "censo" rides from rider 1, and 441 rides from a second
-rider on whom the ε calibration was confirmed *frozen* — nothing refit): the
-harnesses live in `data/activities/` (`compare.mjs`, `censo_compare.mjs`,
-`eps_hypothesis.mjs`, `eps_sp_test.mjs`, `ppaz_inventory.mjs`, `ppaz_compare.mjs`)
-and the write-ups — including a draft paper — live in **`research/`**
-(`MODEL_COMPARISON_JOURNAL.md`, `article-draft.md`, `literature-context.md`, …).
+rider on whom the ε calibration was confirmed *frozen* — nothing refit). The
+**time** model (`x* = x + k₊·h₊ − k₋·h₋`) is also tested against measured moving
+time on all three datasets (`time_compare.mjs`): the ascent half transfers, the
+descent bridge does not. The harnesses live in `data/activities/` (`compare.mjs`,
+`censo_compare.mjs`, `eps_hypothesis.mjs`, `eps_sp_test.mjs`, `ppaz_inventory.mjs`,
+`ppaz_compare.mjs`, `time_compare.mjs`) and the write-ups — including a draft
+paper — live in **`research/`** (`MODEL_COMPARISON_JOURNAL.md`, `article-draft.md`,
+`literature-context.md`, …).
 
 ---
 
