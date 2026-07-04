@@ -19,6 +19,11 @@ data/activities/censohidrografico/
 # any manifest/derived files.
 data/activities/strava_ppaz/
 
+# JAAM's Strava history export (third rider, shared with consent) — GPS +
+# third-party personal data, never commit. Multi-country (SP, Colombia,
+# Germany, Ukraine, US, …). Whole dir: fit.gz/gpx originals + any manifest/csv.
+data/activities/strava_jaam/
+
 # The censo spreadsheet itself carries activity links / attendance — keep local.
 data/censo-hidrografico.xlsx
 
