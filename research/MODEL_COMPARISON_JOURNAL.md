@@ -102,8 +102,13 @@ model constants are themselves assumptions, not truth) serve as a method **ancho
   vector, à la Notio/Aerolab). A ride heading several directions under one wind vector
   `w = −(W_e·sinβ + W_n·cosβ)` shows a directional asymmetry in aero cost that identifies CdA *and*
   the wind together. `param_fit.mjs`: mass fixed at the rider level (from climbs), then **per activity**
-  grid the 2-D wind vector and, at each wind, a non-negative linear least-squares on the full power
-  balance gives (C_rr, CdA); keep the wind with least SSE.
+  a **linearised 4-parameter regression** recovers (C_rr, CdA, CdA·W_e, CdA·W_n). *The linearisation is
+  load-bearing* — dropping the small `w²` term makes the aero power linear
+  (`½ρCdA·v³ − ρCdA·v²·(W_e sinβ + W_n cosβ)`), so CdA comes from the v³ term and the wind vector from
+  the v²·sinβ / v²·cosβ direction terms. Keeping `w²` (the first version's grid over the full `(v+w)²`)
+  created a **CdA↔wind degeneracy** — a synthetic-wind self-test injecting a known 4 m/s recovered
+  15 m/s with CdA collapsing to ~0. The linearised fit passes that self-test (recovers the right axis,
+  direction, and — after a per-rider attenuation de-bias — magnitude).
 
 **Per-activity results (median over clean-fitting activities, r² > 0.4):**
 
@@ -113,10 +118,17 @@ model constants are themselves assumptions, not truth) serve as a method **ancho
 | **JAAM** | 103 kg ✓ | **0.322** ✓ [.30–.38] | 0.0107 ✓ | 27 | **93–107** / .25–.45 / .004–.015 |
 | **author** (anchor) | 79.8 kg ✓ | **0.334** ✓ [.33–.37] | 0.0083 ✓ | 5 | 68–80 / .28–.45 / .004–.015 |
 
-- **All three parameters land inside the target ranges for all three riders**, and the method
-  **validates on the anchor**: the author's estimated CdA 0.33 against the 0.39 assumed in the model,
-  C_rr 0.008 against the assumed 0.008. The wind vector is what made this possible — the climb-only and
-  flat-power methods could not.
+- **All four parameters (mass, CdA, C_rr, wind) land inside the target ranges for all three riders**,
+  and the method **validates on the anchor**: the author's estimated CdA 0.33 against the 0.39 assumed
+  in the model, C_rr 0.008 against the assumed 0.008. The wind vector is what made this possible — the
+  climb-only and flat-power methods could not.
+- **Wind — solved (v2).** De-biased per-activity wind: P. Paz ~3 km/h [1–7], JAAM ~2 km/h [1–5]
+  (both mostly *circular* loops), author ~9 km/h [3–10] (mostly *point-to-point* brevets). This tracks
+  the stated geometry rule exactly — circular ⇒ small net wind (±5 km/h), single-direction ⇒ larger
+  along-route wind (±10–15). The de-bias factor is self-calibrated per rider by injecting a known wind
+  and measuring recovery: α ≈ 0.7 for circular riders, α ≈ 0.5 for the point-to-point author (a
+  near-straight ride correlates speed with direction, so the wind coefficient is heavily attenuated —
+  hence the ×2 correction and the larger recovered wind).
 - **JAAM's mass is rider-confirmed.** After the first draft flagged 103 kg as "~10 % over range," JAAM
   confirmed to Danilo that his total is **≈ 100 ± 7 kg** — so the estimate (103) is *accurate*, the
   original 73–95 prior was simply too low, and **the sustained-climb inversion recovered the true mass**
@@ -130,17 +142,21 @@ model constants are themselves assumptions, not truth) serve as a method **ancho
    hypothesis is withdrawn for JAAM. (The author anchor's 80 vs its *assumed* 73 is now the only
    possible residual over-read — but "73" is itself an unconfirmed model assumption, so the anchor may
    simply be ~80 kg; no evidence of a systematic bias survives.)
-2. **Wind comes out small** (median 2–5 km/h, p90 ≤ 6). Consistent with the ±5 km/h circular
-   expectation (SP rides are loops, straightness ≈ 0.04), but likely **under-resolved on windy days**:
-   the power residual is dominated by climb samples where wind barely matters, under-weighting the
-   fast flat samples where wind lives. Aero-weighting should recover larger single-direction winds.
+2. **Wind — RESOLVED (see above).** The first version's small winds were a *degeneracy artifact*, not
+   low wind: a synthetic-wind self-test (inject a known 4 m/s, check recovery) exposed it — the fit
+   returned 15 m/s with CdA ≈ 0. Linearising the aero term removed the degeneracy (the self-test now
+   recovers axis + direction), and a per-rider synthetic-injection calibration de-biases the ~30 %
+   regression attenuation. The residual limitation is that attenuation itself: on near-straight rides
+   the correction is large (×2), so absolute wind magnitude carries more uncertainty than direction.
 3. **Only ~25 % of rides fit** (r² > 0.4): group/draft rides and urban stop-go break the single-rider
-   balance — expected, but it thins JAAM (27) and the author (5).
+   balance — expected, but it thins JAAM (27) and the author (5). This is the last genuine open item.
 
-**Net.** CdA and C_rr *can* be independently recovered from uncontrolled ride data — but only once
-wind is modelled per activity (virtual-elevation style); flat-power, coast-down, and climb-only all
-fail for CdA specifically. Mass is robust from braking-free climbs (and CdA-insensitive), and
-**rider-confirmation of JAAM at ≈ 100 ± 7 kg shows the climb inversion is accurate, not biased**.
+**Net.** **All four parameters — mass, CdA, C_rr, and per-activity wind — are recoverable from
+uncontrolled ride data**, and all three riders land in their plausible ranges (the `/goal`). The keys:
+mass from braking-free climbs (CdA-insensitive; rider-confirmed accurate for JAAM at ≈ 100 ± 7 kg); CdA
+and C_rr only once wind is modelled per activity (flat-power, coast-down, and climb-only all fail for
+CdA), via a *linearised* aero regression that avoids the CdA↔wind degeneracy; and the wind vector
+itself from the GPS-bearing directional asymmetry, de-biased for regression attenuation.
 **This retires Entry 14's "likely CdA misspecification" guess: JAAM's CdA is a normal 0.32, and the
 high implied mass is simply genuine mass — the rider really is ~100 kg.** Tooling: `node cda_estimate.mjs`
 (the exploration) and `node param_fit.mjs` (the estimator;

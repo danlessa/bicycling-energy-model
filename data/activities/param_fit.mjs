@@ -441,61 +441,63 @@ function ptsWithGeo(recs) {
   return pts;
 }
 
-// 2-param NON-NEGATIVE linear LS (Crr, CdA) at a given wind, minimising power residual.
-function fitCrrCdA(samples, m, rho, We, Wn) {
-  let s11 = 0, s12 = 0, s22 = 0, y1 = 0, y2 = 0, syy = 0, my = 0, n = samples.length;
-  const tgt = [], f1 = [], f2 = [];
-  for (const s of samples) {
-    const w = -(We * Math.sin(s.bear) + Wn * Math.cos(s.bear));
-    const air = s.v + w;
-    const T = s.pw * KEFF - (m * s.acc + m * G * s.sin) * s.v;   // power minus (KE+gravity)
-    const a1 = m * G * s.cos * s.v;                              // Crr feature (rolling power)
-    const a2 = 0.5 * rho * air * air * s.v;                     // CdA feature (aero power)
-    tgt.push(T); f1.push(a1); f2.push(a2); my += T;
+// k-param no-intercept linear least squares (Gaussian elimination on the normal equations).
+function olsK(feats, ys) {
+  const k = feats[0].length, n = ys.length;
+  const M = Array.from({ length: k }, () => new Float64Array(k + 1));
+  let syy = 0, my = 0; for (const y of ys) my += y; my /= n;
+  for (let i = 0; i < n; i++) { const f = feats[i]; for (let a = 0; a < k; a++) { for (let b = 0; b < k; b++) M[a][b] += f[a] * f[b]; M[a][k] += f[a] * ys[i]; } syy += (ys[i] - my) ** 2; }
+  for (let c = 0; c < k; c++) {
+    let piv = c; for (let r = c + 1; r < k; r++) if (Math.abs(M[r][c]) > Math.abs(M[piv][c])) piv = r;
+    [M[c], M[piv]] = [M[piv], M[c]]; if (Math.abs(M[c][c]) < 1e-15) return null;
+    for (let r = 0; r < k; r++) if (r !== c) { const fac = M[r][c] / M[c][c]; for (let j = c; j <= k; j++) M[r][j] -= fac * M[c][j]; }
   }
-  my /= n;
-  for (let i = 0; i < n; i++) { s11 += f1[i] * f1[i]; s12 += f1[i] * f2[i]; s22 += f2[i] * f2[i]; y1 += f1[i] * tgt[i]; y2 += f2[i] * tgt[i]; syy += (tgt[i] - my) ** 2; }
-  const det = s11 * s22 - s12 * s12;
-  let crr = det ? (y1 * s22 - y2 * s12) / det : NaN, cda = det ? (s11 * y2 - s12 * y1) / det : NaN;
-  // non-negativity: if one is negative, clamp it to 0 and refit the other alone
-  if (crr < 0) { crr = 0; cda = y2 / s22; }
-  if (cda < 0) { cda = 0; crr = y1 / s11; if (crr < 0) crr = 0; }
-  let sse = 0; for (let i = 0; i < n; i++) { const e = tgt[i] - crr * f1[i] - cda * f2[i]; sse += e * e; }
-  return { crr, cda, sse, r2: 1 - sse / syy };
+  const out = new Float64Array(k); for (let i = 0; i < k; i++) out[i] = M[i][k] / M[i][i];
+  let sse = 0; for (let i = 0; i < n; i++) { let e = ys[i]; for (let a = 0; a < k; a++) e -= out[a] * feats[i][a]; sse += e * e; }
+  return { theta: out, r2: 1 - sse / syy };
 }
 
-// Per-activity fit: mass fixed; grid wind then refine; returns params + diagnostics.
+// Per-activity fit — LINEARISED aero regression (no wind grid). Dropping the small w^2 term, the
+// aero power is linear: 1/2 rho CdA (v+w)^2 v ~= CdA*(1/2 rho v^3) - (CdA*We)*(rho v^2 sin b) -
+// (CdA*Wn)*(rho v^2 cos b), so
+//   T = P*keff - (m*a + m*g*sin)*v = Crr*[m g cos v] + CdA*[1/2 rho v^3]
+//        + (CdA*We)*[-rho v^2 sin b] + (CdA*Wn)*[-rho v^2 cos b]
+// is a clean 4-parameter no-intercept regression: CdA from the v^3 term, the wind vector from the
+// v^2 sin/cos direction terms. Fully identifiable -- the CdA<->wind degeneracy came from keeping
+// w^2. One refinement pass folds w^2 back in as a known correction to T.
 function fitActivity(pts, m) {
   const rho = rhoAt(median(pts.map(p => p.alt)));
-  const samples = [];
+  const S = [];
   for (const p of pts) {
-    if (p.power === undefined || p.v === undefined || p.v < 3) continue;   // moving, has power
-    if (p.power <= 0) continue;                                            // pedalling (avoid brake/coast)
-    if (Math.abs(p.acc) > 1.5) continue;                                   // drop wild accelerations
+    if (p.power === undefined || p.v === undefined || p.v < 3 || p.power <= 0) continue;
+    if (Math.abs(p.acc) > 1.5) continue;
     const sec = Math.sqrt(1 + p.grade * p.grade);
-    samples.push({ v: p.v, pw: p.power, acc: p.acc, sin: p.grade / sec, cos: 1 / sec, bear: p.bear });
+    S.push({ v: p.v, pw: p.power, acc: p.acc, sin: p.grade / sec, cos: 1 / sec, bear: p.bear, flatFast: Math.abs(p.grade) < 0.03 && p.v >= 5 });
   }
-  if (samples.length < 200) return null;
-  // speed & direction spread (identifiability gates)
-  const vs = samples.map(s => s.v), vSpread = q(vs, 0.9) - q(vs, 0.1);
-  const dirs = samples.map(s => s.bear);
-  const dirSpread = Math.sqrt((1 - (dirs.reduce((a, b) => a + Math.cos(b), 0) / dirs.length) ** 2 - (dirs.reduce((a, b) => a + Math.sin(b), 0) / dirs.length) ** 2)); // circular spread 0..1
-  let best = null;
-  for (let We = -8; We <= 8.001; We += 1) for (let Wn = -8; Wn <= 8.001; Wn += 1) {
-    const f = fitCrrCdA(samples, m, rho, We, Wn);
-    if (!best || f.sse < best.sse) best = { ...f, We, Wn };
+  if (S.length < 200) return null;
+  const nAero = S.filter(s => s.flatFast).length;
+  const vs = S.map(s => s.v), vSpread = q(vs, 0.9) - q(vs, 0.1);
+  const aeroDirs = S.filter(s => s.flatFast).map(s => s.bear), dsN = aeroDirs.length || 1;
+  const dirSpread = Math.sqrt(Math.max(0, 1 - (aeroDirs.reduce((a, b) => a + Math.cos(b), 0) / dsN) ** 2 - (aeroDirs.reduce((a, b) => a + Math.sin(b), 0) / dsN) ** 2));
+
+  let cda = 0.3, crr = 0.006, We = 0, Wn = 0, r2 = NaN;
+  for (let iter = 0; iter < 3; iter++) {
+    const feats = [], ys = [];
+    for (const s of S) {
+      const w = -(We * Math.sin(s.bear) + Wn * Math.cos(s.bear));
+      const w2corr = 0.5 * rho * cda * s.v * w * w;                       // known w^2 correction (last iter)
+      ys.push(s.pw * KEFF - (m * s.acc + m * G * s.sin) * s.v - w2corr);
+      feats.push([m * G * s.cos * s.v, 0.5 * rho * s.v ** 3, -rho * s.v * s.v * Math.sin(s.bear), -rho * s.v * s.v * Math.cos(s.bear)]);
+    }
+    const f = olsK(feats, ys); if (!f) return null;
+    crr = f.theta[0]; cda = f.theta[1]; r2 = f.r2;
+    if (!(cda > 0.02)) return null;                                       // unphysical CdA => unreliable
+    We = f.theta[2] / cda; Wn = f.theta[3] / cda;
   }
-  // refine ±1 m/s at 0.25 resolution
-  const b0 = best;
-  for (let We = b0.We - 1; We <= b0.We + 1.001; We += 0.25) for (let Wn = b0.Wn - 1; Wn <= b0.Wn + 1.001; Wn += 0.25) {
-    const f = fitCrrCdA(samples, m, rho, We, Wn);
-    if (f.sse < best.sse) best = { ...f, We, Wn };
-  }
-  // straightness = net displacement / path length (→1 point-to-point, →0 circular/out-and-back)
   const first = pts[0], last = pts[pts.length - 1];
   const net = haversine(first, last), plen = last.x - first.x;
-  return { cda: best.cda, crr: best.crr, W: Math.hypot(best.We, best.Wn), windDir: (Math.atan2(best.We, best.Wn) / TO_R + 360) % 360,
-    r2: best.r2, n: samples.length, vSpread, dirSpread, straight: plen > 0 ? net / plen : 1, km: plen / 1000 };
+  return { cda, crr, We, Wn, W: Math.hypot(We, Wn), windDir: (Math.atan2(We, Wn) / TO_R + 360) % 360,
+    r2, n: S.length, nAero, vSpread, dirSpread, straight: plen > 0 ? net / plen : 1, km: plen / 1000 };
 }
 
 // Rider mass from braking-free climbs (CdA-insensitive; fixed nominal CdA=0.35).
@@ -538,6 +540,58 @@ console.log('================================================================');
 console.log('PER-ACTIVITY CdA / C_rr / WIND / MASS  (wind via GPS bearing; mass rider-level from climbs)');
 console.log('k_eff=0.98, ρ=ISA(altitude). Per activity: grid 2-D wind, non-neg linear (C_rr,CdA) at each.\n');
 
+// ---- SYNTHETIC-WIND RECOVERY SELF-TEST (SYNTH=1): inject a known wind into the power (using
+// each ride's own fitted CdA/C_rr/mass) and check the fit recovers it. Decides whether small
+// recovered winds are real (low wind) or a resolution failure. ----
+if (process.env.SYNTH) {
+  const We0 = process.env.SYNTH_WE ? +process.env.SYNTH_WE : 4, Wn0 = process.env.SYNTH_WN ? +process.env.SYNTH_WN : 0;   // inject 4 m/s from the west (blowing east)
+  const R = listRiders()[0]; const m = riderMass(R.files).m;
+  console.log(`SYNTHETIC WIND RECOVERY — inject (We=${We0}, Wn=${Wn0}) m/s, rider ${R.name}, m=${m.toFixed(0)} kg\n`);
+  let done = 0;
+  for (const f of R.files) {
+    if (done >= 8) break;
+    let pts; try { pts = ptsWithGeo(rawRecords(f)); } catch (e) { continue; } if (!pts) continue;
+    const base = fitActivity(pts, m); if (!base || base.dirSpread < 0.4 || base.nAero < 200) continue;
+    const rho = rhoAt(median(pts.map(p => p.alt)));
+    // overwrite each point's power with the model power that WOULD be measured under the true wind
+    for (const p of pts) {
+      if (p.power === undefined || p.v === undefined || p.v < 3 || p.power <= 0) continue;
+      const sec = Math.sqrt(1 + p.grade * p.grade), sin = p.grade / sec, cos = 1 / sec;
+      const w = -(We0 * Math.sin(p.bear) + Wn0 * Math.cos(p.bear)), air = p.v + w;
+      const Pw = ((m * p.acc + m * G * sin) * p.v + base.crr * m * G * cos * p.v + base.cda * 0.5 * rho * air * air * p.v) / KEFF;
+      p.power = Pw > 0 ? Pw : 0.01;   // noiseless synthetic power
+    }
+    const rec = fitActivity(pts, m); if (!rec) continue;
+    console.log(`  ${done + 1}: dirSpread ${base.dirSpread.toFixed(2)}, straight ${base.straight.toFixed(2)}, nAero ${base.nAero}  →  recovered |W| ${(rec.W).toFixed(2)} m/s, dir ${rec.windDir.toFixed(0)}°  (CdA ${rec.cda.toFixed(3)}, C_rr ${rec.crr.toFixed(4)})   [truth 4.0 m/s, 270°]`);
+    done++;
+  }
+  process.exit(0);
+}
+
+// Self-calibrate the wind-magnitude attenuation: inject a known 4 m/s wind (using each ride's own
+// fitted CdA/C_rr/mass), refit, and take the median recovered/injected ratio α. Regression dilution
+// (speed↔direction correlate on real roads) makes α ≈ 0.7; we de-bias real winds by 1/α.
+function windAttenuation(files, m, nCal = 25) {
+  const We0 = 4, Wn0 = 0, ratios = [];
+  for (const f of files) {
+    if (ratios.length >= nCal) break;
+    let pts; try { pts = ptsWithGeo(rawRecords(f)); } catch (e) { continue; } if (!pts) continue;
+    const base = fitActivity(pts, m);
+    if (!base || base.dirSpread < 0.5 || base.nAero < 300 || !(base.cda > 0.15 && base.cda < 0.55)) continue;
+    const rho = rhoAt(median(pts.map(p => p.alt)));
+    for (const p of pts) {
+      if (p.power === undefined || p.v === undefined || p.v < 3 || p.power <= 0) continue;
+      const sec = Math.sqrt(1 + p.grade * p.grade), sin = p.grade / sec, cos = 1 / sec;
+      const w = -(We0 * Math.sin(p.bear) + Wn0 * Math.cos(p.bear)), air = p.v + w;
+      p.power = Math.max(0.01, ((m * p.acc + m * G * sin) * p.v + base.crr * m * G * cos * p.v + base.cda * 0.5 * rho * air * air * p.v) / KEFF);
+    }
+    const rec = fitActivity(pts, m);
+    if (rec && rec.cda > 0.15 && rec.cda < 0.55) ratios.push(rec.W / Math.hypot(We0, Wn0));
+  }
+  const a = median(ratios);
+  return { alpha: a > 0.3 && a < 1.2 ? a : 1, n: ratios.length };
+}
+
 const rows = [];
 for (const r of listRiders()) {
   const rm = riderMass(r.files); const m = rm.m;
@@ -550,18 +604,20 @@ for (const r of listRiders()) {
     } catch (e) { /* skip */ }
   }
   console.log(`  [attrition] ${r.files.length} files → ${nGeo} with GPS → ${nFit} fittable → ${nGate} pass r²>0.4,n≥200`);
-  // aggregate: use activities with decent direction spread (wind identifiable) for CdA
-  const good = acts.filter(a => a.dirSpread > 0.3 && a.vSpread > 3.5);   // enough turning + speed range
-  const cdas = good.map(a => a.cda), crrs = good.map(a => a.crr), winds = acts.map(a => a.W);
+  // "clean" = physically-plausible CdA + direction/speed spread to identify the wind
+  const good = acts.filter(a => a.dirSpread > 0.3 && a.vSpread > 3.5 && a.cda > 0.15 && a.cda < 0.55);
+  const cdas = good.map(a => a.cda), crrs = good.map(a => a.crr);
+  const { alpha, n: nCal } = windAttenuation(r.files, m);
+  const winds = good.map(a => a.W / alpha);                       // de-biased wind magnitude
   const inR = (v, [lo, hi]) => v >= lo && v <= hi ? '✓' : '✗';
-  console.log(`── ${r.name} ──  ${acts.length} activities fit (${good.length} with wind-identifiable geometry)`);
+  console.log(`── ${r.name} ──  ${acts.length} activities fit (${good.length} clean: CdA∈[0.15,0.55], wind geometry)`);
   console.log(`  MASS  = ${m.toFixed(1)} kg   [rider-level, ${rm.nSeg} climb seg]      target ${r.range.m[0]}–${r.range.m[1]}  ${inR(m, r.range.m)}`);
   console.log(`  CdA   = ${median(cdas).toFixed(3)} m²  [IQR ${q(cdas, .25).toFixed(2)}–${q(cdas, .75).toFixed(2)}]   target ${r.range.cda[0]}–${r.range.cda[1]}  ${inR(median(cdas), r.range.cda)}`);
   console.log(`  C_rr  = ${median(crrs).toFixed(4)}   [IQR ${q(crrs, .25).toFixed(4)}–${q(crrs, .75).toFixed(4)}]  target ${r.range.crr[0]}–${r.range.crr[1]}  ${inR(median(crrs), r.range.crr)}`);
-  console.log(`  |wind|= ${median(winds).toFixed(1)} m/s (${(median(winds) * 3.6).toFixed(0)} km/h) median per activity; range ${(q(winds, .1) * 3.6).toFixed(0)}–${(q(winds, .9) * 3.6).toFixed(0)} km/h`);
+  console.log(`  |wind|= ${median(winds).toFixed(1)} m/s (${(median(winds) * 3.6).toFixed(0)} km/h) median, de-biased ÷α (α=${alpha.toFixed(2)}, ${nCal}-ride synth calib); per-activity range ${(q(winds, .1) * 3.6).toFixed(0)}–${(q(winds, .9) * 3.6).toFixed(0)} km/h`);
   console.log(`  median activity: ${median(acts.map(a => a.km)).toFixed(0)} km, straightness ${median(acts.map(a => a.straight)).toFixed(2)}, fit R² ${median(acts.map(a => a.r2)).toFixed(2)}\n`);
-  rows.push({ rider: r.name, m, cda: median(cdas), crr: median(crrs), wind: median(winds), nAct: acts.length, nGood: good.length });
+  rows.push({ rider: r.name, m, cda: median(cdas), crr: median(crrs), wind: median(winds), alpha, nAct: acts.length, nGood: good.length });
 }
-fs.writeFileSync(path.join(HERE, 'param_fit.csv'), 'rider,mass_kg,cda_m2,crr,wind_ms,nAct,nGoodGeom\n' +
-  rows.map(o => `${JSON.stringify(o.rider)},${o.m.toFixed(1)},${o.cda.toFixed(3)},${o.crr.toFixed(4)},${o.wind.toFixed(2)},${o.nAct},${o.nGood}`).join('\n') + '\n');
+fs.writeFileSync(path.join(HERE, 'param_fit.csv'), 'rider,mass_kg,cda_m2,crr,wind_ms_debiased,alpha,nAct,nGood\n' +
+  rows.map(o => `${JSON.stringify(o.rider)},${o.m.toFixed(1)},${o.cda.toFixed(3)},${o.crr.toFixed(4)},${o.wind.toFixed(2)},${o.alpha.toFixed(3)},${o.nAct},${o.nGood}`).join('\n') + '\n');
 console.log('wrote param_fit.csv');
