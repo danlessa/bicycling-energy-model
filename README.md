@@ -47,16 +47,18 @@ empirical-ε and statistics work; no GPS coordinates). Raw `*.fit` tracks, the
 per-rider spreadsheets, and the downloaded activity dirs under `data/activities/`
 are **gitignored** — they carry GPS tracks and private activity links.
 
-The model has been validated against power-meter rides from two riders (44 long
-"longões" + 62 urban "censo" rides from rider 1, and 441 rides from a second
-rider on whom the ε calibration was confirmed *frozen* — nothing refit). The
-**time** model (`x* = x + k₊·h₊ − k₋·h₋`) is also tested against measured moving
-time on all three datasets (`time_compare.mjs`): the ascent half transfers, the
-descent bridge does not. The harnesses live in `data/activities/` (`compare.mjs`,
-`censo_compare.mjs`, `eps_hypothesis.mjs`, `eps_sp_test.mjs`, `ppaz_inventory.mjs`,
-`ppaz_compare.mjs`, `time_compare.mjs`) and the write-ups — including a draft
-paper — live in **`research/`** (`MODEL_COMPARISON_JOURNAL.md`, `article-draft.md`,
-`literature-context.md`, …).
+The model has been validated against power-meter rides from **three riders** — the
+author (44 long "longões" + 62 urban "censo" rides) plus **two independent riders**
+(P. Paz, 441 rides; JAAM, 219 rides; neither a Pedal Hidrográfico member, each shared
+with consent). Frozen and tested on the two independent riders, the energy law and the
+−0.13 offset transfer, while the geometric ε *skill* proves rider-dependent (it wins for
+a coaster, is inconclusive for a fast descent-pedaller). The **time** model
+(`x* = x + k₊·h₊ − k₋·h₋`) is also tested against measured moving time (`time_compare.mjs`):
+the ascent half transfers, the descent bridge does not. The harnesses live in
+`data/activities/` (`compare.mjs`, `censo_compare.mjs`, `eps_hypothesis.mjs`,
+`eps_sp_test.mjs`, `ppaz_inventory.mjs`, `ppaz_compare.mjs`, `jaam_inventory.mjs`,
+`jaam_compare.mjs`, `time_compare.mjs`) and the write-ups — including a draft paper — live
+in **`research/`** (`MODEL_COMPARISON_JOURNAL.md`, `article-draft.md`, `literature-context.md`, …).
 
 ---
 

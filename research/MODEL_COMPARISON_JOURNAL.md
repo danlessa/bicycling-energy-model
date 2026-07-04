@@ -51,7 +51,99 @@ changed. See Entry 11.)*
   every downstream number) — `906de11`
 - **Entry 12** (second rider: P. Paz's Strava export, [`ppaz_inventory.mjs`](../data/activities/ppaz_inventory.mjs) +
   [`ppaz_compare.mjs`](../data/activities/ppaz_compare.mjs)) — `2148deb`
-- **Entry 13** (time model tested on all three datasets, [`time_compare.mjs`](../data/activities/time_compare.mjs)) — this commit
+- **Entry 13** (time model tested on all three datasets, [`time_compare.mjs`](../data/activities/time_compare.mjs)) — `eeb38cd`
+- **Entry 14** (third rider JAAM + a framing correction: P. Paz/JAAM are *independent* riders, not
+  collective members, [`jaam_inventory.mjs`](../data/activities/jaam_inventory.mjs) +
+  [`jaam_compare.mjs`](../data/activities/jaam_compare.mjs)) — this commit
+
+---
+
+## 2026-07-03 — Entry 14: a third rider (JAAM) qualifies the transfer — and a framing correction
+
+*Prompt (Danilo): a third rider's export was added at `strava_jaam`; test it. Two corrections: P. Paz
+and JAAM are **not** members of Pedal Hidrográfico (independent riders who shared data with consent);
+and the author's own rwgps/strava rides — the "longões" — are **not** Pedal Hidrográfico activities
+either (only the "censo" set is). Earlier entries/drafts that called P. Paz "a second collective member"
+or leaned on "same collective" as the external-validity caveat were wrong and are corrected here.*
+
+**What this is.** A **third fully-independent rider** (JAAM — different person, different power meter,
+not the author, not P. Paz, not in the collective), `data/activities/strava_jaam/` (gitignored,
+shared with consent). `jaam_compare.mjs` reuses `ppaz_compare.mjs`'s **verbatim** engines (byte-identical,
+re-verified by diff in an adversarial audit), retargeted to JAAM's manifest, plus a terrain/altitude
+stratification. Numbers below are pinned to `jaam_comparison.csv` md5 `03359f5…` (219 rows); an
+adversarial 3-agent review verified the harness, recomputed every figure, and set the honest framing.
+
+**Inventory** (`jaam_inventory.mjs`): 1 282 FIT files, 0 errors, 2022-12 → 2026-07; **360 power rides**,
+230 ≥ 20 km. Danilo noted JAAM rides many countries (Colombia, Germany, Ukraine, US, …) from
+mountainous to plain — **but that breadth is almost all in the *non-power* activities**: the power rides
+cluster tightly at **~737 m median altitude** (p10 721, p90 785 — the São Paulo band), with only a thin
+non-SP tail (~15 rides: a 2023 sea-level cluster, plus late-2025 dead-flat "300 m" rides that are almost
+certainly indoor). So the *testable* corpus is **~93 % São Paulo**. (Altitude is read from the elevation
+stream — non-locational; no coordinate is stored.)
+
+**Implied mass — a caveat, not a measurement.** We don't know JAAM's mass, so it is inverted from the
+sustained-climb balance as for P. Paz: per-ride median **m̂ = 101.7 kg** [IQR 95.7–108.7]. That is
+implausibly high (P. Paz 74.3, author ~78). The likely cause is **CdA misspecification**, not real mass:
+JAAM is a fast rider (v_f median **29.2 km/h**) whose true CdA is below the assumed censo-urban 0.40, and
+the *fixed-CdA* climb inversion dumps that error into m̂. The energy scoreboard then *uses* the inflated
+mass, so part of its accuracy is "the free parameter absorbing a CdA error" — disclosed, not hidden.
+
+**Energy law — transfers (with a data-implied mass).** On 219 clean rides (median 56.7 km, h₊ 329 m):
+canonical **5.4 %** median |Δ%| (4.2 % by the per-ride statistic), smooth approx best at **3.5 %**
+(ε = 0.20; ε = 0.25 gives 3.7 % — the optimum is *flat and shallow*, not a sharp 0.20). Note the reversal
+from P. Paz: here the **flat ε ≈ 0.20 beats `ε_geom`** (smooth ε_geom 5.5 %, poor-man's ε_geom 9.0 %),
+because JAAM's fast v_f drives `ε_geom` median to **0.61** — it *over*-credits descents this rider never
+banks. Read as: the functional form + one fitted mass reproduce measured `∫P·dt` to ~4–5 % on a third
+independent rider; this transfers the *form*, it does not *predict* (mass is fitted).
+
+**The −0.13 offset is consistent a third time — but read the hedge.** On real descents (s̄ ≥ 3%, n = 21)
+the measured gap med(ε_coast) − med(ε_bal) = **0.133** [bootstrap 95 % CI 0.102–0.186], matching the
+calibrated 0.13 (rider 1) and P. Paz's 0.12. **But the *sign* is structural**: `ε_coast` is a coasting
+upper bound on `ε_bal` (all 21 rides have ε_coast > ε_bal — the §8.3 part–whole issue), and all three
+riders share city/gear context. So this is "**consistent across riders**," not "independently confirmed
+three times." The magnitude landing near 0.13 each time is still notable; the direction is not evidence.
+
+**The geometric ε *skill* does NOT transfer to JAAM — inconclusive on descents, fails on the bulk.**
+Frozen `clamp01(ε_coast − 0.13)` vs measured `ε_bal`:
+
+| subset | frozen | flat 0.20 | flat 0.23 | in-sample flat | corr |
+|---|--:|--:|--:|--:|--:|
+| all clean (n = 215) | **0.469** | 0.157 | 0.167 | 0.152 | −0.31 |
+| real descents s̄ ≥ 3% (n = 21) | **0.090** | 0.111 | 0.094 | 0.085 | 0.270 |
+
+- On the **gentle-heavy bulk it fails outright** (RMS 0.47 vs a flat constant's 0.16) — JAAM rides mostly
+  gentle terrain (median s̄ 1.5%) and, being strong, **pedals the descents** (measured ε_bal 0.17–0.28),
+  so `ε_coast`'s coasting assumption has almost nothing to bite on. This is the §8.3 flat-terrain reversal
+  at rider scale.
+- On the **thin real-descent subset it is inconclusive**: frozen 0.090 vs flat-0.20 0.111 is a
+  **−0.020 RMS difference with 95 % CI [−0.072, 0.024] straddling zero**; it *ties* JAAM's own best flat
+  constant (0.085); and corr 0.270 is **not significant** (t = 1.22, df = 19, p ≈ 0.24). Not a win, not a
+  tie, not a clean failure — **underpowered/inconclusive on descents.** Mass-robust: frozen RMS
+  0.105 / 0.090 / 0.083 at 90 / 101.7 / 110 kg, tracking the in-sample flat throughout.
+
+**This qualifies the P. Paz headline.** Entry 12 reported the frozen estimator *beating* P. Paz's own
+best constant by ~35 %. JAAM shows that win is **rider-dependent**: P. Paz is a coaster (banks descent
+recovery → `ε_coast` has signal), JAAM is a fast descent-pedaler (banks little → no signal). **Net across
+three independent riders and meters: the energy law and the calibrated −0.13 offset transfer robustly;
+the geometric-ε *skill* does not — it works for riders who coast, not for those who pedal down.** That is
+exactly the paper's standing position (§8.3: "ε's remaining scatter is rider behaviour, not route
+geometry"), now demonstrated across riders.
+
+**Geography stays untested.** The multi-country breadth is all in non-power activities; JAAM's
+power + real-descent non-SP subset is **n = 2**. No climatic or cross-region claim is supportable.
+
+**Framing correction (propagated to the article).** P. Paz and JAAM are **independent third-party riders,
+not Pedal Hidrográfico members**; the longões are the author's own brevets, not collective rides; only the
+censo is Pedal Hidrográfico. The external-validity caveat is therefore *not* "same collective" (wrong) but
+"**all three riders' power/descent benchmarks happen to fall in the São Paulo altitude band — coincidental
+geographic co-location across independent riders, not a shared-collective artifact; geography and climate
+remain untested.**" Three *independent* riders is the stronger external-validity story than "same collective."
+
+Caveats: ~4 non-Zwift-tagged flat "300 m" (likely indoor) rides survive into the energy scoreboard — the
+median is immune, and the ε test/mass inversion drop them structurally (flat ⇒ no descent cells, no
+sustained climbs). Rider-3 CdA/C_rr assumed (the mass sweep varies mass, not the suspected CdA culprit).
+Tooling: `node jaam_inventory.mjs && node jaam_compare.mjs` (`JAAM_M=<kg>` for the mass sweep); both read
+the gitignored export and write gitignored outputs.
 
 ---
 
@@ -143,8 +235,9 @@ total-time predictors above.
 Caveats: power-conditioned is the clean out-of-sample mode; speed-anchored and the k₋_meas/v_desc
 diagnostics reuse measured time (in-sample). T2/T3 integrate the full geometric profile while the target is
 powered-moving time (≤10% coverage slack; partly explains T2's censo −11% bias). Only T1b-power-P. Paz was
-pre-declared; the terciles, modes, and per-corpus splits are exploratory. Two riders, same collective
-(Entry-12 caveats carry over).
+pre-declared; the terciles, modes, and per-corpus splits are exploratory. Two riders (the author + the
+independent rider P. Paz — see the Entry-14 framing correction: P. Paz is *not* a collective member),
+same São Paulo region (Entry-12 caveats carry over).
 
 Tooling: `node time_compare.mjs` (reads the three gitignored track sets + manifests; writes
 `time_comparison.csv`, gitignored). `PPAZ_M=<kg> node time_compare.mjs` for the mass sweep.
@@ -218,9 +311,10 @@ rider 1**:
   part–whole; the frozen-vs-flat RMS comparison above is the honest statistic, and it is the
   out-of-sample one.
 
-**Caveats, honestly.** Same collective and city region (shared riding culture and roads —
-some rides may even be the same group events, though measured on an independent body and
-meter); rider-2 CdA/C_rr still assumed, mass calibrated in-sample from climbs (ε result shown
+**Caveats, honestly.** *(Framing corrected in Entry 14: P. Paz is an **independent** rider, NOT a
+collective member; the "same collective" wording below was wrong.)* Same São Paulo **city region**
+(shared roads; though measured on an independent body and meter);
+rider-2 CdA/C_rr still assumed, mass calibrated in-sample from climbs (ε result shown
 insensitive); the ε evaluation shares its *method* (30 m cells, measured flat speed) with
 rider 1, so a method-level artifact would not be caught by this test. n(riders) = 2 — but the
 step from 1 to 2 is the big one.

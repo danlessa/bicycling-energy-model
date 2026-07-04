@@ -25,21 +25,26 @@ home of the *derivation* (`notas.md`) and the side-by-side comparison.
   bridge through descent power. **Keep it in sync with the code** — a model
   change lands in both.
 - `data/` — `sample.gpx` (synthetic) and `flecha_power.csv` (no GPS) committed;
-  all `*.fit`, the `data/activities/{rwgps,strava,censohidrografico,strava_ppaz}/` track
-  dirs, `data/longoes.xlsx` and `data/censo-hidrografico.xlsx` are **gitignored** (GPS /
+  all `*.fit`, the `data/activities/{rwgps,strava,censohidrografico,strava_ppaz,strava_jaam}/`
+  track dirs, `data/longoes.xlsx` and `data/censo-hidrografico.xlsx` are **gitignored** (GPS /
   private activity links / physiology / third-party data). `data/longoes.xlsx` was purged
-  from history (2026-07) after an accidental commit — never re-add it. `strava_ppaz/` is
-  a second rider's full Strava export, shared with consent — never commit any of it.
+  from history (2026-07) after an accidental commit — never re-add it. `strava_ppaz/` and
+  `strava_jaam/` are two **independent** riders' full Strava exports (P. Paz, JAAM — **not**
+  Pedal Hidrográfico members), shared with consent — never commit any of it. (Note: the
+  author's own rwgps/strava rides — the "longões" — are the author's brevets, not PH rides;
+  only the "censo" set is Pedal Hidrográfico.)
 - `data/activities/` — the validation harnesses (committable; the tracks they read are
   not): `compare.mjs` (44 longões power rides), `censo_compare.mjs` (62 censo urban
   rides), `eps_hypothesis.mjs` (ε closed-form test), `eps_sp_test.mjs` (São Paulo ε),
   `ppaz_inventory.mjs` + `ppaz_compare.mjs` (441 second-rider rides: implied-mass
   inversion + frozen-ε transfer test; `PPAZ_M=<kg>` env for mass sensitivity),
+  `jaam_inventory.mjs` + `jaam_compare.mjs` (219 third-rider rides: same test — Entry 14,
+  where the frozen-ε skill proves rider-dependent; `JAAM_M=<kg>` env),
   `time_compare.mjs` (time model `x*=x+k₊h₊−k₋h₋` tested vs measured moving time on all
   three datasets; ascent transfers, descent bridge doesn't — Entry 13; `PPAZ_M` env),
   plus `fetch*.py` / `build_model_inputs.py` / `verify.py`. Each `.mjs` ports the app's
-  engine + FIT parser verbatim — **keep all copies in sync** (app + six harnesses +
-  `ppaz_inventory`'s parser; they drifted before).
+  engine + FIT parser verbatim — **keep all copies in sync** (app + eight harnesses +
+  the two inventory parsers; they drifted before).
 - `research/` — the write-ups: `MODEL_COMPARISON_JOURNAL.md` (numbered entries, newest
   first), `literature-context.md` (positioning), `article-draft.md` + `article-draft.pt-BR.md`
   (the draft paper, EN + pt-BR), `crr-cda-typical-values.md`, `dem-elevation-comparison.md`,
