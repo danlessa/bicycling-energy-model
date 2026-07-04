@@ -42,9 +42,12 @@ home of the *derivation* (`notas.md`) and the side-by-side comparison.
   where the frozen-ε skill proves rider-dependent; `JAAM_M=<kg>` env),
   `time_compare.mjs` (time model `x*=x+k₊h₊−k₋h₋` tested vs measured moving time on all
   three datasets; ascent transfers, descent bridge doesn't — Entry 13; `PPAZ_M` env),
+  `cda_estimate.mjs` + `param_fit.mjs` (independent per-rider CdA/C_rr/mass + per-activity
+  wind estimation — Entry 15; `param_fit.mjs`'s `ptsWithGeo` keeps lat/lon for GPS bearing,
+  the one point-builder that is NOT the verbatim `ptsFromFIT`),
   plus `fetch*.py` / `build_model_inputs.py` / `verify.py`. Each `.mjs` ports the app's
-  engine + FIT parser verbatim — **keep all copies in sync** (app + eight harnesses +
-  the two inventory parsers; they drifted before).
+  engine + FIT parser verbatim — **keep all copies in sync** (app + the harness `.mjs` +
+  the inventory parsers; they drifted before).
 - `research/` — the write-ups: `MODEL_COMPARISON_JOURNAL.md` (numbered entries, newest
   first), `literature-context.md` (positioning), `article-draft.md` + `article-draft.pt-BR.md`
   (the draft paper, EN + pt-BR), `crr-cda-typical-values.md`, `dem-elevation-comparison.md`,
