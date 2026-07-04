@@ -110,22 +110,26 @@ model constants are themselves assumptions, not truth) serve as a method **ancho
 | rider | mass (climbs) | CdA | C_rr | activities | target ranges |
 |---|--:|--:|--:|--:|:--|
 | **P. Paz** | 80.7 kg ✓ | **0.259** ✓ [IQR .22–.34] | 0.0053 ✓ | 123 (95 wind-usable) | 72–90 / .25–.45 / .004–.015 |
-| **JAAM** | 103 kg ✗ | **0.322** ✓ [.30–.38] | 0.0107 ✓ | 27 | 73–95 / .25–.45 / .004–.015 |
+| **JAAM** | 103 kg ✓ | **0.322** ✓ [.30–.38] | 0.0107 ✓ | 27 | **93–107** / .25–.45 / .004–.015 |
 | **author** (anchor) | 79.8 kg ✓ | **0.334** ✓ [.33–.37] | 0.0083 ✓ | 5 | 68–80 / .28–.45 / .004–.015 |
 
-- **CdA and C_rr land inside the target ranges for all three riders**, and the method **validates on
-  the anchor**: the author's estimated CdA 0.33 against the 0.39 assumed in the model, C_rr 0.008
-  against the assumed 0.008. The wind vector is what made this possible — the climb-only and
+- **All three parameters land inside the target ranges for all three riders**, and the method
+  **validates on the anchor**: the author's estimated CdA 0.33 against the 0.39 assumed in the model,
+  C_rr 0.008 against the assumed 0.008. The wind vector is what made this possible — the climb-only and
   flat-power methods could not.
-- **Mass in range for 2 of 3**; JAAM ~103 kg stays ~10 % above its 73–95 range.
+- **JAAM's mass is rider-confirmed.** After the first draft flagged 103 kg as "~10 % over range," JAAM
+  confirmed to Danilo that his total is **≈ 100 ± 7 kg** — so the estimate (103) is *accurate*, the
+  original 73–95 prior was simply too low, and **the sustained-climb inversion recovered the true mass**
+  (Entry 14's 101.7 kg was right, not an artifact). This *validates* the mass machinery rather than
+  indicting it, and removes the "surge / meter over-read" worry for JAAM.
 
 **Honest open items.**
 
-1. **JAAM's mass (~103 kg)** is isolated to the *climb* estimate (its per-activity CdA/C_rr are fine).
-   The likely cause is **intra-climb surging** — accelerate-then-ease costs measured energy that nets
-   to ≈ 0 KE at the segment ends, so the regression books it as resistance and inflates mass; the
-   author anchor over-reads the same way (73 → 80). A high-reading meter is the other candidate.
-   Estimating mass from the whole-ride acceleration term (`m·a·v`) rather than climbs should reduce it.
+1. **JAAM's mass — RESOLVED** (see above): rider-confirmed ≈ 100 ± 7 kg, so the 103 kg estimate is
+   accurate and the prior range was too low. The earlier "intra-climb surge / meter over-read"
+   hypothesis is withdrawn for JAAM. (The author anchor's 80 vs its *assumed* 73 is now the only
+   possible residual over-read — but "73" is itself an unconfirmed model assumption, so the anchor may
+   simply be ~80 kg; no evidence of a systematic bias survives.)
 2. **Wind comes out small** (median 2–5 km/h, p90 ≤ 6). Consistent with the ±5 km/h circular
    expectation (SP rides are loops, straightness ≈ 0.04), but likely **under-resolved on windy days**:
    the power residual is dominated by climb samples where wind barely matters, under-weighting the
@@ -135,10 +139,11 @@ model constants are themselves assumptions, not truth) serve as a method **ancho
 
 **Net.** CdA and C_rr *can* be independently recovered from uncontrolled ride data — but only once
 wind is modelled per activity (virtual-elevation style); flat-power, coast-down, and climb-only all
-fail for CdA specifically. Mass is robust from braking-free climbs (and CdA-insensitive), with a ~10 %
-surge/meter over-read. **This retires Entry 14's "likely CdA misspecification" guess: JAAM's CdA is a
-normal 0.32 — the high implied mass is genuine mass and/or an intra-climb-surge / meter artifact, not
-aero.** Tooling: `node cda_estimate.mjs` (the exploration) and `node param_fit.mjs` (the estimator;
+fail for CdA specifically. Mass is robust from braking-free climbs (and CdA-insensitive), and
+**rider-confirmation of JAAM at ≈ 100 ± 7 kg shows the climb inversion is accurate, not biased**.
+**This retires Entry 14's "likely CdA misspecification" guess: JAAM's CdA is a normal 0.32, and the
+high implied mass is simply genuine mass — the rider really is ~100 kg.** Tooling: `node cda_estimate.mjs`
+(the exploration) and `node param_fit.mjs` (the estimator;
 ~1 min; writes gitignored CSVs). This is a v1 — the two numeric open items above are the next passes.
 
 ---
@@ -168,11 +173,11 @@ stream — non-locational; no coordinate is stored.)
 
 **Implied mass — a caveat, not a measurement.** We don't know JAAM's mass, so it is inverted from the
 sustained-climb balance as for P. Paz: per-ride median **m̂ = 101.7 kg** [IQR 95.7–108.7]. That is
-implausibly high (P. Paz 74.3, author ~78). *(Hypothesised here as a CdA misspecification — **refuted in
-Entry 15**: JAAM's independently-estimated CdA is a normal 0.32, and the climb mass is CdA-insensitive
-(±4 kg per 0.10 CdA), so the high m̂ is genuine mass and/or an intra-climb-surge / meter over-read,
-not aero.)* Whatever its cause, the energy scoreboard *uses* this mass, so part of its accuracy is the
-free parameter absorbing a mass/rolling misspecification — disclosed, not hidden.
+implausibly high at first glance (P. Paz 74.3, author ~78). *(Hypothesised here as a CdA
+misspecification — **corrected in Entry 15**: JAAM's independently-estimated CdA is a normal 0.32, the
+climb mass is CdA-insensitive, and **JAAM later confirmed his total is ≈ 100 ± 7 kg** — so 101.7 kg was
+not implausible at all; the sustained-climb inversion recovered his true mass. He is simply a large
+rider.)* The energy scoreboard uses this (correct) mass, so its accuracy is genuine here — disclosed.
 
 **Energy law — transfers (with a data-implied mass).** On 219 clean rides (median 56.7 km, h₊ 329 m):
 canonical **5.4 %** median |Δ%| (4.2 % by the per-ride statistic), smooth approx best at **3.5 %**
