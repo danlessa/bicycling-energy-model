@@ -24,6 +24,11 @@ data/activities/strava_ppaz/
 # Germany, Ukraine, US, …). Whole dir: fit.gz/gpx originals + any manifest/csv.
 data/activities/strava_jaam/
 
+# The author's own full Strava history export (a broader superset of the longões) —
+# GPS + private activity links, never commit. Whole dir: fit.gz/gpx/json originals
+# + any manifest/derived files.
+data/activities/strava_danlessa/
+
 # The censo spreadsheet itself carries activity links / attendance — keep local.
 data/censo-hidrografico.xlsx
 
