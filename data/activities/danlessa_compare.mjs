@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// THIRD-RIDER verification: JAAM's Strava history export (strava_jaam/, gitignored —
+// AUTHOR full-export verification: the author's full Strava history export (strava_danlessa/, gitignored —
 // third-party GPS shared with consent). The external-validity test the article's §10.4
 // names as its deepest limitation: every prior number comes from ONE rider and ONE meter.
 //
@@ -14,14 +14,14 @@
 //   2. PASS B — with m̂ frozen: canonical (fed the ride's own regime powers) + smooth
 //      approx (2 m deadband) + poor-man's scalar, ε swept {geom, 0.00…0.25}; the censo
 //      physical floor (∫P·dt ≥ m̂·g·h₊_sm/k_eff) + cadence cross-check.
-//   3. ε THIRD-RIDER TEST: per-ride descent-balance ε_bal vs geometric ε_coast on 30 m
+//   3. ε AUTHOR CONSISTENCY TEST (rider 1 — the −0.13 offset was calibrated on this rider, so this is IN-SAMPLE-ish): per-ride descent-balance ε_bal vs geometric ε_coast on 30 m
 //      cells (α at the MEASURED flat speed, VSTOP-gated). The estimators are FROZEN from
 //      the first rider: clamp01(ε_coast − 0.13), flat 0.20, flat 0.23. Nothing here is
 //      refit — this is out-of-sample across rider, meter, and terrain.
 //
 //   node ppaz_inventory.mjs && node ppaz_compare.mjs
 //
-// Output: console report + jaam_comparison.csv (gitignored via data/activities/*.csv).
+// Output: console report + danlessa_comparison.csv (gitignored via data/activities/*.csv).
 import fs from 'node:fs';
 import path from 'node:path';
 import zlib from 'node:zlib';
@@ -32,13 +32,13 @@ const G = 9.81, NS = 240;
 const VMAX = 38 / 3.6, VSTART = 15 / 3.6;
 const CLIMB_THR = 0.02, DESC_THR = -0.015, ENGINE_DX = 5, TAU_SMOOTH = 2;
 // ASSUMED rider physics (same generic values as the censo run) — EXCEPT the mass,
-// which pass A estimates from JAAM's own sustained climbs (m0 = reference for the
+// which pass A estimates from author's own sustained climbs (m0 = reference for the
 // linear inversion). ρ São Paulo ≈ 1.13; wind 0; k_eff 0.98 (repo defaults).
 const ASSUMED = { m: 78, CdA: 0.40, Crr: 0.008, rho: 1.13, keff: 0.98, wind: 0 };
-// JAAM_CDA / JAAM_CRR: swap the generic assumed drag/rolling for the rider's own Entry-15 fitted
+// DANLESSA_CDA / DANLESSA_CRR: swap the generic assumed drag/rolling for the rider's own Entry-15 fitted
 // values — the fitted-physics robustness test (do the conclusions survive the right constants?).
-if (process.env.JAAM_CDA) ASSUMED.CdA = +process.env.JAAM_CDA;
-if (process.env.JAAM_CRR) ASSUMED.Crr = +process.env.JAAM_CRR;
+if (process.env.DANLESSA_CDA) ASSUMED.CdA = +process.env.DANLESSA_CDA;
+if (process.env.DANLESSA_CRR) ASSUMED.Crr = +process.env.DANLESSA_CRR;
 const M0 = 78;                      // reference mass for the climb-balance inversion
 const MIN_SUSTAINED_DH = 200;       // m of sustained climb for a stable per-ride m̂
 const EPS_SWEEP = [['geom', null], ['0.00', 0.00], ['0.05', 0.05], ['0.10', 0.10], ['0.15', 0.15], ['0.20', 0.20], ['0.25', 0.25]];
@@ -412,9 +412,9 @@ function epsCellsPz(pts, p) {
 }
 
 // ===== driver =====
-const man = JSON.parse(fs.readFileSync(path.join(HERE, 'strava_jaam_manifest.json'), 'utf8'));
+const man = JSON.parse(fs.readFileSync(path.join(HERE, 'strava_danlessa_manifest.json'), 'utf8'));
 const CAND = man.filter(a => a.sport === 'ride' && a.powCov > 0.5 && a.km >= 20 && a.altCov >= 0.99);
-console.log(`JAAM THIRD-RIDER VERIFICATION — ${CAND.length} candidate rides (ride, power>50%, ≥20 km, alt≥99%)`);
+console.log(`AUTHOR (danlessa) FULL-EXPORT VERIFICATION — ${CAND.length} candidate rides (ride, power>50%, ≥20 km, alt≥99%)`);
 
 const readPts = file => {
   let buf = fs.readFileSync(path.join(HERE, file));
@@ -451,8 +451,8 @@ console.log('IMPLIED TOTAL MASS — sustained-climb balance (≥3% over ≥100 m
 console.log(`  ${SA.n} sections over ${usable.length} rides, Σ sustained Δh = ${Math.round(SA.dh)} m`);
 console.log(`  global (energy-weighted) m̂ = ${mGlobal.toFixed(1)} kg`);
 console.log(`  per-ride median m̂ = ${mHat.toFixed(1)} kg  [IQR ${q(MH, .25).toFixed(1)}–${q(MH, .75).toFixed(1)}, n=${MH.length}]`);
-const M_USE = process.env.JAAM_M ? +process.env.JAAM_M : mHat;   // JAAM_M env: mass-sensitivity runs
-console.log(`  → using m = ${M_USE.toFixed(1)} kg ${process.env.JAAM_M ? '(JAAM_M override)' : '(per-ride median; robust to power dropouts)'}\n`);
+const M_USE = process.env.DANLESSA_M ? +process.env.DANLESSA_M : mHat;   // DANLESSA_M env: mass-sensitivity runs
+console.log(`  → using m = ${M_USE.toFixed(1)} kg ${process.env.DANLESSA_M ? '(DANLESSA_M override)' : '(per-ride median; robust to power dropouts)'}\n`);
 
 // ---- PASS B: full model comparison + ε cells, with m̂ frozen ----
 const rows = [];
@@ -480,7 +480,6 @@ for (const a of usable) {
     const ps = pushStats(pts);
     const ec = epsCellsPz(pts, p);
     const row = { ride: a.id, date: a.date, dist_km: prof.x[prof.x.length - 1] / 1000,
-      medAlt: a.medAlt, ascentPerKm: a.ascentPerKm,   // non-locational terrain/altitude tags (Note 3)
       hplus: aRaw.hplus, hplus_sm: aSm.hplus, emp, peFloor, dataOK, push: ps.push, slow: ps.slow, cadCov: ps.cadCov,
       epsG, km, vf_kmh: vf * 3.6,
       epsBal: ec ? ec.epsBal : NaN, epsCoast: ec ? ec.epsCoast : NaN, sbar: ec ? ec.sbar : NaN, Hd: ec ? ec.Hd : NaN, vfMeas_kmh: ec ? ec.vf * 3.6 : NaN,
@@ -514,7 +513,7 @@ for (const [t] of EPS_SWEEP) print(`  smooth · ε=${t}`, `sm_${t}`);
 console.log("  -- poor-man's (scalar k_smooth) --");
 for (const [t] of EPS_SWEEP) print(`  poor-man's · ε=${t}`, `pm_${t}`);
 
-// ---- ε THIRD-RIDER TEST (the out-of-sample result) ----
+// ---- ε AUTHOR CONSISTENCY TEST (rider 1 — the −0.13 offset was calibrated on this rider, so this is IN-SAMPLE-ish) (the out-of-sample result) ----
 const eOK = clean.filter(r => Number.isFinite(r.epsBal) && Number.isFinite(r.epsCoast));
 const clamp01 = x => Math.max(0, Math.min(1, x));
 const rms = (xs) => Math.sqrt(xs.reduce((s, x) => s + x * x, 0) / xs.length);
@@ -522,7 +521,7 @@ const corrOf = (xs, ys) => { const n = xs.length, mx = xs.reduce((a, b) => a + b
   let sxy = 0, sxx = 0, syy = 0; for (let i = 0; i < n; i++) { sxy += (xs[i] - mx) * (ys[i] - my); sxx += (xs[i] - mx) ** 2; syy += (ys[i] - my) ** 2; }
   return sxy / Math.sqrt(sxx * syy); };
 console.log('\n================================================================');
-console.log('ε THIRD-RIDER TEST — estimators FROZEN from rider 1 (nothing refit)');
+console.log('ε AUTHOR CONSISTENCY TEST (rider 1 — the −0.13 offset was calibrated on this rider, so this is IN-SAMPLE-ish) — estimators FROZEN from rider 1 (nothing refit)');
 for (const [lab, sub] of [['all clean rides', eOK], ['s̄ ≥ 3%', eOK.filter(r => r.sbar >= 0.03)]]) {
   if (sub.length < 5) continue;
   const eb = sub.map(r => r.epsBal), ecst = sub.map(r => r.epsCoast);
@@ -533,30 +532,7 @@ for (const [lab, sub] of [['all clean rides', eOK], ['s̄ ≥ 3%', eOK.filter(r 
   console.log(`    frozen  clamp01(ε_coast − 0.13)      ${f(rms(sub.map(r => r.epsBal - clamp01(r.epsCoast - 0.13))), 3)}`);
   console.log(`    frozen  flat ε = 0.20                ${f(rms(eb.map(x => x - 0.20)), 3)}`);
   console.log(`    frozen  flat ε = 0.23                ${f(rms(eb.map(x => x - 0.23)), 3)}`);
-  console.log(`    in-sample flat = median ε_bal (${f(flatIn, 2)})  ${f(rms(eb.map(x => x - flatIn)), 3)}   <- JAAM's own best constant`);
-}
-
-// ---- TERRAIN / GEOGRAPHY STRATIFICATION (Note 3: JAAM spans SP + a non-SP tail,
-//      plain ↔ mountainous). Does the FROZEN estimator hold off the São Paulo band? ----
-console.log('\n----------------------------------------------------------------');
-console.log('TERRAIN / GEOGRAPHY CUTS — frozen clamp01(ε_coast−0.13), real descents (s̄ ≥ 3%)');
-console.log('note: JAAM power rides are ~93% São Paulo (medAlt ~737 m); the non-SP tail is small.');
-{
-  const real = eOK.filter(r => r.sbar >= 0.03);
-  const cuts = [
-    ['São Paulo band (600–1000 m)', real.filter(r => r.medAlt != null && r.medAlt >= 600 && r.medAlt < 1000)],
-    ['non-SP altitude (<600 or ≥1000 m)', real.filter(r => r.medAlt != null && (r.medAlt < 600 || r.medAlt >= 1000))],
-    ['plain (ascent < 8 m/km)', real.filter(r => r.ascentPerKm != null && r.ascentPerKm < 8)],
-    ['hilly (ascent ≥ 8 m/km)', real.filter(r => r.ascentPerKm != null && r.ascentPerKm >= 8)],
-  ];
-  console.log(`${'cut'.padEnd(34)}${'n'.padStart(4)}${'RMS frozen'.padStart(12)}${'RMS in-samp'.padStart(12)}${'med ε_bal'.padStart(11)}`);
-  for (const [lab, sub] of cuts) {
-    if (sub.length < 3) { console.log(`  ${lab.padEnd(32)}${String(sub.length).padStart(4)}  (too few)`); continue; }
-    const eb = sub.map(r => r.epsBal);
-    const rFrozen = rms(sub.map(r => r.epsBal - clamp01(r.epsCoast - 0.13)));
-    const rIn = rms(eb.map(x => x - medOf(eb)));
-    console.log(`  ${lab.padEnd(32)}${String(sub.length).padStart(4)}${f(rFrozen, 3).padStart(12)}${f(rIn, 3).padStart(12)}${f(medOf(eb), 2).padStart(11)}`);
-  }
+  console.log(`    in-sample flat = median ε_bal (${f(flatIn, 2)})  ${f(rms(eb.map(x => x - flatIn)), 3)}   <- author's own best constant`);
 }
 
 // ---- flagged + CSV ----
@@ -565,5 +541,5 @@ if (flagged.length) {
 }
 const cols = Object.keys(rows[0]);
 const csv = [cols.join(',')].concat(rows.map(r => cols.map(k => typeof r[k] === 'string' ? JSON.stringify(r[k]) : (Number.isFinite(r[k]) ? +Number(r[k]).toFixed(3) : r[k])).join(','))).join('\n');
-fs.writeFileSync(path.join(HERE, 'jaam_comparison.csv'), csv + '\n');
-console.log(`\nwrote jaam_comparison.csv (${rows.length} rides)`);
+fs.writeFileSync(path.join(HERE, 'danlessa_comparison.csv'), csv + '\n');
+console.log(`\nwrote danlessa_comparison.csv (${rows.length} rides)`);

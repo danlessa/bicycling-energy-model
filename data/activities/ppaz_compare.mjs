@@ -35,6 +35,10 @@ const CLIMB_THR = 0.02, DESC_THR = -0.015, ENGINE_DX = 5, TAU_SMOOTH = 2;
 // which pass A estimates from P. Paz's own sustained climbs (m0 = reference for the
 // linear inversion). ρ São Paulo ≈ 1.13; wind 0; k_eff 0.98 (repo defaults).
 const ASSUMED = { m: 78, CdA: 0.40, Crr: 0.008, rho: 1.13, keff: 0.98, wind: 0 };
+// PPAZ_CDA / PPAZ_CRR: swap the generic assumed drag/rolling for the rider's own Entry-15 fitted
+// values — the fitted-physics robustness test (do the conclusions survive the right constants?).
+if (process.env.PPAZ_CDA) ASSUMED.CdA = +process.env.PPAZ_CDA;
+if (process.env.PPAZ_CRR) ASSUMED.Crr = +process.env.PPAZ_CRR;
 const M0 = 78;                      // reference mass for the climb-balance inversion
 const MIN_SUSTAINED_DH = 200;       // m of sustained climb for a stable per-ride m̂
 const EPS_SWEEP = [['geom', null], ['0.00', 0.00], ['0.05', 0.05], ['0.10', 0.10], ['0.15', 0.15], ['0.20', 0.20], ['0.25', 0.25]];

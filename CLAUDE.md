@@ -25,12 +25,13 @@ home of the *derivation* (`notas.md`) and the side-by-side comparison.
   bridge through descent power. **Keep it in sync with the code** — a model
   change lands in both.
 - `data/` — `sample.gpx` (synthetic) and `flecha_power.csv` (no GPS) committed;
-  all `*.fit`, the `data/activities/{rwgps,strava,censohidrografico,strava_ppaz,strava_jaam}/`
+  all `*.fit`, the `data/activities/{rwgps,strava,censohidrografico,strava_ppaz,strava_jaam,strava_danlessa}/`
   track dirs, `data/longoes.xlsx` and `data/censo-hidrografico.xlsx` are **gitignored** (GPS /
   private activity links / physiology / third-party data). `data/longoes.xlsx` was purged
   from history (2026-07) after an accidental commit — never re-add it. `strava_ppaz/` and
   `strava_jaam/` are two **independent** riders' full Strava exports (P. Paz, JAAM — **not**
-  Pedal Hidrográfico members), shared with consent — never commit any of it. (Note: the
+  Pedal Hidrográfico members), shared with consent; `strava_danlessa/` is the author's own
+  full Strava export (a superset of the longões, Entry 16) — never commit any of it. (Note: the
   author's own rwgps/strava rides — the "longões" — are the author's brevets, not PH rides;
   only the "censo" set is Pedal Hidrográfico.)
 - `data/activities/` — the validation harnesses (committable; the tracks they read are
@@ -40,11 +41,15 @@ home of the *derivation* (`notas.md`) and the side-by-side comparison.
   inversion + frozen-ε transfer test; `PPAZ_M=<kg>` env for mass sensitivity),
   `jaam_inventory.mjs` + `jaam_compare.mjs` (219 third-rider rides: same test — Entry 14,
   where the frozen-ε skill proves rider-dependent; `JAAM_M=<kg>` env),
+  `danlessa_inventory.mjs` + `danlessa_compare.mjs` (the author's full Strava export, 1597
+  power rides, as a fourth dataset — Entry 16; validates the mass machinery, in-sample-ish),
   `time_compare.mjs` (time model `x*=x+k₊h₊−k₋h₋` tested vs measured moving time on all
   three datasets; ascent transfers, descent bridge doesn't — Entry 13; `PPAZ_M` env),
   `cda_estimate.mjs` + `param_fit.mjs` (independent per-rider CdA/C_rr/mass + per-activity
   wind estimation — Entry 15; `param_fit.mjs`'s `ptsWithGeo` keeps lat/lon for GPS bearing,
-  the one point-builder that is NOT the verbatim `ptsFromFIT`),
+  the one point-builder that is NOT the verbatim `ptsFromFIT`).
+  The `*_compare.mjs` take `<RIDER>_M`/`_CDA`/`_CRR` env overrides to swap the assumed physics
+  for a rider's Entry-15 fitted values — the fitted-vs-assumed robustness test (Entry 16),
   plus `fetch*.py` / `build_model_inputs.py` / `verify.py`. Each `.mjs` ports the app's
   engine + FIT parser verbatim — **keep all copies in sync** (app + the harness `.mjs` +
   the inventory parsers; they drifted before).

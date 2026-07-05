@@ -57,7 +57,89 @@ changed. See Entry 11.)*
   [`jaam_compare.mjs`](../data/activities/jaam_compare.mjs)) — this commit
 - **Entry 15** (independent per-rider CdA/C_rr/mass + per-activity wind estimation,
   [`cda_estimate.mjs`](../data/activities/cda_estimate.mjs) +
-  [`param_fit.mjs`](../data/activities/param_fit.mjs)) — this commit
+  [`param_fit.mjs`](../data/activities/param_fit.mjs)) — `1d4eb2c`
+- **Entry 16** (fitted rider physics vs assumed; the author's full Strava export as a fourth dataset,
+  [`danlessa_inventory.mjs`](../data/activities/danlessa_inventory.mjs) +
+  [`danlessa_compare.mjs`](../data/activities/danlessa_compare.mjs) + `*_CDA`/`*_CRR` overrides) — this commit
+
+---
+
+## 2026-07-04 — Entry 16: does it hold with the *real* rider physics? + the author's full export
+
+*Prompt (Danilo): (a) test how the article conclusions change if we use the Entry-15 *fitted* rider
+physics instead of the generic assumed constants — that's our best guess for riders 2–3; (b) then, add
+the author's own full Strava export (`strava_danlessa`, 1597 power rides) and analyse it as another
+rider dataset.*
+
+Two connected robustness checks. Tooling: `PPAZ_CDA`/`PPAZ_CRR` (and `JAAM_`, `DANLESSA_`) env overrides
+on the compare harnesses swap the generic assumed drag/rolling for each rider's Entry-15 fitted values;
+`danlessa_inventory.mjs` + `danlessa_compare.mjs` add the author's full export (verbatim engines).
+
+### Part A — fitted physics vs assumed (riders 2–3)
+
+The article feeds riders 2–3 the *generic* CdA 0.40 / C_rr 0.008. Entry 15 gives their own best estimates
+(P. Paz CdA 0.26 / C_rr 0.0053 / m 80.7; JAAM 0.323 / 0.0108 / 103.2). Rerunning the energy + ε tests
+with the fitted set:
+
+| | assumed | fitted | verdict |
+|---|--:|--:|:--|
+| **P. Paz** canonical med \|Δ%\| (bias) | 6.8% (+5.0) | 7.5% (−6.9) | accuracy robust, **bias flips** |
+| **P. Paz** frozen-ε RMS vs in-sample (s̄≥3%) | 0.091 vs 0.139 | 0.083 vs 0.086 | **35% win → tie** |
+| **P. Paz** offset gap (med ε_coast − ε_bal) | 0.12 | 0.19 | shifts |
+| **JAAM** canonical med \|Δ%\| (bias) | 5.4% (−5.0) | 4.9% (−4.0) | robust |
+| **JAAM** frozen-ε RMS vs in-sample (s̄≥3%) | 0.091 vs 0.086 | 0.089 vs 0.086 | tie → tie (robust) |
+| **JAAM** offset gap | 0.13 | 0.13 | robust |
+
+- **The energy law's accuracy (~4–7% median) is robust to the parameter choice** for both riders — but
+  fitted physics does *not* improve it. On P. Paz the bias flips +5% → −7%: the generic 0.40 was actually
+  *closer* to the whole-ride-optimal CdA than the flat-fit 0.26 (see Part C for why).
+- **JAAM is fully robust** because its fitted CdA↓ (0.40→0.32) and C_rr↑ (0.008→0.011) nearly cancel in
+  α = (C_rr·mg + ½ρCdA·v_f²)/k_eff, so v_f (29.2 km/h), ε_geom (0.61), ε_bal, the frozen-ε tie, and the
+  0.13 offset all hold.
+- **P. Paz's headline "35% ε win" does NOT survive.** With the correct (lower) CdA, α drops, so measured
+  ε_bal drops (0.36→0.14) and the geometric estimator no longer beats his own best flat constant — it
+  **ties** (0.083 vs 0.086), exactly like JAAM. The 35% figure was inflated by the assumed-high CdA pushing
+  the in-sample constant far from the geometric estimate. **This qualifies §8.6 of the article** (see
+  below): under best-guess physics both independent riders *tie*, a cleaner and more honest story — the
+  geometric-ε skill adds little beyond a flat constant for either. (Caveat: the −0.13 offset was calibrated
+  on rider 1's *assumed* physics, so mixing fitted physics for riders 2–3 is a mild inconsistency; but
+  rider 1's fitted CdA ≈ assumed for the *longões*, so the offset itself barely moves — Part B checks it.)
+
+### Part B — the author's full Strava export as a fourth dataset (danlessa)
+
+`strava_danlessa`: **2880 FIT files, 1597 power rides** (782 ≥ 20 km), 2017-08 → 2026-06, altitude 39–2852 m,
+terrain to 91 m/km. The author is rider 1 (the *calibration* rider), so this is **not** an out-of-sample
+transfer test — it is a large-sample validation of the *machinery*. Flagged in-sample-ish in the harness.
+
+- **`param_fit`** (98 clean activities): mass **71.2 kg** ✓, CdA 0.256, C_rr 0.0072, wind ~3 km/h.
+- **`danlessa_compare`** (621 clean rides, assumed physics): implied mass **74.5 kg** [IQR 67.6–80.8];
+  canonical energy **6.1 % median at +0.1 % bias** (near-zero — the best-calibrated dataset, as expected
+  for the calibration rider); smooth ε_geom 6.2 % (−0.3 %); frozen-ε RMS **0.090 vs in-sample 0.121** on
+  210 real descents; **offset gap 0.13** (ε_coast 0.37 − ε_bal 0.24) — recurs exactly.
+- **Mass validation — and the Entry-15 "over-read" retired.** Two independent methods land at **71–75 kg**
+  against Danilo's known **≈ 73 kg**. The earlier author/longões estimate (79.8 kg, n=5) was *not* a bias:
+  the longões are loaded ultra-distance **brevets** (extra gear/food/water ⇒ genuinely ~80 kg system),
+  while the full export of normal training rides gives ~71–75 kg. The estimator tracks the actual loadout.
+- The 0.13 offset and the frozen-ε win *do* hold here — but this is the calibration rider, so it confirms
+  self-consistency, not independence.
+
+### Part C — the connecting thread: fitted CdA sits ~35 % below the assumed 0.40
+
+Across all riders the *fitted* CdA clusters **0.26–0.34** (P. Paz 0.26, JAAM 0.32, author 0.26), well under
+the generic assumed 0.40. The likely cause: `param_fit` reads CdA from *fast, flat* samples — exactly where
+a rider is most aerodynamic (tucked) or **drafting in a group** — so it recovers the aero-position CdA, not
+the upright/solo average. That is why feeding CdA 0.26 into the *whole-ride* energy model under-predicts
+(Part A, P. Paz bias +5%→−7%): the whole ride includes non-aero-optimal riding the flat-fit never saw.
+
+**Net.** (1) The energy law's ~4–7 % accuracy is robust to assumed-vs-fitted physics. (2) JAAM's ε result
+is fully robust; **P. Paz's 35 % ε win is not — it becomes a tie under best-guess physics**, matching JAAM
+(article §8.6 needs this qualification). (3) The author's full export validates the mass machinery (71–75 vs
+known 73; longões was brevet loadout) and the 0.13 offset, in-sample. (4) The fitted CdA is systematically
+the aero-position value (~0.26–0.34), below the generic 0.40 — informative, not a bug.
+
+Tooling: `PPAZ_M=80.7 PPAZ_CDA=0.26 PPAZ_CRR=0.0053 node ppaz_compare.mjs` (and `JAAM_`, `DANLESSA_`);
+`node danlessa_inventory.mjs && node danlessa_compare.mjs`; `node param_fit.mjs` (now 4 riders). All read
+the gitignored exports, write gitignored CSVs.
 
 ---
 

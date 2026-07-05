@@ -533,6 +533,8 @@ function listRiders() {
   try { R.push({ name: 'P. Paz', range: { m: [72, 90], cda: [0.25, 0.45], crr: [0.004, 0.015] }, files: load('strava_ppaz_manifest.json', a => a.sport === 'ride' && a.powCov > 0.5 && a.km >= 20).map(a => a.file) }); } catch (e) { console.error(e.message); }
   try { R.push({ name: 'JAAM', range: { m: [93, 107], cda: [0.25, 0.45], crr: [0.004, 0.015] }, files: load('strava_jaam_manifest.json', a => a.sport === 'ride' && a.powCov > 0.5 && a.km >= 20).map(a => a.file) }); } catch (e) { console.error(e.message); }
   try { R.push({ name: 'author/longões', range: { m: [68, 80], cda: [0.28, 0.45], crr: [0.004, 0.015] }, files: load('model_inputs.json', e => e.has_power && e.file).map(e => e.file) }); } catch (e) { console.error(e.message); }
+  // author's FULL Strava export (danlessa) — the strongest anchor: the author's true physics are known.
+  try { R.push({ name: 'author/danlessa', range: { m: [68, 80], cda: [0.28, 0.45], crr: [0.004, 0.015] }, files: load('strava_danlessa_manifest.json', a => a.sport === 'ride' && a.powCov > 0.5 && a.km >= 20).map(a => a.file) }); } catch (e) { console.error(e.message); }
   return R;
 }
 
