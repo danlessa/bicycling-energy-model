@@ -200,6 +200,29 @@ realisation is uniformly worse than the totals form on the over-predicted corpor
 its `max(0,·)` clamp cannot net a cliff against a shallow stretch, so it over-charges descents — a concrete
 strike against the sampasimu `v2Edge` per-edge ε on descent-heavy routes (article §9.1).
 
+**The causal test — flip the bias, flip the winner (fitted-physics rerun).** The bias-trade reading was,
+so far, correlational. Entry 16's machinery makes it causal: swap in each rider's Entry-15 *fitted*
+constants (`PPAZ_M=80.7 PPAZ_CDA=0.26 PPAZ_CRR=0.0053`, `JAAM 103.2/0.323/0.0108`, `DANLESSA
+71.2/0.256/0.0072`) and R0's bias signs move — P. Paz *flips* to under-prediction (+4.3 → −6.2; the fitted
+CdA removes drag Entry 16 showed was over-stated), JAAM shrinks (−4.7 → −3.5), the author swings hard
+negative (+0.1 → −10.9; the fitted aero-position CdA under-predicts whole rides — Entry 16 Part C
+replaying). **Pre-registered prediction: the regime outcome should track the *new* bias signs, not the
+riders.** It does, 6-for-6:
+
+| corpus | R0 bias, assumed → fitted | regime (R1a-totals) vs R0, assumed → fitted |
+|---|---|---|
+| P. Paz | +4.3 → **−6.2** (flips) | **loses (32%) → wins (71%, p < 0.001)**; 6.4 vs 7.0 med |
+| JAAM | −4.7 → −3.5 (shrinks) | wins (72%) → wins (72%), median margin 0.9 → 0.1 pp |
+| author full | +0.1 → **−10.9** | tie (54%) → wins (83%); 11.6 vs 12.1 med |
+
+Same rider, same rides, same model — only the physics constants changed, and the winner followed the bias
+sign every time. This **upgrades the bias-trade from interpretation to demonstrated mechanism**: the
+regime decomposition is a roughly constant *positive energy padding* (the climb aero the champion zeroes),
+and it "wins" precisely when the parameter set under-predicts. It is not a structural accuracy gain — with
+well-chosen constants (the author corpus under assumed physics, bias +0.1), the champion is unbeaten.
+(Note the fitted run is *not* the better configuration overall — author accuracy degrades 6.3 → 12.1
+because param_fit's CdA is the aero-position value; here it serves only as the lever that moves the bias.)
+
 **Information asymmetry — stated both ways (it strengthens the negative).** The R1 variants **and canonical** consume
 all three regime powers; the champion *closed form* uses only `P₌` + geometry + the frozen ε (its climb
 term is gravity-only `β·h₊`, verified). So R1 **fails to beat R0 despite strictly more information**. And
@@ -239,10 +262,20 @@ descent-heavy routes (§9.1); and **(2)** `α/β` is the natural *scale* of the 
 with rider speed and sits at the 2% default), even though a symmetric adaptive rule does not pay because
 the optimum is asymmetric. Danilo's totals form R2 adds the *most* energy, so it is weakest on the
 over-predicted corpora — re-confirming the α-split (the article's 19.3 → 8.7% climb-aero fix) rather than
-replacing it.
+replacing it. The fitted-physics rerun settles the mechanism causally: same rides, same model, different
+constants → the winner follows R0's bias sign 6-for-6.
 
-Tooling: `node regime_compare.mjs` (all five corpora; `SANITY=1` runs the synthetic gates; `PPAZ_M` /
-`JAAM_M` / `DANLESSA_M` env for mass sensitivity). Writes the gitignored `regime_comparison.csv`.
+*Process note (verification vs validation).* The adversarial review verified the harness was **built
+right** (code, stats, traps) but missed both conceptual errors — the per-edge-vs-totals category error and
+ε's aggregate physicality — because the plan itself specified per-edge; reviewers inherit the plan's blind
+spots. Both corrections came from the domain owner. The classic V&V split, and the known cure: validation
+("the right thing?") is best done by stakeholders; future entry plans should put the "is the comparison
+apples-to-apples with the champion's own evaluation style?" question to the owner *before* execution.
+
+Tooling: `node regime_compare.mjs` (all five corpora; `SANITY=1` runs the synthetic gates;
+`<RIDER>_M`/`_CDA`/`_CRR` envs swap in fitted physics — the causal rerun above is
+`PPAZ_M=80.7 PPAZ_CDA=0.26 PPAZ_CRR=0.0053 JAAM_M=103.2 JAAM_CDA=0.323 JAAM_CRR=0.0108 DANLESSA_M=71.2 DANLESSA_CDA=0.256 DANLESSA_CRR=0.0072 node regime_compare.mjs`).
+Writes the gitignored `regime_comparison.csv`.
 
 ---
 

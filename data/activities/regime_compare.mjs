@@ -37,11 +37,18 @@ const VMAX = 38 / 3.6, VSTART = 15 / 3.6;
 const CLIMB_THR = 0.02, DESC_THR = -0.015, ENGINE_DX = 5, TAU_SMOOTH = 2;
 const VSTOP = 0.5 / 3.6;
 const ASSUMED = { m: 78, CdA: 0.40, Crr: 0.008, rho: 1.13, keff: 0.98, wind: 0 };
-const MASS = {   // frozen per-rider masses (Entries 12/14/16); env overrides for sensitivity
-  ppaz: process.env.PPAZ_M ? +process.env.PPAZ_M : 74.3,
-  jaam: process.env.JAAM_M ? +process.env.JAAM_M : 101.7,
-  danlessa: process.env.DANLESSA_M ? +process.env.DANLESSA_M : 74.5,
-};
+// Per-rider physics: frozen masses (Entries 12/14/16) + <RIDER>_M/_CDA/_CRR env overrides — the
+// fitted-vs-assumed rerun (Entry 16's machinery): swap in each rider's Entry-15 fitted constants
+// to test whether the regime model's win/loss tracks R0's bias sign (the bias-trade prediction).
+const PHYS = {};
+for (const [r, m0] of [['ppaz', 74.3], ['jaam', 101.7], ['danlessa', 74.5]]) {
+  const U = r.toUpperCase();
+  PHYS[r] = { ...ASSUMED,
+    m: process.env[`${U}_M`] ? +process.env[`${U}_M`] : m0,
+    CdA: process.env[`${U}_CDA`] ? +process.env[`${U}_CDA`] : ASSUMED.CdA,
+    Crr: process.env[`${U}_CRR`] ? +process.env[`${U}_CRR`] : ASSUMED.Crr,
+  };
+}
 const ZWIFT = 260;
 const SWEEP_CLIMB = [0.01, 0.015, 0.02, 0.025, 0.03, 0.04];
 const SWEEP_DESC = [-0.01, -0.015, -0.02, -0.03];
@@ -806,12 +813,13 @@ try {
 } catch (e) { console.error('censo load error', e.message); }
 console.log(`censo: ${nC} rides (physical floor)`);
 
-// independent riders + author full export (manifest, mass frozen, Zwift excluded)
-for (const [corpus, manifest, mass] of [
-  ['ppaz', 'strava_ppaz_manifest.json', MASS.ppaz],
-  ['jaam', 'strava_jaam_manifest.json', MASS.jaam],
-  ['danlessa', 'strava_danlessa_manifest.json', MASS.danlessa],
+// independent riders + author full export (manifest, physics frozen + env overrides, Zwift excluded)
+for (const [corpus, manifest] of [
+  ['ppaz', 'strava_ppaz_manifest.json'],
+  ['jaam', 'strava_jaam_manifest.json'],
+  ['danlessa', 'strava_danlessa_manifest.json'],
 ]) {
+  const phys = PHYS[corpus];
   let n = 0, zw = 0;
   try {
     const man = JSON.parse(fs.readFileSync(path.join(HERE, manifest), 'utf8'));
@@ -820,14 +828,14 @@ for (const [corpus, manifest, mass] of [
       try {
         const pts = readPts(a.file);
         if (FIT_MANUF === ZWIFT) { zw++; continue; }
-        processRide(pts, { ...ASSUMED, m: mass }, a.id, corpus, 'open'); n++;
+        processRide(pts, phys, a.id, corpus, 'open'); n++;
       } catch (er) { /* skip */ }
       if (n % 200 === 0 && n) console.log(`  …${corpus} ${n}/${cand.length}`);
     }
   } catch (e) { console.error(`${corpus} load error`, e.message); }
   zwTot += zw;
   if (corpus === 'ppaz') nP = n; else if (corpus === 'jaam') nJ = n; else nD = n;
-  console.log(`${corpus}: ${n} rides (skipped ${zw} Zwift), mass ${mass} kg`);
+  console.log(`${corpus}: ${n} rides (skipped ${zw} Zwift), m ${phys.m} kg · CdA ${phys.CdA} · Crr ${phys.Crr}`);
 }
 
 // ===== reporting =====
