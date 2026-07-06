@@ -1,7 +1,7 @@
 
 # Energia de Rotas de Bicicleta em Forma Fechada: Duas Correções, um Fator Calibrado de Recuperação na Descida, e um Dual Energia↔Tempo
 
-> **RASCUNHO / artigo em elaboração — notas de pesquisa do Pedal Hidrográfico** (v0.14, julho de 2026). Benchmarks autorrelatados; não revisado por pares. Duas ressalvas governam todos os números de acurácia: **(i)** ambos os motores são condicionados à potência *medida* de cada pedalada — os números medem a consistência da contabilidade de energia, não previsão cega (§10.4); **(ii)** a calibração de ε é intra-amostra no ciclista 1, e sua margem entre ciclistas sobre uma constante fixa é sensível ao ciclista e aos parâmetros (§8.6). As alegações de novidade são limitadas pelo corpus (§10.3). O livro-razão completo de limitações é a §10.4.
+> **RASCUNHO / artigo em elaboração — notas de pesquisa do Pedal Hidrográfico** (v0.15, julho de 2026). Benchmarks autorrelatados; não revisado por pares. Duas ressalvas governam todos os números de acurácia: **(i)** ambos os motores são condicionados à potência *medida* de cada pedalada — os números medem a consistência da contabilidade de energia, não previsão cega (§10.4); **(ii)** a calibração de ε é intra-amostra no ciclista 1, e sua margem entre ciclistas sobre uma constante fixa é sensível ao ciclista e aos parâmetros (§8.6). As alegações de novidade são limitadas pelo corpus (§10.3). O livro-razão completo de limitações é a §10.4.
 
 ## Resumo
 
@@ -663,7 +663,7 @@ O pacote de custos decompõe `α` e `β` exatamente nas constantes da §3:
 Por aresta direcionada (`dist` = comprimento de solo em metros, `dh` = subida com sinal):
 
 - **dh ≥ 0** (subida / plano): `aRoll·dist + (grade < climbThr ? aAero·dist : 0) + beta·dh`;
-- **dh < 0** (descida): `max(0, aRoll·dist + aAero·dist − ε·beta·|dh|)`, com o fator de recuperação geométrico `ε = clamp₀₁(min(1, abRatio·dist/|dh|) − 0.13)` calculado **por aresta** — uma escolha de realização não explicitada em `notas.md` ou §4, que definem o offset de −0,13 sobre o ε **agregado** ponderado pela queda (§4.1, §8.3). As duas coincidem exatamente onde o clamp não atua, e divergem apenas em perfis com parcela substancial de arestas de descida mais íngremes que a inclinação de piso de ε (≈14%), onde a forma por aresta é a mais defensável fisicamente das duas — ela nunca deixa um trecho fácil e suave "compensar na média" um paredão que um ciclista não consegue de fato descer em inércia.
+- **dh < 0** (descida): `max(0, aRoll·dist + aAero·dist − ε·beta·|dh|)`, com o fator de recuperação geométrico `ε = clamp₀₁(min(1, abRatio·dist/|dh|) − 0.13)` calculado **por aresta** — uma escolha de realização não explicitada em `notas.md` ou §4, que definem o offset de −0,13 sobre o ε **agregado** ponderado pela queda (§4.1, §8.3). As duas coincidem exatamente onde o clamp não atua, e divergem apenas em perfis com parcela substancial de arestas de descida mais íngremes que a inclinação de piso de ε (≈14%). A forma por aresta é uma **realização orientada ao roteamento, não a mais física**: um custo de aresta de Dijkstra precisa ser localmente aditivo, o que força a escolha — mas ε é *por construção* um agregado ponderado pela queda (§4.1), que empacota fenômenos da descida inteira (aero excedente, frenagem, pedalada na descida) que uma aresta de 5 m não resolve, e empiricamente o clamp por aresta cobra a mais nas descidas em relação à forma agregada, porque não consegue compensar um paredão contra um trecho suave (entrada 17 do journal: 9,3% vs 7,3% de mediana no segundo ciclista). Para estimar a energia de uma *pedalada*, use o ε agregado; a forma por aresta é o preço da aditividade por aresta num campo de roteamento.
 
 Esta é a realização **assimétrica, com clamp na descida** de `E ≈ α·x + β·(h₊ − ε·h₋)`, com a direcionalidade (uma aresta é barata na descida, cara na subida) que torna o *campo* de energia assimétrico. A expressão `v2Edge` idêntica — com ε geométrico completo e o corte de aero na subida incluídos, não um termo de gravidade nu — é reutilizada para arestas de portal de ponte/túnel sobre `(deckLenM, ±dh)`, com a direção `reverse` lendo o custo da direção oposta — construída em paridade de bits entre os motores JS e Rust. **Implantação:** `https://simujaules.pedalhidrografi.co`.
 
@@ -756,6 +756,25 @@ As limitações, em ordem aproximada de quanto limitam as alegações:
 
 **Ressalvas de parâmetro/referência.** A física do ciclista do censo é *assumida* (m = 78 kg, C_dA = 0.40, C_rr = 0.008, ρ = 1.13, wind = 0, k_eff = 0.98), e o `ε ≈ 0.23` de balanço de descida ainda pode estar um pouco deflacionado por `C_rr = 0.008` ser baixo para o asfalto urbano áspero. O filtro de piso físico (`legE ≥ mg·h₊/k_eff`) e a verificação de cadência excluíram 7 pedaladas que mediram abaixo da energia potencial de subida (chegando a 53%, superestimando em +79…+373%) — um corte de qualidade de dados que é fundamentado, mas que de fato poda o corpus.
 
+### 10.5 Uma alternativa considerada: decomposição por regime
+
+Uma alternativa estruturalmente mais limpa foi testada e rejeitada (entrada 17 do journal): decompor a
+pedalada por regime de inclinação e deixar cada regime avaliar a lei base com sua **própria** potência e
+velocidade modelada — `E_new = E_flat(x₌; P₌) + E_climb(x₊; P₊) + E_descent(x₋; P₋)` (aero de subida na
+`v_c(P₊)` quase-estacionária; três tratamentos de descida, incl. um `P₋·t₋` sem ε), mais uma variante de
+totais `α(P₌)·x + β·h₊ − ε·β·h₋`. Avaliada sobre totais por regime — espelhando como o próprio campeão
+avalia; uma realização por aresta descarta a fisicalidade agregada de ε e cobra a mais nas descidas — a
+decomposição é competitiva mas **não é uma melhoria**: perde o endpoint pré-declarado do segundo ciclista
+(melhor variante 6,2% vs 5,8% do campeão), empata no corpus sem viés do autor, e vence apenas onde o
+campeão subestima. Uma re-execução com física ajustada torna o mecanismo causal (6 de 6 configurações
+corpus×física): suas vitórias são uma **troca de viés** — um acolchoamento quase constante de ~+4,6 pp de
+aero de subida que ajuda exatamente quando o conjunto de parâmetros subestima — não um ganho estrutural,
+mesmo consumindo as três potências de regime onde a forma fechada campeã precisa só de `P_flat`. As
+simplificações do campeão (aero de subida zerado, ε agregado) pagam seu custo como cancelamento de viés.
+Uma ideia transferível sobrevive: a inclinação de resistência plana `α/β` é a *escala* natural do limiar
+de regime (1,4–2,5% entre corpora, ordenando com a velocidade do ciclista, assentada no default de 2%),
+embora uma regra simétrica ±α/β fique aquém do ótimo assimétrico por corpus.
+
 ## 11. Conclusão e trabalhos futuros
 
 Apresentamos dois motores para a energia mecânica de pedalar uma rota — uma simulação direta padrão de Martin-1998 [Martin et al. 1998] e a forma fechada barata `E ≈ α_r·x + α_a·x_flat + k_h·k_smooth·β·(h₊ − ε·h₋)` — executados sobre constantes físicas *compartilhadas*, de modo que a diferença entre eles isola o erro de modelagem do erro de parâmetro.
@@ -772,7 +791,7 @@ Duas questões em aberto seguem diretamente das limitações e delimitam qualque
 
 ## Disponibilidade de dados e código
 
-Todo o código é público: o app de comparação (`energy-model-comparison.html`), os harnesses de validação em `data/activities/` (`compare`, `censo_compare`, `eps_hypothesis`, `eps_sp_test`, `time_compare`, os pares de inventário + comparação por ciclista `ppaz_*` / `jaam_*` / `danlessa_*`, e os de estimação de parâmetros `param_fit` / `cda_estimate`) e as derivações (`notas.md`) estão em <https://github.com/danlessa/bicycling-energy-model>; as ferramentas irmãs implantadas (sampasimu, amora, quilojaules) estão sob a organização `pedalhidro` no GitHub. As gravações brutas das pedaladas (arquivos FIT com trilhas GPS) e as planilhas-fonte **não** são publicadas — contêm dados de localização e de atividades privadas — mas cada número deste artigo se regenera a partir delas com um comando por harness, e os CSVs agregados por pedalada, com coordenadas removidas, estão disponíveis mediante pedido. A proveniência das análises é registrada entrada por entrada, com hashes de commit, em `research/MODEL_COMPARISON_JOURNAL.md`.
+Todo o código é público: o app de comparação (`energy-model-comparison.html`), os harnesses de validação em `data/activities/` (`compare`, `censo_compare`, `eps_hypothesis`, `eps_sp_test`, `time_compare`, os pares de inventário + comparação por ciclista `ppaz_*` / `jaam_*` / `danlessa_*`, os de estimação de parâmetros `param_fit` / `cda_estimate`, e o teste de decomposição por regime `regime_compare`) e as derivações (`notas.md`) estão em <https://github.com/danlessa/bicycling-energy-model>; as ferramentas irmãs implantadas (sampasimu, amora, quilojaules) estão sob a organização `pedalhidro` no GitHub. As gravações brutas das pedaladas (arquivos FIT com trilhas GPS) e as planilhas-fonte **não** são publicadas — contêm dados de localização e de atividades privadas — mas cada número deste artigo se regenera a partir delas com um comando por harness, e os CSVs agregados por pedalada, com coordenadas removidas, estão disponíveis mediante pedido. A proveniência das análises é registrada entrada por entrada, com hashes de commit, em `research/MODEL_COMPARISON_JOURNAL.md`.
 
 ## Ética e privacidade
 

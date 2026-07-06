@@ -1,6 +1,6 @@
 # Bicycle Route Energy in Closed Form: Two Corrections, a Calibrated Descent-Recovery Factor, and an Energy↔Time Dual
 
-> **DRAFT / working paper — Pedal Hidrográfico research notes** (v0.14, July 2026). Self-reported benchmarks; not peer-reviewed. Two caveats govern every accuracy figure: **(i)** both engines are conditioned on each ride's *measured* power — the numbers measure consistency of the energy accounting, not blind prediction (§10.4); **(ii)** the ε calibration is in-sample on rider 1, and its cross-rider margin over a flat constant is rider- and parameter-sensitive (§8.6). Novelty claims are corpus-bounded (§10.3). The full limitation ledger is §10.4.
+> **DRAFT / working paper — Pedal Hidrográfico research notes** (v0.15, July 2026). Self-reported benchmarks; not peer-reviewed. Two caveats govern every accuracy figure: **(i)** both engines are conditioned on each ride's *measured* power — the numbers measure consistency of the energy accounting, not blind prediction (§10.4); **(ii)** the ε calibration is in-sample on rider 1, and its cross-rider margin over a flat constant is rider- and parameter-sensitive (§8.6). Novelty claims are corpus-bounded (§10.3). The full limitation ledger is §10.4.
 
 **Danilo Lessa Bernardineli** — *Pedal Hidrográfico* (collective), São Paulo, Brazil — danilo.lessa@gmail.com
 
@@ -664,7 +664,7 @@ The cost bundle decomposes `α` and `β` into exactly the constants of §3:
 Per directed edge (`dist` = ground length in metres, `dh` = signed rise):
 
 - **dh ≥ 0** (uphill / flat): `aRoll·dist + (grade < climbThr ? aAero·dist : 0) + beta·dh`;
-- **dh < 0** (downhill): `max(0, aRoll·dist + aAero·dist − ε·beta·|dh|)`, with the geometric recovery factor `ε = clamp₀₁(min(1, abRatio·dist/|dh|) − 0.13)` computed **per edge** — a realisation choice not spelled out in `notas.md` or §4, which define the −0.13 offset on the drop-weighted *aggregate* ε (§4.1, §8.3). The two coincide exactly wherever the clamp doesn't bind, and diverge only on profiles with a substantial share of descent edges steeper than ε's floor grade (≈14%), where the per-edge form is the more physically defensible of the two — it never lets a shallow easy stretch's coasting "average out" a cliff a rider cannot actually coast down.
+- **dh < 0** (downhill): `max(0, aRoll·dist + aAero·dist − ε·beta·|dh|)`, with the geometric recovery factor `ε = clamp₀₁(min(1, abRatio·dist/|dh|) − 0.13)` computed **per edge** — a realisation choice not spelled out in `notas.md` or §4, which define the −0.13 offset on the drop-weighted *aggregate* ε (§4.1, §8.3). The two coincide exactly wherever the clamp doesn't bind, and diverge only on profiles with a substantial share of descent edges steeper than ε's floor grade (≈14%). The per-edge form is a **routing-driven realisation, not the more physical one**: a Dijkstra edge cost must be locally additive, which forces the choice — but ε is *by construction* a drop-weighted aggregate (§4.1) bundling whole-descent phenomena (excess aero, braking, descent pedalling) that a 5 m edge cannot resolve, and empirically the per-edge clamp over-charges descents relative to the aggregate form because it cannot net a cliff against a shallow stretch (journal Entry 17: 9.3% vs 7.3% median on the second rider). For estimating a *ride's* energy, use the aggregate ε; the per-edge form is the price of edge-additivity in a routing field.
 
 This is the **asymmetric, downhill-clamped** realisation of `E ≈ α·x + β·(h₊ − ε·h₋)`, with the directionality (an edge is cheap downhill, expensive up) that makes the energy *field* asymmetric. The identical `v2Edge` expression — full geometric ε and climb-aero gating included, not a bare gravity term — is reused for bridge/tunnel portal edges on `(deckLenM, ±dh)`, with the `reverse` direction reading the opposite-direction cost — built at bit-parity between the JS and Rust engines. **Deployment:** `https://simujaules.pedalhidrografi.co`.
 
@@ -757,6 +757,24 @@ The limitations, in rough order of how much they bound the claims:
 
 **Parameter/benchmark caveats.** The censo rider physics is *assumed* (m = 78 kg, C_dA = 0.40, C_rr = 0.008, ρ = 1.13, wind = 0, k_eff = 0.98), and the descent-balance `ε ≈ 0.23` may still be a touch deflated by `C_rr = 0.008` being low for rough city asphalt. The physical-floor filter (`legE ≥ mg·h₊/k_eff`) and cadence check excluded 7 rides that measured below the climbing potential energy (down to 53%, over-predicting by +79…+373%) — a data-quality cut that is principled but does prune the corpus.
 
+### 10.5 An alternative considered: regime decomposition
+
+A structurally cleaner alternative was tested and rejected (journal Entry 17): decompose the ride by
+slope regime and let each regime evaluate the base law with its **own** power and modelled speed —
+`E_new = E_flat(x₌; P₌) + E_climb(x₊; P₊) + E_descent(x₋; P₋)` (climb aero at the quasi-steady `v_c(P₊)`;
+three descent treatments incl. a no-ε `P₋·t₋`), plus a totals variant `α(P₌)·x + β·h₊ − ε·β·h₋`.
+Evaluated on regime totals — matching how the champion itself evaluates; a per-edge realisation discards
+ε's aggregate physicality and over-charges descents — the decomposition is competitive but **not an
+improvement**: it loses the pre-declared second-rider endpoint (best variant 6.2% vs the champion's 5.8%),
+ties on the unbiased author corpus, and wins only where the champion under-predicts. A fitted-physics
+rerun makes the mechanism causal (6 of 6 corpus×physics configurations): its wins are a **bias trade** —
+a near-constant ~+4.6 pp climb-aero padding that helps exactly when the parameter set under-predicts —
+not a structural gain, even though it consumes all three regime powers where the champion's closed form
+needs only `P_flat`. The champion's simplifications (zero climb aero, lumped ε) earn their keep as
+bias-cancellation. One transferable idea survives: the flat-resistance grade `α/β` is the natural *scale*
+of the regime threshold (1.4–2.5% across corpora, ordering with rider speed, sitting at the 2% default),
+though a symmetric ±α/β rule underperforms the asymmetric per-corpus optimum.
+
 ## 11. Conclusion and future work
 
 We presented two engines for the mechanical energy of pedalling a route — a standard Martin-1998 forward simulation [Martin et al. 1998] and the cheap closed form `E ≈ α_r·x + α_a·x_flat + k_h·k_smooth·β·(h₊ − ε·h₋)` — run on *shared* physical constants, so that the gap between them isolates modelling error from parameter error.
@@ -773,7 +791,7 @@ Two open questions follow directly from the limitations and bound any claim of g
 
 ## Data and code availability
 
-All code is public: the comparison app (`energy-model-comparison.html`), the validation harnesses under `data/activities/` (`compare`, `censo_compare`, `eps_hypothesis`, `eps_sp_test`, `time_compare`, the per-rider inventory + compare pairs `ppaz_*` / `jaam_*` / `danlessa_*`, and the parameter-estimation `param_fit` / `cda_estimate`), and the derivations (`notas.md`) live at <https://github.com/danlessa/bicycling-energy-model>; the deployed sibling tools (sampasimu, amora, quilojaules) are under the `pedalhidro` GitHub organisation. The raw ride recordings (FIT files carrying GPS tracks) and the source spreadsheets are **not** published — they contain location and private-activity data — but every number in this paper regenerates from them with one command per harness, and aggregated per-ride CSVs with coordinates stripped are available on request. The analysis provenance is logged entry-by-entry, with commit hashes, in `research/MODEL_COMPARISON_JOURNAL.md`.
+All code is public: the comparison app (`energy-model-comparison.html`), the validation harnesses under `data/activities/` (`compare`, `censo_compare`, `eps_hypothesis`, `eps_sp_test`, `time_compare`, the per-rider inventory + compare pairs `ppaz_*` / `jaam_*` / `danlessa_*`, the parameter-estimation `param_fit` / `cda_estimate`, and the regime-decomposition test `regime_compare`), and the derivations (`notas.md`) live at <https://github.com/danlessa/bicycling-energy-model>; the deployed sibling tools (sampasimu, amora, quilojaules) are under the `pedalhidro` GitHub organisation. The raw ride recordings (FIT files carrying GPS tracks) and the source spreadsheets are **not** published — they contain location and private-activity data — but every number in this paper regenerates from them with one command per harness, and aggregated per-ride CSVs with coordinates stripped are available on request. The analysis provenance is logged entry-by-entry, with commit hashes, in `research/MODEL_COMPARISON_JOURNAL.md`.
 
 ## Ethics and privacy
 
