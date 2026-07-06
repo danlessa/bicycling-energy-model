@@ -445,9 +445,9 @@ The per-regime decomposition localizes the residual error. The canonical sim is 
 
 The conservation identity `k_eff·legE = ΔKE + W_rr + W_aero + W_grav + W_brake` is machine-checked per ride (`compare.mjs`); the worst relative residual across the 44 rides is 1.8×10⁻⁸, confirming the semi-implicit integrator never injects or leaks energy [Martin et al. 1998].
 
-![Model scoreboard](figs/fig1-scoreboard.svg)
+![Where the closed form's error comes from](figs/fig1-attribution.svg)
 
-*Figure 1. Median absolute percent error against measured `∫P·dt` over the 44 power rides, per model variant (best at top). The corrected closed form (`cf` + 2 m deadband, vermillion) edges the full forward simulation (blue); the raw closed-form baseline sits at 19.3%.*
+*Figure 1. Where the closed form's error comes from. The raw baseline (19.3% median |Δ%|) is not diffuse model error but two identifiable artifacts: correcting the climb-aero over-charge (the `cf` α-split) removes 10.6 points, and deadbanding the fractal ascent noise (τ = 2 m) removes another 5.1 — landing at 3.6%, below the forward simulation's own 5.1% (dashed). The full variant ranking is the table above.*
 
 ![Predicted vs measured energy](figs/fig2-pred-vs-meas.svg)
 

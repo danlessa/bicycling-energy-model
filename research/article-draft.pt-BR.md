@@ -444,9 +444,9 @@ A decomposição por regime localiza o erro residual. A sim. canônica é quase 
 
 A identidade de conservação `k_eff·legE = ΔKE + W_rr + W_aero + W_grav + W_brake` é verificada mecanicamente por pedalada (`compare.mjs`); o pior resíduo relativo entre as 44 pedaladas é 1,8×10⁻⁸, confirmando que o integrador semi-implícito nunca injeta ou vaza energia [Martin et al. 1998].
 
-![Placar dos modelos](figs/fig1-scoreboard.svg)
+![De onde vem o erro da forma fechada](figs/fig1-attribution.svg)
 
-*Figura 1. Erro percentual absoluto mediano contra o `∫P·dt` medido nas 44 pedaladas com potência, por variante de modelo (melhor no topo). A forma fechada corrigida (`cf` + banda morta de 2 m, vermelhão) supera por pouco a simulação direta completa (azul); a linha de base bruta fica em 19,3%. (Rótulos das figuras em inglês; ver §8.1.)*
+*Figura 1. De onde vem o erro da forma fechada. A linha de base bruta (19,3% de |Δ%| mediano) não é erro difuso de modelo, mas dois artefatos identificáveis: corrigir a sobrecobrança de aero na subida (o split de α do `cf`) remove 10,6 pontos, e aplicar a banda morta ao ruído fractal de subida (τ = 2 m) remove outros 5,1 — chegando a 3,6%, abaixo dos 5,1% da própria simulação direta (tracejado). O ranking completo de variantes está na tabela acima. (Rótulos das figuras em inglês.)*
 
 ![Previsto vs medido](figs/fig2-pred-vs-meas.svg)
 

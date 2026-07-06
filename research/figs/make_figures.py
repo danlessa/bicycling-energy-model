@@ -131,36 +131,52 @@ def num(s):
         return None
 
 
-# ---- Figure 1: the longões scoreboard (median |Δ%| per variant) ----
-# Aggregate medians over the 44 power rides (compare.mjs scoreboard, §8.1).
+# ---- Figure 1: error attribution — where the closed form's error comes from ----
+# Waterfall over the 44 power rides (compare.mjs, §8.1): baseline 19.3% → climb-aero fix
+# (cf split) 8.7% → + 2 m deadband 3.6%; canonical 5.1% as the dashed reference. The full
+# variant ranking stays in the §8.1 table — this figure carries the attribution story.
 def fig1():
-    rows = [
-        ('approx cf + 2 m smooth', 3.6, True),
-        ('canonical (forward sim)', 5.1, False),
-        ('canonical + 2 m smooth', 5.6, False),
-        ('approx cf + scalar k_smooth', 5.8, False),
-        ('approx cf + sheet v_f', 7.2, False),
-        ('approx cf + measured v_f', 8.2, False),
-        ('approx + climb-fraction (cf)', 8.7, False),
-        ('approx off + 2 m smooth', 10.2, False),
-        ('approx off (baseline)', 19.3, False),
+    stages = [
+        ('baseline\n(off, raw h±)', 19.3),
+        ('+ climb-aero fix\n(cf α-split)', 8.7),
+        ('+ 2 m deadband\n(ascent noise)', 3.6),
     ]
-    f = Fig(560, 300, pad=(30, 20, 40, 210))
-    xr, yr = (0, 20), (0, len(rows))
-    f.frame(xr, yr, 'median |Δ%| vs measured ∫P·dt', '', yticks=[])
-    bh = (f.y1 - f.y0) / len(rows) * 0.66
-    for i, (lab, v, win) in enumerate(rows):
-        yc = f.y0 + (i + 0.5) / len(rows) * (f.y1 - f.y0)
-        x0, _ = f.map(0, 0, xr, yr)
-        x1, _ = f.map(min(v, 20), 0, xr, yr)
-        col = VERM if win else (BLUE if 'canonical' in lab else GREY)
-        f.body.append(f'<rect x="{x0:.1f}" y="{yc-bh/2:.1f}" width="{x1-x0:.1f}" height="{bh:.1f}" '
-                      f'rx="2" fill="{col}" fill-opacity="{1 if win else 0.85}"/>')
-        f.body.append(f'<text x="{x0-8:.0f}" y="{yc+4:.1f}" text-anchor="end" {FONT} '
-                      f'font-size="11" fill="{INK}" font-weight="{600 if win else 400}">{lab}</text>')
-        f.body.append(f'<text x="{x1+5:.1f}" y="{yc+4:.1f}" {FONT} font-size="11" '
-                      f'fill="{INK}" font-weight="{600 if win else 400}">{v:.1f}</text>')
-    f.save('fig1-scoreboard.svg')
+    CANON = 5.1
+    f = Fig(520, 340, pad=(40, 24, 66, 54))
+    xr, yr = (0, 3), (0, 21)
+    f.frame(xr, yr, '', 'median |Δ%| vs measured ∫P·dt',
+            xticks=[], yticks=[0, 5, 10, 15, 20],
+            title='Where the closed-form error comes from (44 rides)')
+    bw = 0.52
+    cols = [GREY, BLUE, VERM]
+    tops = []
+    for i, (lab, v) in enumerate(stages):
+        xl, yb = f.map(i + 0.5 - bw / 2, 0, xr, yr)
+        xrr, yt = f.map(i + 0.5 + bw / 2, v, xr, yr)
+        tops.append(((xl + xrr) / 2, yt, v, xl, xrr))
+        f.body.append(f'<rect x="{xl:.1f}" y="{yt:.1f}" width="{xrr-xl:.1f}" height="{yb-yt:.1f}" '
+                      f'rx="3" fill="{cols[i]}" fill-opacity="0.9"/>')
+        f.body.append(f'<text x="{(xl+xrr)/2:.1f}" y="{yt-7:.1f}" text-anchor="middle" {FONT} '
+                      f'font-size="13" font-weight="600" fill="{INK}">{v:.1f}%</text>')
+        for k, line in enumerate(lab.split('\n')):
+            f.body.append(f'<text x="{(xl+xrr)/2:.1f}" y="{f.y1+16+k*13:.0f}" text-anchor="middle" '
+                          f'{FONT} font-size="11" fill="{INK}">{line}</text>')
+    # delta connectors between consecutive bar tops
+    for i in range(2):
+        (cx0, y0, v0, _, xr0), (cx1, y1, v1, xl1, _) = tops[i], tops[i + 1]
+        f.body.append(f'<line x1="{xr0:.1f}" y1="{y0:.1f}" x2="{xl1:.1f}" y2="{y0:.1f}" '
+                      f'stroke="{GREY}" stroke-width="1.2" stroke-dasharray="3 3"/>')
+        f.body.append(f'<line x1="{xl1:.1f}" y1="{y0:.1f}" x2="{xl1:.1f}" y2="{y1:.1f}" '
+                      f'stroke="{GREY}" stroke-width="1.2" stroke-dasharray="3 3"/>')
+        f.body.append(f'<text x="{xl1-5:.1f}" y="{(y0+y1)/2+4:.1f}" text-anchor="end" {FONT} '
+                      f'font-size="11" fill="{INK}">−{v0-v1:.1f}</text>')
+    # canonical reference line
+    _, yc = f.map(0, CANON, xr, yr)
+    f.body.append(f'<line x1="{f.x0}" y1="{yc:.1f}" x2="{f.x1}" y2="{yc:.1f}" '
+                  f'stroke="{GREEN}" stroke-width="1.6" stroke-dasharray="5 4"/>')
+    f.body.append(f'<text x="{f.x0+8:.0f}" y="{yc-6:.1f}" {FONT} '
+                  f'font-size="11" fill="{GREEN}">canonical forward sim 5.1%</text>')
+    f.save('fig1-attribution.svg')
 
 
 # ---- Figure 2: predicted vs measured energy, 44 rides ----
