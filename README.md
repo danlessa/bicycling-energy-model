@@ -57,7 +57,7 @@ a coaster, is inconclusive for a fast descent-pedaller). The **time** model
 the ascent half transfers, the descent bridge does not. The harnesses live in
 `data/activities/` (`compare.mjs`, `censo_compare.mjs`, `eps_hypothesis.mjs`,
 `eps_sp_test.mjs`, `ppaz_inventory.mjs`, `ppaz_compare.mjs`, `jaam_inventory.mjs`,
-`jaam_compare.mjs`, `time_compare.mjs`) and the write-ups — including a draft paper — live
+`jaam_compare.mjs`, `time_compare.mjs`, `regime_compare.mjs`) and the write-ups — including a draft paper — live
 in **`research/`** (`MODEL_COMPARISON_JOURNAL.md`, `article-draft.md`, `literature-context.md`, …).
 
 ---

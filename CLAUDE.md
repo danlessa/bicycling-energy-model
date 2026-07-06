@@ -47,7 +47,11 @@ home of the *derivation* (`notas.md`) and the side-by-side comparison.
   three datasets; ascent transfers, descent bridge doesn't — Entry 13; `PPAZ_M` env),
   `cda_estimate.mjs` + `param_fit.mjs` (independent per-rider CdA/C_rr/mass + per-activity
   wind estimation — Entry 15; `param_fit.mjs`'s `ptsWithGeo` keeps lat/lon for GPS bearing,
-  the one point-builder that is NOT the verbatim `ptsFromFIT`).
+  the one point-builder that is NOT the verbatim `ptsFromFIT`),
+  `regime_compare.mjs` (the regime-decomposed closed form E_flat+E_climb+E_descent tested vs
+  the champion on all five corpora — Entry 17, a rejected alternative: its win/loss is a bias
+  trade, causally shown by the fitted-physics rerun; `SANITY=1` synthetic gates; evaluate
+  regime closed forms on TOTALS, not per edge — per-edge ε discards its aggregate physicality).
   The `*_compare.mjs` take `<RIDER>_M`/`_CDA`/`_CRR` env overrides to swap the assumed physics
   for a rider's Entry-15 fitted values — the fitted-vs-assumed robustness test (Entry 16),
   plus `fetch*.py` / `build_model_inputs.py` / `verify.py`. Each `.mjs` ports the app's
