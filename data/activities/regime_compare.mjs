@@ -578,6 +578,44 @@ function regimeComponents(prof, p, pw, thr, eps, descentMode) {
   return { E: (Eflat + Eclimb + Edesc) / 1000, Eflat: Eflat / 1000, Eclimb: Eclimb / 1000, Edesc: Edesc / 1000, xF, xC, xD, hpC, hmD, vFlat };
 }
 
+// Regime closed form on TOTALS — the apples-to-apples form (the champion R0 evaluates on totals: its
+// roll/aero/gravity/ε-credit are all aggregate quantities, the edge walk only MEASURES x/x_climb/h±).
+// Classify edges once to accumulate per-regime aggregates (x_r, h₊_r, h₋_r), then evaluate each
+// regime's closed form ONCE: climb aero at a single v_c(s̄₊); descent clamp/equilibrium on the descent
+// TOTAL, not per edge. Identical to regimeComponents on the linear terms; differs on the nonlinear
+// v_c / max(0,·) / v₋ — where the per-edge form is the sampasimu v2Edge realisation (§9.1), not the law.
+function regimeTotals(prof, p, pw, thr, eps, descentMode) {
+  const mg = p.m * G, beta = mg / p.keff, w = p.wind;
+  const aRoll = mg * p.Crr / p.keff;
+  const vFlat = Math.max(0.05, flatEqSpeed(pw.flat > 0 ? pw.flat : 1, p));
+  const aAeroFlat = 0.5 * p.rho * p.CdA * (vFlat + w) * Math.abs(vFlat + w) / p.keff;
+  const xs = prof.x, hs = prof.h;
+  let xF = 0, hpF = 0, hmF = 0, xC = 0, hpC = 0, xD = 0, hmD = 0;
+  for (let i = 1; i < xs.length; i++) {
+    const dx = xs[i] - xs[i - 1], dh = hs[i] - hs[i - 1];
+    if (!(dx > 0)) continue;
+    const slope = dh / dx;
+    if (slope >= thr.climbThr) { xC += dx; hpC += Math.max(0, dh); }
+    else if (slope <= thr.descThr) { xD += dx; hmD += Math.max(0, -dh); }
+    else { xF += dx; if (dh >= 0) hpF += dh; else hmF += -dh; }
+  }
+  const Eflat = (aRoll + aAeroFlat) * xF + beta * (hpF - hmF);   // flat: aggregate, gravity net (no ε)
+  let Eclimb = 0;
+  if (xC > 0) {   // climb: single v_c at the mean climb grade s̄₊
+    const sC = hpC / xC, secC = Math.sqrt(1 + sC * sC), sinC = sC / secC, cosC = 1 / secC;
+    const vc = pw.climb > 0 ? Math.min(vFlat, p.keff * pw.climb / (p.Crr * mg * cosC + mg * sinC)) : vFlat;
+    Eclimb = (aRoll + 0.5 * p.rho * p.CdA * (vc + w) * Math.abs(vc + w) / p.keff) * xC + beta * hpC;
+  }
+  let Edesc = 0;
+  if (xD > 0) {   // descent: clamp / equilibrium on the descent TOTAL at the mean descent grade s̄₋
+    const sD = hmD / xD, secD = Math.sqrt(1 + sD * sD), sinD = -sD / secD, cosD = 1 / secD;
+    if (descentMode === 'R1a') Edesc = Math.max(0, (aRoll + aAeroFlat) * xD - eps * beta * hmD);
+    else if (descentMode === 'R1b') { const vD = descentEqSpeed(pw.descent, sD, { ...p, vmax: VMAX }, VMAX); Edesc = (pw.descent > 0 ? pw.descent : 0) * (xD * secD / vD); }
+    else { const deficit = p.Crr * mg * cosD + 0.5 * p.rho * p.CdA * (vFlat + w) * Math.abs(vFlat + w) + mg * sinD; Edesc = Math.max(0, deficit) * xD * secD / p.keff; }
+  }
+  return { E: (Eflat + Eclimb + Edesc) / 1000, Eflat: Eflat / 1000, Eclimb: Eclimb / 1000, Edesc: Edesc / 1000 };
+}
+
 // R0 champion — smooth (cf + 2 m deadband) AND poor-man's scalar, VERBATIM formulae from
 // ppaz_compare.mjs pass B (aSm/aRaw/km/eSm/ePm). eps = the descent recovery the caller supplies.
 function r0Champion(prof, profS, p, pw, eps) {
@@ -641,9 +679,12 @@ function processRide(pts, p0, label, corpus, epsRule) {
   // canonical selects power by local grade via pw.climbThr/descThr — must carry them (unlike the
   // closed-form paths, which take thresholds separately). Missing them ⇒ flat power everywhere.
   const canon = canonical(prof, { ...pw, climbThr: CLIMB_THR, descThr: DESC_THR }, p).legE / 1000;
-  const R1a = regimeComponents(profS, p, pw, thr, eps, 'R1a');
+  const R1a = regimeComponents(profS, p, pw, thr, eps, 'R1a');   // per-edge (sampasimu v2Edge-style)
   const R1b = regimeComponents(profS, p, pw, thr, eps, 'R1b');
   const R1c = regimeComponents(profS, p, pw, thr, eps, 'R1c');
+  const R1aT = regimeTotals(profS, p, pw, thr, eps, 'R1a');       // TOTALS (apt closed form, matches R0)
+  const R1bT = regimeTotals(profS, p, pw, thr, eps, 'R1b');
+  const R1cT = regimeTotals(profS, p, pw, thr, eps, 'R1c');
   // E_new2 (R2) — TOTALS decomposition (Danilo): E_flat(d=x,P₌,h=0) + E_climb(d=0,P₊,h₊) +
   // E_descent(d=0,P₋,h₋) = α(P₌)·x + β·h₊ − ε·β·h₋, aero over the FULL distance at flat speed (no
   // climb-aero split — the 'off' aero mode), on the deadband profile. With d=0 the climb/descent
@@ -670,10 +711,12 @@ function processRide(pts, p0, label, corpus, epsRule) {
   rows.push({
     corpus, ride: label, emp, km: prof.x[prof.x.length - 1] / 1000, vf_kmh: vf * 3.6, ab, eps,
     r0sm: r0.eSm, r0pm: r0.ePm, canon, r1a: R1a.E, r1b: R1b.E, r1c: R1c.E, r1a_ad: R1a_ad.E, r2: R2,
+    r1a_t: R1aT.E, r1b_t: R1bT.E, r1c_t: R1cT.E,
     r1a_flat: R1a.Eflat, r1a_climb: R1a.Eclimb, r1a_desc: R1a.Edesc,
     xF: R1a.xF, xC: R1a.xC, xD: R1a.xD, hpC: R1a.hpC, hmD: R1a.hmD, eMclimb, eMflat, eMdesc,
     d_r0sm: dPct(r0.eSm, emp), d_r0pm: dPct(r0.ePm, emp), d_canon: dPct(canon, emp),
     d_r1a: dPct(R1a.E, emp), d_r1b: dPct(R1b.E, emp), d_r1c: dPct(R1c.E, emp), d_r1a_ad: dPct(R1a_ad.E, emp), d_r2: dPct(R2, emp),
+    d_r1a_t: dPct(R1aT.E, emp), d_r1b_t: dPct(R1bT.E, emp), d_r1c_t: dPct(R1cT.E, emp),
     d_rc: dPct(R1a.Eclimb, eMclimb), d_rf: dPct(R1a.Eflat, eMflat), d_rd: dPct(R1a.Edesc, eMdesc),
   });
 }
@@ -716,6 +759,16 @@ if (process.env.SANITY) {
   // monotone climb ⇒ no spurious descent regime; the 2 m deadband lag leaves a short flat base
   // segment (roll+aero, no gravity), so climb must merely DOMINATE, not be the only regime.
   say('pure climb: no spurious descent + climb dominates', approx(rcC.Edesc, 0) && rcC.Eclimb / rcC.E > 0.97, `E_desc ${rcC.Edesc.toFixed(3)} · climb frac ${(rcC.Eclimb / rcC.E).toFixed(3)}`);
+
+  // regimeTotals: same reduction + additivity, and it must EQUAL regimeComponents where there is no
+  // nonlinearity to diverge on — a CONSTANT-grade climb (raw profile: single v_c, no clamp) ⇒ totals ≡ per-edge.
+  const tAllFlat = regimeTotals(prof, pFlat, pw, { climbThr: 1e9, descThr: -1e9 }, 0.2, 'R1a').E;
+  say('regimeTotals reduction: all-flat == raw v1', approx(tAllFlat, rawV1), `${tAllFlat.toFixed(4)} vs ${rawV1.toFixed(4)}`);
+  const tc = regimeTotals(prof, pFlat, pw, { climbThr: CLIMB_THR, descThr: DESC_THR }, 0.2, 'R1a');
+  say('regimeTotals additivity', approx(tc.Eflat + tc.Eclimb + tc.Edesc, tc.E, 1e-9));
+  const cePw = { climb: 250, flat: 200, descent: 0 }, ct = { climbThr: CLIMB_THR, descThr: DESC_THR };
+  const ceEdge = regimeComponents(climbProf, pFlat, cePw, ct, 0.2, 'R1a'), ceTot = regimeTotals(climbProf, pFlat, cePw, ct, 0.2, 'R1a');
+  say('constant-grade climb: totals ≡ per-edge', Math.abs(ceEdge.E - ceTot.E) / ceTot.E < 1e-3, `edge ${ceEdge.E.toFixed(2)} vs totals ${ceTot.E.toFixed(2)}`);
 
   console.log(ok ? '\nSANITY: ALL PASS' : '\nSANITY: FAILURES ABOVE');
   process.exit(ok ? 0 : 1);
@@ -781,7 +834,9 @@ for (const [corpus, manifest, mass] of [
 const byCorpus = c => rows.filter(r => r.corpus === c);
 const CORP = [['longoes', 'longões (open, per-ride physics)'], ['censo', 'censo (urban, assumed)'], ['ppaz', 'P. Paz (open, assumed)'], ['jaam', 'JAAM (open, assumed)'], ['danlessa', 'author full (open, in-sample)']];
 const f = (x, d = 1) => (x == null || Number.isNaN(x) || !Number.isFinite(x)) ? '—' : x.toFixed(d);
-const KEYS = [['d_r0sm', 'R0 champion (cf+2m smooth)'], ['d_r0pm', 'R0 poor-man scalar'], ['d_canon', 'canonical (forward sim)'], ['d_r1a', 'R1a regime (ε clamp)'], ['d_r1b', 'R1b regime (P₋·t₋)'], ['d_r1c', 'R1c regime (force-deficit)'], ['d_r2', 'R2 totals (α·x+β(h₊−εh₋))'], ['d_r1a_ad', 'R1a adaptive ±α/β']];
+const KEYS = [['d_r0sm', 'R0 champion (cf+2m smooth)'], ['d_r0pm', 'R0 poor-man scalar'], ['d_canon', 'canonical (forward sim)'], ['d_r1a', 'R1a regime (ε clamp)'], ['d_r1b', 'R1b regime (P₋·t₋)'], ['d_r1c', 'R1c regime (force-deficit)'],
+  ['d_r1a_t', 'R1a TOTALS (ε clamp)'], ['d_r1b_t', 'R1b TOTALS (P₋·t₋)'], ['d_r1c_t', 'R1c TOTALS (force-def)'],
+  ['d_r2', 'R2 totals (α·x+β(h₊−εh₋))'], ['d_r1a_ad', 'R1a adaptive ±α/β']];
 
 console.log('\n================================================================');
 console.log('REGIME-DECOMPOSED MODEL — median |Δ%| vs measured ∫P·dt, per corpus');
@@ -835,7 +890,7 @@ for (const [c, title] of [['ppaz', 'P. Paz'], ['jaam', 'JAAM'], ['danlessa', 'au
   const set = byCorpus(c); if (!set.length) continue;
   const mR0 = medOf(set.map(r => Math.abs(r.d_r0sm)).filter(Number.isFinite));
   console.log(`  ${title}  (n=${set.length}, R0 ${f(mR0)}%):`);
-  for (const [k, lab] of [['d_r1a', 'R1a'], ['d_r1c', 'R1c'], ['d_r2', 'R2 ']]) {
+  for (const [k, lab] of [['d_r1a', 'R1a edge'], ['d_r1a_t', 'R1a totals'], ['d_r1c_t', 'R1c totals'], ['d_r2', 'R2 totals']]) {
     const t = pairedAbs(set, k, 'd_r0sm'), mA = medOf(set.map(r => Math.abs(r[k])).filter(Number.isFinite));
     console.log(`     ${lab} ${f(mA)}%  · ${lab} better ${t.wins}/${t.n} (${f(t.winFrac * 100, 0)}%) · sign p=${f(t.pSign, 3)} · Wilcoxon p=${f(t.pWilcoxon, 3)}`);
   }
@@ -868,7 +923,7 @@ for (const [c] of CORP) {
 }
 
 // ===== CSV (gitignored via data/activities/*.csv) =====
-const cols = ['corpus', 'ride', 'emp', 'km', 'vf_kmh', 'ab', 'eps', 'r0sm', 'r0pm', 'canon', 'r1a', 'r1b', 'r1c', 'r1a_ad', 'r2', 'r1a_flat', 'r1a_climb', 'r1a_desc', 'xF', 'xC', 'xD', 'hpC', 'hmD', 'eMclimb', 'eMflat', 'eMdesc', 'd_r0sm', 'd_r0pm', 'd_canon', 'd_r1a', 'd_r1b', 'd_r1c', 'd_r1a_ad', 'd_r2', 'd_rc', 'd_rf', 'd_rd'];
+const cols = ['corpus', 'ride', 'emp', 'km', 'vf_kmh', 'ab', 'eps', 'r0sm', 'r0pm', 'canon', 'r1a', 'r1b', 'r1c', 'r1a_t', 'r1b_t', 'r1c_t', 'r1a_ad', 'r2', 'r1a_flat', 'r1a_climb', 'r1a_desc', 'xF', 'xC', 'xD', 'hpC', 'hmD', 'eMclimb', 'eMflat', 'eMdesc', 'd_r0sm', 'd_r0pm', 'd_canon', 'd_r1a', 'd_r1b', 'd_r1c', 'd_r1a_t', 'd_r1b_t', 'd_r1c_t', 'd_r1a_ad', 'd_r2', 'd_rc', 'd_rf', 'd_rd'];
 const csv = [cols.join(',')].concat(rows.map(r => cols.map(k => typeof r[k] === 'string' ? JSON.stringify(r[k]) : (Number.isFinite(r[k]) ? +Number(r[k]).toFixed(3) : '')).join(','))).join('\n');
 fs.writeFileSync(path.join(HERE, 'regime_comparison.csv'), csv + '\n');
 console.log(`\nwrote regime_comparison.csv (${rows.length} rides: L ${nL} C ${nC} P ${nP} J ${nJ} D ${nD}, skipped ${zwTot} Zwift)`);

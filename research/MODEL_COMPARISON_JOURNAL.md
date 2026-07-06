@@ -120,8 +120,38 @@ E_new2 = E_flat(d=x, P=P₌, h=0) + E_climb(d=0, P=P₊, h=h₊) + E_descent(d=0
 `d=0` makes the climb/descent **powers drop out** (they would only scale a zero distance), so `β·h₊`
 carries the climb (`E_climb ≈ P₊·t₊ ≈ β·h₊`, pure lift) and `−ε·β·h₋` the descent credit. `x, h₊, h₋`
 are the deadband-profile totals. This is exactly the v1 base law with aero un-split — hence its kinship
-to the article's `off` baseline. (Both models use `H₊/H₋` on the 2 m deadband profile; E_new classifies
-per 5 m edge.)
+to the article's `off` baseline.
+
+**Totals vs per-edge — and how the champion evaluates (Danilo's question).** A *closed form* should
+evaluate each regime's formula **once on its aggregate totals** (`x_r, h₊_r, h₋_r`, mean grade, regime
+power), not sum a per-edge walk. This matters, because **the champion R0 evaluates on totals**: in
+`approxComponents`, `roll = α_r·X`, `aero = α_a·x_nonclimb`, `climb = β·h₊`, and the descent credit
+`ε·β·h₋` are all *aggregate* quantities — the edge loop only *measures* `X / x_climb / h± / hminus`;
+there is no per-edge clamp, no per-edge `v_c` (its climb term is gravity-only), and ε is itself the
+drop-weighted `ε_geom`. So E_new is evaluated **two ways**, and the *totals* form is the apples-to-apples
+comparison: **`regimeTotals`** classifies edges once to get the regime aggregates, then evaluates each
+regime's law once (climb aero at a single `v_c(s̄₊)`; the descent clamp/equilibrium on the descent
+*total* at `s̄₋`). The per-edge **`regimeComponents`** is the *sampasimu `v2Edge`* realisation (article
+§9.1) — it clamps `max(0,·)` and re-solves `v_c`/`v₋` per 5 m edge. The two are *identical on the linear
+terms* (roll, gravity, flat aero — verified: a constant-grade climb gives totals ≡ per-edge to 1e-3) and
+diverge only on the nonlinear `v_c`/`max(0,·)`/`v₋`; the per-edge `max(0,·)` clamps steep-descent credits
+to zero edge-by-edge (it *cannot* net them), so it systematically **over**-charges descents relative to
+the totals form.
+
+**Why totals is not just convenient but *physically* right for ε (Danilo's point).** ε is not a local
+edge property — *by construction* it is the **drop-weighted aggregate** `ε = Σ ε(sᵢ)·h₋ᵢ / H₋` (§4.1),
+and its physical content is a *bundle* of whole-descent phenomena — the excess aero of descending faster
+than `v_f`, **plus braking**, minus any descent pedalling — averaged over the descent. Those phenomena are
+not resolvable at a 5 m edge (braking on a corner is repaid by gravity two edges later; the −0.13 offset
+is a *ride-level* braking/pedalling residual). So applying ε **per edge** discards exactly the physicality
+that defines it — it treats a lumped, behaviourally-set average as if it were a local coasting law. The
+totals form is therefore the faithful realisation, and the empirical descent over-charge of the per-edge
+variant (P. Paz 9.3 vs 7.3) is the symptom, not the cause. This **contests the article's §9.1 framing**,
+which calls the per-edge `v2Edge` form "the more physically defensible" (it never lets a shallow stretch
+average out a cliff): that argument holds for a *routing cost* that must be additive per edge, but for
+*estimating a ride's energy* the aggregate ε is the physical one — §9.1 should be softened to say the
+per-edge form is a routing-driven realisation, not the more physical one. (sampasimu keeps per-edge
+because a Dijkstra edge cost must be local; that is a deployment constraint, not a claim about ε.)
 
 **Design & the two traps.** Three firewalled descent variants (never mixed): **R1a** keeps the base-law
 per-edge ε clamp `max(0, α_r·dx + α_a(v₌)·dx − ε·β·|dh|)`; **R1b** = `P₋·t₋` over the *modelled* descent
@@ -130,36 +160,45 @@ totals form is **R2** = `α(P₌)·x + β·h₊ − ε·β·h₋` with aero over
 traps were guarded and adversarially verified clean: **(1) the P·t tautology** — every predicted regime
 speed is modelled from power+physics, never measured, so `Σ P̄·t ≡ ∫P·dt` can't sneak in (measured regime
 energies are used *only* as the per-regime attribution denominators); **(2) descent double-count** — ε and
-an explicit descent-aero charge never co-occur in one variant. Sanity gates pass: all-flat thresholds
-reduce R1a to the raw v1 law exactly; Σ components ≡ E; flat anchor R1a = R0 = canonical; pure climb
-E_climb ≥ PE floor. R0 and canonical reproduce the published harnesses (longões canonical 5.1, JAAM 5.4;
-P. Paz R0-smooth 5.8 / poor-man 4.9 — all exact). Two bugs were caught and fixed en route (canonical was
-called without `pw.climbThr/descThr` → flat power everywhere; `beta` undefined in the driver).
+an explicit descent-aero charge never co-occur in one variant. Sanity gates pass (both `regimeComponents`
+and `regimeTotals`): all-flat thresholds reduce to the raw v1 law exactly; Σ components ≡ E; flat anchor
+R1a = R0 = canonical; pure climb E_climb ≥ PE floor; **constant-grade climb: totals ≡ per-edge to 1e-3**
+(confirming the two forms differ only on nonlinearities). R0 and canonical reproduce the published
+harnesses (longões canonical 5.1, JAAM 5.4; P. Paz R0-smooth 5.8 / poor-man 4.9 — all exact). Two bugs
+were caught and fixed en route (canonical called without `pw.climbThr/descThr` → flat power everywhere;
+`beta` undefined in the driver).
 
-**Pre-declared primary endpoint (P. Paz, R1a vs R0, paired): the regime model LOSES.** R1a **9.3%** median
-|Δ%| vs R0 **5.8%** — R1a better on only 20% of the 441 rides (sign & Wilcoxon p < 0.001). R2 is worse
-still (10.9%). The decomposition costs two extra power inputs and does not pay on the endpoint.
+**Pre-declared primary endpoint (P. Paz, per-edge R1a vs R0, paired): the regime model LOSES** — R1a
+**9.3%** median |Δ%| vs R0 **5.8%**, better on only 20% of the 441 rides (p < 0.001). *But that number is
+inflated by the per-edge clamp.* On the apt **totals** closed form the loss shrinks a lot: **R1a-totals
+7.3%** (32% win) and the best regime variant **R1c-totals 6.2%** (38%) — still short of R0's 5.8% on the
+endpoint, but no longer a rout. (The pre-registered endpoint stays the per-edge R1a; the totals form is
+reported as the fairer, champion-matched comparison, not a moved goalpost.)
 
-**But the win/loss is rider-dependent — and it is a *bias trade*, not an accuracy gain.** Scoreboard
-(median |Δ%|, signed bias in parens):
+**The win/loss is rider-dependent — a *bias trade*, not an accuracy gain.** Scoreboard, median |Δ%|
+(signed bias in parens for R0); regime variants shown as **totals** (the closed form), with per-edge R1a
+in the last column for contrast:
 
-| corpus | R0 champ | canonical | R1a | R1b | R1c | R2 (totals) | R1a adaptive |
+| corpus | R0 champ | canonical | R1a-t | R1b-t | R1c-t | R2 totals | R1a per-edge |
 |---|--:|--:|--:|--:|--:|--:|--:|
-| longões | 6.7 (−2.1) | 5.1 | **4.6** (+2.4) | **3.8** | 5.3 | 5.6 | 5.2 |
-| censo | 4.6 (−0.8) | 6.5 | 4.5 (+1.6) | 5.6 | 6.0 | 4.4 | 4.4 |
-| **P. Paz** | **5.8 (+4.3)** | 6.7 | 9.3 (+9.0) | 9.3 | 7.5 | 10.9 | 8.3 |
-| JAAM | 5.5 (−4.7) | 5.4 | **3.9** (−2.1) | 4.0 | 4.6 | 4.2 | 4.3 |
-| author full | 6.3 (+0.1) | 6.3 | 7.6 (+5.1) | 7.4 | 6.6 | 8.3 | 6.7 |
+| longões | 6.7 (−2.1) | 5.1 | 6.1 | **4.1** | 6.5 | 5.6 | 4.6 |
+| censo | 4.6 (−0.8) | 6.5 | **4.2** | 5.9 | 6.8 | 4.4 | 4.5 |
+| **P. Paz** | **5.8 (+4.3)** | 6.7 | 7.3 | 8.5 | **6.2** | 10.9 | 9.3 |
+| JAAM | 5.5 (−4.7) | 5.4 | 4.6 | **4.1** | 4.9 | 4.2 | **3.9** |
+| author full | 6.3 (+0.1) | 6.3 | **6.4** | 7.2 | **6.4** | 8.3 | 7.6 |
 
-Head-to-head vs R0 (paired): **P. Paz** — all three R1 variants lose (R1a/R1c/R2 win 20/27/18%, p < 0.001); **JAAM** —
-all three R1 variants **win** (70/75/67%, p < 0.001); **author full** — R1a loses (44%, p = 0.001), R1c *ties*
-(52%, p = 0.43), R2 loses. The pattern is mechanical: **the R1 variants add a near-constant ~+4.6 pp energy shift**
-(the climb aero at `v_c(P₊)` that the champion zeroes), so it helps exactly the corpora where R0
-*under*-predicts (longões −2.1, JAAM −4.7, censo −0.8 → wins) and hurts where R0 *over*-predicts
-(P. Paz +4.3) or is already unbiased (author +0.1 → loses). The sign of R0's own bias predicts the
-outcome (pooled corr(sign(R0 bias), |R1a|−|R0|) ≈ 0.78). Because that bias sign is itself
+Head-to-head vs R0 (paired, totals): **P. Paz** — regime variants lose (R1a-t/R1c-t win 32/38%, p < 0.001);
+**JAAM** — regime variants **win** (R1a-t/R1c-t 79/72%, p < 0.001); **author full** — R1a-t and R1c-t both
+**tie** (54% win, Wilcoxon p = 0.15 / 0.01). The pattern is mechanical: **the regime form adds a
+near-constant ~+4.6 pp energy shift** (the climb aero at `v_c(P₊)` the champion zeroes), so it helps
+exactly the corpora where R0 *under*-predicts (longões −2.1, JAAM −4.7, censo −0.8 → wins) and hurts where
+R0 *over*-predicts (P. Paz +4.3) or is already unbiased (author +0.1 → ties). The sign of R0's own bias
+predicts the outcome (pooled corr(sign(R0 bias), |R1a|−|R0|) ≈ 0.78). Because that bias sign is itself
 rider-dependent (and driven by the assumed-CdA error of Entry 16), the regime model *cannot* be a
-universal win — the endpoint's verdict is contingent on which rider's bias sign was chosen.
+universal win — the endpoint's verdict is contingent on which rider's bias sign was chosen. **The per-edge
+realisation is uniformly worse than the totals form on the over-predicted corpora** (P. Paz 9.3 vs 7.3):
+its `max(0,·)` clamp cannot net a cliff against a shallow stretch, so it over-charges descents — a concrete
+strike against the sampasimu `v2Edge` per-edge ε on descent-heavy routes (article §9.1).
 
 **Information asymmetry — stated both ways (it strengthens the negative).** The R1 variants **and canonical** consume
 all three regime powers; the champion *closed form* uses only `P₌` + geometry + the frozen ε (its climb
@@ -178,23 +217,29 @@ open corpora (longões, P. Paz, author) — pushing gentle descents into the fla
 matches −α/β (−1.5) and JAAM prefers a shallower −1.0. So α/β is a decent *scale* for the threshold but
 does not, symmetric, retro-justify the default; the descent boundary is not universal.
 
-**Per-regime attribution (diagnostic).** R1a's component vs the measured ΣP·dt in that regime: climb
-10–12%, flat 4.5–17.6%, **descent 43–61% — the worst in every corpus**. Treating descents edge-wise is
-exactly where the regime model struggles; the lumped-ε champion is hardest to beat there. *Caveat:* the
+**Per-regime attribution (diagnostic, per-edge R1a).** The R1a component vs the measured ΣP·dt in that
+regime: climb 10–12%, flat 4.5–17.6%, **descent 43–61% — the worst in every corpus**. The descent
+sub-model is where the regime form struggles most; the lumped-ε champion is hardest to beat there.
+*Caveat:* the
 modelled components classify by 5 m-edge slope on the deadband profile while the measured `eM*` use the
 30 m-window point classifier on raw points, so part of this gap is partition mismatch, not pure
 descent-model error — it never enters the scoreboard.
 
-**Verdict.** The regime-decomposed closed form is **not a robust improvement** — it *loses the
-pre-declared P. Paz endpoint* and only wins where the champion under-predicts (cleanly out-of-sample only
-on JAAM; the author corpus is in-sample for the ε/−0.13 calibration and still loses/ties). Its structural
-cleanliness buys nothing the champion's "conveniences" don't already buy more cheaply: **zeroing climb
-aero and lumping descent recovery into ε do real bias-cancellation work**, and adding the physics back
-per-regime simply trades one bias for another. Danilo's totals form R2 adds the *most* energy, so it is
-the weakest on the over-predicted (positive-bias) corpora and fine on the under-predicted ones —
-re-confirming the α-split (the article's 19.3 → 8.7% climb-aero fix) rather than replacing it. The one
-transferable idea worth keeping is that **α/β is the natural scale of the regime threshold** (it orders
-with rider speed and sits at the 2% default), even though a symmetric adaptive rule does not pay.
+**Verdict.** The regime-decomposed closed form — evaluated properly on totals, matching how the champion
+works — is **competitive but not a robust improvement**. It *loses the pre-declared P. Paz endpoint*
+(best totals variant R1c-t 6.2% vs R0 5.8%), **ties** on the unbiased author corpus (6.4 vs 6.3), and
+**wins** only where the champion under-predicts (cleanly out-of-sample on JAAM, 79%). The win/loss is a
+**bias trade**: the regime form adds the ~+4.6 pp climb aero the champion zeroes, so R0's own bias sign
+decides the outcome. Its structural cleanliness buys nothing the champion's "conveniences" don't already
+buy: **zeroing climb aero and lumping descent recovery into ε do real bias-cancellation work**, and adding
+the physics back per-regime trades one bias for another. Two concrete lessons survive: **(1)** the
+**totals** evaluation is the right one — the per-edge `max(0,·)` realisation (sampasimu `v2Edge`)
+over-charges descents by clamping cliffs it cannot net (P. Paz 9.3 vs 7.3), a strike against per-edge ε on
+descent-heavy routes (§9.1); and **(2)** `α/β` is the natural *scale* of the regime threshold (it orders
+with rider speed and sits at the 2% default), even though a symmetric adaptive rule does not pay because
+the optimum is asymmetric. Danilo's totals form R2 adds the *most* energy, so it is weakest on the
+over-predicted corpora — re-confirming the α-split (the article's 19.3 → 8.7% climb-aero fix) rather than
+replacing it.
 
 Tooling: `node regime_compare.mjs` (all five corpora; `SANITY=1` runs the synthetic gates; `PPAZ_M` /
 `JAAM_M` / `DANLESSA_M` env for mass sensitivity). Writes the gitignored `regime_comparison.csv`.
