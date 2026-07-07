@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // ENTRY 20 — goal-driven calibration: can the deployed pipeline hit ±5% error / ±2% bias?
-// Pre-registered protocol (journal Entry 20): two deployable levers only —
+// Pre-registered protocol (journal Entry 21; renumbered from 20 — the split tag literal keeps the old name): two deployable levers only —
 //   L1 (global): static mask-normalized Gaussian pre-smoothing of the deployed IGC-SP 5 m
 //       raster, sigma ∈ {0, 10, 15, 20, 30, 45} m (0 = the original raster), profiles sampled
 //       at 5 m arc steps off the smoothed raster (the app keeps its 5 m grid);

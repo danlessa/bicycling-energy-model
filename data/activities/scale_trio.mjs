@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// ENTRY 21 — the resolution gap as a PARAMETER problem: fit the behavioural trio
+// ENTRY 20 (journal; renumbered from 21 post-hoc) — the resolution gap as a PARAMETER problem: fit the behavioural trio
 // (k_s, ε₀, climbThr) as a pure 5 m → 30 m RESOLUTION TRANSFER (stage 1, geometric —
 // measured energies NEVER touched), then test on validation whether igc5+trio inherits
 // igc30's measured accuracy (stage 2, endpoints E1/E2), per the journal's pre-registration.
@@ -9,17 +9,17 @@
 // minimizing the EQUAL-WEIGHTED mean over the three rider corpora of the corpus-median of
 //   |v2EdgeK(igc5 profile; trio, frozen physics) / v2EdgeK(igc30 profile; DEFAULT constants
 //    k_s=1, ε₀=0.13, thr=0.02, frozen physics) − 1|
-// over TRAIN rides only (Entry 20's sha256('entry20:'+ride) even=train split, verbatim).
+// over TRAIN rides only (Entry 21's sha256('entry20:'+ride) even=train split, verbatim).
 // Censo is NEVER in any fit. Ablations at the same objective: k_s-only, ε₀-only, k_s+ε₀, trio.
 //
 // STAGE 2 (single frozen eval each, VALIDATION split; censo = all 58, out-of-sample):
 //   E1 (gap closure, frozen journal physics): med|Δ%| + median signed Δ% vs measured ∫P·dt for
-//       (a) igc5 default (Entry-20 anchor), (b) igc30 default (anchor), (c) igc5+trio.
+//       (a) igc5 default (Entry-21 anchor), (b) igc30 default (anchor), (c) igc5+trio.
 //       Bridged = (c) within 1.0 pp med|Δ%| AND 1.5 pp bias of (b), per corpus incl. censo.
 //   E2 (physics coherence): per-rider (CdA∈[0.2,0.6], Crr∈[0.003,0.015]) fit ONLY (trio +
 //       mass frozen) on TRAIN at igc5+trio (min med|Δ%| s.t. |medΔ%|≤1, scoreOf penalty),
-//       ONE validation eval per rider vs the Entry-20 gates (<5 ∧ <2); fitted (CdA, Crr)
-//       side-by-side with Entry 20's σ=0 fits and the plausible ranges.
+//       ONE validation eval per rider vs the Entry-21 gates (<5 ∧ <2); fitted (CdA, Crr)
+//       side-by-side with Entry 21's σ=0 fits and the plausible ranges.
 //   P1: implied drop-weighted ε at igc5+trio vs igc30-default (+ igc5-default context).
 //   P2: fitted k_s vs median per-ride h₊(igc30)/h₊(igc5) per corpus.
 //   P4: per-ride ratio v2(igc5)/v2(igc30-default) distribution (median/IQR/p10/p90)
@@ -47,7 +47,7 @@
 // below. The decomposition is asserted ≡ verbatim v2EdgeK at every FITTED/REPORTED parameter
 // set; every headline number is a verbatim v2EdgeK walk (K_MIN_PRECLAMP-tracked).
 //
-// DATA: Entry 20's profile cache (goal_profiles.{bin,meta.json}; σ=0 = the unsmoothed igc5
+// DATA: Entry 21's profile cache (goal_profiles.{bin,meta.json}; σ=0 = the unsmoothed igc5
 // profile at 5 m steps) for the 864 rider rides, plus a SUPPLEMENTARY cache built here
 // (scale_trio_profiles.{bin,meta.json} in the session scratch dir): igc30 profiles (30 m arc
 // steps off Entry 19's sampa_geral_30m.tif 6×-average warp) for all 864 rider rides + the 58
@@ -56,9 +56,9 @@
 // phys-floor, bbox/coverage filters); sampling = gdallocationinfo -valonly -wgs84 -r bilinear,
 // validity floor 0.5 m, ≤1% linear gap fill (buildDemProfile, verbatim).
 //
-// SANITY GATES: rider igc5 σ=0 frozen ≡ Entry 19 CSV v2_igc5 (Entry 20's gate redux); rider
+// SANITY GATES: rider igc5 σ=0 frozen ≡ Entry 19 CSV v2_igc5 (Entry 21's gate redux); rider
 // igc30 frozen ≡ CSV v2_igc30 (validates the new cache); censo igc5/igc30 frozen ≡ CSV (the
-// pre-registered censo reproduction gate); censo emp ≡ CSV; Entry 20's σ=0 uncalibrated
+// pre-registered censo reproduction gate); censo emp ≡ CSV; Entry 21's σ=0 uncalibrated
 // validation numbers (8.53/2.64/14.84) reproduced; walkStatsK ≡ v2EdgeK; decomposition ≡
 // verbatim at fitted sets; dead-clamp; supplementary-cache subset determinism (every 40th
 // ride rebuilt fresh, byte-identical); full analysis run TWICE → byte-identical report+CSV.
@@ -89,8 +89,8 @@ const DEFAULTS = { kS: 1.0, eps0: 0.13, thr: 0.02 };        // the deployed/jour
 const SPACE = { kS: [0.6, 1.0, 9], eps0: [0.0, 0.20, 11], thr: [0.01, 0.04, 7] };  // lo, hi, npts
 const PHYS_BOUNDS = { CdA: [0.2, 0.6], Crr: [0.003, 0.015] };  // E2 per-rider fit
 const PHYS_NPTS = { CdA: 7, Crr: 7 };
-// Entry 20 anchors (journal): σ=0 uncalibrated VALIDATION med|Δ%| + the σ=0-fitted per-rider
-// physics (for the E2 side-by-side; from Entry 20's run at σ=0, supplied by the work order).
+// Entry 21 anchors (journal): σ=0 uncalibrated VALIDATION med|Δ%| + the σ=0-fitted per-rider
+// physics (for the E2 side-by-side; from Entry 21's run at σ=0, supplied by the work order).
 const E20_SIGMA0_UNCAL_VAL = { ppaz: 8.53, jaam: 2.64, danlessa: 14.84 };
 const E20_SIGMA0_FITS = { ppaz: { CdA: 0.2259, Crr: 0.01344 }, jaam: { CdA: 0.5519, Crr: 0.00433 }, danlessa: { CdA: 0.4148, Crr: 0.00478 } };
 const PLAUSIBLE = { CdA: [0.25, 0.45], Crr: [0.004, 0.012] };
@@ -234,7 +234,7 @@ for (let i = 1; i < refCsv.length; i++) {
 }
 if (SMOKE) for (const c of ALL_CORP) csvRides[c] = csvRides[c].slice(0, 3);
 
-// ===== Entry-20 goal cache (rider igc5 σ=0 profiles + emp/pFlat/total) =====
+// ===== Entry-21 goal cache (rider igc5 σ=0 profiles + emp/pFlat/total) =====
 const gMeta = JSON.parse(fs.readFileSync(GOAL_META, 'utf8'));
 if (!SMOKE) {
   const want = CORPORA.flatMap(c => csvRides[c].map(r => c + '|' + r.ride)).join(';');
@@ -556,7 +556,7 @@ function runAnalysis() {
   console.error(`  stage-1 fits: ${((Date.now() - tFit) / 1000).toFixed(1)} s`);
   const TRIO = abl.trio;
 
-  L.push('ENTRY 21 — scale trio (k_s, ε₀, climbThr): pure 5 m → 30 m resolution transfer');
+  L.push('ENTRY 20 — scale trio (k_s, ε₀, climbThr): pure 5 m → 30 m resolution transfer');
   L.push(`corpora: ${ALL_CORP.map(c => `${c}=${byCorpus(c).length}`).join(' ')} · split (sha256 entry20:, even=train): ${CORPORA.map(c => `${c} ${trainOf(c).length}/${valOf(c).length}`).join(' · ')} · censo out-of-sample (never fitted)`);
   L.push(`caches: goal_profiles.bin sha256=${gBinSha.slice(0, 16)}… supp=${sBinSha.slice(0, 16)}…`);
   L.push('');
@@ -636,7 +636,7 @@ function runAnalysis() {
     const e20 = E20_SIGMA0_FITS[c];
     L.push(`  ${c.padEnd(9)} fitted CdA=${f(b.CdA, 4)} Crr=${f(b.Crr, 5)} (train med|Δ%|=${f(b.medAbs)} medΔ%=${f(b.medSigned)})`);
     L.push(`  ${''.padEnd(9)} validation n=${sv.n}: med|Δ%|=${f(sv.medAbs)} medΔ%=${f(sv.medSigned)} p10=${f(sv.p10)} p90=${f(sv.p90)}  gate(<5 ∧ <±2): ${(sv.medAbs < 5 && Math.abs(sv.medSigned) < 2) ? 'PASS' : 'FAIL'}`);
-    L.push(`  ${''.padEnd(9)} vs Entry-20 σ=0 fit CdA=${f(e20.CdA, 4)} Crr=${f(e20.Crr, 5)} · plausible (CdA 0.25–0.45, Crr 0.004–0.012): now CdA ${inR(b.CdA, PLAUSIBLE.CdA) ? 'IN' : 'OUT'}/Crr ${inR(b.Crr, PLAUSIBLE.Crr) ? 'IN' : 'OUT'}, was CdA ${inR(e20.CdA, PLAUSIBLE.CdA) ? 'IN' : 'OUT'}/Crr ${inR(e20.Crr, PLAUSIBLE.Crr) ? 'IN' : 'OUT'}`);
+    L.push(`  ${''.padEnd(9)} vs Entry-21 σ=0 fit CdA=${f(e20.CdA, 4)} Crr=${f(e20.Crr, 5)} · plausible (CdA 0.25–0.45, Crr 0.004–0.012): now CdA ${inR(b.CdA, PLAUSIBLE.CdA) ? 'IN' : 'OUT'}/Crr ${inR(b.Crr, PLAUSIBLE.Crr) ? 'IN' : 'OUT'}, was CdA ${inR(e20.CdA, PLAUSIBLE.CdA) ? 'IN' : 'OUT'}/Crr ${inR(e20.Crr, PLAUSIBLE.Crr) ? 'IN' : 'OUT'}`);
   }
   const e2AllPass = CORPORA.every(c => e2[c].val.medAbs < 5 && Math.abs(e2[c].val.medSigned) < 2);
   L.push(`  E2 ENDPOINT: ${e2AllPass ? 'PASS (all riders meet med|Δ%|<5 ∧ |medΔ%|<2)' : 'FAIL for: ' + CORPORA.filter(c => !(e2[c].val.medAbs < 5 && Math.abs(e2[c].val.medSigned) < 2)).join(', ')}`);
@@ -697,7 +697,7 @@ const gate = (name, pass, extra = '') => gates.push({ name, pass, extra });
 gate('corpus counts = 277/181/406/58', SMOKE || ALL_CORP.every(c => byCorpus(c).length === EXPECT[c]),
   ALL_CORP.map(c => `${c}=${byCorpus(c).length}`).join(' '));
 
-// Entry-19 CSV reproduction at frozen default physics — riders igc5 (Entry-20 gate redux),
+// Entry-19 CSV reproduction at frozen default physics — riders igc5 (Entry-21 gate redux),
 // riders igc30 (validates the NEW supp cache), censo igc5+igc30 (the pre-registered censo gate),
 // censo emp; plus r1dV2Edge ≡ v2EdgeK(1, 0.13) spot equivalence on every censo profile.
 {
@@ -726,7 +726,7 @@ gate('corpus counts = 277/181/406/58', SMOKE || ALL_CORP.every(c => byCorpus(c).
   gate('v2EdgeK(1, 0.13) ≡ r1dV2Edge on censo igc5 profiles', wEq < 1e-9, `max ${wEq.toExponential(2)} kJ`);
 }
 
-// Entry-20 σ=0 uncalibrated VALIDATION reproduction (the igc5-frozen anchor)
+// Entry-21 σ=0 uncalibrated VALIDATION reproduction (the igc5-frozen anchor)
 {
   let worst = 0; const got = {};
   for (const c of CORPORA) {
@@ -734,7 +734,7 @@ gate('corpus counts = 277/181/406/58', SMOKE || ALL_CORP.every(c => byCorpus(c).
     got[c] = medOf(d.map(Math.abs));
     worst = Math.max(worst, Math.abs(got[c] - E20_SIGMA0_UNCAL_VAL[c]));
   }
-  gate('Entry-20 σ=0 uncalibrated validation med|Δ%| ≡ 8.53/2.64/14.84 (tol 0.01)', SMOKE || worst < 0.01,
+  gate('Entry-21 σ=0 uncalibrated validation med|Δ%| ≡ 8.53/2.64/14.84 (tol 0.01)', SMOKE || worst < 0.01,
     CORPORA.map(c => `${c}=${f(got[c], 3)}`).join(' '));
 }
 
