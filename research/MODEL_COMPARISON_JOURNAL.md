@@ -64,13 +64,13 @@ changed. See Entry 11.)*
 - **Entry 17** (a regime-decomposed closed form E_new = E_flat + E_climb + E_descent, and a totals
   variant E_new2, tested vs the champion on all five corpora,
   [`regime_compare.mjs`](../data/activities/regime_compare.mjs)) — this commit
-- **Entry 21** (goal-driven: can the deployed pipeline hit ±5% error / ±2% bias? smoothing σ +
-  per-rider calibration, train/validation,
-  [`goal_calibration.mjs`](../data/activities/goal_calibration.mjs)) — this commit
-- **Entry 20** (hypothesis: the resolution gap is a PARAMETER problem — scale-dependent
+- **Entry 21** (hypothesis: the resolution gap is a PARAMETER problem — scale-dependent
   behavioural trio (k_s, ε₀, climbThr) vs scale-free rider physics; fit the trio as a pure
   5 m→30 m resolution transfer, no DEM edits,
   [`scale_trio.mjs`](../data/activities/scale_trio.mjs)) — this commit
+- **Entry 20** (goal-driven: can the deployed pipeline hit ±5% error / ±2% bias? smoothing σ +
+  per-rider calibration, train/validation,
+  [`goal_calibration.mjs`](../data/activities/goal_calibration.mjs)) — this commit
 - **Entry 19** (the app's usual DEM: v2Edge on the deployed IGC-SP 5 m raster vs its 30 m resample,
   censo rides, [`igc_resolution_test.mjs`](../data/activities/igc_resolution_test.mjs)) — this commit
 - **Entry 18** (correction: R1a is NOT the deployed sampasimu cost — dead-clamp proof + Jensen
@@ -81,7 +81,137 @@ changed. See Entry 11.)*
 
 ---
 
-## 2026-07-07 — Entry 21: goal-driven — can the deployed pipeline hit ±5% error / ±2% bias?
+## 2026-07-07 — Entry 21: hypothesis — the resolution gap is a parameter problem, not a DEM problem
+
+*Prompt (Danilo, `/goal`): "Can we bridge that gap through parameters on the closed form
+rather than messing with the DEM? Investigate and make an hypothesis. Purely empirical is
+fine, physically/behaviourally-coherent is desirable."*
+
+### The hypothesis (H21)
+
+**The closed form's constants split into two kinds.** The *rider physics* (m, CdA, C_rr, ρ,
+k_eff) are scale-free. The *behavioural/calibration* constants are **functions of the profile
+sampling interval Δx, by construction**: ε₀ = 0.13 was calibrated on **30 m descent cells**
+(Entry 8); k_s is the roller/momentum discount whose target — the sub-resolution relief a
+rider coasts over — is exactly what changes when Δx changes; climbThr = 2% separates "real
+climb" from "undulation" at some reference scale. Entry 19's "resolution over-charge" is then
+not a DEM defect but **stale calibration: 30 m constants applied to 5 m grades**. H21: a
+single, rider-independent re-calibration of the trio **(k_s, ε₀, climbThr)** at Δx = 5 m
+bridges the gap — no DEM modification — and, fitted this way, the per-rider physics recovered
+on top land nearer physically plausible values than Entry 20's contaminated effective fits
+(which pushed JAAM's CdA to 0.55 and C_rr to 0.0043 to absorb resolution error).
+
+*Supporting evidence already on file:* Entry 20's σ=0-calibrated ablation PASSED validation
+(3.66/2.25/4.95) — parameters demonstrably CAN absorb the gap; the open question is whether
+they can do it coherently (shared, rider-independent, mechanism-matched) rather than by
+per-rider effective-value contamination. Entry 20's mechanism decomposition gives the
+targets: h₊(igc5) > h₊(igc30) on 919/922 rides (k_s's mechanism) and implied drop-weighted
+ε 0.414@5 m vs 0.456@30 m (ε₀'s mechanism).
+
+### Pre-registered protocol
+
+- **Two-stage design — the trio is fitted as a pure RESOLUTION TRANSFER, never against
+  measured energies.** Stage 1 (geometric): fit shared (k_s, ε₀, climbThr) so the 5 m walk
+  reproduces the 30 m walk ride-by-ride — minimize the median (equal-weighted across the
+  three rider corpora) of |v2(igc5; trio, frozen physics) / v2(igc30; default constants,
+  frozen physics) − 1| over TRAIN rides (Entry 20's split, reused verbatim). Measured ∫P·dt
+  is never touched in stage 1, so the trio cannot absorb rider-physics error by
+  construction. Stage 2 (accuracy, evaluated once on VALIDATION): does igc5+trio inherit
+  igc30's measured accuracy?
+- **Data**: Entry 20's cached profiles (864 rides × {igc5, igc30}), same hash split. Plus
+  the 58 censo rides' igc5/igc30 profiles (sampled the same way) as a **fully out-of-sample
+  transfer corpus** — censo is never used in any fit (and its group-ride drafting confounds
+  absolute accuracy, so it enters only the gap-closure comparison, not the accuracy gate).
+- **Search space**: k_s ∈ [0.6, 1.0], ε₀ ∈ [0.0, 0.20], climbThr ∈ [0.01, 0.04];
+  deterministic coarse-to-fine grid. Ablations: k_s-only, ε₀-only, k_s+ε₀, full trio —
+  attribute the gap between the two mechanisms.
+- **Endpoints** (validation split, frozen journal physics):
+  - **E1 (gap closure)**: per-corpus med |Δ%| and bias of v2@igc5+trio vs the igc30-frozen
+    anchor (Entry 20 numbers). Bridged = igc5+trio within 1.0 pp med|Δ%| and 1.5 pp bias of
+    igc30-frozen, per corpus, INCLUDING the unfitted censo.
+  - **E2 (coherence of physics on top)**: re-fit per-rider (CdA, C_rr) ONLY (k_s now owned
+    by the shared trio; mass frozen) on train at igc5+trio; validation must still meet the
+    Entry-20 goal gates (med|Δ%| < 5, |bias| < 2); and the fitted CdA/C_rr should land
+    nearer the plausible ranges (CdA 0.25–0.45, C_rr 0.004–0.012) than Entry 20's σ=0 fits.
+- **Coherence predictions** (each checkable, each falsifies part of H21):
+  - P1: fitted ε₀(5 m) < 0.13, and the implied drop-weighted 5 m ε moves to ≈ the 30 m
+    implied value (0.456 pooled).
+  - P2: fitted k_s < 1, consistent in magnitude with the median h₊(igc30)/h₊(igc5) ratio
+    (~0.88 on censo-like terrain) — though k_s also scales the descent credit, so exact
+    equality is not expected, only the right ballpark and sign.
+  - P3: the trio transfers to censo (biggest gap corpus, zero fitting exposure).
+  - P4: trio-corrected per-ride energies correlate with igc30 energies tighter than
+    igc5-default does (the transfer is per-ride, not just in the median).
+- **Deployment note (if H21 holds)**: the app could ship "Δx-aware default constants"
+  (set k_s/ε₀/climbThr defaults from the DEM pixel size at load) as a parameters-only
+  alternative to v55's raster smoothing — same requirements-compatibility (O(1)-local,
+  viewing ≡ routing), zero DEM mutation. NOT implemented as part of this entry.
+- **Caveat pinned upfront**: matching ride TOTALS along fixed paths is the first-order
+  target; edge-level costs (hence field shapes/route choice) may still differ between
+  igc5+trio and igc30 — flagged for a follow-up if H21 holds.
+
+### Results — H21 partially supported: parameters DO bridge the gap, but only within the terrain regime they were fitted on
+
+**Integrity.** Harness [`scale_trio.mjs`](../data/activities/scale_trio.mjs) (engines verbatim;
+stage-1 inner loop uses an exact algebraic decomposition of the walk, asserted ≡ the verbatim
+engine to 6.8e-10 kJ at every reported set). All gates pass: Entry-19 per-ride reproduction
+(riders AND the newly-sampled censo igc5/igc30, worst 5e-5 kJ), Entry-20 igc5-frozen anchors
+reproduced (8.53/2.64/14.84), dead-clamp global min **+2.14 J** on every non-degenerate set
+(the k_s=1, ε₀=0 grid corner is exactly 0 by algebra — fp ulps, not a live clamp), analysis
+double-run byte-identical.
+
+**Stage 1 (geometric fit, measured energies never touched).** Fitted trio:
+**k_s = 0.9375, ε₀ = 0.0632, climbThr = 0.025**; train objective (mean corpus-median
+|v2(igc5;trio)/v2(igc30;default) − 1|) 0.0282 → **0.0076**. Ablations: k_s alone does most of
+the work (→ 0.0083, at k_s = 0.8844); ε₀ alone → 0.0127. The two knobs trade off (k_s+ε₀
+lands at 0.869/0.144) — the trio's k_s sits higher (0.9375) because ε₀ 0.13→0.063 takes over
+part of the correction.
+
+**E1 — gap closure (validation, frozen physics; med|Δ%| / bias):**
+
+| corpus | igc5 default | igc30 default (target) | igc5 + trio | bridged? |
+|---|---|---|---|:--|
+| ppaz (121) | 8.53 / +8.53 | 7.64 / +7.44 | 7.60 / +7.60 | **YES** (Δ 0.05 / 0.16 pp) |
+| jaam (94) | 2.64 / −0.31 | 2.83 / −1.86 | 2.67 / −1.31 | **YES** (0.16 / 0.55) |
+| danlessa (216) | 14.84 / +14.81 | 9.89 / +9.45 | 10.51 / +10.45 | **YES** (0.62 / 1.00) |
+| **censo (58, o-o-s)** | 22.10 / +22.10 | 12.26 / +12.26 | 16.71 / +16.71 | **NO** (4.44 / 4.44) |
+
+**Coherence:** P1 holds — ε₀(5 m) = 0.063 < 0.13, implied drop-weighted ε moves 0.414 →
+0.479 ≈ the 30 m value 0.456 (pooled). P2 holds strikingly — the k_s-only fit (0.8844) lands
+essentially ON the median h₊(igc30)/h₊(igc5) ratio (0.8958 pooled): k_s is doing exactly its
+roller-discount job. P4 holds for the riders — per-ride ratios move to ≈1.00 with IQRs
+shrinking (e.g. danlessa validation 1.050/0.028 → 1.009/0.023), so it is a genuine per-ride
+transfer, not a median artifact. **P3 fails**: censo (never fitted, flattest terrain, biggest
+gap) closes only ~55% of its 9.8 pp gap. **E2 fails its gate**: per-rider (CdA, C_rr) refit
+on top passes ppaz (4.83/+0.54) and jaam (2.38/+0.36) but danlessa lands 5.22/−0.37 (0.22 pp
+over); and the recovered physics is NOT systematically more plausible than Entry 20's (3/6
+parameters in plausible range before and after — the residual bias now escapes into C_rr↓
+0.0037/0.0032 instead of CdA).
+
+**Verdict — the refined hypothesis.** The answer to the prompt is **yes, with a scope
+limit**: a single rider-independent, mechanism-coherent re-calibration of the behavioural
+trio at Δx = 5 m — fitted purely as a resolution transfer, no DEM edits, no measured data —
+bridges the resolution gap **on the terrain regime it was fitted on** (all three rider
+corpora, per-ride, with each constant moving exactly as its mechanism predicts). What
+falsifies the strong form is censo: **the resolution error is terrain-dependent** (flat urban
+terrain has proportionally more sub-30 m roller content — its h₊ ratio is 0.867 vs the
+riders' ~0.90 — and one constant k_s cannot carry both regimes). So H21 refines to:
+**the behavioural constants are functions of (Δx, terrain-roughness regime), not of Δx
+alone.** A constant trio is a good parameters-only bridge for open/hilly riding; the v55
+raster smoothing remains the terrain-adaptive fix (it acts per-cell, so flat and hilly
+regions each lose exactly their own sub-σ relief) — which is WHY it transfers where the trio
+does not. Practical reading for sampasimu: Δx-aware default constants would be an honest
+lightweight fallback when a user disables smoothing, but they are not a full substitute; and
+the E2 outcome cautions that per-rider "physics" fitted on top of ANY resolution correction
+still absorbs behavioural residuals (drafting, position, meter) — treat fitted CdA/C_rr as
+effective values regardless.
+
+Tooling: `node scale_trio.mjs` (~5 min cold, ~15 s cache-hit; reuses Entry 20's profile
+cache + Entry 19's warp raster; writes the gitignored `scale_trio.csv`).
+
+---
+
+## 2026-07-07 — Entry 20: goal-driven — can the deployed pipeline hit ±5% error / ±2% bias?
 
 *Prompt (Danilo, `/goal`): "Simujaules, when routing a path, should have a prediction error of
 less than ±5%, with a bias lower than ±2%. danlessa/ppaz/jaam as the training/validation
@@ -108,8 +238,7 @@ dataset list (group rides — drafting breaks the single-rider energy balance).
 ### Pre-registered protocol (declared before any tuning run)
 
 - **Split**: within each rider's Entry-19 coverage set, deterministic 50/50 by
-  `sha256('entry20:' + rideName)` parity — train = even, validation = odd (the `'entry20:'`
-  literal predates the 20↔21 renumbering and stays verbatim — it defines the split). Validation is
+  `sha256('entry20:' + rideName)` parity — train = even, validation = odd. Validation is
   evaluated ONCE, at the end, at frozen settings; no peeking during tuning.
 - **Lever 1 (global, deployable — the Entry 19 roadmap mitigation)**: static Gaussian
   pre-smoothing of the 5 m raster, σ ∈ {0, 10, 15, 20, 30, 45} m, profiles sampled at 5 m
@@ -198,142 +327,6 @@ the pre-registration's deployable-scheme amendment.
 
 Tooling: `node goal_calibration.mjs` (~25 min full; needs the conda python for the raster
 prep, gdallocationinfo, `sampa_geral.tif`; writes the gitignored `goal_calibration.csv`).
-
----
-
-## 2026-07-07 — Entry 20: hypothesis — the resolution gap is a parameter problem, not a DEM problem
-
-*Prompt (Danilo, `/goal`): "Can we bridge that gap through parameters on the closed form
-rather than messing with the DEM? Investigate and make an hypothesis. Purely empirical is
-fine, physically/behaviourally-coherent is desirable."*
-
-*Numbering note: Entries 20 and 21 were renumbered post-hoc (Danilo, 2026-07-07) so this
-hypothesis entry sits as the conceptual continuation of Entry 19; the goal-delivery entry
-(now 21) was EXECUTED first, which is why this entry cites Entry 21's artifacts. The
-harnesses' split-tag literal `'entry20:'` predates the swap and is kept verbatim for
-reproducibility — it names the split, not this entry.*
-
-### The hypothesis (H20)
-
-**The closed form's constants split into two kinds.** The *rider physics* (m, CdA, C_rr, ρ,
-k_eff) are scale-free. The *behavioural/calibration* constants are **functions of the profile
-sampling interval Δx, by construction**: ε₀ = 0.13 was calibrated on **30 m descent cells**
-(Entry 8); k_s is the roller/momentum discount whose target — the sub-resolution relief a
-rider coasts over — is exactly what changes when Δx changes; climbThr = 2% separates "real
-climb" from "undulation" at some reference scale. Entry 19's "resolution over-charge" is then
-not a DEM defect but **stale calibration: 30 m constants applied to 5 m grades**. H20: a
-single, rider-independent re-calibration of the trio **(k_s, ε₀, climbThr)** at Δx = 5 m
-bridges the gap — no DEM modification — and, fitted this way, the per-rider physics recovered
-on top land nearer physically plausible values than Entry 21's contaminated effective fits
-(which pushed JAAM's CdA to 0.55 and C_rr to 0.0043 to absorb resolution error).
-
-*Supporting evidence already on file:* Entry 21's σ=0-calibrated ablation PASSED validation
-(3.66/2.25/4.95) — parameters demonstrably CAN absorb the gap; the open question is whether
-they can do it coherently (shared, rider-independent, mechanism-matched) rather than by
-per-rider effective-value contamination. Entry 21's mechanism decomposition gives the
-targets: h₊(igc5) > h₊(igc30) on 919/922 rides (k_s's mechanism) and implied drop-weighted
-ε 0.414@5 m vs 0.456@30 m (ε₀'s mechanism).
-
-### Pre-registered protocol
-
-- **Two-stage design — the trio is fitted as a pure RESOLUTION TRANSFER, never against
-  measured energies.** Stage 1 (geometric): fit shared (k_s, ε₀, climbThr) so the 5 m walk
-  reproduces the 30 m walk ride-by-ride — minimize the median (equal-weighted across the
-  three rider corpora) of |v2(igc5; trio, frozen physics) / v2(igc30; default constants,
-  frozen physics) − 1| over TRAIN rides (Entry 21's split, reused verbatim). Measured ∫P·dt
-  is never touched in stage 1, so the trio cannot absorb rider-physics error by
-  construction. Stage 2 (accuracy, evaluated once on VALIDATION): does igc5+trio inherit
-  igc30's measured accuracy?
-- **Data**: Entry 21's cached profiles (864 rides × {igc5, igc30}), same hash split. Plus
-  the 58 censo rides' igc5/igc30 profiles (sampled the same way) as a **fully out-of-sample
-  transfer corpus** — censo is never used in any fit (and its group-ride drafting confounds
-  absolute accuracy, so it enters only the gap-closure comparison, not the accuracy gate).
-- **Search space**: k_s ∈ [0.6, 1.0], ε₀ ∈ [0.0, 0.20], climbThr ∈ [0.01, 0.04];
-  deterministic coarse-to-fine grid. Ablations: k_s-only, ε₀-only, k_s+ε₀, full trio —
-  attribute the gap between the two mechanisms.
-- **Endpoints** (validation split, frozen journal physics):
-  - **E1 (gap closure)**: per-corpus med |Δ%| and bias of v2@igc5+trio vs the igc30-frozen
-    anchor (Entry 21 numbers). Bridged = igc5+trio within 1.0 pp med|Δ%| and 1.5 pp bias of
-    igc30-frozen, per corpus, INCLUDING the unfitted censo.
-  - **E2 (coherence of physics on top)**: re-fit per-rider (CdA, C_rr) ONLY (k_s now owned
-    by the shared trio; mass frozen) on train at igc5+trio; validation must still meet the
-    Entry-21 goal gates (med|Δ%| < 5, |bias| < 2); and the fitted CdA/C_rr should land
-    nearer the plausible ranges (CdA 0.25–0.45, C_rr 0.004–0.012) than Entry 21's σ=0 fits.
-- **Coherence predictions** (each checkable, each falsifies part of H20):
-  - P1: fitted ε₀(5 m) < 0.13, and the implied drop-weighted 5 m ε moves to ≈ the 30 m
-    implied value (0.456 pooled).
-  - P2: fitted k_s < 1, consistent in magnitude with the median h₊(igc30)/h₊(igc5) ratio
-    (~0.88 on censo-like terrain) — though k_s also scales the descent credit, so exact
-    equality is not expected, only the right ballpark and sign.
-  - P3: the trio transfers to censo (biggest gap corpus, zero fitting exposure).
-  - P4: trio-corrected per-ride energies correlate with igc30 energies tighter than
-    igc5-default does (the transfer is per-ride, not just in the median).
-- **Deployment note (if H20 holds)**: the app could ship "Δx-aware default constants"
-  (set k_s/ε₀/climbThr defaults from the DEM pixel size at load) as a parameters-only
-  alternative to v55's raster smoothing — same requirements-compatibility (O(1)-local,
-  viewing ≡ routing), zero DEM mutation. NOT implemented as part of this entry.
-- **Caveat pinned upfront**: matching ride TOTALS along fixed paths is the first-order
-  target; edge-level costs (hence field shapes/route choice) may still differ between
-  igc5+trio and igc30 — flagged for a follow-up if H20 holds.
-
-### Results — H20 partially supported: parameters DO bridge the gap, but only within the terrain regime they were fitted on
-
-**Integrity.** Harness [`scale_trio.mjs`](../data/activities/scale_trio.mjs) (engines verbatim;
-stage-1 inner loop uses an exact algebraic decomposition of the walk, asserted ≡ the verbatim
-engine to 6.8e-10 kJ at every reported set). All gates pass: Entry-19 per-ride reproduction
-(riders AND the newly-sampled censo igc5/igc30, worst 5e-5 kJ), Entry-21 igc5-frozen anchors
-reproduced (8.53/2.64/14.84), dead-clamp global min **+2.14 J** on every non-degenerate set
-(the k_s=1, ε₀=0 grid corner is exactly 0 by algebra — fp ulps, not a live clamp), analysis
-double-run byte-identical.
-
-**Stage 1 (geometric fit, measured energies never touched).** Fitted trio:
-**k_s = 0.9375, ε₀ = 0.0632, climbThr = 0.025**; train objective (mean corpus-median
-|v2(igc5;trio)/v2(igc30;default) − 1|) 0.0282 → **0.0076**. Ablations: k_s alone does most of
-the work (→ 0.0083, at k_s = 0.8844); ε₀ alone → 0.0127. The two knobs trade off (k_s+ε₀
-lands at 0.869/0.144) — the trio's k_s sits higher (0.9375) because ε₀ 0.13→0.063 takes over
-part of the correction.
-
-**E1 — gap closure (validation, frozen physics; med|Δ%| / bias):**
-
-| corpus | igc5 default | igc30 default (target) | igc5 + trio | bridged? |
-|---|---|---|---|:--|
-| ppaz (121) | 8.53 / +8.53 | 7.64 / +7.44 | 7.60 / +7.60 | **YES** (Δ 0.05 / 0.16 pp) |
-| jaam (94) | 2.64 / −0.31 | 2.83 / −1.86 | 2.67 / −1.31 | **YES** (0.16 / 0.55) |
-| danlessa (216) | 14.84 / +14.81 | 9.89 / +9.45 | 10.51 / +10.45 | **YES** (0.62 / 1.00) |
-| **censo (58, o-o-s)** | 22.10 / +22.10 | 12.26 / +12.26 | 16.71 / +16.71 | **NO** (4.44 / 4.44) |
-
-**Coherence:** P1 holds — ε₀(5 m) = 0.063 < 0.13, implied drop-weighted ε moves 0.414 →
-0.479 ≈ the 30 m value 0.456 (pooled). P2 holds strikingly — the k_s-only fit (0.8844) lands
-essentially ON the median h₊(igc30)/h₊(igc5) ratio (0.8958 pooled): k_s is doing exactly its
-roller-discount job. P4 holds for the riders — per-ride ratios move to ≈1.00 with IQRs
-shrinking (e.g. danlessa validation 1.050/0.028 → 1.009/0.023), so it is a genuine per-ride
-transfer, not a median artifact. **P3 fails**: censo (never fitted, flattest terrain, biggest
-gap) closes only ~55% of its 9.8 pp gap. **E2 fails its gate**: per-rider (CdA, C_rr) refit
-on top passes ppaz (4.83/+0.54) and jaam (2.38/+0.36) but danlessa lands 5.22/−0.37 (0.22 pp
-over); and the recovered physics is NOT systematically more plausible than Entry 21's (3/6
-parameters in plausible range before and after — the residual bias now escapes into C_rr↓
-0.0037/0.0032 instead of CdA).
-
-**Verdict — the refined hypothesis.** The answer to the prompt is **yes, with a scope
-limit**: a single rider-independent, mechanism-coherent re-calibration of the behavioural
-trio at Δx = 5 m — fitted purely as a resolution transfer, no DEM edits, no measured data —
-bridges the resolution gap **on the terrain regime it was fitted on** (all three rider
-corpora, per-ride, with each constant moving exactly as its mechanism predicts). What
-falsifies the strong form is censo: **the resolution error is terrain-dependent** (flat urban
-terrain has proportionally more sub-30 m roller content — its h₊ ratio is 0.867 vs the
-riders' ~0.90 — and one constant k_s cannot carry both regimes). So H20 refines to:
-**the behavioural constants are functions of (Δx, terrain-roughness regime), not of Δx
-alone.** A constant trio is a good parameters-only bridge for open/hilly riding; the v55
-raster smoothing remains the terrain-adaptive fix (it acts per-cell, so flat and hilly
-regions each lose exactly their own sub-σ relief) — which is WHY it transfers where the trio
-does not. Practical reading for sampasimu: Δx-aware default constants would be an honest
-lightweight fallback when a user disables smoothing, but they are not a full substitute; and
-the E2 outcome cautions that per-rider "physics" fitted on top of ANY resolution correction
-still absorbs behavioural residuals (drafting, position, meter) — treat fitted CdA/C_rr as
-effective values regardless.
-
-Tooling: `node scale_trio.mjs` (~5 min cold, ~15 s cache-hit; reuses Entry 21's profile
-cache + Entry 19's warp raster; writes the gitignored `scale_trio.csv`).
 
 ---
 
