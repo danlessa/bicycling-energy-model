@@ -64,11 +64,156 @@ changed. See Entry 11.)*
 - **Entry 17** (a regime-decomposed closed form E_new = E_flat + E_climb + E_descent, and a totals
   variant E_new2, tested vs the champion on all five corpora,
   [`regime_compare.mjs`](../data/activities/regime_compare.mjs)) — this commit
+- **Entry 19** (the app's usual DEM: v2Edge on the deployed IGC-SP 5 m raster vs its 30 m resample,
+  censo rides, [`igc_resolution_test.mjs`](../data/activities/igc_resolution_test.mjs)) — this commit
 - **Entry 18** (correction: R1a is NOT the deployed sampasimu cost — dead-clamp proof + Jensen
   sign flip + R1d pre-registration and results (the Jensen prediction fails to a resolution effect;
   the bias-trade law claims R1d too),
   [`verify_v2edge_clamp.mjs`](../data/activities/verify_v2edge_clamp.mjs) +
   [`regime_compare.mjs`](../data/activities/regime_compare.mjs)) — this commit
+
+---
+
+## 2026-07-06 — Entry 19: the app on its usual DEM — v2Edge on the deployed IGC-SP 5 m raster vs a 30 m resample
+
+*Prompt (Danilo): "most of the time we use IGC-SP DTM which has 5 m resolution — is this a
+concern?" (after Entry 18's R1d showed v2Edge's grade-local ε collapses at fine sampling).
+Test it on the deployed raster itself: sampasimu's `dem/sampa_geral.tif` — IGC-SP-derived,
+WGS84, ~5 m pixels, covering the São Paulo censo bbox. Danilo: use `sampa_geral.tif`, which
+has been VALIDATED, not the wider-coverage `mdt_igc_2010.tif` (known QA issues in several
+regions).*
+
+### Pre-registration (declared before running)
+
+**Question.** Entry 18's R1d found v2Edge ties the champion at ~30 m sampling but over-charges
+at 5 m — on *recorded-track* profiles, where fine grades are partly baro/GPS noise. The app's
+usual input is a smooth surveyed 5 m DTM. Does the resolution over-charge transfer to the
+deployment, and how big is it?
+
+**Stakes (Danilo).** sampasimu is the main instrument of **Sampa 300 Quilojaules** (*A Cidade
+de 300 kJ*, `initiative-300kj-city`): the mission measures whether a super-majority of
+metropolitan São Paulo can reach each other and essential services within a **300 kJ
+round-trip energy budget** over real terrain, using the app's synthetic energy fields for
+what's possible / current / could be done. A systematic high bias on the deployed 5 m DEM
+therefore *understates the city's measured accessibility* (the 300 kJ frontier shrinks), and
+the descent-credit distortion moves where the frontier sits — so the bias magnitude quantified
+here propagates directly into the mission's headline measure, not just into per-ride kJ.
+
+**Data.** The clean censo rides (Entry 9's filters, verbatim) whose tracks fall inside
+`sampa_geral.tif` with ≥99% valid samples. *Amendment (Danilo, pre-results): also include the
+P. Paz, JAAM, and author-full (danlessa) clean power rides inside the same coverage — censo
+rides are GROUP urban rides (drafting, stop-go), so the three independent riders' individual
+rides are the better-isolated corpus. Each rider keeps their own frozen physics and per-corpus
+ε rule exactly as in `regime_compare.mjs`. The censo endpoint stays as declared; the pooled
+independent-rider rides become a co-primary for the same endpoint.* Three profile sources per ride, each built by
+arc-length-resampling the GPS track and sampling the raster bilinearly at those points:
+(a) **baro** — the recorded elevation (harness baseline / anchor); (b) **igc5** — the deployed
+5 m raster at 5 m steps (deployment-faithful); (c) **igc30** — the same raster warped to ~30 m
+(6× native pixel, `-r average`) at 30 m steps (the R1d sweet-spot regime). *Amendment (Danilo,
+pre-results): add (d) **fabdem30** — the FABDEM V1-2 tile (S24W047, from the collective's
+`telhas.pedalhidrografi.co/fabdem/` server) at 30 m steps — the globally-available reference
+source, connecting this entry to Entry 6's k_DEM axis: it answers what the app would get on
+the free global DEM instead of the local survey, and whether igc30 ≈ fabdem30 (Entry 6 found
+the two bare-earth sources within ~6% on ascent).*
+
+**Models per profile.** The deployed **v2Edge walk** (Entry 18's R1d realisation, code reused
+verbatim from `regime_compare.mjs`) and the **R0 champion** (smooth cf + 2 m deadband, censo ε
+rule = flat 0.20), both vs measured `∫P·dt`.
+
+**Primary endpoint.** Paired med |Δ%| and signed bias of **v2Edge@igc5 vs v2Edge@igc30**.
+
+**Predictions.** (P1) igc5 over-charges relative to igc30 (positive signed-bias gap) via two
+additive mechanisms: finer grades → grade-local ε collapse (less descent credit), and roller
+inflation of `β·h₊` (Entry 6). (P2) The gap is SMALLER than R1d's raw-baro 5 m catastrophe
+(censo 12.3%) because a surveyed DTM's 5 m grades are mostly real, not noise. (P3) R0 on the
+same profiles degrades less from igc30→igc5 than v2Edge does (its ε is aggregate; only the
+`β·h₊` inflation hits it). **Decision rule for the app:** signed-bias gap (v2Edge@igc5 −
+v2Edge@igc30) > ~3–4 pp ⇒ the static ~30 m pre-smoothing mitigation goes on sampasimu's
+roadmap; < 2 pp ⇒ disclosure-only stands.
+
+**Sanity gates.** Profile distance ≡ track distance; empirical `∫P·dt` matches the published
+censo values for the same rides; igc5 sampled at 30 m steps ≈ igc30 (the warp adds averaging,
+so approximate, not exact); per-edge cost > 0 everywhere (the Entry 18 dead-clamp assert);
+DEM-vs-baro elevation RMS in the Entry-6 ballpark (~7–8 m shape RMS) as a sampling-correctness
+check.
+
+### Results
+
+**Corpus & integrity.** 922 rides passed coverage (censo **58** of 62 clean; P. Paz **277**;
+JAAM **181**; author full **406**; pooled independent riders **864**). Strict
+all-points-inside-bbox + ≥99% valid samples; engines runtime-extracted from
+`regime_compare.mjs` (byte-identical by construction); the full run executed twice with
+**byte-identical output**. All sanity gates pass: the baro anchor reproduces
+`regime_comparison.csv` on 912 matched rides to 5e-4 kJ; dead-clamp min pre-clamp edge
+**+4.46 J** across all 922×4 profiles; igc5-sampled-at-30 m ≈ igc30 to 1.0% median energy
+(residual = the warp's area averaging); profile ≡ track distance exact. One gate met only in
+spirit: DEM-vs-baro shape RMS came out **3.7 m** median, below the Entry-6 7–8 m ballpark —
+plausibly because Entry 6's RMS was FABDEM-vs-baro while this is the tighter IGC-vs-baro.
+
+**Med |Δ%| / median signed Δ% vs ∫P·dt** (v2Edge on raw profiles at native step — the
+deployment-faithful walk, ≡ Entry 18's `r1d5r` on baro; R0 = cf + 2 m deadband, per-corpus ε
+rule, ε_geom recomputed per profile source):
+
+| | v2@baro | v2@igc5 | v2@igc30 | v2@fab30 | R0@baro | R0@igc5 | R0@igc30 | R0@fab30 |
+|---|--:|--:|--:|--:|--:|--:|--:|--:|
+| censo (58) | 12.0 / +12.0 | **22.1 / +22.1** | 12.3 / +12.3 | 15.8 / +15.8 | 4.7 / −1.1 | 5.6 / +3.4 | 4.4 / +1.0 | 6.1 / +0.1 |
+| ppaz (277) | 6.4 / +6.1 | 9.0 / +9.0 | 8.1 / +8.1 | 18.8 / +18.8 | 5.2 / +4.4 | 6.6 / +5.5 | 6.2 / +5.1 | 8.4 / +8.2 |
+| jaam (181) | 4.8 / −3.7 | 2.9 / −0.5 | 3.4 / −1.9 | 14.4 / +14.4 | 5.5 / −4.9 | 5.0 / −4.5 | 5.6 / −5.1 | 3.4 / −2.2 |
+| danlessa (406) | 9.6 / +9.2 | 14.8 / +14.7 | 9.8 / +9.5 | 19.0 / +19.0 | 5.5 / +0.8 | 5.9 / +3.3 | 5.0 / +0.9 | 6.0 / +2.8 |
+| **pooled (864)** | 6.9 / +5.4 | **9.6 / +9.5** | 7.1 / +6.3 | 17.6 / +17.6 | 5.4 / +0.7 | 5.8 / +2.3 | 5.4 / +0.7 | 5.8 / +3.1 |
+
+**Primary endpoints — the resolution over-charge is real, and the decision rule is
+TRIGGERED.** Paired v2Edge@igc5 vs @igc30: **censo** med per-ride signed gap **+9.44 pp**
+(igc5 better on 3% of rides, sign & Wilcoxon p < 1e-4); **pooled riders** **+3.64 pp** (igc5
+better 25%, p < 1e-4). Both exceed the pre-registered ~3–4 pp threshold ⇒ **the static ~30 m
+pre-smoothing mitigation goes on sampasimu's roadmap** — and igc30 *is* that mitigation's
+preview (an average warp is what pre-smoothing produces), so its measured benefit is already
+on the table: censo 22.1 → 12.3, pooled 9.6 → 7.1 med |Δ%|. Per corpus the gap is
+heterogeneous: danlessa +5.4 pp, ppaz +2.0 pp, and JAAM +1.4 pp where igc5 actually *wins* on
+|Δ%| (55%, p = 0.16) — Entry 17's bias-trade law yet again: JAAM is the under-predicted
+corpus, so the spurious extra energy lands as accuracy.
+
+**Predictions.** **P1 confirmed**, with both mechanisms measured separately: roller inflation
+(igc5 h₊ > igc30 h₊ on **919/922** rides; censo median +14%) and ε collapse (implied
+drop-weighted ε from the walk: censo 0.219@igc5 vs 0.255@igc30; pooled 0.414 vs 0.456).
+**P2 REFUTED for censo**: the surveyed 5 m DTM is *worse* than the recorded baro (v2@baro
+12.0 vs v2@igc5 22.1) — real survey micro-relief that graded roads smooth away gets charged
+as if ridden; P2 holds for the rider corpora (gaps 1.4–5.4 pp, far from censo's 9.4).
+**P3 confirmed**: R0's aggregate ε shields it — igc30→igc5 degrades R0 by 0.4–1.2 pp
+(pooled 5.4 → 5.8) vs v2Edge's 2.5 pp (7.1 → 9.6).
+
+**The base gap persists at 30 m.** Even at its sweet spot the deployed walk over-charges
+(pooled signed **+6.3%**, censo **+12.3%**) while R0 sits at +0.7 / +1.0 — Entry 18's R1d
+conclusion (aggregate ε is the better *ride-energy* estimator) reproduces on real DEM
+profiles. The resolution mitigation removes the incremental 3.6–9.4 pp, not this base gap.
+
+**Secondary — FABDEM is not an adequate substitute here; Entry 6 qualified.** Paired on the
+same rides, fabdem30 is far worse than igc30 for the rider corpora: pooled med |Δ%| **17.6 vs
+7.1** (fabdem better on 9%, p < 1e-4), median energy +10.4%, median h₊ **+57%** pooled and
+**+101% / +135%** on P. Paz / JAAM — flat lowland rides accumulate FABDEM per-pixel noise as
+rollers (a 27 km P. Paz ride: h₊ 99 m on igc30 vs 391 m on fabdem30) and v2Edge's grade-local
+ε then amplifies the charge. Censo is the mild case (energy +2.2%, h₊ +1.6%). **Entry 6's
+"two bare-earth sources agree within ~6%" was measured on 10 hilly longões and does NOT
+generalize to flat urban terrain.** For the mission: the *validated local survey is
+load-bearing* — the free global DEM would overstate ride energies by ~+18% median and shrink
+the measured 300 kJ frontier drastically.
+
+**Stakes readout (Sampa 300 Quilojaules).** At today's deployment (igc5) the pooled median
+over-charge is **+9.5%** (censo group rides +22%) — the 300 kJ round-trip frontier is
+materially understated. With the 30 m pre-smoothing the residual is +6.3% pooled (+12%
+censo): better, and conservatively signed, but not neutral — the remaining lever is the base
+v2Edge-vs-R0 gap, and closing *that* reopens the viewing≡routing requirement (per-edge ε vs
+aggregate ε), so it is a product decision, not a patch.
+
+*Deviations from the brief (all disclosed):* v2Edge walks RAW profiles (deployment-faithful;
+makes the baro anchor ≡ `r1d5r`); ε_geom recomputed per profile source for the open corpora
+(censo stays flat 0.20); engine reuse by runtime extraction + eval of `regime_compare.mjs`
+(stronger than substring assertion); `sampa_geral.tif` has no declared nodata — un-surveyed
+cells read 0, so validity = sample > 0.5 m; the RMS-gate note above. No subsampling anywhere.
+
+Tooling: `node igc_resolution_test.mjs` (~15 min; needs `gdalwarp`/`gdallocationinfo`, the
+sampasimu `dem/sampa_geral.tif`, and network for the FABDEM tile on first run; writes the
+gitignored `igc_resolution_test.csv`).
 
 ---
 
@@ -1209,7 +1354,10 @@ COP30 0.84 (0.79–0.95), SRTM 0.72 (0.59–0.90, noisiest), baro 1.23 (1.10–1
 dependent, worst on rough/gravel: r2 arrochai 1.54, Cantareira 2 1.46).
 
 - **The two bare-earth sources agree (~17–18 km, within 6 %)** — IGC 5 m ≈ FABDEM 30 m,
-  cross-checking the real terrain ascent.
+  cross-checking the real terrain ascent. *(Qualified in Entry 19: this was measured on 10
+  hilly longões and does NOT generalize to flat urban/lowland terrain — there FABDEM's
+  per-pixel noise reads as rollers, inflating h₊ by +57% median over the pooled SP rides,
+  +101–135% on the flattest corpora.)*
 - **The recorded baro *under*-records** (−11 % raw, −21 % smoothed): the altimeter lags and
   smooths, so short climbs read as ~null grade (Danilo's observation). It is the LOW
   outlier — **not** ground truth (correcting an earlier overstatement). The DSMs *over*-record
