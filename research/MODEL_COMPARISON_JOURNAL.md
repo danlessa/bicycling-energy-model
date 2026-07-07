@@ -64,6 +64,9 @@ changed. See Entry 11.)*
 - **Entry 17** (a regime-decomposed closed form E_new = E_flat + E_climb + E_descent, and a totals
   variant E_new2, tested vs the champion on all five corpora,
   [`regime_compare.mjs`](../data/activities/regime_compare.mjs)) — this commit
+- **Entry 20** (goal-driven: can the deployed pipeline hit ±5% error / ±2% bias? smoothing σ +
+  per-rider calibration, train/validation,
+  [`goal_calibration.mjs`](../data/activities/goal_calibration.mjs)) — this commit
 - **Entry 19** (the app's usual DEM: v2Edge on the deployed IGC-SP 5 m raster vs its 30 m resample,
   censo rides, [`igc_resolution_test.mjs`](../data/activities/igc_resolution_test.mjs)) — this commit
 - **Entry 18** (correction: R1a is NOT the deployed sampasimu cost — dead-clamp proof + Jensen
@@ -71,6 +74,125 @@ changed. See Entry 11.)*
   the bias-trade law claims R1d too),
   [`verify_v2edge_clamp.mjs`](../data/activities/verify_v2edge_clamp.mjs) +
   [`regime_compare.mjs`](../data/activities/regime_compare.mjs)) — this commit
+
+---
+
+## 2026-07-07 — Entry 20: goal-driven — can the deployed pipeline hit ±5% error / ±2% bias?
+
+*Prompt (Danilo, `/goal`): "Simujaules, when routing a path, should have a prediction error of
+less than ±5%, with a bias lower than ±2%. danlessa/ppaz/jaam as the training/validation
+datasets."*
+
+**Metric interpretation (stated so it can be contested).** Per-corpus **validation-set**
+med |Δ%| < 5 **and** |median signed Δ%| < 2, for each of the three riders' Entry-19 coverage
+sets, with Δ% = (deployed prediction − measured ∫P·dt)/measured. "Deployed prediction" = the
+v2Edge walk on `sampa_geral.tif`-derived profiles at 5 m arc steps (the app's pipeline),
+plus only levers that are actually deployable in the app. Censo is excluded by the goal's own
+dataset list (group rides — drafting breaks the single-rider energy balance).
+
+### Scoping (from Entry 19's per-ride CSV — no new computation)
+
+- Baseline deployed (igc5, frozen journal physics, no calibration): ppaz 9.0/+9.0,
+  jaam 2.9/−0.5, danlessa 14.8/+14.7 — only jaam passes.
+- Split-simulated protocol (50/50 hash split; per-rider **scalar** fitted on train; 30 m
+  regime as smoothing proxy): validation ppaz **4.69/−0.70 PASS**, jaam **2.48/+0.22 PASS**,
+  danlessa **5.23/−0.17** — bias passes, scatter fails by 0.23 pp.
+- danlessa's train residual structure at 30 m (post-scalar): slow-v_f tercile **+5.17**
+  medΔ% (med|Δ%| 10.2) vs fast tercile −2.01 (3.14); hilliness terciles −1.7 → +2.6. Both
+  tilts map onto app-native knobs: the CdA/Crr split acts through v_f², kSmooth scales β.
+
+### Pre-registered protocol (declared before any tuning run)
+
+- **Split**: within each rider's Entry-19 coverage set, deterministic 50/50 by
+  `sha256('entry20:' + rideName)` parity — train = even, validation = odd. Validation is
+  evaluated ONCE, at the end, at frozen settings; no peeking during tuning.
+- **Lever 1 (global, deployable — the Entry 19 roadmap mitigation)**: static Gaussian
+  pre-smoothing of the 5 m raster, σ ∈ {0, 10, 15, 20, 30, 45} m, profiles sampled at 5 m
+  arc steps off the smoothed raster (the app keeps its 5 m grid; heights are prepared
+  app-side at DEM load and shipped identically to all three engines — no parity impact).
+  σ selected on TRAIN only: minimize the worst corpus's train med |Δ%| after per-rider fits.
+  *Amendment (pre-results): the smoothing scheme is pinned to the DEPLOYABLE form — 
+  sequential per-axis mask-normalized Gaussian passes (rows then columns, truncation 3σ,
+  per-axis σ_px from the geotransform), which the app can run in place at 135 M cells with
+  O(row) temp memory — not the exact 2-D normalized convolution (identical away from nodata
+  holes; differs only near hole edges). The harness tests exactly what would ship.*
+- **Lever 2 (per-rider, deployable = the app's parameter panel)**: fit
+  (CdA ∈ [0.2, 0.6], Crr ∈ [0.003, 0.015], kSmooth ∈ [0.5, 1.0]) per rider on TRAIN;
+  mass FROZEN at the journal values (74.3 / 101.7 / 74.5), ρ 1.13, k_eff 0.98, per-ride
+  P_flat from the ride's own extracted flat power (deployment analog: the rider knows their
+  day's flat power). v_f, abRatio, and ε are recomputed inside the fit (flatEqSpeed depends
+  on CdA/Crr). Objective per rider: minimize train med |Δ%| subject to |train medΔ%| ≤ 1
+  (a buffer inside the 2% criterion).
+- **Endpoint**: the three validation sets at the frozen (σ, per-rider params). PASS = all
+  three meet med |Δ%| < 5 ∧ |medΔ%| < 2.
+- **Fallback ladder** (only if validation fails; pre-declared): (F1) refit with `epsOffset`
+  as a 4th, SHARED (never per-rider) parameter — it is a behavioural constant the journal
+  calibrated once, so re-fitting it demands this explicit disclosure; (F2) report the honest
+  failure and stop — no per-rider σ, no post-hoc ride exclusions, no metric reinterpretation.
+- **Sanity gates**: σ=0 uncalibrated reproduces Entry 19's igc5 numbers exactly; the
+  calibrator at the frozen journal physics reproduces the cached v2_igc5 per ride; profile
+  cache determinism (two builds byte-identical); the Entry-18 dead-clamp assert on every
+  walked profile.
+
+### Results — **PRIMARY ENDPOINT: PASS** (no fallback needed)
+
+**Integrity.** Harness [`goal_calibration.mjs`](../data/activities/goal_calibration.mjs) +
+[`goal_smooth_rasters.py`](../data/activities/goal_smooth_rasters.py) (the amended deployable
+smoothing scheme, constants pinned in both headers for the app port). 864 rides
+(277/181/406), split 156/121 · 87/94 · 190/216 (train/validation). Sanity gates: σ=0 frozen
+physics ≡ Entry 19's `v2_igc5` to 5.0e-5 kJ; dead-clamp global min pre-clamp edge **+2.44 J**
+across every profile at every evaluated parameter set; Phase C run twice → byte-identical
+(sha256-matched); cache spot-rebuild (every 40th ride, fresh from FIT+gdal) byte-identical.
+Gate 5 (h₊ monotone in σ) FAILED as literally stated and was diagnosed benign: at the
+SELECTED σ\*=10, h₊(σ10) < h₊(σ0) on **864/864** rides; the ≥1-uptick rides (107/864, worst
++5.5% on a single step) are all at σ≥20 — large-σ displacement of steep terrain, inherent to
+the scheme, absent at the deployed σ.
+
+**Train matrix** (post-fit train med|Δ%|, per-rider (CdA, Crr, kSmooth) fitted at each σ,
+|medΔ%|≤1 constraint): worst corpus = 4.02 (σ0), **3.95 (σ10)**, 3.96 (σ15), 4.15 (σ20),
+4.16 (σ30), 4.25 (σ45) → **σ\* = 10 m** by the pre-registered rule. Fitted at σ\*:
+ppaz (0.206, 0.0142, 0.548), jaam (0.378, 0.0097, 0.976), danlessa (0.348, 0.0077, 0.768) —
+*effective* values (they absorb residual model/resolution bias; do not read them as physical
+CdA/Crr).
+
+**Validation (single frozen eval at σ\*=10 + per-rider fits):**
+
+| corpus | n | med \|Δ%\| | med Δ% | p10 | p90 | gate (<5 ∧ <±2) |
+|---|--:|--:|--:|--:|--:|:--|
+| ppaz | 121 | **3.69** | **+0.96** | −7.2 | +7.2 | **PASS** |
+| jaam | 94 | **2.74** | **+0.31** | −3.4 | +5.8 | **PASS** |
+| danlessa | 216 | **4.94** | **+0.81** | −7.7 | +14.9 | **PASS** (margin 0.06 pp) |
+
+**Ablations (validation sets) — the honest decomposition:**
+
+- **σ=0 calibrated** (σ0-fitted params): 3.66 / 2.25 / 4.95 — also passes all three.
+  **Post-calibration, smoothing buys ≈ nothing**: the per-rider calibration is the lever
+  that carries the goal; the effective parameters absorb the resolution bias. σ\*=10 remains
+  the *validated* deployed configuration (it is what the pre-registered selection produced,
+  and its params need their σ: σ=0 with σ\*-fitted params FAILS danlessa at +2.77 bias).
+- **σ\*=10 uncalibrated** (frozen journal physics): 8.74/+8.74 FAIL, 2.65/−1.31 PASS,
+  11.96/+11.83 FAIL — light smoothing alone does NOT rescue uncalibrated accuracy (the
+  Entry-19 30 m regime needed σ≈30-equivalent averaging; σ10 is deliberately lighter).
+- **σ=0 uncalibrated** (the deployed baseline, validation split): 8.53 / 2.64 / 14.84 —
+  fails, as Entry 19 said.
+
+**Verdict.** The goal — validation med |Δ%| < 5 with |bias| < 2% per rider — is **met** by
+the deployable configuration (σ\*=10 m mask-normalized pre-smoothing + per-rider effective
+(CdA, Crr, kSmooth) calibrated on the rider's own ~100–200 rides, mass frozen at the known
+value). The single biggest lever is the calibration, not the smoothing — matching Entry 17's
+bias-trade lesson from the other side: with well-chosen constants the model family is
+already good enough, and the constants are learnable from a rider's history. danlessa passes
+with 0.06 pp of margin — treat that corpus as at-spec, not comfortably inside it (its full
+export spans 9 years of bikes/meters/loadouts; per-era calibration would likely widen the
+margin but was not pre-registered, so it was not run).
+
+*Deviations (disclosed):* ride-set membership taken from Entry 19's CSV (equivalence
+enforced per ride by the emp + v2_igc5 reproduction gates); cache determinism verified by
+fresh-rebuilding every 40th ride rather than a full second build; Phase A implemented per
+the pre-registration's deployable-scheme amendment.
+
+Tooling: `node goal_calibration.mjs` (~25 min full; needs the conda python for the raster
+prep, gdallocationinfo, `sampa_geral.tif`; writes the gitignored `goal_calibration.csv`).
 
 ---
 
