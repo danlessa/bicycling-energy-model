@@ -64,6 +64,135 @@ changed. See Entry 11.)*
 - **Entry 17** (a regime-decomposed closed form E_new = E_flat + E_climb + E_descent, and a totals
   variant E_new2, tested vs the champion on all five corpora,
   [`regime_compare.mjs`](../data/activities/regime_compare.mjs)) — this commit
+- **Entry 18** (correction: R1a is NOT the deployed sampasimu cost — dead-clamp proof + Jensen
+  sign flip + R1d pre-registration and results (the Jensen prediction fails to a resolution effect;
+  the bias-trade law claims R1d too),
+  [`verify_v2edge_clamp.mjs`](../data/activities/verify_v2edge_clamp.mjs) +
+  [`regime_compare.mjs`](../data/activities/regime_compare.mjs)) — this commit
+
+---
+
+## 2026-07-06 — Entry 18: correction — R1a is not sampasimu's realisation (the app's per-edge ε never clamps), and the Jensen sign flips
+
+*Prompt (Danilo): implement Entry 17's recommendation in sampasimu, under two product
+requirements — viewing energy ≡ routing energy (one number everywhere), and Dijkstra-fast
+local edge costs. The pre-implementation audit refuted the premise instead; this entry records
+the correction. No measured number changes — Entry 17's scoreboard and all its ride statistics
+stand untouched.*
+
+**What Entry 17 got wrong.** It treated `regimeComponents`' R1a — ONE ride-frozen ε (the
+aggregate `clamp01(ε_geom − 0.13)`, or the flat 0.20) applied to every 5 m edge under
+`max(0,·)` — as "the *sampasimu `v2Edge`* realisation", and read R1a's descent over-charge
+(P. Paz 9.3 vs 7.3 med |Δ%|) as a concrete strike against the deployed app (§9.1). But the app
+does something different: `v2Edge` recomputes ε **from each edge's own grade**,
+`ε(s) = clamp₀₁(min(1, (α/β)/s) − 0.13)` with `s = |dh|/d`. The two constructions share only
+the words "per-edge".
+
+**The app's descent cost is provably positive — its clamp is dead code.** With
+`α = aRoll + aAero`, the three regimes of ε(s):
+
+- **gentle**, `s ≤ α/β`: ε saturates at `1 − 0.13 = 0.87` and `β·|dh| ≤ α·d`, so
+  `e = α·d − 0.87·β·|dh| ≥ 0.13·α·d`;
+- **middle**, ε ∈ (0, 0.87): the α parts cancel exactly, leaving `e = 0.13·β·|dh|`;
+- **steep**, ε floored at 0: `e = α·d`.
+
+Always strictly positive — the trailing `max(0, e)` in `v2Edge` (and its Rust port) is
+unreachable, defensive-only code. This is not even a new result: it is exactly the
+`descFloor = 0.13·α > 0` bound sampasimu's own A\* admissibility proof derives
+(`energy-worker.js`). Numerically confirmed by
+[`verify_v2edge_clamp.mjs`](../data/activities/verify_v2edge_clamp.mjs): a 1.78 M-combo sweep
+over (dist, grade, mass, C_rr, CdA, P_flat, k_smooth ≤ 1 — which only widens the margin) finds
+a global minimum pre-clamp cost of +4.1e-4 kJ, plus the middle-regime identity to 1e-12. By
+contrast R1a's frozen ε̄ has no such protection: on a steep edge `ε̄·s > α/β` easily, the
+pre-clamp cost goes negative, the floor fires, and credit that should net against gentler
+stretches is destroyed. **The 9.3-vs-7.3 over-charge is a property of the frozen-ε-per-edge
+construction, not of the deployed app.**
+
+**And the sign flips.** The real difference between the app's grade-local ε and the champion's
+aggregate ε_geom is a Jensen gap: `f(x) = max(0, x − 0.13)` is convex on [0, 1], so the
+drop-weighted mean of `f(min(1, (α/β)/sᵢ))` (the app) is ≥ `f` of the drop-weighted mean (the
+champion) — verified on 20 k random descent profiles (same script), with equality exactly on
+constant grade. More `f` = more descent credit: **sampasimu mildly *under*-charges descents
+relative to the champion**, the opposite direction of Entry 17's claim.
+
+**What stands.** Entry 17's methodological lesson stands in full: evaluate closed forms on
+totals, and a frozen aggregate ε applied per edge under a clamp genuinely over-charges
+descents — all its measured numbers are untouched. What falls is only the attribution: §9.1
+needs no softening on the app's account, and every "strike against sampasimu `v2Edge`" should
+read "strike against R1a's frozen-ε construction". Inline corrections added to Entry 17 below
+(Entry-14/15 style).
+
+**Pre-registered next test — R1d, the app's *actual* realisation.** Whether grade-local ε is
+empirically better or worse than the champion is now a genuine open question. Declared before
+running: add **R1d** to `regime_compare.mjs` — per-edge over the same deadbanded 5 m profile
+as R1a, edge cost = the verbatim `v2Edge` (roll always; aero charged iff `dh < climbThr·dx`,
+so full flat aero on descents; `β·dh` uphill; grade-local ε downhill; no regime powers —
+information budget identical to R0: `P₌` + geometry + the frozen −0.13). **Primary endpoint:**
+med |Δ%| vs ∫P·dt on the 441 P. Paz rides, paired vs R0. Secondary: all five corpora + the
+fitted-physics rerun (Entry 17's bias-sign machinery). *Prediction:* R1d tracks R0 closely
+from slightly below (the Jensen extra credit), so it should edge R0 where R0 over-predicts
+(P. Paz, assumed physics) and lose slightly where R0 under-predicts (JAAM). Sanity gates:
+all-flat thresholds reduce to the raw v1 law; constant-grade descent ⇒ R1d ≡ R0 exactly (no
+Jensen gap by construction); machine-assert per-edge cost > 0 everywhere (the dead-clamp
+proof). Also run a 30 m-resampled profile variant as sensitivity: grade-local ε is
+resolution-sensitive in a way the aggregate is not, and the deployment lives on a ~30 m DEM
+grid.
+
+*Process note.* The misattribution survived Entry 17's adversarial review because the harness
+*named* its own construction after the deployment — every reviewer verified R1a against the
+plan, and none diffed it against the deployed cost function. Meanwhile sampasimu's own
+cross-repo audit (its v52) had verified the app's code as correct-to-spec, so each repo was
+verified in isolation and the bridge between them — "R1a is what the app does" — was the one
+unverified claim. Same cure as Entry 17's V&V note: put "is this the thing it's named after?"
+to the code, not the prose.
+
+### R1d results (same day) — the clamp is dead on real data, the Jensen prediction fails, and the bias-trade law claims another model
+
+R1d ran as pre-registered (`regime_compare.mjs`, verbatim `v2Edge` walk; sanity gates all pass,
+including **R1d ≡ R0 on a constant-grade descent to 1e-6** — so every real-data difference is grade
+*variance*, not construction).
+
+- **The dead-clamp claim holds on real data.** Across all 1 402 rides (and again under fitted
+  physics), the minimum pre-clamp descent edge is **+4.6 J** (fitted: +3.9 J) — the deployed
+  `max(0,·)` never fired once on ~5 800 ride-profiles' worth of real edges. The R1a-style credit
+  destruction genuinely cannot happen in the app.
+- **Pre-registered endpoint (P. Paz, assumed): R1d loses** — **7.1%** vs R0 **5.8%** (R1d better on
+  27%, p < 0.001). Full scoreboard (med |Δ%|, R1d vs R0): longões **6.4 vs 6.7** (R1d wins), censo
+  4.7 vs 4.6 (tie), P. Paz 7.1 vs 5.8 (loses), JAAM **4.5 vs 5.5** (wins, 75%, p < 0.001),
+  author 7.1 vs 6.3 (loses, 44%).
+- **The Jensen prediction FAILED — and the pre-registered sensitivity explains why.** The prediction
+  said R1d sits *below* R0 (grade-local ε ⇒ more credit, by convexity). Empirically R1d sits **above**
+  R0 on every corpus (median per-ride Δ +8 to +96 kJ): the champion's ε_geom samples grades on **30 m
+  cells of the raw profile**, while R1d samples **5 m deadbanded edges** — finer grades are steeper
+  grades, `ε(s)` collapses toward 0 on steep edges, and the *resolution* effect (less credit)
+  overwhelms the *convexity* effect (more credit). Entry 18's own hedge ("grade-local ε is
+  resolution-sensitive in a way the aggregate is not") turned out to be the headline, not the caveat.
+  The resolution×smoothing grid confirms it: at the FABDEM-like **30 m grid R1d improves** almost
+  everywhere (longões 5.6, P. Paz 6.8, author 6.6) and the deployment-faithful **30 m raw** splits
+  honours with the champion (longões 6.5 vs 6.7, JAAM **4.2** vs 5.5, censo 6.1 vs 4.6, P. Paz 7.5 vs
+  5.8) — while **5 m raw on urban baro tracks is catastrophic** (censo 12.3%: elevation noise reads
+  as steep grades and destroys the credit). A happy accident for the deployment: v2Edge behaves
+  *best* near the 30 m DEM grid it actually runs on.
+- **The bias-trade law claims R1d too.** Under fitted physics (all champion biases negative), R1d
+  flips to winning everywhere: P. Paz **71%** (6.4 vs 7.0), JAAM 63%, author **81%** (9.8 vs 12.1).
+  Same rides, same model, the winner follows R0's bias sign — R1d's extra energy is not climb aero
+  (it uses the same cf gate as R0) but *reduced descent credit from resolution*, and it obeys the
+  same law: whatever direction a variant shifts total energy, it wins exactly where the champion's
+  parameter bias points the other way.
+
+**Verdict.** The app is vindicated where Entry 17 indicted it (the clamp is dead code; no frozen-ε
+over-charge), but its grade-local ε is **not better than the champion's aggregate** — at the
+harness's 5 m grid it is strictly worse (a resolution artifact of ε(s), exactly as the physicality
+argument predicts: grade-local recovery is not meaningful at scales where the grade itself is
+noise), and at its native ~30 m grid it roughly ties. For *ride energy*, the champion's aggregate ε
+stands; for *routing*, v2Edge stands too — running at the resolution where its grade-local ε is
+least wrong. The remaining practical note for sampasimu: avoid feeding v2Edge profiles much finer
+than ~30 m (the credit collapses), and the k_DEM/§8.7 source-bias axis is separate from and additive
+to this resolution effect.
+
+Tooling: `node verify_v2edge_clamp.mjs` (self-contained, no ride data; exits non-zero on any
+violation); `node regime_compare.mjs` (R1d in the scoreboard + the Entry-18 endpoint block, Jensen
+check, resolution×smoothing grid, and the dead-clamp assert; fitted rerun via the Entry-17 envs).
 
 ---
 
@@ -132,7 +261,9 @@ drop-weighted `ε_geom`. So E_new is evaluated **two ways**, and the *totals* fo
 comparison: **`regimeTotals`** classifies edges once to get the regime aggregates, then evaluates each
 regime's law once (climb aero at a single `v_c(s̄₊)`; the descent clamp/equilibrium on the descent
 *total* at `s̄₋`). The per-edge **`regimeComponents`** is the *sampasimu `v2Edge`* realisation (article
-§9.1) — it clamps `max(0,·)` and re-solves `v_c`/`v₋` per 5 m edge. The two are *identical on the linear
+§9.1) — it clamps `max(0,·)` and re-solves `v_c`/`v₋` per 5 m edge. *(Corrected in Entry 18: R1a is
+NOT the app's realisation — it applies one ride-frozen ε per edge, while the deployed `v2Edge`
+recomputes ε from each edge's own grade, and its clamp provably never fires.)* The two are *identical on the linear
 terms* (roll, gravity, flat aero — verified: a constant-grade climb gives totals ≡ per-edge to 1e-3) and
 diverge only on the nonlinear `v_c`/`max(0,·)`/`v₋`; the per-edge `max(0,·)` clamps steep-descent credits
 to zero edge-by-edge (it *cannot* net them), so it systematically **over**-charges descents relative to
@@ -152,6 +283,9 @@ average out a cliff): that argument holds for a *routing cost* that must be addi
 *estimating a ride's energy* the aggregate ε is the physical one — §9.1 should be softened to say the
 per-edge form is a routing-driven realisation, not the more physical one. (sampasimu keeps per-edge
 because a Dijkstra edge cost must be local; that is a deployment constraint, not a claim about ε.)
+*(Qualified in Entry 18: the totals-vs-per-edge lesson stands for the frozen-ε R1a tested here, but the
+§9.1 softening is NOT needed on the app's account — the deployed `v2Edge` uses a grade-local ε whose
+clamp never fires, and it sits on the credit-generous side of the aggregate, not the over-charging one.)*
 
 **Design & the two traps.** Three firewalled descent variants (never mixed): **R1a** keeps the base-law
 per-edge ε clamp `max(0, α_r·dx + α_a(v₌)·dx − ε·β·|dh|)`; **R1b** = `P₋·t₋` over the *modelled* descent
@@ -198,7 +332,9 @@ rider-dependent (and driven by the assumed-CdA error of Entry 16), the regime mo
 universal win — the endpoint's verdict is contingent on which rider's bias sign was chosen. **The per-edge
 realisation is uniformly worse than the totals form on the over-predicted corpora** (P. Paz 9.3 vs 7.3):
 its `max(0,·)` clamp cannot net a cliff against a shallow stretch, so it over-charges descents — a concrete
-strike against the sampasimu `v2Edge` per-edge ε on descent-heavy routes (article §9.1).
+strike against the sampasimu `v2Edge` per-edge ε on descent-heavy routes (article §9.1). *(Corrected in
+Entry 18: the strike lands on R1a's frozen-ε construction only — the deployed sampasimu cost recomputes
+ε per edge from local grade, never clamps, and Jensen-sides toward MORE descent credit than the champion.)*
 
 **The causal test — flip the bias, flip the winner (fitted-physics rerun).** The bias-trade reading was,
 so far, correlational. Entry 16's machinery makes it causal: swap in each rider's Entry-15 *fitted*
@@ -256,7 +392,8 @@ works — is **competitive but not a robust improvement**. It *loses the pre-dec
 decides the outcome. Its structural cleanliness buys nothing the champion's "conveniences" don't already
 buy: **zeroing climb aero and lumping descent recovery into ε do real bias-cancellation work**, and adding
 the physics back per-regime trades one bias for another. Two concrete lessons survive: **(1)** the
-**totals** evaluation is the right one — the per-edge `max(0,·)` realisation (sampasimu `v2Edge`)
+**totals** evaluation is the right one — the per-edge `max(0,·)` realisation (sampasimu `v2Edge` *— not
+so, see Entry 18: the app's grade-local ε never clamps; this describes R1a's frozen-ε form only*)
 over-charges descents by clamping cliffs it cannot net (P. Paz 9.3 vs 7.3), a strike against per-edge ε on
 descent-heavy routes (§9.1); and **(2)** `α/β` is the natural *scale* of the regime threshold (it orders
 with rider speed and sits at the 2% default), even though a symmetric adaptive rule does not pay because
