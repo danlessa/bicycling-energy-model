@@ -623,6 +623,44 @@ function regimeTotals(prof, p, pw, thr, eps, descentMode) {
   return { E: (Eflat + Eclimb + Edesc) / 1000, Eflat: Eflat / 1000, Eclimb: Eclimb / 1000, Edesc: Edesc / 1000 };
 }
 
+// R1d — the DEPLOYED sampasimu cost (Entry 18 pre-registration): per-edge VERBATIM v2Edge over the
+// same profile. Unlike R1a's ride-frozen ε̄, ε is GRADE-LOCAL, recomputed from each edge's own grade:
+// ε(s) = clamp₀₁(min(1, (α/β)/s) − 0.13), s = |dh|/dx. Roll always; aero charged iff dh < climbThr·dx
+// (zero on climbs, full flat aero on descents — the champion's cf gating); β·dh uphill; NO regime
+// powers — information budget ≡ R0 (P_flat + geometry + the frozen −0.13). The trailing max(0,·) is
+// provably dead (Entry 18 / verify_v2edge_clamp.mjs); we keep it verbatim AND track the pre-clamp
+// minimum so the run machine-asserts the dead-clamp claim on real data.
+let R1D_MIN_PRECLAMP = Infinity;
+function r1dV2Edge(prof, p, pw, climbThr) {
+  const mg = p.m * G, beta = mg / p.keff, w = p.wind;
+  const vFlat = Math.max(0.05, flatEqSpeed(pw.flat > 0 ? pw.flat : 1, p));
+  const aRoll = mg * p.Crr / p.keff;
+  const aAero = 0.5 * p.rho * p.CdA * (vFlat + w) * Math.abs(vFlat + w) / p.keff;
+  const abRatio = (aRoll + aAero) / beta;   // α/β, same physics family as the champion's ε_geom
+  const xs = prof.x, hs = prof.h;
+  let E = 0;
+  for (let i = 1; i < xs.length; i++) {
+    const dx = xs[i] - xs[i - 1], dh = hs[i] - hs[i - 1];
+    if (!(dx > 0)) continue;
+    let e;
+    if (dh >= 0) {
+      const aero = (dh < climbThr * dx) ? aAero * dx : 0;
+      e = aRoll * dx + aero + beta * dh;
+    } else {
+      const ndh = -dh;
+      let eps = abRatio * dx / ndh;
+      if (eps > 1) eps = 1;
+      eps -= 0.13;
+      if (eps < 0) eps = 0;
+      e = aRoll * dx + aAero * dx - eps * beta * ndh;
+      if (e < R1D_MIN_PRECLAMP) R1D_MIN_PRECLAMP = e;
+      if (e < 0) e = 0;
+    }
+    E += e;
+  }
+  return E / 1000;
+}
+
 // R0 champion — smooth (cf + 2 m deadband) AND poor-man's scalar, VERBATIM formulae from
 // ppaz_compare.mjs pass B (aSm/aRaw/km/eSm/ePm). eps = the descent recovery the caller supplies.
 function r0Champion(prof, profS, p, pw, eps) {
@@ -692,6 +730,17 @@ function processRide(pts, p0, label, corpus, epsRule) {
   const R1aT = regimeTotals(profS, p, pw, thr, eps, 'R1a');       // TOTALS (apt closed form, matches R0)
   const R1bT = regimeTotals(profS, p, pw, thr, eps, 'R1b');
   const R1cT = regimeTotals(profS, p, pw, thr, eps, 'R1c');
+  // R1d — deployed v2Edge (grade-local ε; Entry 18). Headline on the same deadband 5 m profile as
+  // R1a/R0 (champion-matched); sensitivity grid = resolution × smoothing, because grade-local ε is
+  // resolution-sensitive in a way the aggregate ε is not. Resolutions map to the deployment's real
+  // elevation grids — 30 m ↔ FABDEM (what sampasimu serves), 5 m ↔ IGC-SP DTM (survey truth) — but
+  // note we RESAMPLE the ride's own track at those spacings; source elevation bias is §8.7's k_DEM,
+  // a separate axis. Smoothing: deadband τ=2 vs raw (the deployed default is k_s = 1, i.e. raw).
+  const R1d = r1dV2Edge(profS, p, pw, CLIMB_THR);                 // 5 m + deadband (headline)
+  const R1d5r = r1dV2Edge(prof, p, pw, CLIMB_THR);                // 5 m raw
+  const prof30 = resampleProfile(physProfile, 30);
+  const R1d30 = r1dV2Edge({ x: prof30.x, h: deadband(prof30.h, TAU_SMOOTH) }, p, pw, CLIMB_THR);   // 30 m + deadband
+  const R1d30r = r1dV2Edge(prof30, p, pw, CLIMB_THR);             // 30 m raw (deployment-faithful)
   // E_new2 (R2) — TOTALS decomposition (Danilo): E_flat(d=x,P₌,h=0) + E_climb(d=0,P₊,h₊) +
   // E_descent(d=0,P₋,h₋) = α(P₌)·x + β·h₊ − ε·β·h₋, aero over the FULL distance at flat speed (no
   // climb-aero split — the 'off' aero mode), on the deadband profile. With d=0 the climb/descent
@@ -718,12 +767,13 @@ function processRide(pts, p0, label, corpus, epsRule) {
   rows.push({
     corpus, ride: label, emp, km: prof.x[prof.x.length - 1] / 1000, vf_kmh: vf * 3.6, ab, eps,
     r0sm: r0.eSm, r0pm: r0.ePm, canon, r1a: R1a.E, r1b: R1b.E, r1c: R1c.E, r1a_ad: R1a_ad.E, r2: R2,
-    r1a_t: R1aT.E, r1b_t: R1bT.E, r1c_t: R1cT.E,
+    r1a_t: R1aT.E, r1b_t: R1bT.E, r1c_t: R1cT.E, r1d: R1d, r1d5r: R1d5r, r1d30: R1d30, r1d30r: R1d30r,
     r1a_flat: R1a.Eflat, r1a_climb: R1a.Eclimb, r1a_desc: R1a.Edesc,
     xF: R1a.xF, xC: R1a.xC, xD: R1a.xD, hpC: R1a.hpC, hmD: R1a.hmD, eMclimb, eMflat, eMdesc,
     d_r0sm: dPct(r0.eSm, emp), d_r0pm: dPct(r0.ePm, emp), d_canon: dPct(canon, emp),
     d_r1a: dPct(R1a.E, emp), d_r1b: dPct(R1b.E, emp), d_r1c: dPct(R1c.E, emp), d_r1a_ad: dPct(R1a_ad.E, emp), d_r2: dPct(R2, emp),
     d_r1a_t: dPct(R1aT.E, emp), d_r1b_t: dPct(R1bT.E, emp), d_r1c_t: dPct(R1cT.E, emp),
+    d_r1d: dPct(R1d, emp), d_r1d5r: dPct(R1d5r, emp), d_r1d30: dPct(R1d30, emp), d_r1d30r: dPct(R1d30r, emp),
     d_rc: dPct(R1a.Eclimb, eMclimb), d_rf: dPct(R1a.Eflat, eMflat), d_rd: dPct(R1a.Edesc, eMdesc),
   });
 }
@@ -776,6 +826,23 @@ if (process.env.SANITY) {
   const cePw = { climb: 250, flat: 200, descent: 0 }, ct = { climbThr: CLIMB_THR, descThr: DESC_THR };
   const ceEdge = regimeComponents(climbProf, pFlat, cePw, ct, 0.2, 'R1a'), ceTot = regimeTotals(climbProf, pFlat, cePw, ct, 0.2, 'R1a');
   say('constant-grade climb: totals ≡ per-edge', Math.abs(ceEdge.E - ceTot.E) / ceTot.E < 1e-3, `edge ${ceEdge.E.toFixed(2)} vs totals ${ceTot.E.toFixed(2)}`);
+
+  // R1d gates (Entry 18): (a) no-descent profile + climbThr=∞ reduces to raw v1 α·x + β·h₊;
+  // (b) constant-grade descent ⇒ R1d ≡ R0.eSm exactly (grade-local ε = aggregate ε_geom, no Jensen
+  // gap by construction); (c) pre-clamp positivity (asserted on the real corpora in the main run).
+  const dPw = { climb: 200, flat: 150, descent: 60 };
+  const r1dClimb = r1dV2Edge(climbProf, pFlat, dPw, 1e9);
+  let cX = 0, cH = 0; for (let i = 1; i < climbProf.x.length; i++) { cX += climbProf.x[i] - climbProf.x[i - 1]; cH += climbProf.h[i] - climbProf.h[i - 1]; }
+  const vD = flatEqSpeed(dPw.flat, pFlat);
+  const aR = mg * pFlat.Crr / pFlat.keff, aA = 0.5 * pFlat.rho * pFlat.CdA * vD * Math.abs(vD) / pFlat.keff;
+  const v1Climb = (aR * cX + aA * cX + beta * cH) / 1000;
+  say('R1d reduction: no-descent + climbThr=∞ == raw v1', approx(r1dClimb, v1Climb), `${r1dClimb.toFixed(3)} vs ${v1Climb.toFixed(3)}`);
+  const descProf = mkProf(2001, 5, () => -0.05), descProfS = { x: descProf.x, h: deadband(descProf.h, TAU_SMOOTH) };
+  const epsD = epsGeom(descProf, pFlat, vD);
+  const r0D = r0Champion(descProf, descProfS, pFlat, { ...dPw, climbThr: CLIMB_THR, descThr: DESC_THR }, epsD);
+  const r1dD = r1dV2Edge(descProfS, pFlat, dPw, CLIMB_THR);
+  say('R1d ≡ R0 on constant-grade descent (no Jensen gap)', Math.abs(r1dD - r0D.eSm) / Math.abs(r0D.eSm) < 1e-6, `R1d ${r1dD.toFixed(4)} vs R0 ${r0D.eSm.toFixed(4)} (ε_geom ${epsD.toFixed(3)})`);
+  say('R1d pre-clamp positivity (synthetics)', R1D_MIN_PRECLAMP > 0, `min ${R1D_MIN_PRECLAMP.toExponential(2)} J`);
 
   console.log(ok ? '\nSANITY: ALL PASS' : '\nSANITY: FAILURES ABOVE');
   process.exit(ok ? 0 : 1);
@@ -844,6 +911,7 @@ const CORP = [['longoes', 'longões (open, per-ride physics)'], ['censo', 'censo
 const f = (x, d = 1) => (x == null || Number.isNaN(x) || !Number.isFinite(x)) ? '—' : x.toFixed(d);
 const KEYS = [['d_r0sm', 'R0 champion (cf+2m smooth)'], ['d_r0pm', 'R0 poor-man scalar'], ['d_canon', 'canonical (forward sim)'], ['d_r1a', 'R1a regime (ε clamp)'], ['d_r1b', 'R1b regime (P₋·t₋)'], ['d_r1c', 'R1c regime (force-deficit)'],
   ['d_r1a_t', 'R1a TOTALS (ε clamp)'], ['d_r1b_t', 'R1b TOTALS (P₋·t₋)'], ['d_r1c_t', 'R1c TOTALS (force-def)'],
+  ['d_r1d', 'R1d v2Edge (grade-local ε)'],
   ['d_r2', 'R2 totals (α·x+β(h₊−εh₋))'], ['d_r1a_ad', 'R1a adaptive ±α/β']];
 
 console.log('\n================================================================');
@@ -889,6 +957,26 @@ console.log(`  R1a ${f(r1aMed)}%  vs  R0 ${f(r0Med)}%   (n=${Pset.length})`);
 console.log(`  paired R1a−R0: R1a better on ${pt.wins}/${pt.n} (${f(pt.winFrac * 100, 0)}%) · med Δ|Δ%| ${f(pt.medDiff, 2)}pp · sign p=${f(pt.pSign, 3)} · Wilcoxon p=${f(pt.pWilcoxon, 3)}`);
 console.log('================================================================');
 
+console.log('\nENTRY-18 PRE-REGISTERED ENDPOINT — R1d (deployed v2Edge, grade-local ε) vs R0, P. Paz');
+const r1dMed = medOf(Pset.map(r => Math.abs(r.d_r1d)).filter(Number.isFinite));
+const pt18 = pairedAbs(Pset, 'd_r1d', 'd_r0sm');
+console.log(`  R1d ${f(r1dMed)}%  vs  R0 ${f(r0Med)}%   (n=${Pset.length})`);
+console.log(`  paired R1d−R0: R1d better on ${pt18.wins}/${pt18.n} (${f(pt18.winFrac * 100, 0)}%) · med Δ|Δ%| ${f(pt18.medDiff, 2)}pp · sign p=${f(pt18.pSign, 3)} · Wilcoxon p=${f(pt18.pWilcoxon, 3)}`);
+// Jensen-direction check: grade-local ε gives MORE descent credit ⇒ R1d should predict LESS than R0
+console.log('\n  Jensen direction (med per-ride r1d − r0sm, kJ; negative ⇒ R1d below R0 as predicted):');
+for (const [c] of CORP) {
+  const set = byCorpus(c); if (!set.length) continue;
+  const dj = medOf(set.map(r => r.r1d - r.r0sm).filter(Number.isFinite));
+  console.log(`    ${c.padEnd(10)} ${f(dj, 2)} kJ  (med |Δ%|: R1d ${f(medOf(set.map(r => Math.abs(r.d_r1d)).filter(Number.isFinite)))} vs R0 ${f(medOf(set.map(r => Math.abs(r.d_r0sm)).filter(Number.isFinite)))})`);
+}
+console.log('\n  R1d resolution×smoothing sensitivity (med |Δ%|): 5m+db (headline) · 5m raw · 30m+db (FABDEM-grid) · 30m raw (deployed default)');
+for (const [c] of CORP) {
+  const set = byCorpus(c); if (!set.length) continue;
+  const g = k => f(medOf(set.map(r => Math.abs(r[k])).filter(Number.isFinite)));
+  console.log(`    ${c.padEnd(10)} ${g('d_r1d')} · ${g('d_r1d5r')} · ${g('d_r1d30')} · ${g('d_r1d30r')}`);
+}
+console.log(`\n  dead-clamp assert: min pre-clamp descent edge across ALL rides = ${R1D_MIN_PRECLAMP.toExponential(2)} J ${R1D_MIN_PRECLAMP > 0 ? '(> 0 ✓ — the max(0,·) never fired)' : '(≤ 0 — CLAMP FIRED, Entry-18 claim violated!)'}`);
+
 // HEAD-TO-HEAD (paired, each regime variant vs R0) on all THREE full open datasets on equal
 // footing — P. Paz, JAAM, and the author's full export. The author is rider 1 (in-sample for the
 // ε/−0.13 calibration), but R0 and every R1* SHARE that frozen calibration, so it cancels in the
@@ -898,7 +986,7 @@ for (const [c, title] of [['ppaz', 'P. Paz'], ['jaam', 'JAAM'], ['danlessa', 'au
   const set = byCorpus(c); if (!set.length) continue;
   const mR0 = medOf(set.map(r => Math.abs(r.d_r0sm)).filter(Number.isFinite));
   console.log(`  ${title}  (n=${set.length}, R0 ${f(mR0)}%):`);
-  for (const [k, lab] of [['d_r1a', 'R1a edge'], ['d_r1a_t', 'R1a totals'], ['d_r1c_t', 'R1c totals'], ['d_r2', 'R2 totals']]) {
+  for (const [k, lab] of [['d_r1a', 'R1a edge'], ['d_r1a_t', 'R1a totals'], ['d_r1c_t', 'R1c totals'], ['d_r2', 'R2 totals'], ['d_r1d', 'R1d v2Edge']]) {
     const t = pairedAbs(set, k, 'd_r0sm'), mA = medOf(set.map(r => Math.abs(r[k])).filter(Number.isFinite));
     console.log(`     ${lab} ${f(mA)}%  · ${lab} better ${t.wins}/${t.n} (${f(t.winFrac * 100, 0)}%) · sign p=${f(t.pSign, 3)} · Wilcoxon p=${f(t.pWilcoxon, 3)}`);
   }
@@ -931,7 +1019,7 @@ for (const [c] of CORP) {
 }
 
 // ===== CSV (gitignored via data/activities/*.csv) =====
-const cols = ['corpus', 'ride', 'emp', 'km', 'vf_kmh', 'ab', 'eps', 'r0sm', 'r0pm', 'canon', 'r1a', 'r1b', 'r1c', 'r1a_t', 'r1b_t', 'r1c_t', 'r1a_ad', 'r2', 'r1a_flat', 'r1a_climb', 'r1a_desc', 'xF', 'xC', 'xD', 'hpC', 'hmD', 'eMclimb', 'eMflat', 'eMdesc', 'd_r0sm', 'd_r0pm', 'd_canon', 'd_r1a', 'd_r1b', 'd_r1c', 'd_r1a_t', 'd_r1b_t', 'd_r1c_t', 'd_r1a_ad', 'd_r2', 'd_rc', 'd_rf', 'd_rd'];
+const cols = ['corpus', 'ride', 'emp', 'km', 'vf_kmh', 'ab', 'eps', 'r0sm', 'r0pm', 'canon', 'r1a', 'r1b', 'r1c', 'r1a_t', 'r1b_t', 'r1c_t', 'r1d', 'r1d5r', 'r1d30', 'r1d30r', 'r1a_ad', 'r2', 'r1a_flat', 'r1a_climb', 'r1a_desc', 'xF', 'xC', 'xD', 'hpC', 'hmD', 'eMclimb', 'eMflat', 'eMdesc', 'd_r0sm', 'd_r0pm', 'd_canon', 'd_r1a', 'd_r1b', 'd_r1c', 'd_r1a_t', 'd_r1b_t', 'd_r1c_t', 'd_r1d', 'd_r1d5r', 'd_r1d30', 'd_r1d30r', 'd_r1a_ad', 'd_r2', 'd_rc', 'd_rf', 'd_rd'];
 const csv = [cols.join(',')].concat(rows.map(r => cols.map(k => typeof r[k] === 'string' ? JSON.stringify(r[k]) : (Number.isFinite(r[k]) ? +Number(r[k]).toFixed(3) : '')).join(','))).join('\n');
 fs.writeFileSync(path.join(HERE, 'regime_comparison.csv'), csv + '\n');
 console.log(`\nwrote regime_comparison.csv (${rows.length} rides: L ${nL} C ${nC} P ${nP} J ${nJ} D ${nD}, skipped ${zwTot} Zwift)`);
