@@ -35,15 +35,15 @@ OUT="${1:-../../simujaules/modelo}"
 CHROME="/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
 BASE="https://simujaules.pedalhidrografi.co/modelo"
 
-# DOI — set once the Zenodo deposit exists (env MODELO_DOI, or edit here:
-# e.g. "10.5281/zenodo.XXXXXXX") and rebuild. While empty, everything
-# DOI-dependent is omitted: the citation_doi meta tag, the DOI byline entry,
-# and the Plaudit open-endorsement widget (https://plaudit.pub — ORCID-signed
-# public endorsements; its embed resolves the work via citation_doi, so it is
-# only meaningful once the DOI exists). The Plaudit embed is the page's one
-# external script — it is a hosted service by design, deliberately excepted
-# from the self-contained rule.
-DOI="${MODELO_DOI:-}"
+# DOI — the Zenodo deposit's reserved DOI (env MODELO_DOI overrides). It
+# drives the citation_doi meta tag, the DOI byline entry, and the Plaudit
+# open-endorsement widget (https://plaudit.pub — ORCID-signed public
+# endorsements; its embed resolves the work via citation_doi). NB: while the
+# Zenodo deposit stays a DRAFT the DOI is reserved but does not resolve at
+# doi.org yet — it goes live when the deposit is published. The Plaudit embed
+# is the page's one external script — a hosted service by design, deliberately
+# excepted from the self-contained rule. Set empty to omit all of it.
+DOI="${MODELO_DOI:-10.5281/zenodo.21282165}"
 DOI_META=""; DOI_ITEM=""; PLAUDIT_PT=""; PLAUDIT_EN=""
 if [[ -n "$DOI" ]]; then
   DOI_META="<meta name=\"citation_doi\" content=\"$DOI\">"

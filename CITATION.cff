@@ -14,6 +14,10 @@ abstract: >-
   simulation — run on shared physical constants, validated against ~1,400
   power-meter rides. Home of the derivation notes, the comparison app, and the
   validation harnesses.
+identifiers:
+  - type: doi
+    value: 10.5281/zenodo.21282165
+    description: "Zenodo deposit of the working paper"
 preferred-citation:
   type: report
   title: "Bicycle Route Energy in Closed Form: Two Corrections, a Descent-Recovery Offset That Transfers Across Riders, and an Energy↔Time Dual"
@@ -22,6 +26,7 @@ preferred-citation:
       given-names: "Danilo"
   year: 2026
   month: 7
+  doi: 10.5281/zenodo.21282165
   institution:
     name: "Pedal Hidrográfico"
   notes: "Working paper v1.0. Portuguese version at https://simujaules.pedalhidrografi.co/modelo/"

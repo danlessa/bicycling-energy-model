@@ -64,7 +64,8 @@ paper — live in **`research/`** (`MODEL_COMPARISON_JOURNAL.md`, `article-draft
 <https://simujaules.pedalhidrografi.co/modelo/>** (português) /
 **<https://simujaules.pedalhidrografi.co/modelo/en.html>** (English) — built from
 `research/article-draft*.md` by `research/build-modelo.sh`. Citation metadata in
-[`CITATION.cff`](CITATION.cff).
+[`CITATION.cff`](CITATION.cff); DOI [10.5281/zenodo.21282165](https://doi.org/10.5281/zenodo.21282165)
+(Zenodo).
 
 ---
 
