@@ -13,6 +13,12 @@
 # hreflang alternates, and a citation_pdf_url; the PDFs are printed from the
 # HTML by headless Chrome.
 #
+# Design: Distill-style (transformer-circuits.pub as the reference) — serif
+# body on a ~44rem measure, sans headings, a small-caps byline grid under the
+# title, hairline rules, sans tables/captions, and a TOC that docks to the
+# left margin on wide screens. The markdown's own H1 is stripped at build time
+# and replaced by the injected title block (also keeps the TOC clean).
+#
 # Requires: pandoc (tested 3.1) and Google Chrome.
 # Usage: ./build-modelo.sh [output-dir]     default: ../../simujaules/modelo
 set -euo pipefail
@@ -34,45 +40,106 @@ trap 'rm -rf "$TMP"' EXIT
 # ---------------------------------------------------------------- shared CSS
 cat > "$TMP/style.html" <<'EOF'
 <style>
-:root { color-scheme: light dark; }
-html { -webkit-text-size-adjust: 100%; }
-body { margin: 0 auto; max-width: 46rem; padding: 1.5rem 1.2rem 4rem;
-  font: 1rem/1.55 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-  color: #1a1a1a; background: #fffefc; overflow-wrap: break-word; }
-h1 { font-size: 1.55rem; line-height: 1.25; margin: 1.2rem 0 .8rem; }
-h2 { font-size: 1.25rem; margin: 2.2rem 0 .6rem; }
-h3 { font-size: 1.05rem; margin: 1.8rem 0 .5rem; }
-a { color: #0b6bcb; }
-img { max-width: 100%; height: auto; }
-figure { margin: 1.4rem 0; } figcaption, em:has(> img) { font-size: .92rem; }
-blockquote { margin: 1.2rem 0; padding: .6rem 1rem; border-left: 4px solid #d0a54a;
-  background: rgba(208,165,74,.09); font-size: .95rem; }
-code { font: .88em ui-monospace, SFMono-Regular, Menlo, monospace;
-  background: rgba(120,120,120,.12); padding: .1em .28em; border-radius: 4px; }
-pre { overflow-x: auto; padding: .8rem 1rem; background: rgba(120,120,120,.1);
-  border-radius: 8px; } pre code { background: none; padding: 0; }
-table { display: block; max-width: 100%; overflow-x: auto; border-collapse: collapse;
-  font-size: .92rem; margin: 1.2rem 0; }
-th, td { padding: .3rem .6rem; border-bottom: 1px solid rgba(120,120,120,.35);
-  text-align: left; white-space: nowrap; }
-thead th { border-bottom: 2px solid rgba(120,120,120,.6); }
-math { font-size: 1.05em; }
-#TOC { margin: 1.6rem 0; padding: .8rem 1.2rem; border: 1px solid rgba(120,120,120,.3);
-  border-radius: 10px; font-size: .93rem; }
-#TOC ul { margin: .2rem 0; padding-left: 1.1rem; list-style: none; }
-#TOC > ul { padding-left: 0; }
-.lang-nav { display: flex; gap: 1rem; justify-content: space-between;
-  font-size: .9rem; padding: .5rem 0 1rem; border-bottom: 1px solid rgba(120,120,120,.3); }
-footer.modelo { margin-top: 3rem; padding-top: 1rem; font-size: .88rem;
-  border-top: 1px solid rgba(120,120,120,.3); }
-@media (prefers-color-scheme: dark) {
-  body { color: #e6e2da; background: #14130f; }
-  a { color: #6fb3f2; }
+:root {
+  color-scheme: light dark;
+  --bg: #ffffff; --fg: #1b1b1b; --muted: #616161; --faint: #9a9a9a;
+  --hair: rgba(0,0,0,.14); --hair2: rgba(0,0,0,.07);
+  --note-bg: #f7f7f4; --note-bd: #e9e9e3; --code-bg: #f4f4f0;
+  --underline: rgba(0,0,0,.3);
+  --sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+  --serif: Georgia, "Iowan Old Style", "Times New Roman", serif;
+  --mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, monospace;
 }
+@media (prefers-color-scheme: dark) { :root {
+  --bg: #171614; --fg: #e7e3db; --muted: #a8a399; --faint: #7c776e;
+  --hair: rgba(255,255,255,.17); --hair2: rgba(255,255,255,.08);
+  --note-bg: #1f1e1b; --note-bd: #2d2b26; --code-bg: #242320;
+  --underline: rgba(255,255,255,.35);
+}}
+html { -webkit-text-size-adjust: 100%; scroll-behavior: smooth; }
+body { margin: 0 auto; max-width: 44rem; padding: 0 1.4rem 5rem;
+  background: var(--bg); color: var(--fg);
+  font: 1.06rem/1.72 var(--serif); overflow-wrap: break-word; }
+
+/* ---- banner + front matter (Distill-style) ---- */
+.d-banner { display: flex; justify-content: space-between; flex-wrap: wrap; gap: .4rem 1.5rem;
+  padding: .75rem 0; border-bottom: 1px solid var(--hair2);
+  font: .74rem var(--sans); letter-spacing: .14em; text-transform: uppercase; color: var(--muted); }
+.d-banner a { color: inherit; border-bottom: none; }
+.d-banner a:hover { color: var(--fg); }
+h1.d-title { font: 700 2.1rem/1.22 var(--sans); letter-spacing: -.015em; margin: 2.6rem 0 1.4rem; }
+.d-byline { display: grid; grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+  gap: 1rem 2rem; padding: 1.05rem 0 1.15rem; margin: 0 0 1.8rem;
+  border-top: 1px solid var(--hair); border-bottom: 1px solid var(--hair);
+  font: .92rem/1.5 var(--sans); }
+.d-byline .label { display: block; font-size: .68rem; letter-spacing: .13em;
+  text-transform: uppercase; color: var(--faint); margin-bottom: .2rem; }
+
+/* ---- headings ---- */
+h2 { font: 600 1.42rem/1.3 var(--sans); letter-spacing: -.01em;
+  margin: 3rem 0 1rem; padding-bottom: .4rem; border-bottom: 1px solid var(--hair2); }
+h3 { font: 600 1.1rem/1.35 var(--sans); margin: 2.2rem 0 .7rem; }
+
+/* ---- links: quiet, Distill-style hairline underline ---- */
+a { color: inherit; text-decoration: none; border-bottom: 1px solid var(--underline); }
+a:hover { border-bottom-color: currentColor; }
+
+/* ---- notes / quotes ---- */
+blockquote { margin: 1.7rem 0; padding: 1rem 1.3rem; background: var(--note-bg);
+  border: 1px solid var(--note-bd); border-radius: 10px;
+  font: .93rem/1.65 var(--sans); }
+blockquote p { margin: .4rem 0; }
+
+/* ---- code + math ---- */
+code { font: .82em var(--mono); background: var(--code-bg);
+  padding: .12em .32em; border-radius: 4px; }
+pre { overflow-x: auto; padding: .95rem 1.15rem; background: var(--code-bg);
+  border-radius: 10px; font-size: .85rem; line-height: 1.55; }
+pre code { background: none; padding: 0; font-size: 1em; }
+math { font-size: 1.06em; }
+math[display="block"] { display: block; margin: 1.1rem 0; overflow-x: auto; }
+
+/* ---- tables: sans, horizontal hairlines only ---- */
+table { display: block; max-width: 100%; overflow-x: auto; border-collapse: collapse;
+  font: .84rem/1.5 var(--sans); margin: 1.5rem 0; }
+th, td { padding: .38rem .75rem; border-bottom: 1px solid var(--hair2);
+  text-align: left; white-space: nowrap; }
+thead th { border-bottom: 1px solid var(--hair); font-weight: 600; }
+table a { border-bottom: none; }
+
+/* ---- figures + captions ---- */
+img { max-width: 100%; height: auto; display: block; margin: 2rem auto .8rem; }
+p:has(> img:only-child) { margin: 0; }
+p:has(> img:only-child) + p:has(> em:only-child) { margin: 0 auto 2rem;
+  max-width: 38rem; font: .88rem/1.55 var(--sans); color: var(--muted); }
+
+/* ---- TOC: boxed in-flow; docks to the left margin on wide screens ---- */
+#TOC { margin: 2rem 0; padding: 1.1rem 1.4rem; border: 1px solid var(--hair2);
+  border-radius: 10px; font: .9rem/1.55 var(--sans); }
+#TOC h2, #toc-title { font: 600 .72rem var(--sans); letter-spacing: .13em;
+  text-transform: uppercase; color: var(--faint);
+  margin: 0 0 .55rem; padding: 0; border: none; }
+#TOC ul { list-style: none; margin: 0; padding-left: 0; }
+#TOC ul ul { padding-left: 1rem; }
+#TOC li { margin: .18rem 0; }
+#TOC a { border-bottom: none; color: var(--muted); }
+#TOC a:hover { color: var(--fg); }
+@media (min-width: 1420px) {
+  #TOC { position: fixed; top: 3.4rem; left: max(1.2rem, calc(50vw - 22rem - 17rem));
+    width: 14rem; max-height: calc(100vh - 6.5rem); overflow-y: auto;
+    border: none; border-radius: 0; padding: 0 .4rem 0 0; font-size: .8rem; }
+}
+
+hr { border: none; border-top: 1px solid var(--hair); margin: 2.6rem 0; }
+footer.modelo { margin-top: 3.5rem; padding-top: 1.2rem; border-top: 1px solid var(--hair);
+  font: .85rem/1.6 var(--sans); color: var(--muted); }
+
 @media print {
-  body { max-width: none; font-size: 10.5pt; }
-  .lang-nav { display: none; }
-  a { color: inherit; text-decoration: none; }
+  body { max-width: none; font-size: 10pt; }
+  .d-banner { display: none; }
+  #TOC { position: static; width: auto; max-height: none; border: 1px solid var(--hair2);
+    border-radius: 10px; padding: 1rem 1.3rem; }
+  a { border-bottom: none; color: inherit; }
 }
 </style>
 EOF
@@ -141,14 +208,28 @@ cat > "$TMP/head.en.html" <<EOF
 </script>
 EOF
 
-# ------------------------------------------------------------ nav + footers
-cat > "$TMP/nav.pt.html" <<'EOF'
-<nav class="lang-nav"><span><a href="https://simujaules.pedalhidrografi.co/">← Simujaules</a></span>
-<span><a href="en.html" hreflang="en">English version</a> · <a href="artigo.pdf">PDF</a></span></nav>
+# ------------------------------------------- banner + title block + footers
+cat > "$TMP/front.pt.html" <<EOF
+<div class="d-banner"><span><a href="https://simujaules.pedalhidrografi.co/">Simujaules</a> · Pesquisa do Pedal Hidrográfico</span>
+<span><a href="en.html" hreflang="en">English</a> · <a href="artigo.pdf">PDF</a></span></div>
+<h1 class="d-title">$TITLE_PT</h1>
+<div class="d-byline">
+  <div><span class="label">Autor</span> Danilo Lessa Bernardineli</div>
+  <div><span class="label">Afiliação</span> <a href="https://pedalhidrografi.co">Pedal Hidrográfico</a>, São Paulo</div>
+  <div><span class="label">Publicado</span> 9 de julho de 2026 · v1.0</div>
+  <div><span class="label">Recursos</span> <a href="artigo.pdf">PDF</a> · <a href="https://github.com/danlessa/bicycling-energy-model">Código e dados</a></div>
+</div>
 EOF
-cat > "$TMP/nav.en.html" <<'EOF'
-<nav class="lang-nav"><span><a href="https://simujaules.pedalhidrografi.co/">← Simujaules</a></span>
-<span><a href="./" hreflang="pt-BR">Versão em português</a> · <a href="paper.pdf">PDF</a></span></nav>
+cat > "$TMP/front.en.html" <<EOF
+<div class="d-banner"><span><a href="https://simujaules.pedalhidrografi.co/">Simujaules</a> · Pedal Hidrográfico Research</span>
+<span><a href="./" hreflang="pt-BR">Português</a> · <a href="paper.pdf">PDF</a></span></div>
+<h1 class="d-title">$TITLE_EN</h1>
+<div class="d-byline">
+  <div><span class="label">Author</span> Danilo Lessa Bernardineli</div>
+  <div><span class="label">Affiliation</span> <a href="https://pedalhidrografi.co">Pedal Hidrográfico</a>, São Paulo</div>
+  <div><span class="label">Published</span> July 9, 2026 · v1.0</div>
+  <div><span class="label">Resources</span> <a href="paper.pdf">PDF</a> · <a href="https://github.com/danlessa/bicycling-energy-model">Code &amp; data</a></div>
+</div>
 EOF
 cat > "$TMP/foot.pt.html" <<'EOF'
 <footer class="modelo"><p>© 2026 Danilo Lessa Bernardineli — texto sob licença
@@ -168,17 +249,23 @@ Part of the <a href="https://pedalhidrografi.co">Pedal Hidrográfico</a> researc
 EOF
 
 # ---------------------------------------------------------------- build HTML
-build () { # $1 src.md  $2 out.html  $3 lang  $4 pagetitle  $5 toc-title  $6 head  $7 nav  $8 foot
-  pandoc "$1" -f markdown -t html5 --standalone --mathml \
+build () { # $1 src.md  $2 out.html  $3 lang  $4 pagetitle  $5 toc-title  $6 front  $7 foot
+  # Strip the markdown's own first H1 — the injected title block replaces it
+  # (and keeps it out of the TOC). BSD-awk-safe (macOS sed lacks GNU's 0,/re/).
+  awk '!d && /^# / { d=1; next } { print }' "$1" > "$TMP/src.md"
+  # -implicit_figures: keep images as plain <p><img></p> so the following
+  # *Figure N…* emphasis paragraph is the single styled caption (no duplicate
+  # figcaption from the alt text).
+  pandoc "$TMP/src.md" -f markdown-implicit_figures -t html5 --standalone --mathml \
     --toc --toc-depth=2 -V toc-title="$5" \
     -M pagetitle="$4" -M lang="$3" -M document-css=false \
     --include-in-header="$TMP/style.html" --include-in-header="$TMP/$6" \
-    --include-before-body="$TMP/$7" --include-after-body="$TMP/$8" \
+    --include-before-body="$TMP/front.$7.html" --include-after-body="$TMP/foot.$7.html" \
     -o "$OUT/$2"
   echo ">> built $2 ($(du -h "$OUT/$2" | cut -f1 | tr -d ' '))"
 }
-build article-draft.pt-BR.md index.html pt-BR "$TITLE_PT" "Sumário"  head.pt.html nav.pt.html foot.pt.html
-build article-draft.md       en.html    en    "$TITLE_EN" "Contents" head.en.html nav.en.html foot.en.html
+build article-draft.pt-BR.md index.html pt-BR "$TITLE_PT" "Sumário"  head.pt.html pt
+build article-draft.md       en.html    en    "$TITLE_EN" "Contents" head.en.html en
 
 # ---------------------------------------------------------------- figs + PDF
 cp figs/fig*.svg "$OUT/figs/"
