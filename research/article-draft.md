@@ -1,6 +1,6 @@
 # Bicycle Route Energy in Closed Form: Two Corrections, a Descent-Recovery Offset That Transfers Across Riders, and an Energy↔Time Dual
 
-> **DRAFT / working paper — Pedal Hidrográfico research notes** (v0.16, July 2026). Self-reported benchmarks; not peer-reviewed. Two caveats govern every accuracy figure: **(i)** both engines are conditioned on each ride's *measured* power — the numbers measure consistency of the energy accounting, not blind prediction (§10.4); **(ii)** the ε calibration is in-sample on rider 1, and its cross-rider margin over a flat constant is rider- and parameter-sensitive (§8.6). Novelty claims are corpus-bounded (§10.3). The full limitation ledger is §10.4.
+> **Working paper — Pedal Hidrográfico research notes** (v1.0, July 2026). Self-reported benchmarks; not peer-reviewed. Two caveats govern every accuracy figure: **(i)** both engines are conditioned on each ride's *measured* power — the numbers measure consistency of the energy accounting, not blind prediction (§10.4); **(ii)** the ε calibration is in-sample on rider 1, and its cross-rider margin over a flat constant is rider- and parameter-sensitive (§8.6). Novelty claims are corpus-bounded (§10.3). The full limitation ledger is §10.4.
 
 **Danilo Lessa Bernardineli** — *Pedal Hidrográfico* (collective), São Paulo, Brazil — danilo.lessa@gmail.com
 

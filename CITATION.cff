@@ -1,0 +1,28 @@
+cff-version: 1.2.0
+message: "If you use this code or cite the working paper, please use the metadata below."
+title: "bicycling-energy-model"
+type: software
+authors:
+  - family-names: "Lessa Bernardineli"
+    given-names: "Danilo"
+    email: danilo.lessa@gmail.com
+repository-code: "https://github.com/danlessa/bicycling-energy-model"
+url: "https://simujaules.pedalhidrografi.co/modelo/"
+abstract: >-
+  Two models of the mechanical energy (and time) of pedalling a route — a
+  closed-form law E ≈ α·x + β·(h₊ − ε·h₋) and a Martin-1998 forward-dynamics
+  simulation — run on shared physical constants, validated against ~1,400
+  power-meter rides. Home of the derivation notes, the comparison app, and the
+  validation harnesses.
+preferred-citation:
+  type: report
+  title: "Bicycle Route Energy in Closed Form: Two Corrections, a Descent-Recovery Offset That Transfers Across Riders, and an Energy↔Time Dual"
+  authors:
+    - family-names: "Lessa Bernardineli"
+      given-names: "Danilo"
+  year: 2026
+  month: 7
+  institution:
+    name: "Pedal Hidrográfico"
+  notes: "Working paper v1.0. Portuguese version at https://simujaules.pedalhidrografi.co/modelo/"
+  url: "https://simujaules.pedalhidrografi.co/modelo/en.html"

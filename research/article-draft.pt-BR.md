@@ -1,7 +1,7 @@
 
 # Energia de Rotas de Bicicleta em Forma Fechada: Duas Correções, um Offset de Recuperação na Descida que se Transfere entre Ciclistas, e um Dual Energia↔Tempo
 
-> **RASCUNHO / artigo em elaboração — notas de pesquisa do Pedal Hidrográfico** (v0.16, julho de 2026). Benchmarks autorrelatados; não revisado por pares. Duas ressalvas governam todos os números de acurácia: **(i)** ambos os motores são condicionados à potência *medida* de cada pedalada — os números medem a consistência da contabilidade de energia, não previsão cega (§10.4); **(ii)** a calibração de ε é intra-amostra no ciclista 1, e sua margem entre ciclistas sobre uma constante fixa é sensível ao ciclista e aos parâmetros (§8.6). As alegações de novidade são limitadas pelo corpus (§10.3). O livro-razão completo de limitações é a §10.4.
+> **Working paper — notas de pesquisa do Pedal Hidrográfico** (v1.0, julho de 2026). Benchmarks autorrelatados; não revisado por pares. Duas ressalvas governam todos os números de acurácia: **(i)** ambos os motores são condicionados à potência *medida* de cada pedalada — os números medem a consistência da contabilidade de energia, não previsão cega (§10.4); **(ii)** a calibração de ε é intra-amostra no ciclista 1, e sua margem entre ciclistas sobre uma constante fixa é sensível ao ciclista e aos parâmetros (§8.6). As alegações de novidade são limitadas pelo corpus (§10.3). O livro-razão completo de limitações é a §10.4.
 
 ## Resumo
 
