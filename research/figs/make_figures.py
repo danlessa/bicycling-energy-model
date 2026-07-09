@@ -93,22 +93,31 @@ class Fig:
         b.append(f'<text x="14" y="{cy:.0f}" text-anchor="middle" {FONT} font-size="12" '
                  f'fill="{INK}" transform="rotate(-90 14 {cy:.0f})">{ylabel}</text>')
 
-    def dot(self, x, y, xr, yr, r, fill, op=1.0, stroke='none'):
+    def dot(self, x, y, xr, yr, r, fill, op=1.0, stroke='none', tip=None, cls=None):
         px, py = self.map(x, y, xr, yr)
+        extra = (f' data-tip="{tip}"' if tip else '') + (f' class="{cls}"' if cls else '')
         self.body.append(f'<circle cx="{px:.1f}" cy="{py:.1f}" r="{r:.1f}" fill="{fill}" '
-                         f'fill-opacity="{op}" stroke="{stroke}" stroke-width="0.8"/>')
+                         f'fill-opacity="{op}" stroke="{stroke}" stroke-width="0.8"{extra}/>')
 
-    def line(self, pts, xr, yr, color, w=2.0, dash=''):
+    def line(self, pts, xr, yr, color, w=2.0, dash='', cls=None):
         d = ' '.join(('M' if i == 0 else 'L') + f'{self.map(x,y,xr,yr)[0]:.1f},{self.map(x,y,xr,yr)[1]:.1f}'
                      for i, (x, y) in enumerate(pts))
         da = f' stroke-dasharray="{dash}"' if dash else ''
-        self.body.append(f'<path d="{d}" fill="none" stroke="{color}" stroke-width="{w}"{da}/>')
+        cl = f' class="{cls}"' if cls else ''
+        self.body.append(f'<path d="{d}" fill="none" stroke="{color}" stroke-width="{w}"{da}{cl}/>')
 
     def legend(self, items, x, y):
-        for i, (lab, col) in enumerate(items):
+        # items: (label, colour) or (label, colour, series-key). Keyed entries
+        # are emitted as <g class="lg" data-series=…> — the page JS makes them
+        # click-to-toggle for the matching .key elements in the same SVG.
+        for i, it in enumerate(items):
+            lab, col, key = (it + (None,))[:3] if len(it) == 2 else it
             yy = y + i * 18
-            self.body.append(f'<rect x="{x}" y="{yy-9}" width="12" height="12" rx="2" fill="{col}"/>')
-            self.body.append(f'<text x="{x+18}" y="{yy+1}" {FONT} font-size="11" fill="{INK}">{lab}</text>')
+            row = (f'<rect x="{x}" y="{yy-9}" width="12" height="12" rx="2" fill="{col}"/>'
+                   f'<text x="{x+18}" y="{yy+1}" {FONT} font-size="11" fill="{INK}">{lab}</text>')
+            if key:
+                row = f'<g class="lg" data-series="{key}">{row}</g>'
+            self.body.append(row)
 
     def save(self, name):
         svg = (f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {self.w} {self.h}" '
@@ -154,8 +163,9 @@ def fig1():
         xl, yb = f.map(i + 0.5 - bw / 2, 0, xr, yr)
         xrr, yt = f.map(i + 0.5 + bw / 2, v, xr, yr)
         tops.append(((xl + xrr) / 2, yt, v, xl, xrr))
+        tip = f'{lab.replace(chr(10), " ")}: {v:.1f}% median |Δ%|'
         f.body.append(f'<rect x="{xl:.1f}" y="{yt:.1f}" width="{xrr-xl:.1f}" height="{yb-yt:.1f}" '
-                      f'rx="3" fill="{cols[i]}" fill-opacity="0.9"/>')
+                      f'rx="3" fill="{cols[i]}" fill-opacity="0.9" data-tip="{tip}"/>')
         f.body.append(f'<text x="{(xl+xrr)/2:.1f}" y="{yt-7:.1f}" text-anchor="middle" {FONT} '
                       f'font-size="13" font-weight="600" fill="{INK}">{v:.1f}%</text>')
         for k, line in enumerate(lab.split('\n')):
@@ -189,18 +199,21 @@ def fig2():
         cfS = num(r['cfS_vs_emp'])  # smoothed-cf % error -> reconstruct predicted kJ
         if None in (emp, can, cfS):
             continue
-        pts.append((emp / 1000, can / 1000, emp * (1 + cfS / 100) / 1000))
+        pts.append((emp / 1000, can / 1000, emp * (1 + cfS / 100) / 1000,
+                    (can - emp) / emp * 100, cfS))
     hi = max(max(p[0], p[1], p[2]) for p in pts) * 1.05
     xr = yr = (0, hi)
     f = Fig(420, 400, pad=(40, 18, 46, 52))
     f.frame(xr, yr, 'measured ∫P·dt  (MJ)', 'predicted energy  (MJ)',
             title='Predicted vs measured (44 rides)')
     f.line([(0, 0), (hi, hi)], xr, yr, GREY, 1.2, dash='4 3')
-    for emp, can, cfs in pts:
-        f.dot(emp, cfs, xr, yr, 4.2, VERM, 0.8)
-        f.dot(emp, can, xr, yr, 4.2, BLUE, 0.7)
-    f.legend([('approx cf + 2 m smooth', VERM), ('canonical', BLUE), ('perfect (y = x)', GREY)],
-             f.x0 + 12, f.y0 + 16)
+    for emp, can, cfs, dcan, dcfs in pts:
+        f.dot(emp, cfs, xr, yr, 4.2, VERM, 0.8, cls='s0',
+              tip=f'approx cf+2m: measured {emp:.2f} MJ → predicted {cfs:.2f} MJ ({dcfs:+.1f}%)')
+        f.dot(emp, can, xr, yr, 4.2, BLUE, 0.7, cls='s1',
+              tip=f'canonical: measured {emp:.2f} MJ → predicted {can:.2f} MJ ({dcan:+.1f}%)')
+    f.legend([('approx cf + 2 m smooth', VERM, 's0'), ('canonical', BLUE, 's1'),
+              ('perfect (y = x)', GREY)], f.x0 + 12, f.y0 + 16)
     f.save('fig2-pred-vs-meas.svg')
 
 
@@ -215,7 +228,8 @@ def fig3():
             title='Ascent is scale-dependent (fractal)')
     f.line(data, xr, yr, GREEN, 2.4)
     for x, y in data:
-        f.dot(x, y, xr, yr, 3.6, GREEN)
+        f.dot(x, y, xr, yr, 3.6, GREEN,
+              tip=f'τ = {x} m: Σh₊ = {y} km ({y / data[0][1] * 100:.0f}% of raw)')
     # mark the chosen τ = 2 m default
     px, py = f.map(2, 77.4, xr, yr)
     f.body.append(f'<line x1="{px:.1f}" y1="{py:.1f}" x2="{px:.1f}" y2="{f.y1:.1f}" '
@@ -247,10 +261,11 @@ def fig4():
         r = 3 + 7 * math.sqrt(be / bmax)          # area ∝ descent energy β·H₋
         real = sb >= 0.03
         f.dot(ec, eb, xr, yr, r, VERM if real else GREY, 0.55 if real else 0.30,
-              stroke='#fff' if real else 'none')
+              stroke='#fff' if real else 'none', cls='s0' if real else 's1',
+              tip=f'ε_coast {ec:.2f} → ε_bal {eb:.2f} · s̄ {sb*100:.1f}% · βH₋ {be/1000:.0f} kJ')
     f.body.append(f'<text x="{f.x1-10:.0f}" y="{f.y0+18:.0f}" text-anchor="end" {FONT} '
                   f'font-size="11" fill="{GREEN}">ε = ε_coast − 0.13</text>')
-    f.legend([('real descents (s̄ ≥ 3%)', VERM), ('gentle (near-zero descent kJ)', GREY)],
+    f.legend([('real descents (s̄ ≥ 3%)', VERM, 's0'), ('gentle (near-zero descent kJ)', GREY, 's1')],
              f.x0 + 12, f.y1 - 40)
     f.body.append(f'<text x="{f.x0+12:.0f}" y="{f.y1-4:.0f}" {FONT} font-size="10" '
                   f'fill="{GREY}">point area ∝ descent energy β·H₋</text>')
@@ -270,18 +285,20 @@ def fig5():
             xticks=[0, .05, .1, .15, .2, .25], yticks=[-5, 0, 5, 10, 15],
             title='Censo ε-sweep — 62 urban rides (transfer test)')
     f.line([(0, 0), (0.25, 0)], xr, yr, GREY, 1.0, dash='4 3')
-    f.line(list(zip(eps, sm)), xr, yr, BLUE, 2.2)
-    f.line(list(zip(eps, pm)), xr, yr, VERM, 2.2)
+    f.line(list(zip(eps, sm)), xr, yr, BLUE, 2.2, cls='s0')
+    f.line(list(zip(eps, pm)), xr, yr, VERM, 2.2, cls='s1')
     for e, y in zip(eps, sm):
-        f.dot(e, y, xr, yr, 3.4, BLUE)
+        f.dot(e, y, xr, yr, 3.4, BLUE, cls='s0',
+              tip=f'smooth · ε = {e:.2f}: median Δ% {y:+.1f}')
     for e, y in zip(eps, pm):
-        f.dot(e, y, xr, yr, 3.4, VERM)
+        f.dot(e, y, xr, yr, 3.4, VERM, cls='s1',
+              tip=f"poor-man's · ε = {e:.2f}: median Δ% {y:+.1f}")
     px, py = f.map(0.20, 0, xr, yr)
     f.body.append(f'<line x1="{px:.1f}" y1="{f.y0:.1f}" x2="{px:.1f}" y2="{f.y1:.1f}" '
                   f'stroke="{GREEN}" stroke-width="1.4" stroke-dasharray="3 3"/>')
     f.body.append(f'<text x="{px-6:.1f}" y="{f.y0+14:.0f}" text-anchor="end" {FONT} '
                   f'font-size="11" fill="{GREEN}">ε ≈ 0.20 optimum</text>')
-    f.legend([('smooth approx', BLUE), ("poor-man's scalar", VERM)], f.x0 + 12, f.y1 - 34)
+    f.legend([('smooth approx', BLUE, 's0'), ("poor-man's scalar", VERM, 's1')], f.x0 + 12, f.y1 - 34)
     f.save('fig5-censo-sweep.svg')
 
 
@@ -310,10 +327,11 @@ def fig6():
         r = 2.2 + 5.5 * math.sqrt(hd / hmax)      # area ∝ descent drop H₋
         real = sb >= 0.03
         f.dot(ec, min(eb, 1.2), xr, yr, r, VERM if real else GREY, 0.45 if real else 0.22,
-              stroke='none')
+              stroke='none', cls='s0' if real else 's1',
+              tip=f'ε_coast {ec:.2f} → ε_bal {eb:.2f} · s̄ {sb*100:.1f}% · H₋ {hd:.0f} m')
     f.body.append(f'<text x="{f.x1-10:.0f}" y="{f.y0+18:.0f}" text-anchor="end" {FONT} '
                   f'font-size="11" fill="{GREEN}">ε = ε_coast − 0.13 (frozen)</text>')
-    f.legend([('real descents (s̄ ≥ 3%, n = 156)', VERM), ('gentle rides', GREY)],
+    f.legend([('real descents (s̄ ≥ 3%, n = 156)', VERM, 's0'), ('gentle rides', GREY, 's1')],
              f.x0 + 12, f.y1 - 40)
     f.body.append(f'<text x="{f.x0+12:.0f}" y="{f.y1-4:.0f}" {FONT} font-size="10" '
                   f'fill="{GREY}">point area ∝ descent drop H₋</text>')
@@ -341,12 +359,15 @@ def fig7():
             title='Predicted vs measured moving time')
     f.line([(0, 0), (hi, hi)], xr, yr, GREY, 1.2, dash='4 3')
     # draw ppaz first (most points), then censo, then longões on top
+    key = {'ppaz': 's2', 'censo': 's1', 'longoes': 's0'}
     for corp in ('ppaz', 'censo', 'longoes'):
         for meas, pred, c in P:
             if c == corp:
-                f.dot(meas, pred, xr, yr, 3.6, col[corp], 0.6)
-    f.legend([('longões (rider 1, open)', BLUE), ('censo (rider 1, urban)', VERM),
-              ('P. Paz (rider 2)', GREEN), ('perfect (y = x)', GREY)], f.x0 + 12, f.y0 + 16)
+                f.dot(meas, pred, xr, yr, 3.6, col[corp], 0.6, cls=key[corp],
+                      tip=f'{corp}: measured {meas:.2f} h → predicted {pred:.2f} h '
+                          f'({(pred / meas - 1) * 100:+.1f}%)')
+    f.legend([('longões (rider 1, open)', BLUE, 's0'), ('censo (rider 1, urban)', VERM, 's1'),
+              ('P. Paz (rider 2)', GREEN, 's2'), ('perfect (y = x)', GREY)], f.x0 + 12, f.y0 + 16)
     f.save('fig7-time.svg')
 
 
@@ -376,10 +397,11 @@ def fig8():
         r = 2.2 + 5.5 * math.sqrt(hd / hmax)
         real = sb >= 0.03
         f.dot(ec, min(eb, 1.2), xr, yr, r, VERM if real else GREY, 0.55 if real else 0.20,
-              stroke='none')
+              stroke='none', cls='s0' if real else 's1',
+              tip=f'ε_coast {ec:.2f} → ε_bal {eb:.2f} · s̄ {sb*100:.1f}% · H₋ {hd:.0f} m')
     f.body.append(f'<text x="{f.x1-10:.0f}" y="{f.y0+18:.0f}" text-anchor="end" {FONT} '
                   f'font-size="11" fill="{GREEN}">ε = ε_coast − 0.13 (frozen)</text>')
-    f.legend([('real descents (s̄ ≥ 3%, n = 21)', VERM), ('gentle rides (bulk)', GREY)],
+    f.legend([('real descents (s̄ ≥ 3%, n = 21)', VERM, 's0'), ('gentle rides (bulk)', GREY, 's1')],
              f.x0 + 12, f.y1 - 40)
     f.body.append(f'<text x="{f.x0+12:.0f}" y="{f.y1-4:.0f}" {FONT} font-size="10" '
                   f'fill="{GREY}">most of this rider\'s riding is gentle — measured ε_bal sits far below the line</text>')
