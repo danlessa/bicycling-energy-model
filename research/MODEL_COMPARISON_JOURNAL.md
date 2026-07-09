@@ -78,6 +78,58 @@ changed. See Entry 11.)*
   the bias-trade law claims R1d too),
   [`verify_v2edge_clamp.mjs`](../data/activities/verify_v2edge_clamp.mjs) +
   [`regime_compare.mjs`](../data/activities/regime_compare.mjs)) — this commit
+- **Entry 22** (bootstrap 95% CIs + paired sign tests for the article's headline medians; the
+  champion-vs-canonical "beats" claim demoted to parity,
+  [`bootstrap_ci.mjs`](../data/activities/bootstrap_ci.mjs)) — this commit
+
+---
+
+## 2026-07-09 — Entry 22: error bars for the headline medians — the champion "beats" the sim only on the median, so the article now claims parity
+
+*Prompt (Danilo): revise the article for the review weaknesses — fold Entries 19–21 in, re-frame
+the title/abstract around what transfers, and put uncertainty on the headline numbers. This entry
+records the new statistics; no engine ran and no published median changed.*
+
+**What was computed.** [`bootstrap_ci.mjs`](../data/activities/bootstrap_ci.mjs) reads the
+per-ride CSVs already written by the other harnesses (`model_comparison`, `censo_comparison`,
+`ppaz_comparison`, `jaam_comparison`, `time_comparison` — no FIT parsing, no engines) and adds
+two kinds of statistics the article previously lacked:
+
+- **Bootstrap 95% CIs on the headline medians** (percentile method, 10⁴ resamples over rides,
+  deterministic seed). Gate: every published median must reproduce to the journal's 1-decimal
+  rounding (±0.11) before its CI is reported — all gates pass, exit non-zero otherwise. The time
+  endpoint reproduces only against `tMovBin` (the harness's actual scoreboard target), not
+  `tMov` — mind that if reusing the CSV.
+- **Exact two-sided paired sign tests on |Δ%|** for every head-to-head the article states as a
+  ranking.
+
+**The one finding that changed a claim.** On the 44 longões, the champion (cf + 2 m deadband,
+3.6% median) vs the canonical sim (5.1%): CIs **[2.0, 5.6] vs [3.8, 7.1]** overlap, and paired,
+the champion is closer on only **25/44 rides (57%, sign test p = 0.45)**. The "beats the forward
+simulation" headline was a median-point comparison that the paired test does not support. The
+article (v0.16) now claims **statistical parity** everywhere it said "beats" (abstract, §8.1,
+Fig. 1 caption, §11) — which is still the practically decisive result, since the closed form is
+the engine cheap enough to route with.
+
+**Rankings that ARE paired-significant** (and now say so in §8.4/§8.6): P. Paz pm·ε_geom beats
+the flat-ε 0.20 variant on 76% of rides and the canonical sim on 60% (both p < 10⁻⁴); JAAM
+sm·ε=0.20 beats sm·ε_geom on 65% (p < 10⁻⁴). Parity results stated as such: censo pm·ε=0.20 vs
+canonical 33/62 (p = 0.70). The §8.8 time endpoint keeps its already-published paired tests
+(56% of 433, p = 0.011) and gains CIs (T1b 6.6 [5.9, 7.2] vs T0 7.6 [7.0, 8.5]).
+
+**Article v0.16 (both languages), the rest of the revision.** New **§8.9** compresses Entries
+19–21 (resolution over-charge → pre-registered goal PASS with calibration as the lever →
+scale/terrain-dependent behavioural trio); the recipe moves to **§8.10** and gains a calibration
+step 7. Title re-framed ("a Descent-Recovery Offset That Transfers Across Riders" — the offset is
+the robust piece, not the geometric skill). §6.3 flags the implicit-scale consequence; §7.1
+documents the CI/sign-test methodology; §9.1 corrects the outdated "~30 m grid the deployment
+uses" claim (the usual raster is the 5 m IGC-SP) and records the shipped v55 σ = 10 m
+pre-smoothing; §10.2 gains a provenance row; §10.4 scopes the calibration result against
+planning-mode; §11 adds the constants-are-the-frontier finding and the terrain-indexed-trio open
+question. `article-draft.pt-BR.md` mirrors every change.
+
+Tooling: `node bootstrap_ci.mjs` (instant; needs only the gitignored per-ride CSVs; exits
+non-zero on any gate failure).
 
 ---
 

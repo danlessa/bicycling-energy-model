@@ -56,7 +56,16 @@ home of the *derivation* (`notas.md`) and the side-by-side comparison.
   `igc_resolution_test.mjs` (v2Edge + R0 on the deployed IGC-SP 5 m raster vs 30 m resample vs
   FABDEM, 922 SP rides — Entry 19: 5 m resolution over-charge confirmed on the real DEM,
   ~30 m pre-smoothing mitigation triggered, FABDEM disqualified on flat terrain; needs
-  gdalwarp/gdallocationinfo + sampasimu's dem/sampa_geral.tif).
+  gdalwarp/gdallocationinfo + sampasimu's dem/sampa_geral.tif),
+  `goal_calibration.mjs` + `goal_smooth_rasters.py` (pre-registered ±5%/±2% goal — Entry 20:
+  PASS on all three riders' validation halves at σ\*=10 m + per-rider (CdA, Crr, kSmooth);
+  the calibration, not the smoothing, is the lever; fitted values are effective, not physical),
+  `scale_trio.mjs` (the behavioural trio (k_s, ε₀, climbThr) re-fitted as a pure 5 m→30 m
+  resolution transfer — Entry 21: bridges the rider corpora per-ride, fails on censo ⇒ the
+  trio is a function of (Δx, terrain regime), not Δx alone),
+  `bootstrap_ci.mjs` (bootstrap 95% CIs + paired sign tests for the article's headline medians
+  from the existing per-ride CSVs — Entry 22: champion-vs-canonical is parity, not "beats";
+  gates reproduce every published median, exits non-zero on failure).
   The `*_compare.mjs` take `<RIDER>_M`/`_CDA`/`_CRR` env overrides to swap the assumed physics
   for a rider's Entry-15 fitted values — the fitted-vs-assumed robustness test (Entry 16),
   plus `fetch*.py` / `build_model_inputs.py` / `verify.py`. Each `.mjs` ports the app's
