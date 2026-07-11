@@ -222,6 +222,50 @@ invisible on the smooth terrain most rides are made of, where the clamp rarely b
 *Worked example* (RMC200 Mogi): $\alpha/\beta=0.0202$, $\bar s=3.4\%$ ⇒
 $\min(1,\,0.0202/0.0341)=0.59$; minus $0.13$ ⇒ $\mathbf{0.46}$, vs. measured $0.47$.
 
+### Per-edge realisation (v2Edge) — what Simujaules deploys
+
+Routing needs an $O(1)$-local edge cost, so the deployed engine (sampasimu
+`energy-worker.js` and its Rust port) evaluates the law **per edge**, with the
+recovery recomputed from each edge's *own* grade $s = |dh|/dx$ instead of a
+ride-aggregate $\epsilon$ (journal Entries 18–21):
+
+$$
+dh \ge 0:\quad \alpha_r\,dx + [s < s_{climb}]\,\alpha_a\,dx + k_s\,\beta\,dh
+\qquad
+dh < 0:\quad \max\!\big(0,\ \alpha_r\,dx + \alpha_a\,dx - \epsilon(s)\,k_s\,\beta\,|dh|\big)
+$$
+
+with $\epsilon(s) = \mathrm{clamp}_{01}\!\big(\min(1,\,(\alpha/\beta)/s) - \epsilon_0\big)$,
+$\epsilon_0 = 0.13$. Two structural facts, both load-bearing:
+
+- $\alpha/\beta$ inside $\epsilon(s)$ stays **un-smoothed** ($k_s$ scales only $\beta$):
+  $\epsilon$ is a grade-geometry factor, not an energy one.
+- The trailing $\max(0,\cdot)$ is **provably dead code** — $\epsilon(s)$ keeps every
+  descent edge at or above a strictly positive floor ($0.13\,\alpha\,dx$ in the gentle
+  regime, $0.13\,\beta\,|dh|$ in the middle, $\alpha\,dx$ steep); confirmed at
+  $+4.6\,$J minimum pre-clamp over 1402 real rides (Entry 18,
+  `verify_v2edge_clamp.mjs`).
+
+**Resolution caveat.** The grade-local $\epsilon(s)$ is *resolution-sensitive* in a
+way the aggregate is not: at sampling steps $\ll 30\,$m, local grades read steeper,
+$\epsilon(s)$ collapses toward 0 on descent edges, and v2Edge over-charges — measured
++9.5% pooled median at 5 m vs +6.3% at 30 m on the deployed IGC-SP raster
+(Entry 19; the $-0.13$ was calibrated on **30 m** cells). Deployed mitigations:
+$\sigma = 10\,$m raster pre-smoothing at DEM load, and — the decisive lever —
+**per-rider calibration** of effective $(C_dA, C_{rr}, k_s)$ on the rider's own
+history, which meets a ±5% error / ±2% bias goal on three independent riders
+(Entry 20; fitted values are *effective*, not physical). Alternatively the
+behavioural trio $(k_s, \epsilon_0, s_{climb})$ re-fitted as a pure 30 m → 5 m
+resolution transfer — $k_s = 0.94$, $\epsilon_0 = 0.063$, $s_{climb} = 2.5\%$ —
+bridges the gap per-ride on open/hilly terrain but **not** on flat urban terrain:
+the trio is a function of (sampling step, terrain regime), not of the step alone
+(Entry 21).
+
+**Standing of the two forms** (Entry 22): for *ride energy* the aggregate-$\epsilon$
+champion and the canonical simulation are at statistical parity (medians 3.6% vs
+5.1% on the longões, overlapping CIs, sign test $p = 0.45$); v2Edge ties the champion
+near its native ~30 m grid and is the routing-compatible form.
+
 ---
 
 ## Correcting the climb aero over-charge

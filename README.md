@@ -28,7 +28,13 @@ dependencies. You can:
   button), headwind, and the engine resolution `dx`;
 - compare total energy, the per-regime decomposition, the canonical speed
   profile, displacement energy, and the climb-aero correction (`off` / `≈0` /
-  `v_c`) against canonical.
+  `v_c`) against canonical;
+- read the **v2Edge** card — the per-edge realisation Simujaules actually
+  deploys for routing (grade-local `ε(s)`, `k_s`, `ε₀`; journal Entries 18–21),
+  with its implied drop-weighted ε, the live dead-clamp readout, and a button
+  applying Entry 21's Δx = 5 m re-calibrated trio. Its grade-local ε is
+  resolution-sensitive: move the engine `dx` between 5 and 30 m on a real
+  track to see the over-charge the journal measured.
 
 ## Theory
 

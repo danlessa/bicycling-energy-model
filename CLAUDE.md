@@ -17,7 +17,7 @@ home of the *derivation* (`notas.md`) and the side-by-side comparison.
   the GPX and binary-FIT parsers, hardcoded Portuguese strings (single-language,
   no i18n table). **No dependencies, no bundler, no `package.json`** — open it
   directly in a browser; it surfaces syntax errors immediately. Key functions:
-  `canonical()`, `approximate()`, `parseFIT()`, `buildProfile()`,
+  `canonical()`, `approximate()`, `v2Edge()`, `parseFIT()`, `buildProfile()`,
   `extractRegimePowers()`, `epsFromFIT()`, `recompute()`.
 - `notas.md` — the derivations and spec: the energy law and its `α, β, ε`; the
   local recovery `ε(s)` and its descent-height-weighted aggregate; the climb-aero
@@ -89,6 +89,15 @@ home of the *derivation* (`notas.md`) and the side-by-side comparison.
   pedal power (climb/flat/descent chosen by local grade), safe-speed (`v_max`)
   brake cap on descents. Returns leg energy `∫P·dt`, time, the wheel-work
   breakdown, and the speed profile.
+
+The app also shows **v2Edge** — the per-edge realisation Simujaules deploys
+(grade-local `ε(s) = clamp01(min(1, (α/β)/s) − ε₀)`, aero gated off climbs,
+`k_s` scaling β only, dead `max(0,·)` clamp — journal Entries 18–21). It is a
+verbatim port of `regime_compare.mjs`'s `r1dV2Edge` / sampasimu
+`energy-worker.js`'s edge cost — a change to any copy must land in all
+(same hand-kept-in-sync rule as the engines). It deliberately walks the RAW
+profile (no deadband) at the engine dx, so the Entry-19 resolution over-charge
+is visible live by moving dx between 5 and 30 m.
 
 **Design principle — both read the same physical constants** (`m, C_rr, CdA, ρ,
 k_eff, wind`). That is what makes the comparison meaningful: the gap is the
