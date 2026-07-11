@@ -1,0 +1,57 @@
+# Publish the study tool to GitHub Pages on every push to the `deploy` branch.
+# Live at: https://danlessa.github.io/bicycling-energy-model/
+#
+# The app is one self-contained HTML file (no build step, no assets), so the
+# published site is just that file served as index.html (plus its original
+# filename for deep links). Only the files staged below are ever published —
+# data/, research/ and everything gitignored (FIT/GPX tracks, third-party
+# exports) never leave the repo checkout.
+#
+# One-time setup: Settings → Pages → Source: "GitHub Actions" (configure-pages
+# below tries to enable it automatically; do it by hand if that step fails).
+# If the deploy is rejected by environment protection rules, allow the
+# `deploy` branch under Settings → Environments → github-pages →
+# Deployment branches.
+
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [deploy]
+  workflow_dispatch: {}   # manual deploy button on the Actions tab
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Serialize Pages deploys; don't cancel one mid-flight.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Stage site
+        run: |
+          mkdir _site
+          cp energy-model-comparison.html _site/index.html
+          cp energy-model-comparison.html _site/
+
+      - uses: actions/configure-pages@v5
+        with:
+          enablement: true
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+      - id: deployment
+        uses: actions/deploy-pages@v4
