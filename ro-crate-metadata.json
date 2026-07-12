@@ -28,6 +28,7 @@
         { "@id": "research/article-draft.md" },
         { "@id": "research/article-draft.pt-BR.md" },
         { "@id": "research/claims.ttl" },
+        { "@id": "analysis/" },
         { "@id": "data/activities/" },
         { "@id": "data/sample.gpx" },
         { "@id": "data/flecha_power.csv" }
@@ -98,6 +99,14 @@
       "description": "RDF/Turtle graph: research questions, hypotheses, pre-registered protocols (P-Plan), harness runs (PROV-O), assertions with polarized evidence lines (SEPIO pattern), and typed inter-entry citation links (CiTO).",
       "encodingFormat": "text/turtle",
       "about": { "@id": "./" }
+    },
+    {
+      "@id": "analysis/",
+      "@type": ["Dataset", "SoftwareSourceCode"],
+      "name": "Research workflow in Python (independent-verification port)",
+      "description": "Stdlib-only Python port of the engines/parsers (bem/), a cross-language parity harness that extracts the verbatim JS at run time and asserts agreement to float64 round-off (parity/), and an executable Quarto mirror of the research journal (journal.qmd).",
+      "programmingLanguage": "Python",
+      "isPartOf": { "@id": "./" }
     },
     {
       "@id": "data/activities/",

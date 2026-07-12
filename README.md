@@ -36,6 +36,15 @@ dependencies. You can:
   resolution-sensitive: move the engine `dx` between 5 and 30 m on a real
   track to see the over-charge the journal measured.
 
+## Independent verification (Python)
+
+The whole workflow is also available in **pure Python** under `analysis/`
+(`bem/` package + `analysis/journal.qmd`, an executable Quarto mirror of the
+research journal). The Python port's equivalence to the JS engines is
+machine-checked by `python3 analysis/parity/run_parity.py`, which extracts
+the verbatim JS at run time and compares 8 000+ values to float64 round-off
+— so the analysis can be reviewed without trusting the port by eye.
+
 ## Theory
 
 **`notas.md`** holds the derivations: the energy law and its `α`, `β`, `ε`

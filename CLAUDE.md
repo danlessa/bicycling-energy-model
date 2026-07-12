@@ -73,9 +73,19 @@ home of the *derivation* (`notas.md`) and the side-by-side comparison.
   the inventory parsers; they drifted before).
 - `research/` — the write-ups: `MODEL_COMPARISON_JOURNAL.md` (numbered entries, newest
   first), `literature-context.md` (positioning), `article-draft.md` + `article-draft.pt-BR.md`
-  (the draft paper, EN + pt-BR), `crr-cda-typical-values.md`, `dem-elevation-comparison.md`,
+  (the draft paper, EN + pt-BR), `claims.ttl` (machine-readable claims–questions–evidence
+  graph for Entries 17–22; RO-Crate envelope at the repo root `ro-crate-metadata.json`),
+  `crr-cda-typical-values.md`, `dem-elevation-comparison.md`,
   `censo-model-verification.md`, `VERIFICATION_NOTES.md`, and `dem/` (DEM tooling;
   `dem/coords/` is gitignored — per-ride GPS).
+- `analysis/` — the research workflow in **Python** (stdlib-only), for independent
+  review: `bem/` (line-by-line ports of the engines/parsers + the `analyze_ride`
+  compare.mjs wiring), `parity/` (cross-language harness: `js_runner.mjs` extracts the
+  VERBATIM JS from the app/compare.mjs at run time, `run_parity.py` asserts agreement —
+  8 442 comparisons ≤ 1e-9), and `journal.qmd` (executable Quarto mirror of the journal;
+  data-gated cells skip without the private tracks). **`bem/` is another hand-kept-in-sync
+  engine copy**: an engine/parser change must land there too, and
+  `python3 analysis/parity/run_parity.py` (needs node) must pass afterwards.
 - `README.md` — user-facing overview.
 
 ## The two models
@@ -158,7 +168,9 @@ No build, no CI. Verify by:
   `node time_compare.mjs`. Diff the numbers against the journal
   entries and `research/article-draft.md`; a doc-visible number that moves must be updated
   in both. A change to the engine or FIT parser must be applied to **all** copies (the app
-  + the six harness `.mjs` + `ppaz_inventory.mjs`'s parser) or they drift.
+  + the six harness `.mjs` + `ppaz_inventory.mjs`'s parser + the Python port
+  `analysis/bem/`) or they drift — after any such change run
+  `python3 analysis/parity/run_parity.py` (machine-checks Python ≡ verbatim JS).
 - **Sanity cases** for an engine change: flat (canonical ≈ approximate at auto v_f),
   pure climb (`legE ≥ PE`), pure descent (≈ coast), and P=0 (the bike must *stall*, not
   gain energy — no KE floor).
