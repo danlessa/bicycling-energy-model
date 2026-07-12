@@ -16,6 +16,8 @@ same IEEE-754 doubles, so only the *decimal rendering* differs:
 import math
 from decimal import ROUND_HALF_UP, Decimal
 
+from .v8math import js_num
+
 
 def to_fixed(x, d=0):
     if x != x:
@@ -33,15 +35,9 @@ def to_fixed(x, d=0):
 def js_str(x):
     if isinstance(x, int):
         return str(x)
-    if x != x:
-        return "NaN"
-    if math.isinf(x):
-        return "Infinity" if x > 0 else "-Infinity"
-    if x == 0:
-        return "0"
-    if float(x).is_integer() and abs(x) < 1e21:
-        return str(int(x))
-    return repr(x)  # shortest round-trip, same digits as V8 in the normal range
+    # Full Number::ToString — repr()-based shortcuts mis-render (1e-6, 1e-4)
+    # ("1e-05" where JS says "0.00001") and zero-pad exponents ("1e-07" vs "1e-7").
+    return js_num(float(x))
 
 
 def to_exponential(x, d):
