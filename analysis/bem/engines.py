@@ -50,7 +50,9 @@ def resample_profile(src, dx):
     """Resample an arbitrary {x,h} profile onto a uniform dx grid (JS resampleProfile)."""
     sx, sh = src["x"], src["h"]
     total = sx[len(sx) - 1]
-    n = max(2, round(total / dx) + 1)
+    # JS Math.round is half-UP (floor(x+0.5)); Python round() is half-even —
+    # they diverge when total/dx lands exactly on .5.
+    n = max(2, math.floor(total / dx + 0.5) + 1)
     x = [0.0] * n
     h = [0.0] * n
     j = 0
