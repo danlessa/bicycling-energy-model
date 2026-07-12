@@ -12,7 +12,7 @@ resolve their inputs and this directory relative to their own location).
 | `eps_hypothesis.csv` | `python3 harness/eps_hypothesis.py` | 9 |
 | `eps_sp.csv` | `python3 harness/eps_sp_test.py` | 10 |
 | `ppaz_comparison.csv` | `python3 harness/ppaz_compare.py` | 12 |
-| `time_comparison.csv` | `node harness/time_compare.mjs` | 13 |
+| `time_comparison.csv` | `python3 harness/time_compare.py` | 13 |
 | `jaam_comparison.csv` | `python3 harness/jaam_compare.py` | 14 |
 | `cda_estimate.csv`, `param_fit.csv` | `node harness/cda_estimate.mjs` / `param_fit.mjs` | 15 |
 | `danlessa_comparison.csv` | `python3 harness/danlessa_compare.py` | 16 |
