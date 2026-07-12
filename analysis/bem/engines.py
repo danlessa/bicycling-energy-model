@@ -119,6 +119,7 @@ def canonical(prof, pw, p):
     KEinit = 0.5 * m * p["vstart"] * p["vstart"]
     KE = KEinit
     legE = t = Wrr = Waero = Wgrav = Wbrake = 0.0
+    legER = [0.0, 0.0, 0.0]  # per-regime legE bookkeeping [descent, flat, climb] (no dynamics effect)
     speed = [0.0] * n
     brk = [0] * n
     regime = [0] * n
@@ -189,6 +190,7 @@ def canonical(prof, pw, p):
             vNew = math.sqrt(2 * KEn / m)
             dt = dsSub / vNew
             legE += Pleg * dt
+            legER[reg + 1] += Pleg * dt
             t += dt
             Wrr += Frr * dsSub
             Waero += Faero * dsSub
@@ -212,7 +214,9 @@ def canonical(prof, pw, p):
     return {
         "legE": legE, "t": t, "Wrr": Wrr, "Waero": Waero, "Wgrav": Wgrav,
         "Wbrake": Wbrake, "speed": speed, "brk": brk, "regime": regime,
-        "stalled": stalled, "avgV": dist / t if t > 0 else 0.0, "minV": minV,
+        "stalled": stalled,
+        "legEByReg": {"descent": legER[0], "flat": legER[1], "climb": legER[2]},
+        "avgV": dist / t if t > 0 else 0.0, "minV": minV,
         "KEinit": KEinit, "KEfin": KE, "dKE": dKE, "dispE": dispE,
     }
 
@@ -230,8 +234,10 @@ def approximate(prof, p, vf, eps, opts=None):
     mode = (opts or {}).get("climbAeroMode") or "off"
     climbThr = opts["climbThr"] if opts and opts.get("climbThr") is not None else 0.02
     Pc = (opts or {}).get("climbPower") or 0
+    dThr = opts["descThr"] if opts and opts.get("descThr") is not None else -0.015
     xs, hs = prof["x"], prof["h"]
     X = hplus = hminus = aeroSum = clamped = 0.0
+    EByReg = [0.0, 0.0, 0.0]  # [descent, flat, climb] split of E (sums to E; canonical's thresholds)
     for i in range(1, len(xs)):
         dx = xs[i] - xs[i - 1]
         dh = hs[i] - hs[i - 1]
@@ -250,12 +256,15 @@ def approximate(prof, p, vf, eps, opts=None):
         segAero = aeroDx * dx
         aeroSum += segAero
         alphaSeg = aRoll * dx + segAero
+        segGrav = beta * dh if dh >= 0 else -eps * beta * (-dh)
         if dh >= 0:
             hplus += dh
             clamped += alphaSeg + beta * dh
         else:
             hminus += -dh
             clamped += max(0.0, alphaSeg - eps * beta * (-dh))
+        rg = 2 if slope >= climbThr else (0 if slope <= dThr else 1)
+        EByReg[rg] += alphaSeg + segGrav
     roll = aRoll * X
     aero = aeroSum
     climb = beta * hplus
@@ -265,6 +274,7 @@ def approximate(prof, p, vf, eps, opts=None):
         "alpha": aRoll + aAero, "beta": beta, "X": X,
         "hplus": hplus, "hminus": hminus,
         "roll": roll, "aero": aero, "climb": climb, "recov": recov,
+        "EByReg": {"descent": EByReg[0], "flat": EByReg[1], "climb": EByReg[2]},
     }
 
 

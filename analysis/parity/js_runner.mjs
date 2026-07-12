@@ -4,16 +4,18 @@
 //
 // Functions are extracted from the source files at RUN TIME (same technique
 // as igc_resolution_test.mjs's engine reuse): no copies here to drift. App
-// functions come from applet/index.html; the pts pipeline from
-// compare.mjs. Every function in both files starts at column 0 with
-// "function NAME(" and ends at the first column-0 "}".
+// functions come from applet/index.html; the engines + pts pipeline from
+// reference.mjs — the frozen verbatim copy of the retired compare.mjs, i.e.
+// the exact JS that produced the published numbers. Every function in both
+// files starts at column 0 with "function NAME(" and ends at the first
+// column-0 "}".
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const APP = fs.readFileSync(path.join(HERE, '..', '..', 'applet', 'index.html'), 'utf8');
-const CMP = fs.readFileSync(path.join(HERE, '..', '..', 'harness', 'compare.mjs'), 'utf8');
+const CMP = fs.readFileSync(path.join(HERE, 'reference.mjs'), 'utf8');
 
 function extract(src, name) {
   const start = src.indexOf(`function ${name}(`);
@@ -23,11 +25,15 @@ function extract(src, name) {
   return src.slice(start, end + 2);
 }
 
-const APP_FNS = ['flatEqSpeed', 'resampleProfile', 'smoothElevation', 'canonical',
-  'approximate', 'v2Edge', 'approxTime', 'parseFIT', 'extractRegimePowers',
+// canonical/approximate come from the HARNESS copy (compare.mjs), not the app:
+// the harness engines add the per-regime bookkeeping (legEByReg/EByReg) that the
+// published numbers used, so parity checks those fields too. The app copy is the
+// same dynamics minus that instrumentation (hand-kept in sync).
+const APP_FNS = ['flatEqSpeed', 'resampleProfile', 'smoothElevation',
+  'v2Edge', 'approxTime', 'parseFIT', 'extractRegimePowers',
   'epsFromFIT', 'epsGeom'];
-const CMP_FNS = ['haversine', 'ptsFromFIT', 'finishPts', 'empiricalKJ',
-  'overallMeanPower', 'measuredFlatSpeed', 'epsFromBalance', 'deadband',
+const CMP_FNS = ['canonical', 'approximate', 'haversine', 'ptsFromFIT', 'finishPts',
+  'empiricalKJ', 'overallMeanPower', 'measuredFlatSpeed', 'epsFromBalance', 'deadband',
   'ascentHyst', 'buildProfile'];
 
 // buildProfile writes the module globals physProfile/H — replicate them.

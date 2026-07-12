@@ -7,7 +7,7 @@ resolve their inputs and this directory relative to their own location).
 
 | File | Producer | Journal entry |
 |---|---|---|
-| `model_comparison.csv` | `node harness/compare.mjs` | 1+ (longões scoreboard) |
+| `model_comparison.csv` | `python3 harness/compare.py` | 1+ (longões scoreboard) |
 | `censo_comparison.csv` | `node harness/censo_compare.mjs` | 7 |
 | `eps_hypothesis.csv` | `node harness/eps_hypothesis.mjs` | 9 |
 | `eps_sp.csv` | `node harness/eps_sp_test.mjs` | 10 |
