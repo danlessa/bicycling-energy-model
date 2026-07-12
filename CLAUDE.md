@@ -17,7 +17,7 @@ home of the *derivation* (`notas.md`) and the side-by-side comparison.
   the GPX and binary-FIT parsers, hardcoded Portuguese strings (single-language,
   no i18n table). **No dependencies, no bundler, no `package.json`** — open it
   directly in a browser; it surfaces syntax errors immediately. Key functions:
-  `canonical()`, `approximate()`, `parseFIT()`, `buildProfile()`,
+  `canonical()`, `approximate()`, `v2Edge()`, `parseFIT()`, `buildProfile()`,
   `extractRegimePowers()`, `epsFromFIT()`, `recompute()`.
 - `notas.md` — the derivations and spec: the energy law and its `α, β, ε`; the
   local recovery `ε(s)` and its descent-height-weighted aggregate; the climb-aero
@@ -73,10 +73,20 @@ home of the *derivation* (`notas.md`) and the side-by-side comparison.
   the inventory parsers; they drifted before).
 - `research/` — the write-ups: `MODEL_COMPARISON_JOURNAL.md` (numbered entries, newest
   first), `literature-context.md` (positioning), `article-draft.md` + `article-draft.pt-BR.md`
-  (the draft paper, EN + pt-BR), `crr-cda-typical-values.md`, `dem-elevation-comparison.md`,
+  (the draft paper, EN + pt-BR), `claims.ttl` (machine-readable claims–questions–evidence
+  graph for Entries 17–22; RO-Crate envelope at the repo root `ro-crate-metadata.json`),
+  `crr-cda-typical-values.md`, `dem-elevation-comparison.md`,
   `ascent-error-literature.md` (barometer/DEM ascent-error lit review, Entry 24),
   `censo-model-verification.md`, `VERIFICATION_NOTES.md`, and `dem/` (DEM tooling;
   `dem/coords/` is gitignored — per-ride GPS).
+- `analysis/` — the research workflow in **Python** (stdlib-only), for independent
+  review: `bem/` (line-by-line ports of the engines/parsers + the `analyze_ride`
+  compare.mjs wiring), `parity/` (cross-language harness: `js_runner.mjs` extracts the
+  VERBATIM JS from the app/compare.mjs at run time, `run_parity.py` asserts agreement —
+  8 442 comparisons ≤ 1e-9), and `journal.qmd` (executable Quarto mirror of the journal;
+  data-gated cells skip without the private tracks). **`bem/` is another hand-kept-in-sync
+  engine copy**: an engine/parser change must land there too, and
+  `python3 analysis/parity/run_parity.py` (needs node) must pass afterwards.
 - `README.md` — user-facing overview.
 
 ## The two models
@@ -90,6 +100,15 @@ home of the *derivation* (`notas.md`) and the side-by-side comparison.
   pedal power (climb/flat/descent chosen by local grade), safe-speed (`v_max`)
   brake cap on descents. Returns leg energy `∫P·dt`, time, the wheel-work
   breakdown, and the speed profile.
+
+The app also shows **v2Edge** — the per-edge realisation Simujaules deploys
+(grade-local `ε(s) = clamp01(min(1, (α/β)/s) − ε₀)`, aero gated off climbs,
+`k_s` scaling β only, dead `max(0,·)` clamp — journal Entries 18–21). It is a
+verbatim port of `regime_compare.mjs`'s `r1dV2Edge` / sampasimu
+`energy-worker.js`'s edge cost — a change to any copy must land in all
+(same hand-kept-in-sync rule as the engines). It deliberately walks the RAW
+profile (no deadband) at the engine dx, so the Entry-19 resolution over-charge
+is visible live by moving dx between 5 and 30 m.
 
 **Design principle — both read the same physical constants** (`m, C_rr, CdA, ρ,
 k_eff, wind`). That is what makes the comparison meaningful: the gap is the
@@ -150,7 +169,9 @@ No build, no CI. Verify by:
   `node time_compare.mjs`. Diff the numbers against the journal
   entries and `research/article-draft.md`; a doc-visible number that moves must be updated
   in both. A change to the engine or FIT parser must be applied to **all** copies (the app
-  + the six harness `.mjs` + `ppaz_inventory.mjs`'s parser) or they drift.
+  + the six harness `.mjs` + `ppaz_inventory.mjs`'s parser + the Python port
+  `analysis/bem/`) or they drift — after any such change run
+  `python3 analysis/parity/run_parity.py` (machine-checks Python ≡ verbatim JS).
 - **Sanity cases** for an engine change: flat (canonical ≈ approximate at auto v_f),
   pure climb (`legE ≥ PE`), pure descent (≈ coast), and P=0 (the bike must *stall*, not
   gain energy — no KE floor).

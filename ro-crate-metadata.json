@@ -1,0 +1,138 @@
+{
+  "@context": "https://w3id.org/ro/crate/1.1/context",
+  "@graph": [
+    {
+      "@id": "ro-crate-metadata.json",
+      "@type": "CreativeWork",
+      "conformsTo": { "@id": "https://w3id.org/ro/crate/1.1" },
+      "about": { "@id": "./" }
+    },
+    {
+      "@id": "./",
+      "@type": "Dataset",
+      "name": "bicycling-energy-model — research package",
+      "description": "Two models of the mechanical energy (and time) of pedalling a route — a closed-form law E ≈ α·x + β·(h₊ − ε·h₋) and a Martin-1998 forward-dynamics simulation — run on shared physical constants and validated against power-meter rides. The package holds the derivation notes (spec), the browser comparison app, the validation harnesses, the numbered research journal (verbatim prompts preserved), the article drafts (EN and pt-BR), and a machine-readable claims–questions–evidence graph.",
+      "author": { "@id": "#danilo" },
+      "datePublished": "2026-07-12",
+      "identifier": "https://doi.org/10.5281/zenodo.21282165",
+      "url": [
+        "https://github.com/danlessa/bicycling-energy-model",
+        "https://danlessa.github.io/bicycling-energy-model/"
+      ],
+      "citation": { "@id": "#working-paper" },
+      "mentions": { "@id": "research/claims.ttl" },
+      "hasPart": [
+        { "@id": "energy-model-comparison.html" },
+        { "@id": "notas.md" },
+        { "@id": "research/MODEL_COMPARISON_JOURNAL.md" },
+        { "@id": "research/article-draft.md" },
+        { "@id": "research/article-draft.pt-BR.md" },
+        { "@id": "research/claims.ttl" },
+        { "@id": "analysis/" },
+        { "@id": "data/activities/" },
+        { "@id": "data/sample.gpx" },
+        { "@id": "data/flecha_power.csv" }
+      ]
+    },
+    {
+      "@id": "#danilo",
+      "@type": "Person",
+      "name": "Danilo Lessa Bernardineli",
+      "email": "danilo.lessa@gmail.com"
+    },
+    {
+      "@id": "#working-paper",
+      "@type": "ScholarlyArticle",
+      "name": "Bicycle Route Energy in Closed Form: Two Corrections, a Descent-Recovery Offset That Transfers Across Riders, and an Energy↔Time Dual",
+      "author": { "@id": "#danilo" },
+      "identifier": "https://doi.org/10.5281/zenodo.21282165",
+      "url": "https://simujaules.pedalhidrografi.co/modelo/en.html",
+      "inLanguage": ["en", "pt-BR"],
+      "isBasedOn": [
+        { "@id": "research/article-draft.md" },
+        { "@id": "research/article-draft.pt-BR.md" }
+      ]
+    },
+    {
+      "@id": "energy-model-comparison.html",
+      "@type": ["File", "SoftwareSourceCode", "SoftwareApplication"],
+      "name": "Energy model comparison app",
+      "description": "Self-contained, build-step-free browser app: canonical forward-dynamics vs the closed form on shared constants, plus the deployed Simujaules per-edge realisation (v2Edge), GPX/FIT import, and per-regime power extraction.",
+      "encodingFormat": "text/html",
+      "url": "https://danlessa.github.io/bicycling-energy-model/",
+      "programmingLanguage": "JavaScript"
+    },
+    {
+      "@id": "notas.md",
+      "@type": ["File", "CreativeWork"],
+      "name": "Derivation notes (model spec)",
+      "description": "The energy law and its α, β, ε; the local recovery ε(s) and its descent-height-weighted aggregate; the per-edge v2Edge realisation; the climb-aero correction; the time model x* = x + k₊·h₊ − k₋·h₋ and the ε↔k₋ bridge. Kept in sync with the code by convention.",
+      "encodingFormat": "text/markdown"
+    },
+    {
+      "@id": "research/MODEL_COMPARISON_JOURNAL.md",
+      "@type": ["File", "CreativeWork"],
+      "name": "Model comparison journal",
+      "description": "Numbered, reverse-chronological research journal (22 entries): verbatim human prompts, hypotheses, pre-registered protocols and endpoints, results, and verdicts, with per-entry code provenance (commit hashes).",
+      "encodingFormat": "text/markdown"
+    },
+    {
+      "@id": "research/article-draft.md",
+      "@type": ["File", "ScholarlyArticle"],
+      "name": "Article draft (English)",
+      "inLanguage": "en",
+      "encodingFormat": "text/markdown",
+      "workTranslation": { "@id": "research/article-draft.pt-BR.md" }
+    },
+    {
+      "@id": "research/article-draft.pt-BR.md",
+      "@type": ["File", "ScholarlyArticle"],
+      "name": "Rascunho do artigo (português brasileiro)",
+      "inLanguage": "pt-BR",
+      "encodingFormat": "text/markdown",
+      "translationOf": { "@id": "research/article-draft.md" }
+    },
+    {
+      "@id": "research/claims.ttl",
+      "@type": ["File", "Dataset"],
+      "name": "Claims–questions–evidence graph (journal Entries 17–22)",
+      "description": "RDF/Turtle graph: research questions, hypotheses, pre-registered protocols (P-Plan), harness runs (PROV-O), assertions with polarized evidence lines (SEPIO pattern), and typed inter-entry citation links (CiTO).",
+      "encodingFormat": "text/turtle",
+      "about": { "@id": "./" }
+    },
+    {
+      "@id": "analysis/",
+      "@type": ["Dataset", "SoftwareSourceCode"],
+      "name": "Research workflow in Python (independent-verification port)",
+      "description": "Stdlib-only Python port of the engines/parsers (bem/), a cross-language parity harness that extracts the verbatim JS at run time and asserts agreement to float64 round-off (parity/), and an executable Quarto mirror of the research journal (journal.qmd).",
+      "programmingLanguage": "Python",
+      "isPartOf": { "@id": "./" }
+    },
+    {
+      "@id": "data/activities/",
+      "@type": "Dataset",
+      "name": "Validation harnesses",
+      "description": "Node.js harnesses that regenerate every published number from the raw recordings: compare, censo_compare, eps_hypothesis, eps_sp_test, time_compare, per-rider inventory+compare pairs (ppaz_*, jaam_*, danlessa_*), param_fit / cda_estimate, regime_compare, verify_v2edge_clamp, igc_resolution_test, goal_calibration, scale_trio, bootstrap_ci. Each ports the app's engines verbatim (hand-kept-in-sync).",
+      "isPartOf": { "@id": "./" }
+    },
+    {
+      "@id": "data/sample.gpx",
+      "@type": "File",
+      "name": "Synthetic sample GPX (committed fixture)",
+      "encodingFormat": "application/gpx+xml"
+    },
+    {
+      "@id": "data/flecha_power.csv",
+      "@type": "File",
+      "name": "Power-only sample ride (no GPS; committed fixture)",
+      "encodingFormat": "text/csv"
+    },
+    {
+      "@id": "#ride-recordings",
+      "@type": "Dataset",
+      "name": "Raw ride recordings (NOT distributed)",
+      "description": "FIT files (GPS + power) from the author and two independent riders (full activity-history exports shared with informed consent), plus source spreadsheets. Excluded from version control and from this crate's payload: they carry location and private-activity data. Every published number regenerates from them with one command per harness; per-ride aggregate CSVs with coordinates stripped are available on request.",
+      "conditionsOfAccess": "Available on request from the author, coordinates stripped; raw tracks are never distributed."
+    }
+  ]
+}

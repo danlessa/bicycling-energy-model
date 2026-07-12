@@ -52,6 +52,7 @@
   .bignum .sub { color: var(--muted); font-size: 12px; margin-top: 4px; }
   .bignum.canon { border-left: 4px solid var(--canon); }
   .bignum.approx { border-left: 4px solid var(--approx); }
+  .bignum.v2e { border-left: 4px solid var(--warn); }
   .bignum.disp { border-left: 4px solid #9b8cff; }
   .bignum.env { border-left: 4px solid #6aa84f; }
   .stat { display: flex; justify-content: space-between; padding: 3px 0; border-bottom: 1px dashed var(--line); }
@@ -137,6 +138,14 @@
     </div>
 
     <div class="panel">
+      <h2>v2Edge (Simujaules — implantado)</h2>
+      <div class="row"><label title="Desconto de rolagem: escala SÓ o β (cobrança de subida E crédito de descida). O α/β do ε local fica SEM k_s — ε é fator de geometria do grade, não de energia. Ajustado por ciclista no Entry 20 (0,55–0,98, valor EFETIVO).">k<sub>s</sub> (desconto em β)</label><input type="number" id="ksmooth" value="1" min="0.5" max="1" step="0.01"><span class="unit"></span></div>
+      <div class="row"><label title="Offset empírico de recuperação na descida, ε(s) = clamp₀₁(min(1, (α/β)/s) − ε₀). Calibrado em 0,13 sobre células de 30 m (Entry 8).">ε₀ (offset de recuperação)</label><input type="number" id="epsOffset" value="13" min="0" max="30" step="0.5"><span class="unit">%</span></div>
+      <div class="row"><label></label><button class="mini" id="trioDx5" title="Entry 21: o trio comportamental (k_s, ε₀, limiar de subida) re-calibrado como transferência de resolução 30 m → 5 m: k_s 0,94 · ε₀ 6,3% · limiar 2,5%. Faz a ponte em terreno aberto/montanhoso; NÃO transfere pro urbano plano (censo). Também move o limiar de subida compartilhado.">trio p/ Δx = 5 m (Entry 21) →</button></div>
+      <div class="hint">Anda o MESMO perfil cru do canônico (sem deadband). O ε local ao grade é sensível à resolução: compare dx = 5 m × 30 m (Entradas 18–19).</div>
+    </div>
+
+    <div class="panel">
       <h2>Física (compartilhada)</h2>
       <div class="row"><label>Massa (ciclista+bike)</label><input type="number" id="mass" value="75" min="40" max="160" step="1"><span class="unit">kg</span></div>
       <div class="row"><label>C<sub>rr</sub> (rolamento)</label><input type="number" id="crr" value="0.008" min="0.001" max="0.02" step="0.001"><span class="unit"></span></div>
@@ -174,6 +183,11 @@
         <div class="lab">Aproximado — <code>α·x + β(h₊−εh₋)</code></div>
         <div class="val" id="eapprox">—</div>
         <div class="sub" id="approxSub">—</div>
+      </div>
+      <div class="bignum v2e">
+        <div class="lab">v2Edge — Simujaules (ε local por aresta)</div>
+        <div class="val" id="ev2">—</div>
+        <div class="sub" id="v2Sub">—</div>
       </div>
       <div class="bignum disp">
         <div class="lab">Deslocamento — <code>ΔKE + Σ W<sub>resist</sub></code></div>
@@ -265,6 +279,26 @@
         <li><b>Descida</b>: o real desperdiça quase toda a PE em aero+freio; o aproximado credita só a fração ε. Um ε constante
         não acompanha a dependência com a inclinação (descida suave recupera mais; íngreme, quase nada).</li>
       </ul>
+      <p><b>v2Edge (Simujaules)</b> — a realização <i>por aresta</i> do modelo aproximado que o app
+      Simujaules usa para rotear (Entradas 18–21 do journal): rolamento sempre; aero do plano cobrada
+      FORA das subidas (inclusive nas descidas); subida <code>β·Δh</code> com β escalado por k<sub>s</sub>;
+      na descida o crédito usa um ε <b>local ao grade da aresta</b>,
+      <code>ε(s) = clamp₀₁(min(1, (α/β)/s) − ε₀)</code>. O <code>max(0,·)</code> final é comprovadamente
+      código morto (Entry 18 — o card mostra a pior aresta pré-clamp ao vivo). O ε local é
+      <b>sensível à resolução</b>: em dx fino (≪ 30 m) grades finos leem íngremes, o ε colapsa e o
+      v2Edge sobre-cobra — +9,5% de mediana em 5 m vs +6,3% em 30 m nas pedaladas reais de SP
+      (Entry 19; use o campo <i>Resolução do motor</i> para ver o efeito). Os mitigadores implantados:
+      pré-suavização do DEM (σ = 10 m) e, decisiva, a <b>calibração por ciclista</b> —
+      (C<sub>d</sub>A, C<sub>rr</sub>, k<sub>s</sub>) efetivos ajustados no histórico do próprio ciclista
+      atingem a meta de ±5% de erro / ±2% de viés (Entry 20). O botão <i>trio p/ Δx = 5 m</i> aplica a
+      re-calibração de resolução do Entry 21 (vale em terreno aberto/montanhoso; não transfere pro
+      urbano plano).</p>
+      <p><b>Validação</b> (journal; 44 longões + 62 censo + 441 + 219 + 1597 pedaladas de três ciclistas
+      independentes, todas com potenciômetro): o aproximado com deadband τ = 2 m atinge mediana
+      |Δ| ≈ 3,6% vs 5,1% do canônico nos longões — <b>paridade estatística</b> (Entry 22: CIs se
+      sobrepõem, sign test p = 0,45), o que na prática decide a favor da forma fechada, barata o
+      bastante pra rotear. CdA/C<sub>rr</sub>/k<sub>s</sub> ajustados são valores <b>efetivos</b>
+      (absorvem viés residual de modelo/resolução), não físicos (Entradas 15, 16, 20).</p>
       <p style="color:#5a6673">Ferramenta de estudo, fora do PWA — não entra no <code>deploy.sh</code> nem no service worker.</p>
     </details>
   </div>
@@ -484,6 +518,53 @@ function approximate(prof, p, vf, eps, opts) {
     E: roll + aero + climb + recov, clamped, alpha: aRoll + aAero, beta, X, hplus, hminus,
     roll, aero, climb, recov,
   };
+}
+
+// ---------- v2Edge — the closed form as DEPLOYED in Simujaules ----------
+// Per-edge realisation of the approximate law (journal Entries 18–21), ported
+// verbatim from sampasimu's energy-worker.js edge cost / regime_compare.mjs's
+// r1dV2Edge. Per edge (ground dx, signed rise dh): rolling always; the FLAT
+// aero is charged iff grade < climbThr (so none on climbs, FULL flat aero on
+// descents — the cf gate); climbs pay β·dh with β scaled by k_s (climb charge
+// AND descent credit); descents credit a GRADE-LOCAL recovery
+// ε(s) = clamp₀₁(min(1, (α/β)/s) − ε₀), s = |dh|/dx, with α/β UN-smoothed
+// (k_s must not scale it: ε is a grade-geometry factor, not an energy one).
+// The trailing max(0,·) is provably dead (Entry 18, verify_v2edge_clamp.mjs;
+// min pre-clamp edge +4.6 J across 1402 real rides) — kept verbatim, and the
+// pre-clamp minimum is returned so the UI states the claim live. Walks the RAW
+// profile (deployment-faithful, no deadband): grade-local ε is RESOLUTION-
+// sensitive — at dx ≪ 30 m fine grades read steep, ε collapses and v2Edge
+// over-charges (Entry 19: +9.5% median @5 m vs +6.3% @30 m on real SP rides).
+function v2Edge(prof, p, vf, opts) {
+  const mg = p.m * G, w = p.wind;
+  const beta = mg * opts.kSmooth / p.keff;
+  const aRoll = mg * p.Crr / p.keff;
+  const aeroSpd = vf + w;
+  const aAero = 0.5 * p.rho * p.CdA * aeroSpd * Math.abs(aeroSpd) / p.keff;
+  const abRatio = (aRoll + aAero) * p.keff / mg;   // α/β un-smoothed (k_eff cancels; k_s NOT applied)
+  const xs = prof.x, hs = prof.h;
+  let E = 0, minPreClamp = Infinity, epsW = 0, Hd = 0;
+  for (let i = 1; i < xs.length; i++) {
+    const dx = xs[i] - xs[i - 1], dh = hs[i] - hs[i - 1];
+    if (!(dx > 0)) continue;
+    let e;
+    if (dh >= 0) {
+      const aero = (dh < opts.climbThr * dx) ? aAero * dx : 0;
+      e = aRoll * dx + aero + beta * dh;
+    } else {
+      const ndh = -dh;
+      let eps = abRatio * dx / ndh;
+      if (eps > 1) eps = 1;
+      eps -= opts.epsOffset;
+      if (eps < 0) eps = 0;
+      e = aRoll * dx + aAero * dx - eps * beta * ndh;
+      if (e < minPreClamp) minPreClamp = e;
+      if (e < 0) e = 0;
+      epsW += eps * ndh; Hd += ndh;
+    }
+    E += e;
+  }
+  return { E, minPreClamp, epsImplied: Hd > 0 ? epsW / Hd : NaN, hminus: Hd };
 }
 
 // ---------- approximate TIME model (notas.md "effective flat distance") ----------
@@ -972,6 +1053,11 @@ function recompute() {
   const c = canonical(prof, pw, p);
   const aeroOpts = { climbAeroMode: $('climbAeroMode').value, climbThr: num('climbThr') / 100, climbPower: num('pClimb') };
   const a = approximate(profA, p, vf, eps, aeroOpts);
+  // v2Edge: the deployed per-edge walk — RAW profile (same as canonical), the
+  // shared climb threshold, k_s/ε₀ from its own panel.
+  const v2 = v2Edge(prof, p, vf, {
+    kSmooth: num('ksmooth'), epsOffset: num('epsOffset') / 100, climbThr: num('climbThr') / 100,
+  });
   const veq = flatEqSpeed(pw.flat, p);
 
   // big numbers
@@ -983,6 +1069,12 @@ function recompute() {
   $('approxSub').textContent = `α=${(a.alpha / 1000).toFixed(4)} kJ/m · β=${(a.beta / 1000).toFixed(3)} kJ/m${clampNote}`;
   $('alphaOut').textContent = (a.alpha / 1000).toFixed(4) + ' kJ/m';
   $('betaOut').textContent = (a.beta / 1000).toFixed(3) + ' kJ/m';
+  // v2Edge card: Δ vs canônico + implied drop-weighted ε + the live dead-clamp readout
+  $('ev2').textContent = (v2.E / 1000).toFixed(0) + ' kJ';
+  const dv2 = c.legE > 0 ? (v2.E - c.legE) / c.legE * 100 : 0;
+  $('v2Sub').textContent =
+    `${dv2 >= 0 ? '+' : ''}${dv2.toFixed(0)}% vs canônico · ε implícito ${isFinite(v2.epsImplied) ? (v2.epsImplied * 100).toFixed(0) + '%' : '—'}`
+    + (v2.minPreClamp !== Infinity ? ` · pior aresta pré-clamp +${v2.minPreClamp.toFixed(1)} J` : ' · sem descida');
   // displacement energy
   $('edisp').textContent = (c.dispE / 1000).toFixed(0) + ' kJ';
   $('dispSub').textContent = `ΔKE ${(c.dKE / 1000).toFixed(1)} + rol ${(c.Wrr / 1000).toFixed(0)} + aero ${(c.Waero / 1000).toFixed(0)} + freio ${(c.Wbrake / 1000).toFixed(0)} kJ`;
@@ -1149,6 +1241,10 @@ $('geomEps').onclick = () => {                        // ε from route geometry 
   const vf = $('autoVf').checked ? flatEqSpeed(num('pFlat'), p) : num('vf') / 3.6;
   const e = epsGeom(prof, p, vf);
   if (isFinite(e)) { $('eps').value = (e * 100).toFixed(1); recompute(); }
+};
+$('trioDx5').onclick = () => {                       // Entry 21: the Δx=5 m behavioural trio
+  $('ksmooth').value = 0.94; $('epsOffset').value = 6.3; $('climbThr').value = 2.5;
+  recompute();
 };
 $('gravThr').onclick = () => {                       // thresholds where gravity dominates (50%)
   const p = physParams(), aeroSpd = num('vf') / 3.6 + p.wind;

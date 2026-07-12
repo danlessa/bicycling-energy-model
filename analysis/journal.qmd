@@ -1,0 +1,302 @@
+---
+title: "Model comparison journal — executable mirror"
+subtitle: "Python reproduction of research/MODEL_COMPARISON_JOURNAL.md (Entries 1–22)"
+author: "Danilo Lessa Bernardineli (with LLM assistance — see the article's AI declaration)"
+format:
+  html:
+    toc: true
+    code-fold: false
+jupyter: python3
+---
+
+This notebook mirrors [`research/MODEL_COMPARISON_JOURNAL.md`](../research/MODEL_COMPARISON_JOURNAL.md)
+**entry by entry, in chronological order** (the journal itself is reverse-chronological).
+The prose journal remains authoritative; this mirror makes each entry's computation
+**runnable and reviewable in Python** via the `analysis/bem` package — a line-by-line
+port of the JS engines whose equivalence is machine-checked by
+`analysis/parity/run_parity.py` (8 442 comparisons, ≤ 1e-9 relative).
+
+Two kinds of cells:
+
+- **Synthetic demonstrations** — run anywhere, no private data; they reproduce each
+  entry's *mechanism*.
+- **Measured reproductions** — need the local, never-committed tracks
+  (`data/activities/…`); they detect their inputs and skip gracefully when absent,
+  printing the journal's published numbers for comparison instead.
+
+```{python}
+#| label: setup
+import json, math, os, sys
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath("__file__")), "analysis")
+                if os.path.basename(os.getcwd()) != "analysis" else "..")
+sys.path.insert(0, "analysis"); sys.path.insert(0, ".")
+from bem import (canonical, approximate, v2_edge, approx_time, flat_eq_speed,
+                 eps_geom, deadband, ascent_hyst, resample_profile, smooth_elevation,
+                 analyze_ride, load_pts)
+from bem.ride import d_pct, median, CLIMB_THR, DESC_THR
+
+G = 9.81
+P = dict(m=75, Crr=0.008, CdA=0.4, rho=1.1, keff=0.97, vmax=38/3.6, vstart=15/3.6, wind=0)
+PW = dict(climb=150, flat=90, descent=10, climbThr=CLIMB_THR, descThr=DESC_THR)
+
+ACT = os.path.join(os.path.dirname(os.path.abspath("__file__")), "..", "data", "activities")
+if not os.path.isdir(ACT):
+    ACT = os.path.join("data", "activities")
+INPUTS_PATH = os.path.join(ACT, "model_inputs.json")
+INPUTS = json.load(open(INPUTS_PATH)) if os.path.exists(INPUTS_PATH) else None
+print("local tracks available:", INPUTS is not None)
+
+def synth(kind="rolling", n=1001, dx=5.0):
+    x = [i * dx for i in range(n)]
+    if kind == "flat":    h = [20.0] * n
+    elif kind == "climb": h = [10 + 0.05 * xi for xi in x]
+    elif kind == "desc":  h = [10 + 0.05 * (x[-1] - xi) for xi in x]
+    else:                 h = [40 + 25 * math.sin(i / 37) + 6 * math.sin(i / 5.1) for i in range(n)]
+    return {"x": x, "h": h}
+```
+
+# Entry 1 — methodology: the three energies
+
+Per ride: **empirical** `∫P·dt` (ground truth), **canonical** `canonical().legE`
+(forward dynamics), **approximate** `approximate().E` (closed form). Same physical
+constants everywhere — the gap is the *model*.
+
+```{python}
+prof = synth("rolling")
+vf = flat_eq_speed(PW["flat"], P)
+c = canonical(prof, PW, P)
+a = approximate(prof, P, vf, 0.20, dict(climbAeroMode="off", climbThr=CLIMB_THR))
+print(f"canonical {c['legE']/1e3:7.1f} kJ   approximate {a['E']/1e3:7.1f} kJ   "
+      f"(auto v_f = {vf*3.6:.1f} km/h)")
+# conservation identity — the invariant the harness asserts on every ride
+resid = abs(P['keff']*c['legE'] - (c['dKE']+c['Wrr']+c['Waero']+c['Wgrav']+c['Wbrake']))
+print(f"conservation residual {resid/(P['keff']*c['legE']):.2e}  (must be ≤ 1e-6)")
+```
+
+# Entry 2 — baseline: canonical 5.1 %, approximate `off` 19.3 %
+
+The closed form with full flat-speed aero everywhere over-charges climbs.
+Measured reproduction (44 longões):
+
+```{python}
+def scoreboard(taus=(0, 2), mode="zero"):
+    rows = []
+    for e in INPUTS:
+        if not e.get("file") or not e.get("has_power"): continue
+        try:
+            pts = load_pts(os.path.join(ACT, e["file"]))
+            r = analyze_ride(pts, e, eps=e.get("eps", 0.20))
+            rows.append(r)
+        except Exception as ex:
+            print("skip", e.get("label"), ex)
+    return rows
+
+if INPUTS:
+    rows = scoreboard()
+    print("n =", len(rows))
+    print("canonical  med|Δ%| =", round(median([abs(d_pct(r['canon_kj'], r['emp_kj'])) for r in rows]), 1))
+    print("approx off med|Δ%| =", round(median([abs(d_pct(r['off_kj'],   r['emp_kj'])) for r in rows]), 1))
+else:
+    print("tracks absent — journal values: canonical 5.1 (−1.7), approx off 19.3 (+19.3)")
+```
+
+# Entries 3–4 — climb-aero correction and the `v_f` lever
+
+Real climbing speed ≪ v_f, so the aero term over-charges climbs; the `cf`
+variant gates aero off climb segments. On flat ground, canonical ≡ approximate
+**iff** v_f is the flat-equilibrium speed — the calibration anchor:
+
+```{python}
+flatp = synth("flat")
+cflat = canonical(flatp, PW, P)
+for mode in ("off", "zero", "vc"):
+    af = approximate(flatp, P, vf, 0.20, dict(climbAeroMode=mode, climbThr=CLIMB_THR, climbPower=PW["climb"]))
+    print(f"flat: mode={mode:4s}  approx {af['E']/1e3:6.1f} kJ  vs canonical {cflat['legE']/1e3:6.1f} kJ")
+climb = synth("climb")
+cc = canonical(climb, PW, P)
+for mode in ("off", "zero", "vc"):
+    ac = approximate(climb, P, vf, 0.20, dict(climbAeroMode=mode, climbThr=CLIMB_THR, climbPower=PW["climb"]))
+    print(f"5% climb: mode={mode:4s}  Δ vs canonical {d_pct(ac['E'], cc['legE']):+6.1f}%")
+```
+
+# Entry 5 — elevation noise inflates `β·h₊`: the τ = 2 m deadband
+
+`h₊` is linear in every positive jitter step; the canonical sim is nearly immune
+(energy ≈ power·time). The deadband filter removes sub-τ jitter **on the
+approximate path only** — the champion configuration (`cf` + 2 m deadband → 3.6 %):
+
+```{python}
+# smooth truth + sub-metre jitter (baro/track noise): h₊ is LINEAR in every
+# positive jitter step, so raw ascent inflates; the deadband strips it back.
+smooth_h = [40 + 25 * math.sin(i / 37) for i in range(1001)]
+noisy = {"x": [i * 5.0 for i in range(1001)],
+         "h": [h + 0.8 * math.sin(i * 12.9898) for i, h in enumerate(smooth_h)]}
+print(f"true h₊ = {ascent_hyst(smooth_h, 0):.1f} m")
+for tau in (0, 1, 2, 3, 5):
+    print(f"τ={tau}:  h₊ = {ascent_hyst(deadband(noisy['h'], tau) if tau else noisy['h'], 0):7.1f} m")
+```
+
+# Entries 6–7 — DEM sources and the sustained-climb `k_h` fit
+
+DEM-derived `h₊` carries its own bias axis (`k_DEM`); on *sustained* climbs the
+energy balance isolates `k_h ≈ 1` (the rider must pay `mg·Δh/k_eff`), so the
+whole-ride shrink is a roller/noise effect, not missing climb energy. Needs DEM
+tooling + tracks — see `research/dem/` and `compare.mjs`'s `climbBalance`.
+
+# Entry 8 — a closed form for ε from route geometry
+
+Coasting limit `ε(s) = min(1, (α/β)/s)`, drop-weighted over 30 m cells, minus the
+in-sample-calibrated 0.13:
+
+```{python}
+for name in ("desc", "rolling"):
+    pr = synth(name)
+    print(f"{name:8s} ε_geom = {eps_geom(pr, P, vf):.3f}")
+print("journal: corr 0.83–0.87 vs measured ε at s̄ ≥ 3%; scatters ±0.1")
+```
+
+# Entries 9–10 — the urban (censo) rides; ε is a constant in SP
+
+The 62 clean censo rides validate the model out-of-domain (group urban rides);
+São Paulo's measured ε behaves as a constant ≈ 0.20 rather than a braking-driven
+variable — the flat-0.20 rule the champion uses on censo. *(Measured; needs the
+censo tracks.)*
+
+# Entry 11 — general review: code fixes moved numbers ≤ 0.3 pp
+
+Signed-drag fix, compressed-timestamp FIT recovery, gated flat-speed — all
+engine fixes are in both the JS and this Python port; the parity harness pins them.
+
+# Entries 12–14 — the frozen-ε estimator across riders
+
+`ε_geom − 0.13` transfers to P. Paz (441 rides) and partially to JAAM (219):
+the offset is the robust piece, the geometric *skill* is rider-dependent.
+*(Measured; the riders' exports are private.)*
+
+# Entry 13 — the time model, tested
+
+`t = x*/v_f` with `x* = x + k₊·h₊ − k₋·h₋`; ascent half transfers, the descent
+bridge does not:
+
+```{python}
+at = approx_time(synth("rolling"), P, vf, PW)
+print(f"rolling: t = {at['t']/60:.1f} min   k₊ = {at['kPlus']:.1f}   k₋ = {at['kMinus']:.2f}")
+print(f"clean-k₊ check: v_f·β/P_climb = {vf * (P['m']*G/P['keff']) / PW['climb']:.1f}")
+```
+
+# Entries 15–16 — fitted rider physics are *effective* values
+
+Independent CdA/C_rr/mass estimation (fitted CdA ≈ 35 % below the assumed 0.40)
+and the fitted-vs-assumed robustness rerun on all corpora — the scoreboard
+conclusions survive. *(Measured; `param_fit.mjs` / `cda_estimate.mjs`.)*
+
+# Entry 17 — regime decomposition: a bias trade, not a win
+
+Splitting the ride by slope (`E_flat + E_climb + E_descent`) wins exactly where
+the champion's parameter bias points the other way — evaluate closed forms on
+TOTALS; a frozen aggregate ε applied per edge under a clamp destroys credit.
+
+# Entry 18 — the deployed v2Edge: the clamp is dead code
+
+The app's grade-local `ε(s) = clamp₀₁(min(1,(α/β)/s) − 0.13)` keeps every descent
+edge strictly positive. A miniature of `verify_v2edge_clamp.mjs`'s sweep:
+
+```{python}
+min_pre = float("inf")
+for m in (55, 75, 100):
+    for crr in (0.004, 0.008, 0.014):
+        for cda in (0.25, 0.40, 0.55):
+            for pflat in (60, 90, 150):
+                p2 = dict(P, m=m, Crr=crr, CdA=cda)
+                v = flat_eq_speed(pflat, p2)
+                for grade in (0.005, 0.01, 0.02, 0.04, 0.08, 0.15):
+                    n = 41
+                    pr = {"x": [i*5.0 for i in range(n)], "h": [grade*5*(n-1-i) for i in range(n)]}
+                    r = v2_edge(pr, p2, v, dict(kSmooth=1.0, epsOffset=0.13, climbThr=0.02))
+                    if r["minPreClamp"] < min_pre: min_pre = r["minPreClamp"]
+print(f"min pre-clamp descent edge across the sweep: {min_pre:+.4f} J  (> 0 ⇒ clamp never fires)")
+assert min_pre > 0
+```
+
+# Entry 19 — resolution: fine grades collapse the grade-local ε
+
+At dx ≪ 30 m, local grades read steeper, `ε(s)` collapses, v2Edge over-charges
+(+9.5 % pooled median @5 m vs +6.3 % @30 m on the deployed IGC-SP raster). The
+mechanism, on a synthetic rough profile:
+
+```{python}
+rough = synth("rolling")
+rough = {"x": rough["x"], "h": [h + 0.9*math.sin(i*7.7) for i, h in enumerate(rough["h"])]}
+for dx in (5, 30):
+    pr = resample_profile(rough, dx)
+    r = v2_edge(pr, P, vf, dict(kSmooth=1.0, epsOffset=0.13, climbThr=0.02))
+    print(f"dx={dx:2d} m:  v2Edge {r['E']/1e3:6.1f} kJ   implied drop-weighted ε {r['epsImplied']:.3f}   h₋ {r['hminus']:.0f} m")
+print("finer sampling ⇒ lower implied ε ⇒ more energy — Entry 19's over-charge mechanism")
+```
+
+# Entry 20 — the pre-registered goal: PASS via per-rider calibration
+
+σ\* = 10 m raster pre-smoothing + per-rider effective (CdA, C_rr, k_s) meets
+med |Δ%| < 5 ∧ |bias| < 2 on all three validation halves (3.69/+0.96,
+2.74/+0.31, 4.94/+0.81). Ablation: **the calibration, not the smoothing, is the
+lever**. *(Needs `sampa_geral.tif` + gdal; `goal_calibration.mjs`.)*
+
+# Entry 21 — the behavioural trio is a function of (Δx, terrain)
+
+Re-fitted purely as a 5 m→30 m resolution transfer: k_s 0.9375, ε₀ 0.0632,
+climbThr 2.5 % bridges the rider corpora per-ride but not flat-urban censo.
+The trio's effect, live:
+
+```{python}
+pr5 = resample_profile(rough, 5)
+base = v2_edge(pr5, P, vf, dict(kSmooth=1.0,   epsOffset=0.13,  climbThr=0.02))
+trio = v2_edge(pr5, P, vf, dict(kSmooth=0.9375, epsOffset=0.0632, climbThr=0.025))
+pr30 = resample_profile(rough, 30)
+tgt  = v2_edge(pr30, P, vf, dict(kSmooth=1.0,  epsOffset=0.13,  climbThr=0.02))
+print(f"v2@5m default {base['E']/1e3:6.1f} kJ   v2@5m+trio {trio['E']/1e3:6.1f} kJ   v2@30m target {tgt['E']/1e3:6.1f} kJ")
+```
+
+# Entry 22 — error bars: parity, not "beats"
+
+Bootstrap 95 % CIs on the headline medians + exact paired sign tests. The
+machinery, runnable on any per-ride Δ% CSV (here on synthetic Δ%s for shape):
+
+```{python}
+def bootstrap_ci(vals, stat=median, n_boot=10_000, seed=1):
+    # deterministic LCG resampling — no numpy, reproducible
+    s, out, n = seed, [], len(vals)
+    for _ in range(n_boot):
+        acc = []
+        for _ in range(n):
+            s = (s * 6364136223846793005 + 1442695040888963407) % 2**64
+            acc.append(vals[s % n])
+        out.append(stat(acc))
+    out.sort()
+    return out[int(0.025*n_boot)], out[int(0.975*n_boot)]
+
+def sign_test(a, b):
+    wins = sum(1 for x, y in zip(a, b) if abs(x) < abs(y))
+    n = sum(1 for x, y in zip(a, b) if abs(x) != abs(y))
+    # exact two-sided binomial
+    from math import comb
+    p = sum(comb(n, k) for k in range(min(wins, n-wins)+1)) * 2 / 2**n
+    return wins, n, min(1.0, p)
+
+demo_a = [3.1, -2.0, 4.5, 1.2, -5.0, 2.2, 3.9, -1.1, 6.0, 2.8]   # "champion" Δ%
+demo_b = [4.0, -3.5, 4.1, 2.0, -6.2, 1.8, 5.0, -2.4, 7.1, 3.3]   # "canonical" Δ%
+lo, hi = bootstrap_ci([abs(v) for v in demo_a])
+w, n, pv = sign_test(demo_a, demo_b)
+print(f"med|Δ%| CI [{lo:.1f}, {hi:.1f}]   paired: closer on {w}/{n}, sign p = {pv:.2f}")
+print("journal (real data): champion [2.0,5.6] vs canonical [3.8,7.1]; 25/44 (57%), p = 0.45 → parity")
+```
+
+# Reproducing everything
+
+- **Engines vs JS**: `python3 analysis/parity/run_parity.py` (needs node) —
+  the proof this notebook computes what the journal's harnesses computed.
+- **Measured scoreboards**: place the private tracks per
+  `data/activities/README.md` and re-run the Entry 2 cell (and the harness
+  `.mjs` files for the full studies — Entries 19–21 additionally need
+  `sampa_geral.tif` + gdal).
+- Render: `quarto render analysis/journal.qmd` · convert to Jupyter:
+  `quarto convert analysis/journal.qmd`.
