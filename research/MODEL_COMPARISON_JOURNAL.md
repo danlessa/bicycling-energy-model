@@ -81,6 +81,182 @@ changed. See Entry 11.)*
 - **Entry 22** (bootstrap 95% CIs + paired sign tests for the article's headline medians; the
   champion-vs-canonical "beats" claim demoted to parity,
   [`bootstrap_ci.mjs`](../data/activities/bootstrap_ci.mjs)) — this commit
+- **Entry 23** (move-grid connectivity bias in sampasimu's terrain mode — study and code live in
+  the sibling repo: `../simujaules/docs/grid-connectivity-sensitivity-2026-07-11.md` (canonical
+  copy) + its `grid-sens.mjs`/`grid-correct.mjs`/`grid-adaptive.mjs`/`grid-pull.mjs`/`grid-eik.mjs`/
+  `grid-longedge.mjs`) — simujaules commits `f83f2f9`→`17ee186` (note), `1ba06ae` (v57 options)
+
+---
+
+## 2026-07-11 — Entry 23: move-grid connectivity bias in simujaules terrain-mode optimal energy
+
+*Prepared in the simujaules session and imported here. The full tables, threats-to-validity, and
+the reproducible harness live in the sibling repo:
+`../simujaules/docs/grid-connectivity-sensitivity-2026-07-11.md` (the canonical long-form note) +
+`docs/grid-sens.mjs` and companions — simujaules commits `f83f2f9`→`17ee186` (note),
+`1ba06ae` (v57 options). Paths below are relative to `../simujaules/`.*
+
+**Question** (Danilo): does the 8-connected move grid make terrain mode
+overestimate optimal energy via route jaggedness? Sensitivity vs 16-move
+requested; extended to square 4/8/16/32/64/128 (Farey heading ladders) and
+hexagonal 6/12, all profile-integrated, with square-128 as the converged
+near-continuum reference (sq64 within 0.2–0.9 % of it).
+
+**Verdict: yes — and terrain ≈ doubles the pure-geometry prediction.**
+On a 900×900 central-SP crop of the deployed IGC 5 m DTM (v55 σ=10 m
+smoothing, UI-default physics, 4 sources, targets ≥ 800 m):
+
+- **sq8 vs continuum: +12.7 % median, +21.3 % mean, +47 % p90.** At an
+  emulated 30 m (anti-aliased 6× decimation): +8.1 % / +9.7 % / +18 %.
+  Flat-terrain control: +5.7 % median — i.e. real terrain doubles it.
+- **Budget reach** (area within the median of the source's own E8 field)
+  undercounts by **~19 %** (5 m) / ~15 % (30 m) vs continuum — the KPI
+  counting in simujaules is a conservative floor. Bias is one-sided: grid
+  results are upper bounds.
+- **sq16 (profile-integrated) recovers ≈ ⅔ of the bias** (12.7→5.8 %
+  median at 5 m; 8.1→2.7 % at 30 m) at ~2.5–3× relax cost; sq32 gets within
+  1–2 %. Hex-6 is WORSE than sq8; hex-12 sits between sq8 and sq16 —
+  dominated by sq16 on the existing raster. sq4 would be catastrophic
+  (+28–32 % median): the original 8-choice is vindicated.
+
+**Mechanism.** Not octile distance inflation. On flat ground the E8/E16 gap
+follows octile theory exactly (0.8 %→6.9 %→1.0 % across the 0–45° fold,
+peak at 22.5–30°; lattice worst cases reproduced: sq4 41.3 % ≈ √2−1, sq8
+9.2 % ≈ 8.24 % bound, hex6 16.2 % ≈ 2/√3−1). On terrain the direction
+signature VANISHES (5.7–7.8 % medians across all headings) and the gap
+doubles: the dominant cost is **height oscillation** — an 8-grid path
+tracking a contour must zigzag across it, and the asymmetric cost (climb at
+β = 0.7585 kJ/m; descent refunded at ε·β, ε ≤ 1 − 0.13; flat travel
+0.0142 kJ/m) taxes every oscillation. Hence bias grows with terrain detail
+(5 m > 30 m > flat).
+
+**Methodological trap worth recording** (the reason naive comparisons
+mislead): long moves costed from endpoint Δh alone *flatten the relief they
+cross* — a terrain-resampling change masquerading as a jaggedness fix
+(skipping one 1 m bump fakes more saving than ~50 m of straightening).
+Naive sq16 at 30 m reads **−1.3 % median vs continuum** (true: +2.7 %);
+naive sq32 **−8.5 %** (true: +0.9 %) — the error's sign flips and the
+upper-bound guarantee dies. Where a naive ladder lands near zero (sq32 at
+5 m: −0.2 %) it is two large errors cancelling. All reported ladders
+therefore use profile-integrated long edges (bilinear height samples every
+~1 cell, v2Edge per sub-segment — still O(1)-local, so compatible with the
+Entry-18 engine constraint). Any future 16-move work order MUST specify
+profile integration and use this harness as its acceptance test.
+
+**Relation to prior entries.** Independent of Entry 19's cost-model
+resolution over-charge (~+9 % median at 5 m along fixed routes): this is a
+search-discretization bias on route-optimal energies. Both are one-sided
+positive on fine DTMs and compound toward conservative terrain-mode
+energies; neither affects graph/network mode. Per-rider calibration
+(Entry 20) remains the accuracy carrier for absolute kJ.
+
+**Validation.** The harness self-validates its 8-move engine bit-identical
+(max|Δ| = 0, zero finite-mismatches) against the real `energy-worker.js` on
+every run, and the flat control reproduces each lattice's closed-form worst
+case — both held on all reported runs.
+
+**Cost–accuracy scaling law** (measured per-mode times, 810 k cells:
+sq8 0.47 s → sq16 1.13 → sq32 2.71 → sq64 7.22 → sq128 18.1): with error ∝
+time^(−k), the rough-terrain ladder gives k ≈ 0.90/1.16/1.28 per step
+(overall 1.12) — **error × time ≈ constant**, "3× less error for 3× more
+time", with no knee in the curve itself. k ≈ 1 is the natural ceiling for
+uniform heading ladders in the terrain-dominated regime (cost doubles per
+level with edge count; the contour-oscillation error term only halves with
+the heading gap); on smoother terrain k rises toward the flat-geometry
+quadratic (30 m: 1.25–1.9; flat: ~1.7). The stopping rule therefore comes
+from external floors: sq16's 5.8 % residual is already at the Entry-19
+model-bias/calibration scale, sq32's 2.1 % below it. Hex points sit off the
+square Pareto frontier (hex12: 1.34 s / 7.9 % vs sq16 1.13 s / 5.8 %).
+Candidate routes to k < 1 (simujaules note §9): **slope-adaptive
+neighborhoods were tried and REFUTED on this terrain**
+(`docs/grid-adaptive.mjs`; long moves gated by either-endpoint local grade;
+edge-set nesting E8 ≥ E_ad ≥ E_uniform held with 0 violations): at the
+thresholds that preserve accuracy the steep-cell share is 91–98 % (5 m) /
+96–100 % (30 m) — central SP has no flat fraction to skip — and the first
+threshold that prunes (4 % grade, 65 % steep) degrades error faster than
+time (k 0.69, worse than uniform); the gate only pays where the bias is
+already small, i.e. dominated. **String pulling — tried**
+(`docs/grid-pull.mjs`; windowed DP over the 8-grid path with
+profile-integrated straight segments, iterated over surviving breakpoints):
+recovers **44 % of the median path bias (9.6 → 5.4 %) at ~60 ms/path**;
+iteration adds nothing — the residual is corridor lock-in (the
+route-choice component of the bias is unrecoverable post hoc). Excellent
+for the displayed route/top-N (result stays an upper bound and is its own
+integrated cost); useless for fields; loses to a sq16 field for the K×K
+accessibility matrix at K ≳ 12. **Anisotropic Eikonal — evaluated**
+(`docs/grid-eik.mjs`; semi-Lagrangian fast-sweeping, foot point anywhere on
+the radius-1 ring, u and h bilinear at the foot ⇒ effectively continuous
+headings; Gauss-Seidel sweeps absorb the anisotropy): on flat terrain it
+eliminates heading bias exactly as promised (0.18 % mean vs the analytic
+answer, vs sq8's 3.9 %, in 2 sweep-groups); on real terrain it lands
+**BELOW** the converged sq128 reference — −1.3/−1.5 % median at 5 m, −4 to
+−12 % at 30 m (12–17 sweep-groups) — while the true continuum sits only
+~0.2 % below sq128: bilinear foot heights smooth within-cell relief and
+undercharge climbs, the semi-Lagrangian sibling of the naive-long-edge
+artifact, scaling with per-cell relief. At the app's resolutions the
+ladder dominates it (sq32: +1.6–2 % guaranteed-sign error at a fraction of
+the cost), and it forfeits passes counts, budget early-exit, bit-parity,
+and the floor guarantee in both directions. **Precomputed long-edge tables
+— tried: the one candidate that works, for density runs**
+(`docs/grid-longedge.mjs`; every long move's profile integral stored in
+per-directed-heading tables, relaxed by lookup). Structural fact
+confirmed: one Dijkstra integrates each directed edge exactly once
+(settled-guard), so K=1 LOSES (sq16 1.53 s vs 0.92 s incl. precompute);
+the win is amortized across searches sharing the grid — the density pool's
+exact shape. Measured: per-search 0.92 → 0.66 s (sq16, −28 %) and
+2.34 → 1.20 s (sq32, −49 %) — more than the sub-step share, since lookup
+also skips sweep checks and bilinear reads; break-even ~3 searches;
+**bit-identical** to on-demand (max|Δ| = 0). Amortized ladder economics
+for density/KPI runs: sq16 ×1.40 cost for ÷2.19 error → **k ≈ 2.3**; sq32
+×2.55 for ÷6.05 → **k ≈ 1.9**. Binding constraint: memory (64 B/cell sq16
+f64; ~4.3 GB f32 on the 135 M-cell target — per-slice recompute there).
+Bottom line after testing all four candidates: exactly one beats k ≈ 1
+and only in the density regime — precomputed long-edge tables; the
+efficient frontier is sq16/32-with-tables for density/KPI fields,
+on-demand integration for single-source runs (k ≈ 1 stands), string
+pulling for displayed routes, and the threshold-layer correction where a
+centered aggregate beats a floor.
+
+**Parametric correction — how far a shared constant goes**
+(`docs/grid-correct.mjs`): deflating energies (equivalently inflating the
+budget/thresholds) by a per-condition constant c* (1.115 at 5 m, 1.090 at
+30 m) halves-to-thirds the median |error| (9.3 → 4.1 % at 5 m; 8.1 → 2.6 %
+at 30 m) **but only the center moves**: p90 stays 8–11 %, extreme corridors
+20–33 %, and ~60 % of pairs flip to underestimates — the one-sided
+floor guarantee dies. The bias is route-structured: a kJ/m hilliness
+covariate explains only R² ≈ 0.16–0.20 and buys nothing at the median (no
+cheap 2-parameter fix). The constant is NOT universal — ±5 pp across source
+neighborhoods within one city crop, resolution-dependent, cost-bundle-
+dependent — so it must be calibrated per DEM + parameter set (a background
+2–3-ref sq32 probe suffices, ~3 s/ref). If adopted, it belongs at the
+threshold/budget layer (inflate eMax/E₁/E₂ by c), labeled as a centered
+estimate vs the default grid-native floor; a second corrected per-cell
+energy number would violate the viewing≡routing product rule.
+
+**Pre-registered predictions if a 16-move engine is built**: field-median
+energy −5–8 % (5 m) / −3–5 % (30 m); budget-reach +9–11 % (5 m); density
+wall time ≤ 3×; passes corridors sharpen along contours; JS↔Rust bit-parity
+preserved including sub-sampling order.
+
+**Outcome (2026-07-12): shipped and scored.** All three actionable findings
+shipped as options in simujaules v57 (live at
+simujaules.pedalhidrografi.co): a move-directions select (4–128, default 8
+bit-identical; Farey ladder with profile-integrated long moves, amortized
+per-worker tables in density runs, passes stamped over swept cells;
+non-8 browser-only so the Rust-parity invariant is untouched), string
+pulling for the displayed route/top-N, and the KPI grid-correction input
+(threshold layer, with the floor-guarantee warning). Pre-registration
+scorecard against the REAL shipped worker (900×900 5 m crop, 3 sources):
+wall time ×2.49 ≤ 3 **confirmed**; field-median energy drop 3.9–8.7 % per
+source vs the predicted 5–8 % band — **borderline** (band too narrow for
+per-source terrain spread); budget-reach gain 3.1–9.4 % vs 9–11 % —
+**miscalibrated** (strongly source-dependent); JS↔Rust parity resolved by
+design rather than by porting. Methodological lesson worth recording:
+pre-register distributions, not point ranges.
+
+**Reproduce**: see the reproduction section of the simujaules note
+(`docs/grid-sens.mjs` + companion harnesses; needs `sampa_centro.tif` +
+`census/node_modules`; ~5 min total for the three main conditions).
 
 ---
 
