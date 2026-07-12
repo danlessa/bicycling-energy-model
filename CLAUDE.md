@@ -74,6 +74,7 @@ home of the *derivation* (`notas.md`) and the side-by-side comparison.
 - `research/` — the write-ups: `MODEL_COMPARISON_JOURNAL.md` (numbered entries, newest
   first), `literature-context.md` (positioning), `article-draft.md` + `article-draft.pt-BR.md`
   (the draft paper, EN + pt-BR), `crr-cda-typical-values.md`, `dem-elevation-comparison.md`,
+  `ascent-error-literature.md` (barometer/DEM ascent-error lit review, Entry 23),
   `censo-model-verification.md`, `VERIFICATION_NOTES.md`, and `dem/` (DEM tooling;
   `dem/coords/` is gitignored — per-ride GPS).
 - `README.md` — user-facing overview.
