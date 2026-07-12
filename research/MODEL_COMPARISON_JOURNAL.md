@@ -85,6 +85,79 @@ changed. See Entry 11.)*
   the sibling repo: `../simujaules/docs/grid-connectivity-sensitivity-2026-07-11.md` (canonical
   copy) + its `grid-sens.mjs`/`grid-correct.mjs`/`grid-adaptive.mjs`/`grid-pull.mjs`/`grid-eik.mjs`/
   `grid-longedge.mjs`) — simujaules commits `f83f2f9`→`17ee186` (note), `1ba06ae` (v57 options)
+- **Entry 24** (literature review: cumulative-ascent error of consumer barometers vs DEMs,
+  positioned against Entries 6/19–21,
+  [`ascent-error-literature.md`](ascent-error-literature.md)) — this commit
+
+---
+
+## 2026-07-12 — Entry 24: what the literature says a cumulative-ascent measurement is worth — and why our energy endpoint can decide what geometry cannot
+
+*Prompt (Danilo): "literature review on the typical cumulative ascent error when using
+consumer grade barometers, and when using FABDEM or terrain data from aerophotogrammetry —
+compare to the journal entries." No engine ran; no published number changed. Full survey with
+sources: [ascent-error-literature.md](ascent-error-literature.md).*
+
+**Consumer barometers.** Device-level cumulative-ascent (h₊) error is **~1–5%** under benign
+conditions, with between-unit consistency at the ~1–2% level: Menaspà et al. 2014 (IJSPP)
+measure CV 1.5% across Garmin head units (0.2% SRM) with brands ~3% apart, and their
+follow-up abstract reports dry-conditions under-reads of ~2% (Garmin) / ~5% (SRM); a
+28-device figure of 1.5–1.9% standard error circulates via Johnson et al. 2023 (PLOS One).
+Sánchez & Villena 2020 (202 mountain efforts vs an aerial-photogrammetry benchmark) find the
+*opposite sign* — baro consistently over-estimates, GPS-only under-estimates, ~5% raw →
+~1% post-processed. Weather drift is second-order for h₊ (a 6 h field test: ~13 m of
+pressure drift → ~15 m spurious gain, ≲1% of a long ride) — it corrupts absolute altitude,
+not ascent.
+
+**DEMs.** The DEM literature validates *per-point* elevation, where FABDEM is the best
+global source (Hawker 2022: MAE 1.12 m built-up / 2.88 m forest; independent flood-prone
+validation 2024: MAE 1.43 m, RMSE 2.62 m, vs GLO-30 ~4.9 m, SRTM ~5.4 m RMSE) and
+aerophotogrammetric 5 m DTMs of the IGC class sit at sub-metre-to-~1 m σz. **Per-point
+accuracy does not transfer to accumulated ascent.** The one located study measuring h₊
+directly (Sánchez et al., ICECET 2024 — trail running vs a 20 cm LiDAR truth) finds a raw
+4 m DEM ~12 pp *worse* than the consumer watches it would correct, error growing
+monotonically with grid coarsening (+11 pp at 3.2 m → ~+48 pp at 51 m) and
+nearest-neighbour sampling badly worse than bilinear everywhere. Consensus direction across
+the field: GPS-only under-reads, DEM correction over-reads (Garmin's correction +5–10%,
+Menaspà 2014; Strava prioritises baro over its own basemap).
+
+**Against our entries — everything checks, two things are sharper here.**
+
+- Entry 6's DEM-along-track inflation (FABDEM +35%, COP30 +50%, SRTM +71% vs baro,
+  bilinear; NN staircase +30 pp) sits inside the literature's band, and the
+  bilinear-vs-nearest warning is independently replicated.
+- Entry 6's baro −11/−21% vs the IGC 5 m DTM does **not** contradict the lit's 1–5%: the
+  small errors are vs monotone climbs or device-vs-device; ours is baro-vs-terrain
+  micro-relief at 5 m — a benchmark-scale gap, not device error. Sánchez 2020's
+  *over*-reading baro is the same comparison in the on-foot regime, where the athlete's
+  path actually traverses the micro-relief.
+- Entry 19's FABDEM ascent failure on flat terrain (h₊ +57% pooled, +101/135% on
+  P. Paz/JAAM) is consistent with — but sharper than — the literature: per-pixel ~1.5–3 m
+  MAE is exactly what accumulates into doubled ascent on lowlands, yet no located DEM
+  validation propagates per-point error into along-track h₊ by terrain regime.
+- Entry 19's other twist — the *survey-grade* 5 m DTM over-charging energy relative to the
+  baro (censo 22.1 vs 12.0 med |Δ%|) — has no located precedent; the nearest is ICECET's
+  "raw 4 m DEM worse than the watch", which agrees in direction.
+
+**The decidability point (the reason this entry exists).** The scale literature
+(swisstopo's coastline-paradox note; Rapaport, already in
+[literature-context.md](literature-context.md)) ends at: h₊ has no true value, only a value
+at a chosen smoothing scale — so "which ascent is right?" is ill-posed as a *geometry*
+question, and the sign disagreements above are unresolvable on their own terms (each
+benchmark just embodies a different scale). Our harness adds the external referee geometry
+lacks: measured pedalling energy `∫P·dt`. "Which h₊ best predicts the energy actually spent
+through `β·h₊`?" has a well-defined loss, which turns the smoothing scale from a convention
+into a *fittable parameter* — that is literally Entry 20 (σ\* = 10 m and per-rider kSmooth
+fall out of minimising energy error, not chosen a priori), and Entry 21's finding that the
+fitted scale is a function of (Δx, terrain regime) is then a result, not a nuisance. Two
+qualifiers: it is decidable *for a purpose* (energy-effective ascent for a road bike — a
+trail runner's referee would pick a finer scale, which dissolves the Menaspà/Sánchez sign
+conflict), and the answer is rider/terrain-conditional, not universal. No located study
+validates any ascent source against measured pedalling energy; that gap is where
+Entries 19–21 live.
+
+Tooling: none (survey only). Sources and the full comparison table:
+[ascent-error-literature.md](ascent-error-literature.md).
 
 ---
 
