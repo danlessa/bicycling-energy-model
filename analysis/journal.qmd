@@ -1,6 +1,6 @@
 ---
 title: "Model comparison journal — executable mirror"
-subtitle: "Python reproduction of research/MODEL_COMPARISON_JOURNAL.md (Entries 1–22)"
+subtitle: "Python reproduction of research/notes/MODEL_COMPARISON_JOURNAL.md (Entries 1–22)"
 author: "Danilo Lessa Bernardineli (with LLM assistance — see the article's AI declaration)"
 format:
   html:
@@ -9,7 +9,7 @@ format:
 jupyter: python3
 ---
 
-This notebook mirrors [`research/MODEL_COMPARISON_JOURNAL.md`](../research/MODEL_COMPARISON_JOURNAL.md)
+This notebook mirrors [`research/notes/MODEL_COMPARISON_JOURNAL.md`](../research/notes/MODEL_COMPARISON_JOURNAL.md)
 **entry by entry, in chronological order** (the journal itself is reverse-chronological).
 The prose journal remains authoritative; this mirror makes each entry's computation
 **runnable and reviewable in Python** via the `analysis/bem` package — a line-by-line
@@ -141,7 +141,7 @@ for tau in (0, 1, 2, 3, 5):
 DEM-derived `h₊` carries its own bias axis (`k_DEM`); on *sustained* climbs the
 energy balance isolates `k_h ≈ 1` (the rider must pay `mg·Δh/k_eff`), so the
 whole-ride shrink is a roller/noise effect, not missing climb energy. Needs DEM
-tooling + tracks — see `research/dem/` and `compare.mjs`'s `climbBalance`.
+tooling + tracks — see `harness/dem/` and `compare.mjs`'s `climbBalance`.
 
 # Entry 8 — a closed form for ε from route geometry
 

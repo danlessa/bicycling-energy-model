@@ -1,0 +1,209 @@
+# claims.ttl — machine-readable claims–questions–evidence graph for journal
+# Entries 17–22 (proof of concept; the prose remains authoritative in
+# research/notes/MODEL_COMPARISON_JOURNAL.md).
+#
+# Stack: schema.org + CiTO (typed links between claims/entries/artifacts),
+# PROV-O + P-Plan (pre-registrations and harness runs), and a small minted
+# vocabulary (phr:) following the SEPIO assertion/evidence-line PATTERN —
+# minted rather than imported so this sketch doesn't hardcode OBO numeric IDs;
+# swap phr:Assertion / phr:EvidenceLine for their SEPIO equivalents when
+# packaging for real.
+#
+# Validate: python -c "import rdflib; rdflib.Graph().parse('research/notes/claims.ttl')"
+
+@prefix phr:     <https://danlessa.github.io/bicycling-energy-model/vocab#> .
+@prefix :        <https://danlessa.github.io/bicycling-energy-model/claims#> .
+@prefix cito:    <http://purl.org/spar/cito/> .
+@prefix prov:    <http://www.w3.org/ns/prov#> .
+@prefix p-plan:  <http://purl.org/net/p-plan#> .
+@prefix schema:  <http://schema.org/> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:     <http://www.w3.org/2001/XMLSchema#> .
+
+# ── Minted vocabulary (SEPIO-pattern) ────────────────────────────────────────
+
+phr:ResearchQuestion a rdfs:Class ;
+  rdfs:comment "A question posed to the research programme (the journal's verbatim prompts)." .
+phr:Hypothesis a rdfs:Class .
+phr:Assertion a rdfs:Class ;
+  rdfs:comment "A claim with polarized evidence lines (SEPIO pattern)." .
+phr:EvidenceLine a rdfs:Class .
+phr:PreRegisteredProtocol a rdfs:Class ; rdfs:subClassOf p-plan:Plan ;
+  rdfs:comment "Protocol + endpoints declared before any tuning/evaluation run." .
+
+phr:addresses      a rdfs:Property ; rdfs:comment "assertion/hypothesis → question" .
+phr:tests          a rdfs:Property ; rdfs:comment "protocol → hypothesis" .
+phr:hasEvidenceLine a rdfs:Property .
+phr:polarity       a rdfs:Property ; rdfs:comment "supporting | contradicting" .
+phr:evidence       a rdfs:Property ; rdfs:comment "evidence line → artifact/run/measured result" .
+phr:verdict        a rdfs:Property ; rdfs:comment "free-text verdict as recorded in the journal" .
+
+# ── Shared artifacts ─────────────────────────────────────────────────────────
+
+:journal a schema:CreativeWork ;
+  schema:name "Model comparison journal" ;
+  schema:url <https://github.com/danlessa/bicycling-energy-model/blob/main/research/notes/MODEL_COMPARISON_JOURNAL.md> .
+
+:regime_compare.mjs a schema:SoftwareSourceCode , prov:Entity ;
+  schema:name "regime_compare.mjs" .
+:verify_v2edge_clamp.mjs a schema:SoftwareSourceCode , prov:Entity ;
+  schema:name "verify_v2edge_clamp.mjs" .
+:igc_resolution_test.mjs a schema:SoftwareSourceCode , prov:Entity ;
+  schema:name "igc_resolution_test.mjs" .
+:goal_calibration.mjs a schema:SoftwareSourceCode , prov:Entity ;
+  schema:name "goal_calibration.mjs" .
+:scale_trio.mjs a schema:SoftwareSourceCode , prov:Entity ;
+  schema:name "scale_trio.mjs" .
+:bootstrap_ci.mjs a schema:SoftwareSourceCode , prov:Entity ;
+  schema:name "bootstrap_ci.mjs" .
+
+# Per-ride output CSVs are gitignored (regenerable, privacy) — modelled as
+# entities with an availability note, not as crate payload.
+:regime_comparison.csv a prov:Entity ;
+  rdfs:comment "gitignored; regenerates via `node regime_compare.mjs`" .
+:igc_resolution_test.csv a prov:Entity ;
+  rdfs:comment "gitignored; regenerates via `node igc_resolution_test.mjs`" .
+:goal_calibration.csv a prov:Entity ;
+  rdfs:comment "gitignored; regenerates via `node goal_calibration.mjs`" .
+:scale_trio.csv a prov:Entity ;
+  rdfs:comment "gitignored; regenerates via `node scale_trio.mjs`" .
+
+# ── Entry 17 — regime-decomposed closed form ─────────────────────────────────
+
+:q17 a phr:ResearchQuestion ;
+  schema:text "Does a regime-decomposed closed form E_flat + E_climb + E_descent beat the champion?" ;
+  dcterms:source :journal .
+
+:run17 a prov:Activity ;
+  prov:used :regime_compare.mjs ;
+  prov:generated :regime_comparison.csv .
+
+:assert17 a phr:Assertion ;
+  phr:addresses :q17 ;
+  schema:text "Regime decomposition does not beat the champion: its win/loss pattern is a bias trade (a variant wins exactly where the champion's parameter bias points the other way), shown causally by the fitted-physics rerun." ;
+  phr:verdict "rejected alternative" ;
+  prov:wasGeneratedBy :run17 ;
+  cito:citesAsEvidence :regime_comparison.csv .
+
+# ── Entry 18 — correction + the deployed v2Edge (R1d) ────────────────────────
+
+:entry18 a schema:CreativeWork ;
+  dcterms:isPartOf :journal ;
+  cito:corrects :assert17 ;
+  rdfs:comment "Corrects Entry 17's attribution: R1a (frozen-ε per edge) is NOT the deployed sampasimu cost." .
+
+:assert18a a phr:Assertion ;
+  schema:text "v2Edge's trailing max(0,·) descent clamp is dead code: ε(s) keeps every descent edge cost at or above a strictly positive floor." ;
+  phr:hasEvidenceLine
+    [ a phr:EvidenceLine ; phr:polarity "supporting" ;
+      phr:evidence :verify_v2edge_clamp.mjs ;
+      schema:text "1.78M-combo synthetic sweep: global min pre-clamp cost +4.1e-4 kJ; middle-regime identity to 1e-12." ] ,
+    [ a phr:EvidenceLine ; phr:polarity "supporting" ;
+      phr:evidence :regime_comparison.csv ;
+      schema:text "Real data: min pre-clamp descent edge +4.6 J across 1402 rides (fitted physics: +3.9 J)." ] .
+
+:assert18b a phr:Assertion ;
+  schema:text "Grade-local ε is resolution-sensitive in a way the aggregate is not: R1d (deployed v2Edge) roughly ties the champion at ~30 m sampling and is strictly worse at 5 m." ;
+  phr:verdict "the Jensen more-credit prediction failed; the resolution effect dominates" ;
+  prov:wasGeneratedBy :run17 ;
+  cito:citesAsEvidence :regime_comparison.csv .
+
+# ── Entry 19 — the deployed 5 m raster ───────────────────────────────────────
+
+:q19 a phr:ResearchQuestion ;
+  schema:text "Most of the time we use the IGC-SP DTM at 5 m resolution — is this a concern?" ;
+  dcterms:source :journal .
+
+:plan19 a phr:PreRegisteredProtocol ;
+  phr:tests :q19 ;
+  schema:text "Paired v2Edge@igc5 vs @igc30 on 922 rides; decision rule: signed-bias gap > ~3–4 pp puts static ~30 m pre-smoothing on the roadmap." .
+
+:run19 a prov:Activity ;
+  p-plan:correspondsToStep :plan19 ;
+  prov:used :igc_resolution_test.mjs ;
+  prov:generated :igc_resolution_test.csv .
+
+:assert19 a phr:Assertion ;
+  phr:addresses :q19 ;
+  cito:extends :assert18b ;
+  schema:text "The resolution over-charge transfers to the deployment: paired signed gap +9.44 pp (censo) and +3.64 pp (pooled riders) — the pre-registered decision rule is TRIGGERED." ;
+  prov:wasGeneratedBy :run19 ;
+  phr:hasEvidenceLine
+    [ a phr:EvidenceLine ; phr:polarity "supporting" ;
+      phr:evidence :igc_resolution_test.csv ;
+      schema:text "Both mechanisms measured separately: h₊(igc5) > h₊(igc30) on 919/922 rides; implied drop-weighted ε 0.414@5m vs 0.456@30m." ] .
+
+:assert19b a phr:Assertion ;
+  schema:text "FABDEM is unsuitable for energy computation on flat/urban terrain: pooled med|Δ%| 17.6 vs 7.1 (igc30); median h₊ +57% pooled, up to +135% on flat corpora." ;
+  prov:wasGeneratedBy :run19 ;
+  cito:qualifies :journal .   # qualifies Entry 6's "two bare-earth sources agree within ~6%"
+
+# ── Entry 20 — pre-registered goal ───────────────────────────────────────────
+
+:q20 a phr:ResearchQuestion ;
+  schema:text "Can the deployed pipeline reach prediction error < ±5% with bias < ±2%?" .
+
+:plan20 a phr:PreRegisteredProtocol ;
+  phr:tests :q20 ;
+  schema:text "Deterministic 50/50 hash split per rider; lever 1 = deployable Gaussian pre-smoothing σ ∈ {0,10,15,20,30,45} selected on train; lever 2 = per-rider (CdA, Crr, kSmooth) fitted on train; validation evaluated ONCE at frozen settings; pre-declared fallback ladder." .
+
+:run20 a prov:Activity ;
+  p-plan:correspondsToStep :plan20 ;
+  prov:used :goal_calibration.mjs ;
+  prov:generated :goal_calibration.csv .
+
+:assert20 a phr:Assertion ;
+  phr:addresses :q20 ;
+  schema:text "PASS: σ* = 10 m + per-rider effective (CdA, Crr, kSmooth) meets med|Δ%| < 5 and |bias| < 2 on all three riders' validation halves; the calibration, not the smoothing, is the lever; fitted values are effective, not physical." ;
+  prov:wasGeneratedBy :run20 ;
+  phr:hasEvidenceLine
+    [ a phr:EvidenceLine ; phr:polarity "supporting" ; phr:evidence :goal_calibration.csv ;
+      schema:text "Validation: ppaz 3.69/+0.96, jaam 2.74/+0.31, danlessa 4.94/+0.81 (0.06 pp margin)." ] ,
+    [ a phr:EvidenceLine ; phr:polarity "supporting" ; phr:evidence :goal_calibration.csv ;
+      schema:text "Ablation: σ=0 calibrated also passes (3.66/2.25/4.95) — post-calibration, smoothing buys ≈ nothing." ] .
+
+# ── Entry 21 — the behavioural trio as a resolution transfer ─────────────────
+
+:q21 a phr:ResearchQuestion ;
+  schema:text "Can the resolution gap be bridged through parameters on the closed form rather than editing the DEM?" .
+
+:h21 a phr:Hypothesis ;
+  phr:addresses :q21 ;
+  schema:text "A single rider-independent re-calibration of the behavioural trio (k_s, ε₀, climbThr) at Δx = 5 m bridges the gap, with each constant moving as its mechanism predicts." .
+
+:plan21 a phr:PreRegisteredProtocol ;
+  phr:tests :h21 ;
+  schema:text "Two-stage: the trio is fitted purely as a 5m→30m resolution transfer (measured energies never touched in stage 1); stage 2 evaluates accuracy once on validation; censo held out entirely as an out-of-sample transfer corpus; four coherence predictions P1–P4." .
+
+:run21 a prov:Activity ;
+  p-plan:correspondsToStep :plan21 ;
+  prov:used :scale_trio.mjs ;
+  prov:generated :scale_trio.csv .
+
+:assert21 a phr:Assertion ;
+  phr:addresses :q21 ;
+  cito:qualifies :h21 ;
+  schema:text "The behavioural constants are functions of (Δx, terrain-roughness regime), not of Δx alone: the fitted trio (k_s 0.9375, ε₀ 0.0632, climbThr 0.025) bridges the gap per-ride on all three rider corpora but closes only ~55% of censo's gap." ;
+  phr:verdict "H21 partially supported — scope-limited to the terrain regime it was fitted on" ;
+  prov:wasGeneratedBy :run21 ;
+  phr:hasEvidenceLine
+    [ a phr:EvidenceLine ; phr:polarity "supporting" ; phr:evidence :scale_trio.csv ;
+      schema:text "E1 bridged on ppaz/jaam/danlessa (Δ ≤ 0.62 / ≤ 1.00 pp); P1, P2, P4 hold — k_s-only fit (0.8844) lands on the median h₊ ratio (0.8958)." ] ,
+    [ a phr:EvidenceLine ; phr:polarity "contradicting" ; phr:evidence :scale_trio.csv ;
+      schema:text "P3 fails: censo (never fitted, flattest terrain) not bridged (gap 4.44 pp); E2 gate fails on danlessa by 0.22 pp." ] .
+
+# ── Entry 22 — error bars; parity, not 'beats' ───────────────────────────────
+
+:assert-beats a phr:Assertion ;
+  schema:text "(superseded) The champion closed form beats the forward simulation on the 44 longões (median 3.6% vs 5.1%)." ;
+  phr:verdict "demoted — median-point comparison unsupported by the paired test" .
+
+:run22 a prov:Activity ;
+  prov:used :bootstrap_ci.mjs .
+
+:assert22 a phr:Assertion ;
+  cito:updates :assert-beats ;
+  schema:text "Champion vs canonical is statistical parity: bootstrap 95% CIs [2.0, 5.6] vs [3.8, 7.1] overlap; paired, the champion is closer on 25/44 rides (57%, sign test p = 0.45). Parity is still practically decisive — the closed form is the engine cheap enough to route with." ;
+  prov:wasGeneratedBy :run22 ;
+  cito:citesAsEvidence :regime_comparison.csv .

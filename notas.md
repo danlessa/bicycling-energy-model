@@ -22,7 +22,7 @@ The parameters can then be described as follows
 - $\beta := mg$
 - $k_s$ (smoothing): $\approx 0.74$ is the **measured 2 m-deadband ratio on recorded
   barometric profiles**. The value for a DEM source (FABDEM / IGC-SP 2010) is not yet measured
-  — a first-principles estimate is $\approx 0.8$–$0.9$ (see `research/dem-elevation-comparison.md`).
+  — a first-principles estimate is $\approx 0.8$–$0.9$ (see `research/notes/dem-elevation-comparison.md`).
 - $\epsilon$: typically between 10% and 30%
   - Rough geometric estimate $\epsilon \approx \min(1, \frac{\alpha}{\beta \bar{s}})-0.13 \pm 0.1$
     (the $-0.13$ offset is calibrated in-sample on the 44 power rides; on the quasi-independent
@@ -53,7 +53,7 @@ $$
 ### v2
 
 Two refinements to v1, each removing a systematic bias measured against power-meter
-rides (see `research/MODEL_COMPARISON_JOURNAL.md`):
+rides (see `research/notes/MODEL_COMPARISON_JOURNAL.md`):
 
 $$
 E \approx \alpha_r\, x + \alpha_a\, x_{flat} + k_h\,k_{smooth}\,\beta\,(h_+ - \epsilon\, h_-),
@@ -182,7 +182,7 @@ $$
 
 **Empirical test** (44 power rides, predictor vs. the measured
 $\epsilon=(\alpha X_- - E_{legs,-})/(\beta H_-)$ on 30 m cells with $\alpha$ at the
-*measured* flat speed — `data/activities/eps_hypothesis.mjs`, Journal Entry 8):
+*measured* flat speed — `harness/eps_hypothesis.mjs`, Journal Entry 8):
 
 - **The grade law holds where $\epsilon$ matters.** Correlation with the measured
   $\epsilon$ climbs from $0.38$ over all rides to $0.83$ on $\bar s\ge 3\%$ and $0.87$ on

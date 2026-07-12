@@ -4,7 +4,7 @@
 //
 // Functions are extracted from the source files at RUN TIME (same technique
 // as igc_resolution_test.mjs's engine reuse): no copies here to drift. App
-// functions come from energy-model-comparison.html; the pts pipeline from
+// functions come from applet/index.html; the pts pipeline from
 // compare.mjs. Every function in both files starts at column 0 with
 // "function NAME(" and ends at the first column-0 "}".
 import fs from 'node:fs';
@@ -12,8 +12,8 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
-const APP = fs.readFileSync(path.join(HERE, '..', '..', 'energy-model-comparison.html'), 'utf8');
-const CMP = fs.readFileSync(path.join(HERE, '..', '..', 'data', 'activities', 'compare.mjs'), 'utf8');
+const APP = fs.readFileSync(path.join(HERE, '..', '..', 'applet', 'index.html'), 'utf8');
+const CMP = fs.readFileSync(path.join(HERE, '..', '..', 'harness', 'compare.mjs'), 'utf8');
 
 function extract(src, name) {
   const start = src.indexOf(`function ${name}(`);

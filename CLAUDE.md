@@ -13,7 +13,7 @@ home of the *derivation* (`notas.md`) and the side-by-side comparison.
 
 ## Layout
 
-- `energy-model-comparison.html` — the **entire app**: canvas UI, both engines,
+- `applet/index.html` — the **entire app**: canvas UI, both engines,
   the GPX and binary-FIT parsers, hardcoded Portuguese strings (single-language,
   no i18n table). **No dependencies, no bundler, no `package.json`** — open it
   directly in a browser; it surfaces syntax errors immediately. Key functions:
@@ -34,8 +34,12 @@ home of the *derivation* (`notas.md`) and the side-by-side comparison.
   full Strava export (a superset of the longões, Entry 16) — never commit any of it. (Note: the
   author's own rwgps/strava rides — the "longões" — are the author's brevets, not PH rides;
   only the "censo" set is Pedal Hidrográfico.)
-- `data/activities/` — the validation harnesses (committable; the tracks they read are
-  not): `compare.mjs` (44 longões power rides), `censo_compare.mjs` (62 censo urban
+- `results/` — the harness outputs: per-ride result CSVs (gitignored except its
+  README — they carry ride names/dates). Every file regenerates with one harness
+  command (`results/README.md` maps file → producer → journal entry); the scripts
+  create the folder on demand.
+- `harness/` — the validation harnesses (committable; the tracks they read live in
+  `data/activities/`, their outputs in `results/` — both gitignored): `compare.mjs` (44 longões power rides), `censo_compare.mjs` (62 censo urban
   rides), `eps_hypothesis.mjs` (ε closed-form test), `eps_sp_test.mjs` (São Paulo ε),
   `ppaz_inventory.mjs` + `ppaz_compare.mjs` (441 second-rider rides: implied-mass
   inversion + frozen-ε transfer test; `PPAZ_M=<kg>` env for mass sensitivity),
@@ -71,14 +75,19 @@ home of the *derivation* (`notas.md`) and the side-by-side comparison.
   plus `fetch*.py` / `build_model_inputs.py` / `verify.py`. Each `.mjs` ports the app's
   engine + FIT parser verbatim — **keep all copies in sync** (app + the harness `.mjs` +
   the inventory parsers; they drifted before).
-- `research/` — the write-ups: `MODEL_COMPARISON_JOURNAL.md` (numbered entries, newest
-  first), `literature-context.md` (positioning), `article-draft.md` + `article-draft.pt-BR.md`
-  (the draft paper, EN + pt-BR), `claims.ttl` (machine-readable claims–questions–evidence
-  graph for Entries 17–22; RO-Crate envelope at the repo root `ro-crate-metadata.json`),
+- `research/notes/` — the research record: `MODEL_COMPARISON_JOURNAL.md` (numbered
+  entries, newest first), `literature-context.md` + `simujaules-literature-context.md`
+  (positioning), `claims.ttl` (machine-readable claims–questions–evidence graph for
+  Entries 17–22; RO-Crate envelope at the repo root `ro-crate-metadata.json`),
   `crr-cda-typical-values.md`, `dem-elevation-comparison.md`,
   `ascent-error-literature.md` (barometer/DEM ascent-error lit review, Entry 24),
-  `censo-model-verification.md`, `VERIFICATION_NOTES.md`, and `dem/` (DEM tooling;
-  `dem/coords/` is gitignored — per-ride GPS).
+  `censo-model-verification.md`, `VERIFICATION_NOTES.md`.
+- `research/article/` — the paper: `article-draft.md` + `article-draft.pt-BR.md`
+  (the working paper, EN + pt-BR), `figs/` (`make_figures.py` + the committed SVGs),
+  `modelo-assets/` and `build-modelo.sh` (builds the published pages at
+  `simujaules.pedalhidrografi.co/modelo/` into the sibling simujaules repo).
+  (DEM tooling lives in `harness/dem/`; `harness/dem/coords/` is gitignored —
+  per-ride GPS.)
 - `analysis/` — the research workflow in **Python** (stdlib-only), for independent
   review: `bem/` (line-by-line ports of the engines/parsers + the `analyze_ride`
   compare.mjs wiring), `parity/` (cross-language harness: `js_runner.mjs` extracts the
@@ -160,17 +169,18 @@ k_eff, wind`). That is what makes the comparison meaningful: the gap is the
 
 No build, no CI. Verify by:
 
-- **Load `energy-model-comparison.html` in a browser** (or headless Chrome
+- **Load `applet/index.html` in a browser** (or headless Chrome
   `--dump-dom` / `--screenshot`) — it surfaces JS errors and shows the result.
-- **Engine or parser change → re-run the harnesses** (need the local gitignored tracks):
-  from `data/activities/`, `node compare.mjs` (prints the longões scoreboard **and** the
-  worst per-ride conservation residual — must stay ≤ 1e-6), `node censo_compare.mjs`,
-  `node eps_hypothesis.mjs`, `node eps_sp_test.mjs`, `node ppaz_compare.mjs`,
-  `node time_compare.mjs`. Diff the numbers against the journal
-  entries and `research/article-draft.md`; a doc-visible number that moves must be updated
-  in both. A change to the engine or FIT parser must be applied to **all** copies (the app
-  + the six harness `.mjs` + `ppaz_inventory.mjs`'s parser + the Python port
-  `analysis/bem/`) or they drift — after any such change run
+- **Engine or parser change → re-run the harnesses** (need the local gitignored tracks;
+  the scripts resolve `data/activities/` relative to their own location, so run from
+  anywhere): `node harness/compare.mjs` (prints the longões scoreboard **and** the
+  worst per-ride conservation residual — must stay ≤ 1e-6), `node harness/censo_compare.mjs`,
+  `node harness/eps_hypothesis.mjs`, `node harness/eps_sp_test.mjs`, `node harness/ppaz_compare.mjs`,
+  `node harness/time_compare.mjs`. Diff the numbers against the journal
+  entries and `research/article/article-draft.md`; a doc-visible number that moves must be updated
+  in both. A change to the engine or FIT parser must be applied to **all** copies
+  (the app + the six harness `.mjs` + `ppaz_inventory.mjs`'s parser + the Python
+  port `analysis/bem/`) or they drift — after any such change run
   `python3 analysis/parity/run_parity.py` (machine-checks Python ≡ verbatim JS).
 - **Sanity cases** for an engine change: flat (canonical ≈ approximate at auto v_f),
   pure climb (`legE ≥ PE`), pure descent (≈ coast), and P=0 (the bike must *stall*, not

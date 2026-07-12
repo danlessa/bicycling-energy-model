@@ -1,4 +1,4 @@
-"""Physics engines — line-by-line ports of energy-model-comparison.html.
+"""Physics engines — line-by-line ports of applet/index.html.
 
 Reference functions (same names, camelCase there): flatEqSpeed,
 resampleProfile, smoothElevation, canonical, approximate, v2Edge, approxTime,

@@ -17,7 +17,7 @@ lumped into ε, …) rather than a parameter mismatch.
 
 ## Use
 
-Open **`energy-model-comparison.html`** in a browser — no build, no server, no
+Open **`applet/index.html`** in a browser — no build, no server, no
 dependencies. You can:
 
 - draw an elevation profile, or load a **GPX** or **FIT** file;
@@ -60,7 +60,9 @@ descent power.
 power / altitude / grade / regime export from a long brevet, used for the
 empirical-ε and statistics work; no GPS coordinates). Raw `*.fit` tracks, the
 per-rider spreadsheets, and the downloaded activity dirs under `data/activities/`
-are **gitignored** — they carry GPS tracks and private activity links.
+are **gitignored** — they carry GPS tracks and private activity links. The
+harnesses write their per-ride result CSVs to `results/` (also gitignored;
+see `results/README.md` for the file → producer map).
 
 The model has been validated against power-meter rides from **three riders** — the
 author (44 long "longões" + 62 urban "censo" rides) plus **two independent riders**
@@ -70,7 +72,7 @@ with consent). Frozen and tested on the two independent riders, the energy law a
 a coaster, is inconclusive for a fast descent-pedaller). The **time** model
 (`x* = x + k₊·h₊ − k₋·h₋`) is also tested against measured moving time (`time_compare.mjs`):
 the ascent half transfers, the descent bridge does not. The harnesses live in
-`data/activities/` (`compare.mjs`, `censo_compare.mjs`, `eps_hypothesis.mjs`,
+`harness/` (`compare.mjs`, `censo_compare.mjs`, `eps_hypothesis.mjs`,
 `eps_sp_test.mjs`, `ppaz_inventory.mjs`, `ppaz_compare.mjs`, `jaam_inventory.mjs`,
 `jaam_compare.mjs`, `time_compare.mjs`, `regime_compare.mjs`) and the write-ups — including the working
 paper — live in **`research/`** (`MODEL_COMPARISON_JOURNAL.md`, `article-draft.md`, `literature-context.md`, …).
@@ -78,7 +80,7 @@ paper — live in **`research/`** (`MODEL_COMPARISON_JOURNAL.md`, `article-draft
 **📄 The working paper is published at
 <https://simujaules.pedalhidrografi.co/modelo/>** (português) /
 **<https://simujaules.pedalhidrografi.co/modelo/en.html>** (English) — built from
-`research/article-draft*.md` by `research/build-modelo.sh`. Citation metadata in
+`research/article/article-draft*.md` by `research/article/build-modelo.sh`. Citation metadata in
 [`CITATION.cff`](CITATION.cff); DOI [10.5281/zenodo.21282165](https://doi.org/10.5281/zenodo.21282165)
 (Zenodo).
 

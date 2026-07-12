@@ -20,16 +20,16 @@
         "https://danlessa.github.io/bicycling-energy-model/"
       ],
       "citation": { "@id": "#working-paper" },
-      "mentions": { "@id": "research/claims.ttl" },
+      "mentions": { "@id": "research/notes/claims.ttl" },
       "hasPart": [
-        { "@id": "energy-model-comparison.html" },
+        { "@id": "applet/index.html" },
         { "@id": "notas.md" },
-        { "@id": "research/MODEL_COMPARISON_JOURNAL.md" },
-        { "@id": "research/article-draft.md" },
-        { "@id": "research/article-draft.pt-BR.md" },
-        { "@id": "research/claims.ttl" },
+        { "@id": "research/notes/MODEL_COMPARISON_JOURNAL.md" },
+        { "@id": "research/article/article-draft.md" },
+        { "@id": "research/article/article-draft.pt-BR.md" },
+        { "@id": "research/notes/claims.ttl" },
         { "@id": "analysis/" },
-        { "@id": "data/activities/" },
+        { "@id": "harness/" },
         { "@id": "data/sample.gpx" },
         { "@id": "data/flecha_power.csv" }
       ]
@@ -49,12 +49,12 @@
       "url": "https://simujaules.pedalhidrografi.co/modelo/en.html",
       "inLanguage": ["en", "pt-BR"],
       "isBasedOn": [
-        { "@id": "research/article-draft.md" },
-        { "@id": "research/article-draft.pt-BR.md" }
+        { "@id": "research/article/article-draft.md" },
+        { "@id": "research/article/article-draft.pt-BR.md" }
       ]
     },
     {
-      "@id": "energy-model-comparison.html",
+      "@id": "applet/index.html",
       "@type": ["File", "SoftwareSourceCode", "SoftwareApplication"],
       "name": "Energy model comparison app",
       "description": "Self-contained, build-step-free browser app: canonical forward-dynamics vs the closed form on shared constants, plus the deployed Simujaules per-edge realisation (v2Edge), GPX/FIT import, and per-regime power extraction.",
@@ -70,30 +70,30 @@
       "encodingFormat": "text/markdown"
     },
     {
-      "@id": "research/MODEL_COMPARISON_JOURNAL.md",
+      "@id": "research/notes/MODEL_COMPARISON_JOURNAL.md",
       "@type": ["File", "CreativeWork"],
       "name": "Model comparison journal",
       "description": "Numbered, reverse-chronological research journal (22 entries): verbatim human prompts, hypotheses, pre-registered protocols and endpoints, results, and verdicts, with per-entry code provenance (commit hashes).",
       "encodingFormat": "text/markdown"
     },
     {
-      "@id": "research/article-draft.md",
+      "@id": "research/article/article-draft.md",
       "@type": ["File", "ScholarlyArticle"],
       "name": "Article draft (English)",
       "inLanguage": "en",
       "encodingFormat": "text/markdown",
-      "workTranslation": { "@id": "research/article-draft.pt-BR.md" }
+      "workTranslation": { "@id": "research/article/article-draft.pt-BR.md" }
     },
     {
-      "@id": "research/article-draft.pt-BR.md",
+      "@id": "research/article/article-draft.pt-BR.md",
       "@type": ["File", "ScholarlyArticle"],
       "name": "Rascunho do artigo (português brasileiro)",
       "inLanguage": "pt-BR",
       "encodingFormat": "text/markdown",
-      "translationOf": { "@id": "research/article-draft.md" }
+      "translationOf": { "@id": "research/article/article-draft.md" }
     },
     {
-      "@id": "research/claims.ttl",
+      "@id": "research/notes/claims.ttl",
       "@type": ["File", "Dataset"],
       "name": "Claims–questions–evidence graph (journal Entries 17–22)",
       "description": "RDF/Turtle graph: research questions, hypotheses, pre-registered protocols (P-Plan), harness runs (PROV-O), assertions with polarized evidence lines (SEPIO pattern), and typed inter-entry citation links (CiTO).",
@@ -109,7 +109,7 @@
       "isPartOf": { "@id": "./" }
     },
     {
-      "@id": "data/activities/",
+      "@id": "harness/",
       "@type": "Dataset",
       "name": "Validation harnesses",
       "description": "Node.js harnesses that regenerate every published number from the raw recordings: compare, censo_compare, eps_hypothesis, eps_sp_test, time_compare, per-rider inventory+compare pairs (ppaz_*, jaam_*, danlessa_*), param_fit / cda_estimate, regime_compare, verify_v2edge_clamp, igc_resolution_test, goal_calibration, scale_trio, bootstrap_ci. Each ports the app's engines verbatim (hand-kept-in-sync).",

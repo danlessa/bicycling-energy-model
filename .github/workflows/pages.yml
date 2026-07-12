@@ -1,9 +1,10 @@
 # Publish the study tool to GitHub Pages on every push to the `deploy` branch.
 # Live at: https://danlessa.github.io/bicycling-energy-model/
 #
-# The app is one self-contained HTML file (no build step, no assets), so the
-# published site is just that file served as index.html (plus its original
-# filename for deep links). Only the files staged below are ever published —
+# The app is one self-contained HTML file (no build step, no assets) living at
+# applet/index.html, so the published site is just that file served as
+# index.html (plus the pre-move energy-model-comparison.html filename so old
+# deep links keep resolving). Only the files staged below are ever published —
 # data/, research/ and everything gitignored (FIT/GPX tracks, third-party
 # exports) never leave the repo checkout.
 #
@@ -42,8 +43,8 @@ jobs:
       - name: Stage site
         run: |
           mkdir _site
-          cp energy-model-comparison.html _site/index.html
-          cp energy-model-comparison.html _site/
+          cp applet/index.html _site/index.html
+          cp applet/index.html _site/energy-model-comparison.html
 
       - uses: actions/configure-pages@v5
         with:

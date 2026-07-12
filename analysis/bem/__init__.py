@@ -1,7 +1,7 @@
 """bem — pure-Python port of the bicycling-energy-model research workflow.
 
 Every function is a line-by-line transliteration of the JavaScript reference
-(the app `energy-model-comparison.html` and the harness `data/activities/
+(the app `applet/index.html` and the harness `harness/
 compare.mjs`), kept in the SAME evaluation order so results agree to float64
 round-off. The cross-language parity harness (`analysis/parity/`) machine-
 checks that agreement; run it after touching either side.

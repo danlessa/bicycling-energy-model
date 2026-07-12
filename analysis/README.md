@@ -5,8 +5,8 @@ so the analysis can be **independently reviewed and verified** without
 reading JavaScript. Three pieces:
 
 - **`bem/`** — the engine/parser package. Line-by-line transliterations of
-  the JS reference implementations (the app `energy-model-comparison.html`
-  and the harness `data/activities/compare.mjs`), same names, same
+  the JS reference implementations (the app `applet/index.html`
+  and the harness `harness/compare.mjs`), same names, same
   evaluation order:
   `canonical`, `approximate`, `v2_edge`, `approx_time`, `flat_eq_speed`,
   `eps_geom`, `deadband`/`ascent_hyst`/`smooth_elevation`, `parse_fit`,
@@ -26,7 +26,7 @@ reading JavaScript. Three pieces:
   ```
 
 - **`journal.qmd`** — a Quarto notebook that mirrors
-  `research/MODEL_COMPARISON_JOURNAL.md` entry by entry, with runnable
+  `research/notes/MODEL_COMPARISON_JOURNAL.md` entry by entry, with runnable
   Python cells. Synthetic demonstrations run anywhere; cells that
   reproduce measured numbers detect the local (gitignored) tracks and skip
   gracefully when absent. Render with `quarto render analysis/journal.qmd`
