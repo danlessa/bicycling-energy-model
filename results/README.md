@@ -14,12 +14,12 @@ resolve their inputs and this directory relative to their own location).
 | `ppaz_comparison.csv` | `python3 harness/ppaz_compare.py` | 12 |
 | `time_comparison.csv` | `python3 harness/time_compare.py` | 13 |
 | `jaam_comparison.csv` | `python3 harness/jaam_compare.py` | 14 |
-| `cda_estimate.csv`, `param_fit.csv` | `node harness/cda_estimate.mjs` / `param_fit.mjs` | 15 |
+| `cda_estimate.csv`, `param_fit.csv` | `python3 harness/cda_estimate.py` / `param_fit.mjs` | 15 |
 | `danlessa_comparison.csv` | `python3 harness/danlessa_compare.py` | 16 |
-| `regime_comparison.csv` | `node harness/regime_compare.mjs` | 17–18 |
-| `igc_resolution_test.csv` | `node harness/igc_resolution_test.mjs` | 19 |
-| `goal_calibration.csv` | `node harness/goal_calibration.mjs` | 20 |
-| `scale_trio.csv` | `node harness/scale_trio.mjs` | 21 |
+| `regime_comparison.csv` | `python3 harness/regime_compare.py` | 17–18 |
+| `igc_resolution_test.csv` | `python3 harness/igc_resolution_test.py` | 19 |
+| `goal_calibration.csv` | `python3 harness/goal_calibration.py` | 20 |
+| `scale_trio.csv` | `python3 harness/scale_trio.py` | 21 |
 | `longoes_verify.csv` | `python3 harness/verify.py` | — (VERIFICATION_NOTES) |
 
 `python3 harness/bootstrap_ci.py` (Entry 22) reads these CSVs and gates the
