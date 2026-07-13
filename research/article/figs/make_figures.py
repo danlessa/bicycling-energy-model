@@ -2,9 +2,9 @@
 """Regenerate the article figures as dependency-free SVGs (stdlib only).
 
 Reads the harness CSV outputs (all gitignored — they need the local tracks):
-  results/model_comparison.csv     (compare.mjs)
-  results/eps_hypothesis.csv       (eps_hypothesis.mjs)
-  results/censo_comparison.csv     (censo_compare.mjs)
+  results/model_comparison.csv     (compare.py)
+  results/eps_hypothesis.csv       (eps_hypothesis.py)
+  results/censo_comparison.csv     (censo_compare.py)
 
 Writes research/article/figs/fig{1..5}.svg (committed — they carry no GPS, only
 per-ride energies and ε, whose ride names are already public in the article).
@@ -141,7 +141,7 @@ def num(s):
 
 
 # ---- Figure 1: error attribution — where the closed form's error comes from ----
-# Waterfall over the 44 power rides (compare.mjs, §8.1): baseline 19.3% → climb-aero fix
+# Waterfall over the 44 power rides (compare.py, §8.1): baseline 19.3% → climb-aero fix
 # (cf split) 8.7% → + 2 m deadband 3.6%; canonical 5.1% as the dashed reference. The full
 # variant ranking stays in the §8.1 table — this figure carries the attribution story.
 def fig1():
@@ -218,7 +218,7 @@ def fig2():
 
 
 # ---- Figure 3: fractal ascent shrinkage vs deadband threshold ----
-# Σh₊ over the 44 rides at each hysteresis threshold (compare.mjs, §6.1).
+# Σh₊ over the 44 rides at each hysteresis threshold (compare.py, §6.1).
 def fig3():
     data = [(0, 92.4), (1, 83.3), (2, 77.4), (3, 73.3), (5, 66.9), (10, 56.2)]
     xr, yr = (0, 10), (0, 100)
@@ -306,7 +306,7 @@ def fig5():
 def fig6():
     path6 = os.path.join(RES, 'ppaz_comparison.csv')
     if not os.path.exists(path6):
-        print('skip fig6 (no ppaz_comparison.csv — run ppaz_compare.mjs)')
+        print('skip fig6 (no ppaz_comparison.csv — run ppaz_compare.py)')
         return
     rows = load(path6)
     P = []
@@ -342,7 +342,7 @@ def fig6():
 def fig7():
     path7 = os.path.join(RES, 'time_comparison.csv')
     if not os.path.exists(path7):
-        print('skip fig7 (no time_comparison.csv — run time_compare.mjs)')
+        print('skip fig7 (no time_comparison.csv — run time_compare.py)')
         return
     rows = [r for r in load(path7) if r['timeOK'] in ('1', 'true', 'True')]
     col = {'longoes': BLUE, 'censo': VERM, 'ppaz': GREEN}
@@ -376,7 +376,7 @@ def fig7():
 def fig8():
     path8 = os.path.join(RES, 'jaam_comparison.csv')
     if not os.path.exists(path8):
-        print('skip fig8 (no jaam_comparison.csv — run jaam_compare.mjs)')
+        print('skip fig8 (no jaam_comparison.csv — run jaam_compare.py)')
         return
     rows = load(path8)
     P = []

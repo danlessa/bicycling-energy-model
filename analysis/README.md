@@ -6,13 +6,13 @@ reading JavaScript. Three pieces:
 
 - **`bem/`** — the engine/parser package. Line-by-line transliterations of
   the JS reference implementations (the app `applet/index.html`
-  and the harness `harness/compare.mjs`), same names, same
+  and the frozen JS in `parity/reference.mjs`), same names, same
   evaluation order:
   `canonical`, `approximate`, `v2_edge`, `approx_time`, `flat_eq_speed`,
   `eps_geom`, `deadband`/`ascent_hyst`/`smooth_elevation`, `parse_fit`,
   `pts_from_fit`, `build_profile`, `pts_from_gpx`, `extract_regime_powers`,
   `eps_from_balance`, `measured_flat_speed`, and the per-ride pipeline
-  `analyze_ride` (compare.mjs wiring: dx = 5 m, deadband τ = 2 m, mean
+  `analyze_ride` (compare.py wiring: dx = 5 m, deadband τ = 2 m, mean
   regime powers, auto v_f, v_max 38, v_start 15 km/h).
 - **`parity/`** — the cross-language verification harness. Generates
   synthetic profiles, parameter grids and a synthetic binary FIT file,
@@ -34,10 +34,14 @@ reading JavaScript. Three pieces:
 
 ## Sync rule
 
-`bem/` is now another **hand-kept-in-sync copy** of the engines (like the
-harness `.mjs` files). A change to any engine or parser must land in all
-copies, and `parity/run_parity.py` must pass afterwards — it exists to make
-this rule machine-checkable instead of aspirational.
+`bem/` is **the** implementation of the engines: since the harnesses were
+converted from JS to Python they import from here, so there is no longer a
+fleet of `.mjs` copies to keep in step. Exactly **two** copies remain — `bem/`
+and the standalone app (`applet/index.html`, deliberately dependency-free
+vanilla JS). A change to any engine or parser must land in both, and
+`parity/run_parity.py` must pass afterwards: it evaluates the frozen verbatim
+JS in `parity/reference.mjs` and asserts `bem` agrees, which makes the rule
+machine-checkable instead of aspirational.
 
 ## Reproducing the journal scoreboards
 

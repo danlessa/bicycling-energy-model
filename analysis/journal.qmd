@@ -14,7 +14,7 @@ This notebook mirrors [`research/notes/MODEL_COMPARISON_JOURNAL.md`](../research
 The prose journal remains authoritative; this mirror makes each entry's computation
 **runnable and reviewable in Python** via the `analysis/bem` package — a line-by-line
 port of the JS engines whose equivalence is machine-checked by
-`analysis/parity/run_parity.py` (8 442 comparisons, ≤ 1e-9 relative).
+`analysis/parity/run_parity.py` (8 514 comparisons, ≤ 1e-9 relative).
 
 Two kinds of cells:
 
@@ -141,7 +141,7 @@ for tau in (0, 1, 2, 3, 5):
 DEM-derived `h₊` carries its own bias axis (`k_DEM`); on *sustained* climbs the
 energy balance isolates `k_h ≈ 1` (the rider must pay `mg·Δh/k_eff`), so the
 whole-ride shrink is a roller/noise effect, not missing climb energy. Needs DEM
-tooling + tracks — see `harness/dem/` and `compare.mjs`'s `climbBalance`.
+tooling + tracks — see `harness/dem/` and `compare.py`'s `climbBalance`.
 
 # Entry 8 — a closed form for ε from route geometry
 
@@ -188,7 +188,7 @@ print(f"clean-k₊ check: v_f·β/P_climb = {vf * (P['m']*G/P['keff']) / PW['cli
 
 Independent CdA/C_rr/mass estimation (fitted CdA ≈ 35 % below the assumed 0.40)
 and the fitted-vs-assumed robustness rerun on all corpora — the scoreboard
-conclusions survive. *(Measured; `param_fit.mjs` / `cda_estimate.mjs`.)*
+conclusions survive. *(Measured; `param_fit.py` / `cda_estimate.py`.)*
 
 # Entry 17 — regime decomposition: a bias trade, not a win
 
@@ -199,7 +199,7 @@ TOTALS; a frozen aggregate ε applied per edge under a clamp destroys credit.
 # Entry 18 — the deployed v2Edge: the clamp is dead code
 
 The app's grade-local `ε(s) = clamp₀₁(min(1,(α/β)/s) − 0.13)` keeps every descent
-edge strictly positive. A miniature of `verify_v2edge_clamp.mjs`'s sweep:
+edge strictly positive. A miniature of `verify_v2edge_clamp.py`'s sweep:
 
 ```{python}
 min_pre = float("inf")
@@ -239,7 +239,7 @@ print("finer sampling ⇒ lower implied ε ⇒ more energy — Entry 19's over-c
 σ\* = 10 m raster pre-smoothing + per-rider effective (CdA, C_rr, k_s) meets
 med |Δ%| < 5 ∧ |bias| < 2 on all three validation halves (3.69/+0.96,
 2.74/+0.31, 4.94/+0.81). Ablation: **the calibration, not the smoothing, is the
-lever**. *(Needs `sampa_geral.tif` + gdal; `goal_calibration.mjs`.)*
+lever**. *(Needs `sampa_geral.tif` + gdal; `goal_calibration.py`.)*
 
 # Entry 21 — the behavioural trio is a function of (Δx, terrain)
 
@@ -295,8 +295,8 @@ print("journal (real data): champion [2.0,5.6] vs canonical [3.8,7.1]; 25/44 (57
 - **Engines vs JS**: `python3 analysis/parity/run_parity.py` (needs node) —
   the proof this notebook computes what the journal's harnesses computed.
 - **Measured scoreboards**: place the private tracks per
-  `data/activities/README.md` and re-run the Entry 2 cell (and the harness
-  `.mjs` files for the full studies — Entries 19–21 additionally need
+  `data/activities/README.md` and re-run the Entry 2 cell (and the `harness/`
+  scripts for the full studies — Entries 19–21 additionally need
   `sampa_geral.tif` + gdal).
 - Render: `quarto render analysis/journal.qmd` · convert to Jupyter:
   `quarto convert analysis/journal.qmd`.

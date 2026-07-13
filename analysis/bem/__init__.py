@@ -1,9 +1,11 @@
 """bem — pure-Python port of the bicycling-energy-model research workflow.
 
 Every function is a line-by-line transliteration of the JavaScript reference
-(the app `applet/index.html` and the harness `harness/
-compare.mjs`), kept in the SAME evaluation order so results agree to float64
-round-off. The cross-language parity harness (`analysis/parity/`) machine-
+(the app `applet/index.html`, and the frozen verbatim JS of the retired
+harness engines in `analysis/parity/reference.mjs`), kept in the SAME
+evaluation order so results agree to float64 round-off. Since the JS->Python
+harness migration this package IS the implementation the harnesses run on —
+`harness/*.py` import from here rather than carrying copies. The cross-language parity harness (`analysis/parity/`) machine-
 checks that agreement; run it after touching either side.
 
 Stdlib-only by design: no numpy, no dependencies — reviewable line by line.

@@ -45,29 +45,29 @@ phr:verdict        a rdfs:Property ; rdfs:comment "free-text verdict as recorded
   schema:name "Model comparison journal" ;
   schema:url <https://github.com/danlessa/bicycling-energy-model/blob/main/research/notes/MODEL_COMPARISON_JOURNAL.md> .
 
-:regime_compare.mjs a schema:SoftwareSourceCode , prov:Entity ;
-  schema:name "regime_compare.mjs" .
-:verify_v2edge_clamp.mjs a schema:SoftwareSourceCode , prov:Entity ;
-  schema:name "verify_v2edge_clamp.mjs" .
-:igc_resolution_test.mjs a schema:SoftwareSourceCode , prov:Entity ;
-  schema:name "igc_resolution_test.mjs" .
-:goal_calibration.mjs a schema:SoftwareSourceCode , prov:Entity ;
-  schema:name "goal_calibration.mjs" .
-:scale_trio.mjs a schema:SoftwareSourceCode , prov:Entity ;
-  schema:name "scale_trio.mjs" .
-:bootstrap_ci.mjs a schema:SoftwareSourceCode , prov:Entity ;
-  schema:name "bootstrap_ci.mjs" .
+:regime_compare.py a schema:SoftwareSourceCode , prov:Entity ;
+  schema:name "regime_compare.py" .
+:verify_v2edge_clamp.py a schema:SoftwareSourceCode , prov:Entity ;
+  schema:name "verify_v2edge_clamp.py" .
+:igc_resolution_test.py a schema:SoftwareSourceCode , prov:Entity ;
+  schema:name "igc_resolution_test.py" .
+:goal_calibration.py a schema:SoftwareSourceCode , prov:Entity ;
+  schema:name "goal_calibration.py" .
+:scale_trio.py a schema:SoftwareSourceCode , prov:Entity ;
+  schema:name "scale_trio.py" .
+:bootstrap_ci.py a schema:SoftwareSourceCode , prov:Entity ;
+  schema:name "bootstrap_ci.py" .
 
 # Per-ride output CSVs are gitignored (regenerable, privacy) — modelled as
 # entities with an availability note, not as crate payload.
 :regime_comparison.csv a prov:Entity ;
-  rdfs:comment "gitignored; regenerates via `node regime_compare.mjs`" .
+  rdfs:comment "gitignored; regenerates via `python3 regime_compare.py`" .
 :igc_resolution_test.csv a prov:Entity ;
-  rdfs:comment "gitignored; regenerates via `node igc_resolution_test.mjs`" .
+  rdfs:comment "gitignored; regenerates via `python3 igc_resolution_test.py`" .
 :goal_calibration.csv a prov:Entity ;
-  rdfs:comment "gitignored; regenerates via `node goal_calibration.mjs`" .
+  rdfs:comment "gitignored; regenerates via `python3 goal_calibration.py`" .
 :scale_trio.csv a prov:Entity ;
-  rdfs:comment "gitignored; regenerates via `node scale_trio.mjs`" .
+  rdfs:comment "gitignored; regenerates via `python3 scale_trio.py`" .
 
 # ── Entry 17 — regime-decomposed closed form ─────────────────────────────────
 
@@ -76,7 +76,7 @@ phr:verdict        a rdfs:Property ; rdfs:comment "free-text verdict as recorded
   dcterms:source :journal .
 
 :run17 a prov:Activity ;
-  prov:used :regime_compare.mjs ;
+  prov:used :regime_compare.py ;
   prov:generated :regime_comparison.csv .
 
 :assert17 a phr:Assertion ;
@@ -97,7 +97,7 @@ phr:verdict        a rdfs:Property ; rdfs:comment "free-text verdict as recorded
   schema:text "v2Edge's trailing max(0,·) descent clamp is dead code: ε(s) keeps every descent edge cost at or above a strictly positive floor." ;
   phr:hasEvidenceLine
     [ a phr:EvidenceLine ; phr:polarity "supporting" ;
-      phr:evidence :verify_v2edge_clamp.mjs ;
+      phr:evidence :verify_v2edge_clamp.py ;
       schema:text "1.78M-combo synthetic sweep: global min pre-clamp cost +4.1e-4 kJ; middle-regime identity to 1e-12." ] ,
     [ a phr:EvidenceLine ; phr:polarity "supporting" ;
       phr:evidence :regime_comparison.csv ;
@@ -121,7 +121,7 @@ phr:verdict        a rdfs:Property ; rdfs:comment "free-text verdict as recorded
 
 :run19 a prov:Activity ;
   p-plan:correspondsToStep :plan19 ;
-  prov:used :igc_resolution_test.mjs ;
+  prov:used :igc_resolution_test.py ;
   prov:generated :igc_resolution_test.csv .
 
 :assert19 a phr:Assertion ;
@@ -150,7 +150,7 @@ phr:verdict        a rdfs:Property ; rdfs:comment "free-text verdict as recorded
 
 :run20 a prov:Activity ;
   p-plan:correspondsToStep :plan20 ;
-  prov:used :goal_calibration.mjs ;
+  prov:used :goal_calibration.py ;
   prov:generated :goal_calibration.csv .
 
 :assert20 a phr:Assertion ;
@@ -178,7 +178,7 @@ phr:verdict        a rdfs:Property ; rdfs:comment "free-text verdict as recorded
 
 :run21 a prov:Activity ;
   p-plan:correspondsToStep :plan21 ;
-  prov:used :scale_trio.mjs ;
+  prov:used :scale_trio.py ;
   prov:generated :scale_trio.csv .
 
 :assert21 a phr:Assertion ;
@@ -200,7 +200,7 @@ phr:verdict        a rdfs:Property ; rdfs:comment "free-text verdict as recorded
   phr:verdict "demoted — median-point comparison unsupported by the paired test" .
 
 :run22 a prov:Activity ;
-  prov:used :bootstrap_ci.mjs .
+  prov:used :bootstrap_ci.py .
 
 :assert22 a phr:Assertion ;
   cito:updates :assert-beats ;

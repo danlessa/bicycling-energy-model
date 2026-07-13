@@ -182,7 +182,7 @@ $$
 
 **Empirical test** (44 power rides, predictor vs. the measured
 $\epsilon=(\alpha X_- - E_{legs,-})/(\beta H_-)$ on 30 m cells with $\alpha$ at the
-*measured* flat speed — `harness/eps_hypothesis.mjs`, Journal Entry 8):
+*measured* flat speed — `harness/eps_hypothesis.py`, Journal Entry 8):
 
 - **The grade law holds where $\epsilon$ matters.** Correlation with the measured
   $\epsilon$ climbs from $0.38$ over all rides to $0.83$ on $\bar s\ge 3\%$ and $0.87$ on
@@ -244,7 +244,7 @@ $\epsilon_0 = 0.13$. Two structural facts, both load-bearing:
   descent edge at or above a strictly positive floor ($0.13\,\alpha\,dx$ in the gentle
   regime, $0.13\,\beta\,|dh|$ in the middle, $\alpha\,dx$ steep); confirmed at
   $+4.6\,$J minimum pre-clamp over 1402 real rides (Entry 18,
-  `verify_v2edge_clamp.mjs`).
+  `verify_v2edge_clamp.py`).
 
 **Resolution caveat.** The grade-local $\epsilon(s)$ is *resolution-sensitive* in a
 way the aggregate is not: at sampling steps $\ll 30\,$m, local grades read steeper,
@@ -345,7 +345,7 @@ gravity-limited: $t = x_-/v_{desc}$, set by horizontal distance and the (grade-d
 $v_{max}$-capped) descent speed. Pinning it to $h_-$ forces $k_-$ to absorb the typical
 descent grade, $k_- \approx (1 - v_f/v_{desc})/\bar s$, so $k_-$ is a **lumped, free
 parameter** — exactly the role $\epsilon$ plays for energy. (The time model is now tested
-against measured ride *times* on all three datasets — `time_compare.mjs`, journal Entry 13.
+against measured ride *times* on all three datasets — `time_compare.py`, journal Entry 13.
 Split verdict: the ascent term $k_+$ transfers across riders, but the $\epsilon\!\leftrightarrow\!k_-$
 bridge does *not* predict measured descent speed, so $k_-$ stays **free and corpus-dependent**,
 not derived — real descents are behaviour/$v_{max}$-limited, not equilibrium-limited.)

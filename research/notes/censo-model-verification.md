@@ -4,7 +4,7 @@ A second, independent check of the three energy models — **canonical**, **smoo
 approximate**, **poor-man's approximate** — on the collective's *own* rides, distinct from
 the 44 long power-meter rides used in [MODEL_COMPARISON_JOURNAL.md](MODEL_COMPARISON_JOURNAL.md)
 Entries 1–8. Full log: Journal **Entry 9**. Harness:
-[../harness/censo_compare.mjs](../../harness/censo_compare.mjs); downloader
+[../harness/censo_compare.py](../../harness/censo_compare.py); downloader
 [../harness/fetch_censo.py](../../harness/fetch_censo.py).
 
 *(Corrected per Journal Entry 11's code-fix pass: "6 of 7" → "5 of 7" cadence-clear rides below.)*

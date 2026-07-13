@@ -9,7 +9,7 @@ last (oldest) entry. Three energies per ride, all in kJ:
 - **approximate** — `approximate().E`, the closed-form `α·x + β(h₊ − ε·h₋)`
 
 Tooling: [harness/build_model_inputs.py](../../harness/build_model_inputs.py)
-(per-ride parameters from the sheet) → [harness/compare.mjs](../../harness/compare.mjs)
+(per-ride parameters from the sheet) → [harness/compare.py](../../harness/compare.py)
 (runs the **real** engines, ported verbatim from `applet/index.html`).
 Output: `results/model_comparison.csv` (gitignored). Dataset & verification:
 [data/activities/README.md](../../data/activities/README.md),
@@ -36,51 +36,51 @@ changed. See Entry 11.)*
 
 **Code provenance** — the commit holding each entry's analysis code:
 
-- **Entries 1–4** (harness `build_model_inputs.py` + `compare.mjs`: methodology, baseline,
-  climb-fraction, P_flat/P_avg) — [`797173f`](../../harness/compare.mjs)
+- **Entries 1–4** (harness `build_model_inputs.py` + `compare.py`: methodology, baseline,
+  climb-fraction, P_flat/P_avg) — [`797173f`](../../harness/compare.py)
 - **Entry 5** (per-regime, elevation noise, deadband filter, τ=2) — `cd2f549`; the filter +
   `k_h` wired into the app/`notas.md` in `7e46fab`
 - **Entry 6** (DEM/IGC comparison, `harness/dem/`) — `7d958ca`; IGC 5 m + `k_DEM`/`k_h`
   split in `3f98465`, `a184286`
-- **Entry 7** (sustained-climb `k_h` fit, `climbBalance` in `compare.mjs`) — [`9135ab9`](../../harness/compare.mjs)
-- **Entry 8** (closed-form `ε` hypothesis + test, [`eps_hypothesis.mjs`](../../harness/eps_hypothesis.mjs)) — [`6640780`](../../harness/eps_hypothesis.mjs)
+- **Entry 7** (sustained-climb `k_h` fit, `climbBalance` in `compare.py`) — [`9135ab9`](../../harness/compare.py)
+- **Entry 8** (closed-form `ε` hypothesis + test, [`eps_hypothesis.py`](../../harness/eps_hypothesis.py)) — [`6640780`](../../harness/eps_hypothesis.py)
 - **Entry 9** (censo-hidrográfico urban rides, [`fetch_censo.py`](../../harness/fetch_censo.py) +
-  [`censo_compare.mjs`](../../harness/censo_compare.mjs)) — [`9fc247b`](../../harness/censo_compare.mjs)
-- **Entry 10** (São Paulo ε hypothesis test, [`eps_sp_test.mjs`](../../harness/eps_sp_test.mjs)) — `707c584`
+  [`censo_compare.py`](../../harness/censo_compare.py)) — [`9fc247b`](../../harness/censo_compare.py)
+- **Entry 10** (São Paulo ε hypothesis test, [`eps_sp_test.py`](../../harness/eps_sp_test.py)) — `707c584`
 - **Entry 11** (general review: code fixes + honesty corrections across engines, parsers, and
   every downstream number) — `906de11`
-- **Entry 12** (second rider: P. Paz's Strava export, [`ppaz_inventory.mjs`](../../harness/ppaz_inventory.mjs) +
-  [`ppaz_compare.mjs`](../../harness/ppaz_compare.mjs)) — `2148deb`
-- **Entry 13** (time model tested on all three datasets, [`time_compare.mjs`](../../harness/time_compare.mjs)) — `eeb38cd`
+- **Entry 12** (second rider: P. Paz's Strava export, [`ppaz_inventory.py`](../../harness/ppaz_inventory.py) +
+  [`ppaz_compare.py`](../../harness/ppaz_compare.py)) — `2148deb`
+- **Entry 13** (time model tested on all three datasets, [`time_compare.py`](../../harness/time_compare.py)) — `eeb38cd`
 - **Entry 14** (third rider JAAM + a framing correction: P. Paz/JAAM are *independent* riders, not
-  collective members, [`jaam_inventory.mjs`](../../harness/jaam_inventory.mjs) +
-  [`jaam_compare.mjs`](../../harness/jaam_compare.mjs)) — this commit
+  collective members, [`jaam_inventory.py`](../../harness/jaam_inventory.py) +
+  [`jaam_compare.py`](../../harness/jaam_compare.py)) — this commit
 - **Entry 15** (independent per-rider CdA/C_rr/mass + per-activity wind estimation,
-  [`cda_estimate.mjs`](../../harness/cda_estimate.mjs) +
-  [`param_fit.mjs`](../../harness/param_fit.mjs)) — `1d4eb2c`
+  [`cda_estimate.py`](../../harness/cda_estimate.py) +
+  [`param_fit.py`](../../harness/param_fit.py)) — `1d4eb2c`
 - **Entry 16** (fitted rider physics vs assumed; the author's full Strava export as a fourth dataset,
-  [`danlessa_inventory.mjs`](../../harness/danlessa_inventory.mjs) +
-  [`danlessa_compare.mjs`](../../harness/danlessa_compare.mjs) + `*_CDA`/`*_CRR` overrides) — `736f33f`
+  [`danlessa_inventory.py`](../../harness/danlessa_inventory.py) +
+  [`danlessa_compare.py`](../../harness/danlessa_compare.py) + `*_CDA`/`*_CRR` overrides) — `736f33f`
 - **Entry 17** (a regime-decomposed closed form E_new = E_flat + E_climb + E_descent, and a totals
   variant E_new2, tested vs the champion on all five corpora,
-  [`regime_compare.mjs`](../../harness/regime_compare.mjs)) — this commit
+  [`regime_compare.py`](../../harness/regime_compare.py)) — this commit
 - **Entry 21** (hypothesis: the resolution gap is a PARAMETER problem — scale-dependent
   behavioural trio (k_s, ε₀, climbThr) vs scale-free rider physics; fit the trio as a pure
   5 m→30 m resolution transfer, no DEM edits,
-  [`scale_trio.mjs`](../../harness/scale_trio.mjs)) — this commit
+  [`scale_trio.py`](../../harness/scale_trio.py)) — this commit
 - **Entry 20** (goal-driven: can the deployed pipeline hit ±5% error / ±2% bias? smoothing σ +
   per-rider calibration, train/validation,
-  [`goal_calibration.mjs`](../../harness/goal_calibration.mjs)) — this commit
+  [`goal_calibration.py`](../../harness/goal_calibration.py)) — this commit
 - **Entry 19** (the app's usual DEM: v2Edge on the deployed IGC-SP 5 m raster vs its 30 m resample,
-  censo rides, [`igc_resolution_test.mjs`](../../harness/igc_resolution_test.mjs)) — this commit
+  censo rides, [`igc_resolution_test.py`](../../harness/igc_resolution_test.py)) — this commit
 - **Entry 18** (correction: R1a is NOT the deployed sampasimu cost — dead-clamp proof + Jensen
   sign flip + R1d pre-registration and results (the Jensen prediction fails to a resolution effect;
   the bias-trade law claims R1d too),
-  [`verify_v2edge_clamp.mjs`](../../harness/verify_v2edge_clamp.mjs) +
-  [`regime_compare.mjs`](../../harness/regime_compare.mjs)) — this commit
+  [`verify_v2edge_clamp.py`](../../harness/verify_v2edge_clamp.py) +
+  [`regime_compare.py`](../../harness/regime_compare.py)) — this commit
 - **Entry 22** (bootstrap 95% CIs + paired sign tests for the article's headline medians; the
   champion-vs-canonical "beats" claim demoted to parity,
-  [`bootstrap_ci.mjs`](../../harness/bootstrap_ci.mjs)) — this commit
+  [`bootstrap_ci.py`](../../harness/bootstrap_ci.py)) — this commit
 - **Entry 23** (move-grid connectivity bias in sampasimu's terrain mode — study and code live in
   the sibling repo: `../simujaules/docs/grid-connectivity-sensitivity-2026-07-11.md` (canonical
   copy) + its `grid-sens.mjs`/`grid-correct.mjs`/`grid-adaptive.mjs`/`grid-pull.mjs`/`grid-eik.mjs`/
@@ -339,7 +339,7 @@ pre-register distributions, not point ranges.
 the title/abstract around what transfers, and put uncertainty on the headline numbers. This entry
 records the new statistics; no engine ran and no published median changed.*
 
-**What was computed.** [`bootstrap_ci.mjs`](../../harness/bootstrap_ci.mjs) reads the
+**What was computed.** [`bootstrap_ci.py`](../../harness/bootstrap_ci.py) reads the
 per-ride CSVs already written by the other harnesses (`model_comparison`, `censo_comparison`,
 `ppaz_comparison`, `jaam_comparison`, `time_comparison` — no FIT parsing, no engines) and adds
 two kinds of statistics the article previously lacked:
@@ -377,7 +377,7 @@ pre-smoothing; §10.2 gains a provenance row; §10.4 scopes the calibration resu
 planning-mode; §11 adds the constants-are-the-frontier finding and the terrain-indexed-trio open
 question. `article-draft.pt-BR.md` mirrors every change.
 
-Tooling: `node bootstrap_ci.mjs` (instant; needs only the gitignored per-ride CSVs; exits
+Tooling: `python3 bootstrap_ci.py` (instant; needs only the gitignored per-ride CSVs; exits
 non-zero on any gate failure).
 
 ---
@@ -453,7 +453,7 @@ targets: h₊(igc5) > h₊(igc30) on 919/922 rides (k_s's mechanism) and implied
 
 ### Results — H21 partially supported: parameters DO bridge the gap, but only within the terrain regime they were fitted on
 
-**Integrity.** Harness [`scale_trio.mjs`](../../harness/scale_trio.mjs) (engines verbatim;
+**Integrity.** Harness [`scale_trio.py`](../../harness/scale_trio.py) (engines verbatim;
 stage-1 inner loop uses an exact algebraic decomposition of the walk, asserted ≡ the verbatim
 engine to 6.8e-10 kJ at every reported set). All gates pass: Entry-19 per-ride reproduction
 (riders AND the newly-sampled censo igc5/igc30, worst 5e-5 kJ), Entry-20 igc5-frozen anchors
@@ -507,7 +507,7 @@ the E2 outcome cautions that per-rider "physics" fitted on top of ANY resolution
 still absorbs behavioural residuals (drafting, position, meter) — treat fitted CdA/C_rr as
 effective values regardless.
 
-Tooling: `node scale_trio.mjs` (~5 min cold, ~15 s cache-hit; reuses Entry 20's profile
+Tooling: `python3 scale_trio.py` (~5 min cold, ~15 s cache-hit; reuses Entry 20's profile
 cache + Entry 19's warp raster; writes the gitignored `scale_trio.csv`).
 
 ---
@@ -571,7 +571,7 @@ dataset list (group rides — drafting breaks the single-rider energy balance).
 
 ### Results — **PRIMARY ENDPOINT: PASS** (no fallback needed)
 
-**Integrity.** Harness [`goal_calibration.mjs`](../../harness/goal_calibration.mjs) +
+**Integrity.** Harness [`goal_calibration.py`](../../harness/goal_calibration.py) +
 [`goal_smooth_rasters.py`](../../harness/goal_smooth_rasters.py) (the amended deployable
 smoothing scheme, constants pinned in both headers for the app port). 864 rides
 (277/181/406), split 156/121 · 87/94 · 190/216 (train/validation). Sanity gates: σ=0 frozen
@@ -626,7 +626,7 @@ enforced per ride by the emp + v2_igc5 reproduction gates); cache determinism ve
 fresh-rebuilding every 40th ride rather than a full second build; Phase A implemented per
 the pre-registration's deployable-scheme amendment.
 
-Tooling: `node goal_calibration.mjs` (~25 min full; needs the conda python for the raster
+Tooling: `python3 goal_calibration.py` (~25 min full; needs the conda python for the raster
 prep, gdallocationinfo, `sampa_geral.tif`; writes the gitignored `goal_calibration.csv`).
 
 ---
@@ -661,7 +661,7 @@ here propagates directly into the mission's headline measure, not just into per-
 P. Paz, JAAM, and author-full (danlessa) clean power rides inside the same coverage — censo
 rides are GROUP urban rides (drafting, stop-go), so the three independent riders' individual
 rides are the better-isolated corpus. Each rider keeps their own frozen physics and per-corpus
-ε rule exactly as in `regime_compare.mjs`. The censo endpoint stays as declared; the pooled
+ε rule exactly as in `regime_compare.py`. The censo endpoint stays as declared; the pooled
 independent-rider rides become a co-primary for the same endpoint.* Three profile sources per ride, each built by
 arc-length-resampling the GPS track and sampling the raster bilinearly at those points:
 (a) **baro** — the recorded elevation (harness baseline / anchor); (b) **igc5** — the deployed
@@ -674,7 +674,7 @@ the free global DEM instead of the local survey, and whether igc30 ≈ fabdem30 
 the two bare-earth sources within ~6% on ascent).*
 
 **Models per profile.** The deployed **v2Edge walk** (Entry 18's R1d realisation, code reused
-verbatim from `regime_compare.mjs`) and the **R0 champion** (smooth cf + 2 m deadband, censo ε
+verbatim from `regime_compare.py`) and the **R0 champion** (smooth cf + 2 m deadband, censo ε
 rule = flat 0.20), both vs measured `∫P·dt`.
 
 **Primary endpoint.** Paired med |Δ%| and signed bias of **v2Edge@igc5 vs v2Edge@igc30**.
@@ -699,7 +699,7 @@ check.
 **Corpus & integrity.** 922 rides passed coverage (censo **58** of 62 clean; P. Paz **277**;
 JAAM **181**; author full **406**; pooled independent riders **864**). Strict
 all-points-inside-bbox + ≥99% valid samples; engines runtime-extracted from
-`regime_compare.mjs` (byte-identical by construction); the full run executed twice with
+`regime_compare.py` (byte-identical by construction); the full run executed twice with
 **byte-identical output**. All sanity gates pass: the baro anchor reproduces
 `regime_comparison.csv` on 912 matched rides to 5e-4 kJ; dead-clamp min pre-clamp edge
 **+4.46 J** across all 922×4 profiles; igc5-sampled-at-30 m ≈ igc30 to 1.0% median energy
@@ -764,11 +764,11 @@ aggregate ε), so it is a product decision, not a patch.
 
 *Deviations from the brief (all disclosed):* v2Edge walks RAW profiles (deployment-faithful;
 makes the baro anchor ≡ `r1d5r`); ε_geom recomputed per profile source for the open corpora
-(censo stays flat 0.20); engine reuse by runtime extraction + eval of `regime_compare.mjs`
+(censo stays flat 0.20); engine reuse by runtime extraction + eval of `regime_compare.py`
 (stronger than substring assertion); `sampa_geral.tif` has no declared nodata — un-surveyed
 cells read 0, so validity = sample > 0.5 m; the RMS-gate note above. No subsampling anywhere.
 
-Tooling: `node igc_resolution_test.mjs` (~15 min; needs `gdalwarp`/`gdallocationinfo`, the
+Tooling: `python3 igc_resolution_test.py` (~15 min; needs `gdalwarp`/`gdallocationinfo`, the
 sampasimu `dem/sampa_geral.tif`, and network for the FABDEM tile on first run; writes the
 gitignored `igc_resolution_test.csv`).
 
@@ -802,7 +802,7 @@ Always strictly positive — the trailing `max(0, e)` in `v2Edge` (and its Rust 
 unreachable, defensive-only code. This is not even a new result: it is exactly the
 `descFloor = 0.13·α > 0` bound sampasimu's own A\* admissibility proof derives
 (`energy-worker.js`). Numerically confirmed by
-[`verify_v2edge_clamp.mjs`](../../harness/verify_v2edge_clamp.mjs): a 1.78 M-combo sweep
+[`verify_v2edge_clamp.py`](../../harness/verify_v2edge_clamp.py): a 1.78 M-combo sweep
 over (dist, grade, mass, C_rr, CdA, P_flat, k_smooth ≤ 1 — which only widens the margin) finds
 a global minimum pre-clamp cost of +4.1e-4 kJ, plus the middle-regime identity to 1e-12. By
 contrast R1a's frozen ε̄ has no such protection: on a steep edge `ε̄·s > α/β` easily, the
@@ -826,7 +826,7 @@ read "strike against R1a's frozen-ε construction". Inline corrections added to 
 
 **Pre-registered next test — R1d, the app's *actual* realisation.** Whether grade-local ε is
 empirically better or worse than the champion is now a genuine open question. Declared before
-running: add **R1d** to `regime_compare.mjs` — per-edge over the same deadbanded 5 m profile
+running: add **R1d** to `regime_compare.py` — per-edge over the same deadbanded 5 m profile
 as R1a, edge cost = the verbatim `v2Edge` (roll always; aero charged iff `dh < climbThr·dx`,
 so full flat aero on descents; `β·dh` uphill; grade-local ε downhill; no regime powers —
 information budget identical to R0: `P₌` + geometry + the frozen −0.13). **Primary endpoint:**
@@ -850,7 +850,7 @@ to the code, not the prose.
 
 ### R1d results (same day) — the clamp is dead on real data, the Jensen prediction fails, and the bias-trade law claims another model
 
-R1d ran as pre-registered (`regime_compare.mjs`, verbatim `v2Edge` walk; sanity gates all pass,
+R1d ran as pre-registered (`regime_compare.py`, verbatim `v2Edge` walk; sanity gates all pass,
 including **R1d ≡ R0 on a constant-grade descent to 1e-6** — so every real-data difference is grade
 *variance*, not construction).
 
@@ -892,8 +892,8 @@ least wrong. The remaining practical note for sampasimu: avoid feeding v2Edge pr
 than ~30 m (the credit collapses), and the k_DEM/§8.7 source-bias axis is separate from and additive
 to this resolution effect.
 
-Tooling: `node verify_v2edge_clamp.mjs` (self-contained, no ride data; exits non-zero on any
-violation); `node regime_compare.mjs` (R1d in the scoreboard + the Entry-18 endpoint block, Jensen
+Tooling: `python3 verify_v2edge_clamp.py` (self-contained, no ride data; exits non-zero on any
+violation); `python3 regime_compare.py` (R1d in the scoreboard + the Entry-18 endpoint block, Jensen
 check, resolution×smoothing grid, and the dead-clamp assert; fitted rerun via the Entry-17 envs).
 
 ---
@@ -910,7 +910,7 @@ The champion closed form (§3.2) is single-regime with patches: one flat referen
 on climbs (the `cf` α-split), a 2 m deadband, and a lumped descent credit ε. This entry tests whether a
 structurally cleaner *segment* decomposition — each regime evaluating the base law with its **own** power
 (flat `flatEqSpeed(P₌)`; climb aero at the quasi-steady `v_c(P₊)`; descent from the `P₋`+gravity
-equilibrium) — is any better. Harness: `regime_compare.mjs` (engine block verbatim from `time_compare.mjs`,
+equilibrium) — is any better. Harness: `regime_compare.py` (engine block verbatim from `time_compare.py`,
 ppaz block asserted as a substring; new logic = `regimeComponents`/`r0Champion`/the drivers only).
 
 **The two models, written out.** Both build on the base per-metre coefficients
@@ -1111,9 +1111,9 @@ spots. Both corrections came from the domain owner. The classic V&V split, and t
 ("the right thing?") is best done by stakeholders; future entry plans should put the "is the comparison
 apples-to-apples with the champion's own evaluation style?" question to the owner *before* execution.
 
-Tooling: `node regime_compare.mjs` (all five corpora; `SANITY=1` runs the synthetic gates;
+Tooling: `python3 regime_compare.py` (all five corpora; `SANITY=1` runs the synthetic gates;
 `<RIDER>_M`/`_CDA`/`_CRR` envs swap in fitted physics — the causal rerun above is
-`PPAZ_M=80.7 PPAZ_CDA=0.26 PPAZ_CRR=0.0053 JAAM_M=103.2 JAAM_CDA=0.323 JAAM_CRR=0.0108 DANLESSA_M=71.2 DANLESSA_CDA=0.256 DANLESSA_CRR=0.0072 node regime_compare.mjs`).
+`PPAZ_M=80.7 PPAZ_CDA=0.26 PPAZ_CRR=0.0053 JAAM_M=103.2 JAAM_CDA=0.323 JAAM_CRR=0.0108 DANLESSA_M=71.2 DANLESSA_CDA=0.256 DANLESSA_CRR=0.0072 node regime_compare.py`).
 Writes the gitignored `regime_comparison.csv`.
 
 ---
@@ -1127,7 +1127,7 @@ rider dataset.*
 
 Two connected robustness checks. Tooling: `PPAZ_CDA`/`PPAZ_CRR` (and `JAAM_`, `DANLESSA_`) env overrides
 on the compare harnesses swap the generic assumed drag/rolling for each rider's Entry-15 fitted values;
-`danlessa_inventory.mjs` + `danlessa_compare.mjs` add the author's full export (verbatim engines).
+`danlessa_inventory.py` + `danlessa_compare.py` add the author's full export (verbatim engines).
 
 ### Part A — fitted physics vs assumed (riders 2–3)
 
@@ -1191,8 +1191,8 @@ is fully robust; **P. Paz's 35 % ε win is not — it becomes a tie under best-g
 known 73; longões was brevet loadout) and the 0.13 offset, in-sample. (4) The fitted CdA is systematically
 the aero-position value (~0.26–0.34), below the generic 0.40 — informative, not a bug.
 
-Tooling: `PPAZ_M=80.7 PPAZ_CDA=0.26 PPAZ_CRR=0.0053 node ppaz_compare.mjs` (and `JAAM_`, `DANLESSA_`);
-`node danlessa_inventory.mjs && node danlessa_compare.mjs`; `node param_fit.mjs` (now 4 riders). All read
+Tooling: `PPAZ_M=80.7 PPAZ_CDA=0.26 PPAZ_CRR=0.0053 node ppaz_compare.py` (and `JAAM_`, `DANLESSA_`);
+`python3 danlessa_inventory.py && node danlessa_compare.py`; `python3 param_fit.py` (now 4 riders). All read
 the gitignored exports, write gitignored CSVs.
 
 ---
@@ -1208,8 +1208,8 @@ single-direction, ±5 km/h circular).*
 
 **Why this matters.** Entry 14 flagged JAAM's implied mass (101.7 kg) as implausibly high and
 *guessed* it was a CdA misspecification. This entry tests that — and refutes it. Two tools:
-[`cda_estimate.mjs`](../../harness/cda_estimate.mjs) (the exploration of what fails and why) and
-[`param_fit.mjs`](../../harness/param_fit.mjs) (the working per-activity estimator). Engines
+[`cda_estimate.py`](../../harness/cda_estimate.py) (the exploration of what fails and why) and
+[`param_fit.py`](../../harness/param_fit.py) (the working per-activity estimator). Engines
 (`parseFIT`, `haversine`) are verbatim copies; the point builder `ptsWithGeo` is new because it must
 keep lat/lon for **bearing**, which the verbatim `ptsFromFIT` discards. The author's longões (whose
 model constants are themselves assumptions, not truth) serve as a method **anchor** throughout.
@@ -1237,7 +1237,7 @@ model constants are themselves assumptions, not truth) serve as a method **ancho
 - **Wind is the parameter that unlocks CdA** (Danilo's insight; this is virtual-elevation with a wind
   vector, à la Notio/Aerolab). A ride heading several directions under one wind vector
   `w = −(W_e·sinβ + W_n·cosβ)` shows a directional asymmetry in aero cost that identifies CdA *and*
-  the wind together. `param_fit.mjs`: mass fixed at the rider level (from climbs), then **per activity**
+  the wind together. `param_fit.py`: mass fixed at the rider level (from climbs), then **per activity**
   a **linearised 4-parameter regression** recovers (C_rr, CdA, CdA·W_e, CdA·W_n). *The linearisation is
   load-bearing* — dropping the small `w²` term makes the aero power linear
   (`½ρCdA·v³ − ρCdA·v²·(W_e sinβ + W_n cosβ)`), so CdA comes from the v³ term and the wind vector from
@@ -1294,8 +1294,8 @@ and C_rr only once wind is modelled per activity (flat-power, coast-down, and cl
 CdA), via a *linearised* aero regression that avoids the CdA↔wind degeneracy; and the wind vector
 itself from the GPS-bearing directional asymmetry, de-biased for regression attenuation.
 **This retires Entry 14's "likely CdA misspecification" guess: JAAM's CdA is a normal 0.32, and the
-high implied mass is simply genuine mass — the rider really is ~100 kg.** Tooling: `node cda_estimate.mjs`
-(the exploration) and `node param_fit.mjs` (the estimator;
+high implied mass is simply genuine mass — the rider really is ~100 kg.** Tooling: `python3 cda_estimate.py`
+(the exploration) and `python3 param_fit.py` (the estimator;
 ~1 min; writes gitignored CSVs). This is a v1 — the two numeric open items above are the next passes.
 
 ---
@@ -1310,12 +1310,12 @@ or leaned on "same collective" as the external-validity caveat were wrong and ar
 
 **What this is.** A **third fully-independent rider** (JAAM — different person, different power meter,
 not the author, not P. Paz, not in the collective), `data/activities/strava_jaam/` (gitignored,
-shared with consent). `jaam_compare.mjs` reuses `ppaz_compare.mjs`'s **verbatim** engines (byte-identical,
+shared with consent). `jaam_compare.py` reuses `ppaz_compare.py`'s **verbatim** engines (byte-identical,
 re-verified by diff in an adversarial audit), retargeted to JAAM's manifest, plus a terrain/altitude
 stratification. Numbers below are pinned to `jaam_comparison.csv` md5 `03359f5…` (219 rows); an
 adversarial 3-agent review verified the harness, recomputed every figure, and set the honest framing.
 
-**Inventory** (`jaam_inventory.mjs`): 1 282 FIT files, 0 errors, 2022-12 → 2026-07; **360 power rides**,
+**Inventory** (`jaam_inventory.py`): 1 282 FIT files, 0 errors, 2022-12 → 2026-07; **360 power rides**,
 230 ≥ 20 km. Danilo noted JAAM rides many countries (Colombia, Germany, Ukraine, US, …) from
 mountainous to plain — **but that breadth is almost all in the *non-power* activities**: the power rides
 cluster tightly at **~737 m median altitude** (p10 721, p90 785 — the São Paulo band), with only a thin
@@ -1385,7 +1385,7 @@ remain untested.**" Three *independent* riders is the stronger external-validity
 Caveats: ~4 non-Zwift-tagged flat "300 m" (likely indoor) rides survive into the energy scoreboard — the
 median is immune, and the ε test/mass inversion drop them structurally (flat ⇒ no descent cells, no
 sustained climbs). Rider-3 CdA/C_rr assumed (the mass sweep varies mass, not the suspected CdA culprit).
-Tooling: `node jaam_inventory.mjs && node jaam_compare.mjs` (`JAAM_M=<kg>` for the mass sweep); both read
+Tooling: `python3 jaam_inventory.py && node jaam_compare.py` (`JAAM_M=<kg>` for the mass sweep); both read
 the gitignored export and write gitignored outputs.
 
 ---
@@ -1396,9 +1396,9 @@ the gitignored export and write gitignored outputs.
 
 **This retires the standing "time model is theory only" caveat** (§10.4, notas). The energy↔time dual
 `t = x*/v_f`, `x* = x + k₊·h₊ − k₋·h₋` (article §5, the paper's second novel claim) had never been
-compared to a measured ride time. [`time_compare.mjs`](../../harness/time_compare.mjs) does that
+compared to a measured ride time. [`time_compare.py`](../../harness/time_compare.py) does that
 across all three corpora at once (longões 43 · censo 58 · P. Paz 441 clean rides). Engines are verbatim
-copies (assembled programmatically from `ppaz_compare.mjs` + `compare.mjs`'s `ptsFromGPX` +
+copies (assembled programmatically from `ppaz_compare.py` + `compare.py`'s `ptsFromGPX` +
 `applet/index.html`'s `approxTime`); the new pieces are `extractRegimeStats` (per-regime
 moving time/distance/vertical on the same 30 m grade window + VSTOP gate that feeds P̄) and the predictor
 battery. The design was fixed by an adversarial methods review *before* running, and the results by a
@@ -1482,8 +1482,8 @@ pre-declared; the terciles, modes, and per-corpus splits are exploratory. Two ri
 independent rider P. Paz — see the Entry-14 framing correction: P. Paz is *not* a collective member),
 same São Paulo region (Entry-12 caveats carry over).
 
-Tooling: `node time_compare.mjs` (reads the three gitignored track sets + manifests; writes
-`time_comparison.csv`, gitignored). `PPAZ_M=<kg> node time_compare.mjs` for the mass sweep.
+Tooling: `python3 time_compare.py` (reads the three gitignored track sets + manifests; writes
+`time_comparison.csv`, gitignored). `PPAZ_M=<kg> node time_compare.py` for the mass sweep.
 
 ---
 
@@ -1497,13 +1497,13 @@ number came from one rider and one power meter. P. Paz is a different rider, on 
 meter, with a different riding profile (median v_f **26.6 km/h** vs Danilo's 16.5 urban /
 23.4 longões — a faster, open-road rider).
 
-**Inventory** ([`ppaz_inventory.mjs`](../../harness/ppaz_inventory.mjs)): 1 054 FIT files
+**Inventory** ([`ppaz_inventory.py`](../../harness/ppaz_inventory.py)): 1 054 FIT files
 parsed, 0 errors, 2023-10 → 2026-07. 1 052 rides, **753 with power** (>50% coverage), 493 of
 them ≥ 20 km. After the harness filters (altitude ≥ 99%, not-Zwift via FIT `file_id`
 manufacturer — **45 virtual rides excluded** — and power present): **441 usable rides**, none
 excluded by the physical floor (P. Paz's meter shows no censo-style dropouts).
 
-**Implied mass, not assumed** ([`ppaz_compare.mjs`](../../harness/ppaz_compare.mjs) pass A).
+**Implied mass, not assumed** ([`ppaz_compare.py`](../../harness/ppaz_compare.py) pass A).
 We don't know P. Paz's mass, so it is *inverted from the sustained-climb energy balance* (the
 Entry 7 machinery): on climbs ≥ 3% over ≥ 100 m, measured ≈ (grav+roll)·(m/m₀) + aero. Over
 **10 124 sections, 209 km of sustained Δh**: global m̂ = 75.6 kg; **per-ride median m̂ = 74.3 kg**
@@ -1549,7 +1549,7 @@ rider 1**:
   at s̄ ≥ 3% is **0.12** (0.48 − 0.36). Two riders, two meters, same near-constant offset.
 - **Mass-insensitivity**: rerunning with m ∈ {70, 74.3, 78} kg moves the frozen-estimator RMS
   only 0.096/0.091/0.088 (in-sample flat 0.147/0.139/0.133) — the conclusion does not depend on
-  the in-sample mass calibration. (`PPAZ_M=<kg> node ppaz_compare.mjs`.)
+  the in-sample mass calibration. (`PPAZ_M=<kg> node ppaz_compare.py`.)
 - corr(ε_coast, ε_bal) = 0.81 at s̄ ≥ 3% — but as always (Entry 11) that correlation is
   part–whole; the frozen-vs-flat RMS comparison above is the honest statistic, and it is the
   out-of-sample one.
@@ -1562,7 +1562,7 @@ insensitive); the ε evaluation shares its *method* (30 m cells, measured flat s
 rider 1, so a method-level artifact would not be caught by this test. n(riders) = 2 — but the
 step from 1 to 2 is the big one.
 
-Tooling: `node ppaz_inventory.mjs && node ppaz_compare.mjs` (reads the gitignored export;
+Tooling: `python3 ppaz_inventory.py && node ppaz_compare.py` (reads the gitignored export;
 writes `strava_ppaz_manifest.json` + `ppaz_comparison.csv`, both gitignored).
 
 ---
@@ -1604,7 +1604,7 @@ by more):**
 - Smaller robustness fixes (harnesses only, no number changes): `Buffer` pool hazard on small FIT
   reads, `parseFIT` throwing consistently instead of silently truncating on 3 of 4 copies, a
   final-point profile-dedup edge case that could create `dx≈0`, non-monotone device-distance
-  clipping, and a machine-checked per-ride conservation-identity assert (`compare.mjs` now prints
+  clipping, and a machine-checked per-ride conservation-identity assert (`compare.py` now prints
   the worst residual — **1.77e-8**, comfortably under the 1e-6 bar).
 
 **Methodological honesty corrections (documentation, no code change):**
@@ -1615,7 +1615,7 @@ by more):**
   it correlates 0.99 with `ε_coast` — they are nearly the same quantity). The honest statistic is
   the **RMS error reduction vs. a flat-constant baseline**: at `s̄ ≥ 3%`, `ε_coast − 0.13` reaches
   RMS 0.08 against a flat-median baseline of RMS 0.13 — a genuine **37% RMS reduction**, which is
-  the number to lead with, not the correlation. (New `eps_hypothesis.mjs` output section
+  the number to lead with, not the correlation. (New `eps_hypothesis.py` output section
   "ESTIMATOR SKILL".)
 - **`E_leg = E_wheel · k_eff` in `notas.md` had the efficiency on the wrong side** (should be
   `E_wheel / k_eff` — the legs supply *more* than the wheel receives). Fixed.
@@ -1637,7 +1637,7 @@ same code fixes shift their embedded numbers too, but only by ≤0.6 pp (e.g. En
 19.2%→19.3%, Entry 3's climb-fraction 8.5%→8.6%, Entry 4's measured-`v_f` 22.1→22.8 km/h and its
 associated 2.7%→6.7% residual — a real, larger shift from the same VSTOP gate as Entry 8/10, since
 Entry 4 also uses the measured flat speed). None of these reverse a conclusion; re-run
-`compare.mjs` for the exact current values rather than trusting the historical prose figures.
+`compare.py` for the exact current values rather than trusting the historical prose figures.
 
 ---
 
@@ -1651,7 +1651,7 @@ decelerations — readable from the speed trace (post-hoc) or a route's signal/s
 
 Tested on **59 clean censo rides** (power → true descent-balance ε via `epsFromFIT`; speed →
 braking density), α at the *measured* flat speed, assumed rider. Tool:
-[harness/eps_sp_test.mjs](../../harness/eps_sp_test.mjs). Medians: ε_true **0.23**,
+[harness/eps_sp_test.py](../../harness/eps_sp_test.py). Medians: ε_true **0.23**,
 ε_coast **0.40**, gap **0.15** (sd 0.08).
 
 *(Revised by Entry 11's `measuredFlatSpeed`/`epsFromBalance` VSTOP fix — stopped samples were
@@ -1750,7 +1750,7 @@ excludes all 7. They over-predict by +79…+373 % and would wreck the mean.
   asphalt may also nudge the under-prediction.)
 
 Tooling: [harness/fetch_censo.py](../../harness/fetch_censo.py) (RWGPS-preferred
-downloader) → [harness/censo_compare.mjs](../../harness/censo_compare.mjs). Output
+downloader) → [harness/censo_compare.py](../../harness/censo_compare.py). Output
 `results/censo_comparison.csv` (gitignored, like the tracks and the sheet).
 
 ---
@@ -1772,7 +1772,7 @@ same `α·dx`), `ε(s) = (α·dx − E_legs)/(β·h₋)` collapses to a function
 drop-weighted over the descent profile (or lumped with `s̄ = H₋/X₋`). Tested against the
 per-ride **descent-energy-balance ε** (`epsFromBalance`, the app's `epsFromFIT`: 30 m cells,
 `ε = (α·X₋ − E_legs,₋)/(β·H₋)`, α at the *measured* flat speed) over the 44 power rides.
-Tool: [harness/eps_hypothesis.mjs](../../harness/eps_hypothesis.mjs) (κ = curviness in
+Tool: [harness/eps_hypothesis.py](../../harness/eps_hypothesis.py) (κ = curviness in
 rad/km from the GPS, `f_unpaved` = sheet col I).
 
 **The grade core holds where ε carries energy — but read the correlations with care (see Entry 11):**
@@ -2017,7 +2017,7 @@ ones) and re-ran both engines on the smoothed profile. Tried τ = 2 and 3 m (eng
   fine on the raw profile — smoothing it is mildly counter-productive.
 
 Reproduce: the per-regime, elevation-noise, and filter blocks are at the end of
-`compare.mjs` (`TAU_SMOOTH = 2`).
+`compare.py` (`TAU_SMOOTH = 2`).
 
 ---
 
@@ -2227,5 +2227,5 @@ conservation identity `k_eff·legE = ΔKE + W_rr + W_aero + W_grav + W_brake` ho
 ```sh
 # from the repo root
 python3 harness/build_model_inputs.py     # per-ride parameters from the sheet -> model_inputs.json
-node harness/compare.mjs                  # canonical + approximate variants; writes model_comparison.csv
+python3 harness/compare.py                  # canonical + approximate variants; writes model_comparison.csv
 ```

@@ -43,7 +43,7 @@ data/censo-hidrografico.xlsx
 # build_model_inputs.py read it from this path locally.
 data/longoes.xlsx
 
-# Per-ride lon/lat coordinate CSVs written by harness/dem/extract_coords.mjs — GPS.
+# Per-ride lon/lat coordinate CSVs written by harness/dem/extract_coords.py — GPS.
 harness/dem/coords/
 
 # OS / editor cruft
@@ -52,3 +52,9 @@ harness/dem/coords/
 __pycache__/
 *.pyc
 .env
+# Quarto / pandoc render output (regenerable; journal.qmd + article-draft*.md are the sources).
+analysis/journal.html
+analysis/journal_files/
+analysis/*.quarto_ipynb*
+research/article/article-draft*.html
+research/article/article-draft*_files/

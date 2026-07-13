@@ -70,11 +70,12 @@ author (44 long "longões" + 62 urban "censo" rides) plus **two independent ride
 with consent). Frozen and tested on the two independent riders, the energy law and the
 −0.13 offset transfer, while the geometric ε *skill* proves rider-dependent (it wins for
 a coaster, is inconclusive for a fast descent-pedaller). The **time** model
-(`x* = x + k₊·h₊ − k₋·h₋`) is also tested against measured moving time (`time_compare.mjs`):
+(`x* = x + k₊·h₊ − k₋·h₋`) is also tested against measured moving time (`time_compare.py`):
 the ascent half transfers, the descent bridge does not. The harnesses live in
-`harness/` (`compare.mjs`, `censo_compare.mjs`, `eps_hypothesis.mjs`,
-`eps_sp_test.mjs`, `ppaz_inventory.mjs`, `ppaz_compare.mjs`, `jaam_inventory.mjs`,
-`jaam_compare.mjs`, `time_compare.mjs`, `regime_compare.mjs`) and the write-ups — including the working
+`harness/` — all **Python, stdlib-only**, importing the engines from `analysis/bem`
+(`compare.py`, `censo_compare.py`, `eps_hypothesis.py`, `eps_sp_test.py`,
+`ppaz_inventory.py`, `ppaz_compare.py`, `jaam_inventory.py`, `jaam_compare.py`,
+`time_compare.py`, `regime_compare.py`, …) — and the write-ups — including the working
 paper — live in **`research/`** (`MODEL_COMPARISON_JOURNAL.md`, `article-draft.md`, `literature-context.md`, …).
 
 **📄 The working paper is published at
