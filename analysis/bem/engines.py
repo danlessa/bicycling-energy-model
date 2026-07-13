@@ -13,37 +13,78 @@ climbThr, descThr (grade fractions).
 """
 
 import math
+import numpy as np
 
 G = 9.81
 
 _INF = float("inf")
 
+def solve_cubic(a: float,
+                b: float,
+                c: float,
+                d: float) -> list[float]:
+    # Normalize the cubic equation to the form: x^3 + px + q = 0
+    # a x^3 + b x^2 + c x + d = 0
+    # => x^3 + (b/a) x^2 + (c/a) x + (d/a) = 0
+    # Let x = y - b/(3a), then we can eliminate the x^2 term.
 
-def flat_eq_speed(P, p):
+    # Step 1: Normalize the equation
+    if a == 0:
+        raise ValueError("Not a cubic equation")
+
+    # Normalize to x^3 + px + q = 0
+    p = (3 * c * a - b**2) / (3 * a**2)
+    q = (2 * b**3 - 9 * a * b * c + 27 * a**2 * d) / (27 * a**3)
+
+    # Step 2: Use Cardano’s formula
+    delta = (q / 2)**2 + (p / 3)**3
+
+    if delta > 0:
+        # One real root and two complex roots
+        root: float = -q / 2 + np.sqrt(delta)
+        return [root]
+    elif delta == 0:
+        # All roots are real and at least two are equal
+        root: float = -q / 2
+        return [root, -q / 2, -q / 2]
+    else:
+        # Three real roots (casus irreducibilis)
+        root1: float = 2 * np.sqrt(-p / 3) * np.cos(np.arccos(-q / (2 * np.sqrt(-p / 3)**3)) / 3)
+        root2: float = 2 * np.sqrt(-p / 3) * np.cos(np.arccos(-q / (2 * np.sqrt(-p / 3)**3)) / 3 + 2 * np.pi / 3)
+        root3: float = 2 * np.sqrt(-p / 3) * np.cos(np.arccos(-q / (2 * np.sqrt(-p / 3)**3)) / 3 + 4 * np.pi / 3)
+        return [root1, root2, root3]
+
+def flat_eq_speed(P, p) -> float:
     """Flat-equilibrium GROUND speed at pedal power P (JS flatEqSpeed).
 
-    Solves (Crr*mg + 0.5*rho*CdA*(v+w)*|v+w|) * v = keff*P by bisection with
-    SIGNED drag; under a tailwind bisect the monotone branch [-w, 40] first.
+    Solves (Crr*mg + 0.5*rho*CdA*(v+w)**2) * v = keff*P using Cardano's formula.
     """
     a = p["Crr"] * p["m"] * G
     b = 0.5 * p["rho"] * p["CdA"]
     w = p.get("wind", 0.0) or 0.0
 
-    def wheel(v):
-        rel = v + w
-        return (a + b * rel * abs(rel)) * v
+    # Coefficients of the cubic equation
+    # a x^3 + b x^2 + c x + d = 0
+    # where x = v
+    # a = 0.5 * rho * CdA
+    # b = 0.5 * rho * CdA * 2w
+    # c = 0.5 * rho * CdA * w^2 + Crr * m * g
+    # d = -keff * P
 
-    target = p["keff"] * P
-    lo, hi = max(0.0, -w), 40.0
-    if wheel(lo) > target:
-        hi, lo = lo, 0.0
-    for _ in range(60):
-        v = (lo + hi) / 2
-        if wheel(v) < target:
-            lo = v
-        else:
-            hi = v
-    return (lo + hi) / 2
+    # Coefficients
+    coeff_a = b
+    coeff_b = b * 2 * w
+    coeff_c = b * w**2 + a
+    coeff_d = -p["keff"] * P
+
+    # Solve the cubic equation using Cardano's formula
+    roots = solve_cubic(coeff_a, coeff_b, coeff_c, coeff_d)
+
+    # Filter out complex roots and negative values
+    real_roots = [root.real for root in roots if np.isreal(root) and root.real >= 0]
+
+    # Return the maximum real, non-negative root (since speed can't be negative)
+    return max(real_roots) if real_roots else 0.0
 
 
 def resample_profile(src, dx):
