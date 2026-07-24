@@ -1,7 +1,7 @@
 
 # Energia de Rotas de Bicicleta em Forma Fechada: Duas Correções, um Offset de Recuperação na Descida que se Transfere entre Ciclistas, e um Dual Energia↔Tempo
 
-> **Working paper — notas de pesquisa do Pedal Hidrográfico** (v1.0, julho de 2026). Benchmarks autorrelatados; não revisado por pares. Duas ressalvas governam todos os números de acurácia: **(i)** ambos os motores são condicionados à potência *medida* de cada pedalada — os números medem a consistência da contabilidade de energia, não previsão cega (§10.4); **(ii)** a calibração de ε é intra-amostra no ciclista 1, e sua margem entre ciclistas sobre uma constante fixa é sensível ao ciclista e aos parâmetros (§8.6). As alegações de novidade são limitadas pelo corpus (§10.3). O livro-razão completo de limitações é a §10.4.
+> **Working paper — notas de pesquisa do Pedal Hidrográfico** (v1.1, julho de 2026). Benchmarks autorrelatados; não revisado por pares. Duas ressalvas governam todos os números de acurácia: **(i)** ambos os motores são condicionados à potência *medida* de cada pedalada — os números medem a consistência da contabilidade de energia, não previsão cega (§10.4); **(ii)** a calibração de ε é intra-amostra no ciclista 1, e sua margem entre ciclistas sobre uma constante fixa é sensível ao ciclista e aos parâmetros (§8.6). As alegações de novidade são limitadas pelo corpus (§10.3). O livro-razão completo de limitações é a §10.4.
 
 ## Resumo
 
@@ -12,6 +12,24 @@ O termo subespecificado é o crédito de descida `ε ∈ [0,1]` — quanto da en
 A energia tem um gêmeo temporal. Definir uma distância plana efetiva `x* = x + k₊·h₊ − k₋·h₋` faz de `k₋` a imagem temporal de `ε`, e os dois são inter-deriváveis através da potência de descida compartilhada — um vínculo sem precedente localizado, cujo limite degenerado de inércia re-deriva `ε_coast` de forma independente. Testada contra o tempo em movimento medido, a metade de subida transfere-se a um ciclista nunca visto (6,6% mediano vs 7,6% ingênuo) enquanto a ponte de descida não prevê a velocidade de descida medida: descidas são limitadas por comportamento, então `k₋`, como o resíduo de ε, é definido por *como* o ciclista desce, não pela geometria.
 
 A implantação acrescenta um achado final e estrutural: as constantes *comportamentais* da lei são **dependentes da escala**. No MDT de levantamento de 5 m usado em produção, a lei congelada cobra energia a mais em +3,6 a +9,4 pp em relação a um regime de 30 m (922 pedaladas); reajustar o trio de constantes (`k_smooth`, o offset de ε, o limiar de subida) como uma transferência pura de resolução — sem nunca tocar a energia medida — fecha essa lacuna no regime de terreno em que foi ajustado, com cada constante movendo-se exatamente como seu mecanismo prevê, mas não entre regimes: as constantes são funções de *(intervalo de amostragem, terreno)*, não universais (§8.9). Com uma pré-suavização leve do raster (σ = 10 m) mais constantes efetivas por ciclista calibradas no próprio histórico de cada um, o pipeline implantado cumpre uma meta pré-registrada de **±5% de erro / ±2% de viés** em pedaladas de validação para os três ciclistas — a calibração, não a suavização, é a alavanca. Ambos os motores e a lei compartilhada estão implantados em três ferramentas abertas e local-first (sampasimu, amora, quilojaules).
+
+## Resumo em linguagem simples
+
+*Um passeio pelo artigo sem jargão. Cada alegação aqui é tornada precisa — com barras de erro e ressalvas — nas seções indicadas.*
+
+**A pergunta.** Antes de uma pedalada comunitária, quem planeja quer um número: quanta energia essa rota vai custar, em quilojoules? Uma simulação física completa consegue calcular, mas é pesada demais para rodar interativamente sobre milhares de rotas candidatas. Uma fórmula de uma linha dá conta?
+
+**A fórmula.** Energia ≈ um custo por quilômetro percorrido, mais um preço por metro subido, menos um reembolso parcial por metro descido. A fração de reembolso `ε` é o termo interessante e pouco estudado: quanto de uma descida o ciclista realmente recupera.
+
+**O que encontramos, contado em ordem.**
+
+- *Encontrando o campeão (§3, §6, §8.1–8.2).* De fábrica, a fórmula erra ~19% para cima, por duas razões identificáveis: cobra arrasto aerodinâmico na velocidade de cruzeiro até nas subidas lentas (onde o arrasto é quase nulo), e paga gravidade por subida fantasma que é, na verdade, ruído do altímetro. Corrigidas as duas, a fórmula alcança **paridade estatística com a simulação completa** — a uma fração do custo.
+- *O reembolso de descida tem uma geometria (§4, §8.3–8.5).* Descer sem pedalar recupera `min(1, (α/β)/declividade)` da descida, menos um teimosamente constante 0,13 que codifica hábito de frenagem e pedalada. No para-e-anda urbano, um `ε ≈ 0,20` fixo funciona melhor — e, contra a intuição, a densidade de frenagem *não* é a razão: numa descida, a gravidade devolve o que o semáforo tirou, então ε permanece uma constante.
+- *Outros ciclistas (§8.6, §8.8).* Congelada sobre os históricos completos de dois ciclistas independentes (441 + 219 pedaladas), a lei de energia se transfere (~4–7% de erro mediano) e o offset de 0,13 reaparece — mas a *habilidade* geométrica do reembolso depende do ciclista: ajuda quem desce sem pedalar, não quem pedala na descida. O tempo tem uma lei gêmea; sua metade de subida se transfere a um ciclista novo, sua metade de descida não.
+- *O mapa é parte do modelo (§8.7, §8.9).* As fontes de elevação encurralam a verdade em vez de dizê-la, e as constantes comportamentais da lei assumem silenciosamente uma escala de amostragem de ~30 m — num MDT de levantamento de 5 m, afiado demais, a lei congelada cobra a mais. Com uma suavização leve do raster mais constantes por ciclista calibradas no próprio histórico (~100–200 pedaladas), o pipeline implantado cumpriu uma meta pré-registrada de **±5% de erro / ±2% de viés** em pedaladas de validação para os três ciclistas. As constantes, não a fórmula, são a fronteira de acurácia.
+- *Barras de erro honestas (§7.1, §8.1).* Com intervalos de confiança e testes pareados, "a fórmula vence a simulação" virou "a fórmula empata com a simulação". Que continua sendo a vitória prática: o motor barato é o motor suficientemente preciso.
+
+**O que isto não é.** Ambos os motores recebem a potência de pedalada medida de cada atividade, então todo número de acurácia mede a consistência da contabilidade de energia — não previsão cega de rota (§10.4). O registro dia a dia da pesquisa — pré-registros, correções e resultados negativos incluídos — é o diário do projeto no repositório, com uma edição companheira legível.
 
 ## 1. Introdução
 
@@ -429,7 +447,19 @@ O mecanismo é diagnosticado, não assumido, via uma **verificação cruzada de 
 
 ## 8. Resultados
 
+**Como ler esta seção.** Dez subseções, uma história em cinco atos — o mesmo arco do diário do projeto. Cada subseção abaixo abre com seu lugar no arco:
+
+| ato | onde | uma linha |
+|---|---|---|
+| I — encontrando o campeão | §8.1–8.2 | duas correções levam a forma fechada à paridade com a simulação |
+| II — o reembolso de descida ε | §8.3–8.5 | uma lei de inércia mais um −0,13 constante; a cidade pede um 0,20 fixo, e a frenagem não é o mecanismo |
+| III — o que se transfere a outros ciclistas | §8.6, §8.8 | a lei de energia e o offset se transferem; a habilidade de ε e a metade de descida do modelo de tempo, não |
+| IV — o mapa e sua escala | §8.7, §8.9 | as fontes de elevação encurralam a verdade; as constantes comportamentais carregam um regime *(escala, terreno)*; uma meta pré-registrada é cumprida |
+| V — a recompensa | §8.10 | tudo acima comprimido numa receita para quem planeja |
+
 ### 8.1 O placar dos longões (44 pedaladas com potência)
+
+*Ato I — encontrando o campeão.*
 
 Pontuamos cada variante de modelo por seu erro percentual absoluto mediano contra a energia mecânica medida `∫P·dt`, a referência empírica para todas as 44 pedaladas dos longões. A convenção de sinal ao longo de todo o texto é `Δ% = (model − empirical)/empirical`; os colchetes são IC 95% bootstrap da mediana (§7.1). O placar completo, do melhor primeiro:
 
@@ -461,6 +491,8 @@ A identidade de conservação `k_eff·legE = ΔKE + W_rr + W_aero + W_grav + W_b
 
 ### 8.2 O ajuste de subida sustentada `k_h ≈ 1` e a verificação cruzada de suavização
 
+*Ato I, continuação — a banda morta justificada pelo medidor de potência, não pelo gosto.*
+
 A suavização por banda morta é justificada diretamente contra o medidor de potência. Ajustando o coeficiente de gravidade `k_h` apenas em subidas **sustentadas** (inclinação média > 3% ao longo de > 100 m), sobre 2535 dessas seções nas 44 pedaladas:
 
 | | kJ |
@@ -481,6 +513,8 @@ Então, em subidas reais e sustentadas, o ciclista paga essencialmente o `mg·Δ
 O escalar é essencialmente não enviesado (−0,5%) mas carrega aproximadamente o dobro da dispersão da banda morta explícita.
 
 ### 8.3 O ajuste em forma fechada do ε (44 pedaladas com potência)
+
+*Ato II — a geometria do reembolso de descida, e seu teimoso −0,13.*
 
 A forma fechada no limite de inércia `ε_coast(s) = min(1, α/(β·s))`, com `α/β = C_rr + ½ρC_dA(v_f+w)²/(mg)`, foi testada contra o ε de balanço de energia na descida por pedalada medido a partir da trilha FIT (`ε_bal = (α·X₋ − E_legs,₋)/(β·H₋)` em células de 30 m, `α` avaliado à velocidade plana *medida*):
 
@@ -505,6 +539,8 @@ Dois limites afinam o quadro. Primeiro, a previsão de clamp-em-1 é **revertida
 
 ### 8.4 A varredura de ε do censo (62 pedaladas urbanas limpas)
 
+*Ato II, continuação — a cidade dobra ε para um 0,20 fixo.*
+
 O segundo conjunto de dados são 62 passeios coletivos urbanos curtos de São Paulo (mediana 33 km / 454 m de subida / 16,5 km/h / ~14 m·km⁻¹), modelados com um ciclista assumido *genérico* (m = 78 kg, CdA = 0,40, C_rr = 0,008, 100% pavimentado) — apenas a física do ciclista é assumida; geometria, potências por regime, `v_f` e `∫P·dt` são todos derivados de cada atividade. Varrendo ε:
 
 | modelo | med \|Δ%\| | IC 95% | med Δ% | média Δ% |
@@ -527,6 +563,8 @@ O segundo conjunto de dados são 62 passeios coletivos urbanos curtos de São Pa
 Três achados se transferem para um estilo de pedalada completamente diferente. Primeiro, **todos os três modelos reproduzem a energia medida a ~4–7% de mediana com um ciclista genérico**, e o barato escalar do pobre `k_smooth` (3,9%) é tão acurado quanto a simulação direta completa (6,5%) — paridade também no teste pareado (o do pobre é mais próximo em 33 de 62 pedaladas, teste do sinal p = 0,70). Segundo, **a recuperação na descida é fisicamente real mesmo no trânsito de para-e-anda**: definir ε = 0 superestima em +7…+11%, e o piso de erro fica em ε ≈ 0,15–0,20, com sensibilidade a ε de ~12–14 pontos percentuais ao longo da escada de 0–0,29. Terceiro, o `ε_geom` geométrico (mediana 0,29) **credita a mais a recuperação na pedalada urbana de para-e-anda** (ignora a penalidade de frenagem), produzindo ~3–5% de subestimação — então o `ε_geom` é a estimativa de planejamento certa em rotas abertas e percorríveis por inércia, enquanto um ε plano ≈ 0,20 ajusta o para-e-anda urbano.
 
 ### 8.5 O resultado negativo de São Paulo: ε é uma constante, não orientado por frenagem
+
+*Ato II, encerrado — um resultado negativo: densidade de frenagem não é o mecanismo.*
 
 Uma hipótese natural é que a lacuna entre a previsão geométrica e a recuperação medida na pedalada de para-e-anda de São Paulo seja determinada pela densidade de frenagem. Não é. Sobre as 59 pedaladas limpas do censo que carregam um ε de balanço de descida utilizável (medianas: ε_true 0,23, ε_coast 0,40, lacuna 0,15, dp 0,08), nenhum preditor de para-e-anda candidato explica a lacuna:
 
@@ -552,6 +590,8 @@ A conclusão é um **resultado negativo documentado**: a sobrecredita de `ε_coa
 A tabela de estimadores também carrega o **resultado fora da amostra** do artigo, e vale declará-lo com clareza: o offset de −0.13 foi calibrado nas pedaladas abertas dos longões (§8.3) e aplicado a este conjunto urbano *congelado* — e ele empata com a constante fixa que foi selecionada intra-amostra **neste próprio conjunto** (RMS 0,08 vs 0,08). A calibração transfere-se entre regimes de pedalada sem reajuste. A regra prática é, portanto, uma constante — ε ≈ 0,20 (o ótimo da varredura) ou o `ε_coast − 0.13` transferido (equivalente) para a pedalada urbana, ou o ε de balanço de descida puro ≈ 0,23 para uma medição direta (o C_rr = 0,008 assumido ainda pode estar um pouco baixo para o asfalto urbano áspero) — e a correção de frenagem é descartada.
 
 ### 8.6 Os testes entre ciclistas: a lei de energia e o offset transferem-se; a habilidade de ε depende do ciclista
+
+*Ato III — outros ciclistas: a lei se transfere, a habilidade depende do ciclista.*
 
 Os Conjuntos 4 e 5 fazem a pergunta que as seções anteriores não conseguem: algo disto sobrevive a um **ciclista diferente**? Ambos são ciclistas independentes (nenhum membro do coletivo); tudo abaixo usa estimadores congelados do ciclista 1 — nada é reajustado. Os dois ciclistas dão respostas *diferentes*, e o contraste é o ponto: o que se transfere é a lei de energia e o offset calibrado; a *habilidade* geométrica de ε só se transfere para ciclistas cujas descidas se parecem com as do ciclista de calibração.
 
@@ -586,6 +626,8 @@ O saldo entre três ciclistas e medidores: **a lei de energia e o offset calibra
 
 ### 8.7 A tabela de MDE / `k_DEM`
 
+*Ato IV — o mapa como parâmetro: as fontes de elevação encurralam a verdade.*
+
 Como a lei em forma fechada é linear em `h₊` e `h₋`, a fonte dominante de erro de *parâmetro* na implantação é a fonte de elevação, não a física. Ao longo das 12 pedaladas no tile SP S24W047 (histerese de 3 m, amostragem bilinear), tomando o MDT de terreno nu IGC-SP 2010 de 5 m como verdade de levantamento (cobre 10 das 12 pedaladas):
 
 | fonte | res | Σ h₊ | vs IGC | `k_DEM` | mediana por pedalada | mín–máx |
@@ -599,6 +641,8 @@ Como a lei em forma fechada é linear em `h₊` e `h₋`, a fonte dominante de e
 com `k_DEM = IGC / source`. Dois fatos independentes tornam esta tabela acionável. Primeiro, **a distinção terreno nu / modelo de superfície domina**: as duas fontes de terreno nu (IGC 5 m e FABDEM 30 m) concordam dentro de 6%, enquanto os modelos digitais de *superfície* que retêm copa e edificações (COP30 +18%, SRTM +34%) inflam sistematicamente a subida. O SRTM fica ~7 m acima do FABDEM, e todos os MDEs acompanham a forma da trilha registrada a ~7–8 m RMS. Segundo, **o método de amostragem importa tanto quanto a fonte**: a amostragem por vizinho mais próximo prende uma trilha sub-pixel a uma escada e adiciona ~30 pontos percentuais de subida espúria (o FABDEM vai de +35% para +65%), então a amostragem ao longo da trilha deve ser bilinear. A trilha barométrica é o viés oposto — sub-registra em −11% a −21% vs IGC (pior em terreno áspero/cascalho, até 1,54×) mas é unicamente correta nas pontes e túneis que os MDTs não conseguem ver. O FABDEM com amostragem bilinear, corrigido por `k_DEM ≈ 0.95`, é, portanto, o padrão prático para o planejamento em São Paulo **em terreno acidentado**, ficando ali dentro de 5% da verdade de levantamento de 5 m — mas esta tabela foi medida em 12 pedaladas num tile acidentado, e a concordância **não generaliza para terreno plano de várzea**: lá o ruído por pixel do FABDEM acumula-se como ondulações (h₊ mediano +57% sobre 864 pedaladas paulistanas agrupadas, +101–135% nos corpora mais planos; uma pedalada plana de 27 km lê 391 m de subida contra os 99 m do levantamento), inflando a energia prevista em ~+18% de mediana (§8.9; entrada 19 do journal). Onde existe um levantamento local validado (IGC-SP), ele é estrutural; o FABDEM permanece o fallback para terreno que o levantamento não cobre.
 
 ### 8.8 Testando o modelo de tempo: a metade de subida transfere-se, a ponte de descida não
+
+*Ato III, continuação — a lei gêmea do tempo: a metade de subida se transfere, a ponte de descida falha.*
 
 Versões anteriores deixaram o dual energia↔tempo da §5 como teoria — nenhum *tempo* de pedalada medido jamais o testou. Fechamos essa lacuna aqui nos três conjuntos de dados de uma vez (`time_compare.py`; 43 longões, 58 censo, 441 P. Paz pedaladas limpas). O alvo é o **tempo em movimento sobre segmentos com potência** `T_mov = t₊ + t_plano + t₋` (pontos com potência presente e v ≥ 0,5 km/h; os três tempos de regime somam exatamente ao total e cobrem uma mediana de 99,7% de todo o tempo em movimento). Paradas são comportamento, não física, e são excluídas — a fração parada mediana é 25% (longões), 44% (censo), 11% (P. Paz). O tempo previsto é `t = x*/v_f`; reportamos `v_f` de dois modos, **condicionado à potência** (`flatEqSpeed(P̄_plano)`, totalmente fora da amostra) como manchete e **ancorado à velocidade** (medido `x_plano/t_plano`) apenas como diagnóstico, já que este último compartilha o tempo plano medido com o alvo e é, portanto, parcialmente intra-amostra.
 
@@ -625,6 +669,8 @@ Versões anteriores deixaram o dual energia↔tempo da §5 como teoria — nenhu
 
 ### 8.9 Resolução é um regime de parâmetros: o MDT de produção, uma meta de acurácia pré-registrada, e constantes dependentes de escala
 
+*Ato IV, continuação — escala é um regime; a meta pré-registrada é cumprida.*
+
 Toda constante calibrada até aqui — o offset de ε de −0,13 (células de descida de 30 m, §8.3), a inclinação de ruído `c` (§6.3), os limiares de regime de ±2%/−1,5% — foi ajustada sobre perfis cuja amostragem efetiva é ~30 m. Três estudos de acompanhamento (entradas 19–21 do journal) testam a lei onde ela de fato roda — o raster de levantamento de 5 m do motor de roteamento da §9.1 — e convergem para o achado estrutural final deste artigo: **as constantes comportamentais da forma fechada carregam uma escala de amostragem e um regime de terreno implícitos.** A física do ciclista (`m, C_dA, C_rr, ρ, k_eff`) é livre de escala; o trio comportamental (`k_smooth`, o offset de ε, o limiar de subida) não é.
 
 **(a) O MDT de 5 m de produção cobra a mais — por resolução, não por defeito.** Caminhando a lei por aresta sobre o raster de 5 m derivado do IGC-SP usado em produção versus uma reamostragem média a 30 m do *mesmo* raster, em 922 pedaladas de São Paulo pelos quatro corpora, os perfis de 5 m cobram energia a mais numa mediana pareada de **+9,4 pp** (com sinal) nas pedaladas urbanas do censo e **+3,6 pp** agregando as 864 pedaladas dos três ciclistas (ambos p < 10⁻⁴). Os dois mecanismos da §6 são medidos separadamente: inflação de ondulações (`h₊` é maior a 5 m em 919 das 922 pedaladas; mediana do censo +14%) e colapso do ε local-por-inclinação (o ε implícito ponderado pela queda cai de 0,456 a 30 m para 0,414 a 5 m). A parte contraintuitiva: em terreno urbano o MDT de levantamento de 5 m é *pior* que a própria trilha barométrica do ciclista — microrrelevo real do levantamento, que as vias niveladas suavizam, é cobrado como se pedalado. Uma forma fechada com ε agregado fica em grande parte blindada (degrada só ~0,4–1,2 pp de 30 m para 5 m); a forma por aresta com ε local é a exposta. Este é o estudo que desqualificou o FABDEM em terreno plano (§8.7) e pôs uma mitigação de pré-suavização no roteiro de implantação.
@@ -644,6 +690,8 @@ As ablações carregam a decomposição honesta. Sem calibração, a linha de ba
 A seção inverte o enquadramento de abertura do artigo, e vale dizê-lo com todas as letras: dentro da sua família, a forma fechada já é boa o suficiente — **as constantes, não o modelo, são a fronteira de acurácia**, elas carregam um regime implícito de *(escala, terreno)*, e as constantes por ciclista são aprendíveis do próprio histórico do ciclista (~100–200 pedaladas bastam para a meta acima).
 
 ### 8.10 Uma receita para quem planeja
+
+*Ato V — a recompensa: tudo acima como uma lista de verificação.*
 
 Tudo acima se comprime numa lista de passos para pôr um número de kJ (e de tempo) numa rota candidata, dado apenas sua geometria e um palpite de ciclista:
 

@@ -1,6 +1,6 @@
 # Bicycle Route Energy in Closed Form: Two Corrections, a Descent-Recovery Offset That Transfers Across Riders, and an Energy↔Time Dual
 
-> **Working paper — Pedal Hidrográfico research notes** (v1.0, July 2026). Self-reported benchmarks; not peer-reviewed. Two caveats govern every accuracy figure: **(i)** both engines are conditioned on each ride's *measured* power — the numbers measure consistency of the energy accounting, not blind prediction (§10.4); **(ii)** the ε calibration is in-sample on rider 1, and its cross-rider margin over a flat constant is rider- and parameter-sensitive (§8.6). Novelty claims are corpus-bounded (§10.3). The full limitation ledger is §10.4.
+> **Working paper — Pedal Hidrográfico research notes** (v1.1, July 2026). Self-reported benchmarks; not peer-reviewed. Two caveats govern every accuracy figure: **(i)** both engines are conditioned on each ride's *measured* power — the numbers measure consistency of the energy accounting, not blind prediction (§10.4); **(ii)** the ε calibration is in-sample on rider 1, and its cross-rider margin over a flat constant is rider- and parameter-sensitive (§8.6). Novelty claims are corpus-bounded (§10.3). The full limitation ledger is §10.4.
 
 **Danilo Lessa Bernardineli** — *Pedal Hidrográfico* (collective), São Paulo, Brazil — danilo.lessa@gmail.com
 
@@ -13,6 +13,24 @@ The under-specified term is the descent credit `ε ∈ [0,1]` — how much desce
 Energy has a time twin. Defining an effective flat distance `x* = x + k₊·h₊ − k₋·h₋` makes `k₋` the time-image of `ε`, and the two are inter-derivable through the shared descent power — a linkage with no located precedent, whose degenerate coasting limit independently re-derives `ε_coast`. Tested against measured moving time, the ascent half transfers to an unseen rider (6.6% median vs 7.6% naive) while the descent bridge does not predict measured descent speed: descents are behaviour-limited, so `k₋`, like ε's residual, is set by *how* the rider descends, not by geometry.
 
 Deployment adds a final, structural finding: the law's *behavioural* constants are **scale-dependent**. On the deployed 5 m survey DEM the frozen law over-charges energy by +3.6 to +9.4 pp relative to a 30 m regime (922 rides); re-fitting the constant trio (`k_smooth`, the ε offset, the climb threshold) as a pure resolution transfer — never touching measured energy — bridges that gap on the terrain regime it was fitted on, with each constant moving exactly as its mechanism predicts, but not across regimes: the constants are functions of *(sampling interval, terrain)*, not universals (§8.9). With a light σ = 10 m raster pre-smoothing plus per-rider effective constants calibrated on each rider's own history, the deployed pipeline meets a pre-registered **±5% error / ±2% bias** goal on held-out rides for all three riders — the calibration, not the smoothing, is the lever. Both engines and the shared law are deployed in three open, local-first tools (sampasimu, amora, quilojaules).
+
+## Plain-language summary
+
+*A jargon-free tour of the paper. Every claim here is made precise — with error bars and caveats — in the sections it points to.*
+
+**The question.** Before a community bike ride, the planners want one number: how much energy will this route cost, in kilojoules? A full physics simulation can compute it, but it is too heavy to run interactively over thousands of candidate routes. Can a one-line formula do the job?
+
+**The formula.** Energy ≈ a cost per kilometre travelled, plus a price per metre climbed, minus a partial refund per metre descended. The refund fraction `ε` is the interesting, under-studied term: how much of a descent a rider actually gets back.
+
+**What we found, told in order.**
+
+- *Finding the champion (§3, §6, §8.1–8.2).* Out of the box the formula runs ~19% hot, for two identifiable reasons: it bills air drag at cruising speed even on slow climbs (where drag is nearly nil), and it pays gravity for phantom ascent that is really altimeter noise. Correct both, and the formula reaches **statistical parity with the full simulation** — at a fraction of the cost.
+- *The descent refund has a geometry (§4, §8.3–8.5).* Coasting recovers `min(1, (α/β)/slope)` of a descent, minus a stubbornly constant 0.13 that encodes braking and pedalling habit. In stop-go city riding a flat `ε ≈ 0.20` works better — and, counter-intuitively, braking density is *not* the reason: on a descent gravity refunds what a red light takes away, so ε stays a constant.
+- *Other riders (§8.6, §8.8).* Frozen onto two independent riders' full histories (441 + 219 rides), the energy law transfers (~4–7% median error) and the 0.13 offset recurs — but the geometric refund *skill* is rider-dependent: it helps riders who coast downhill, not riders who pedal down. Time has a twin law; its climb half transfers to a new rider, its descent half does not.
+- *The map is part of the model (§8.7, §8.9).* Elevation sources bracket the truth rather than telling it, and the law's behavioural constants silently assume a ~30 m sampling scale — on a razor-sharp 5 m survey DEM the frozen law overcharges. With a light raster smoothing plus per-rider constants calibrated on each rider's own history (~100–200 rides), the deployed pipeline met a pre-registered **±5% error / ±2% bias** goal on held-out rides for all three riders. The constants, not the formula, are the accuracy frontier.
+- *Honest error bars (§7.1, §8.1).* With confidence intervals and paired tests, "the formula beats the simulation" became "the formula ties the simulation". That is still the practical win: the cheap engine is the accurate-enough one.
+
+**What this is not.** Both engines are given each ride's measured pedalling power, so every accuracy figure measures the consistency of the energy accounting — not blind route prediction (§10.4). The day-by-day research record — pre-registrations, corrections and negative results included — is the project journal in the repository, with a readable companion edition.
 
 ## 1. Introduction
 
@@ -430,7 +448,19 @@ The mechanism is diagnosed, not assumed, via a **cadence cross-check** that dist
 
 ## 8. Results
 
+**How to read this section.** Ten subsections, one story in five acts — the same arc as the project journal. Each subsection below opens with its place in the arc:
+
+| act | where | one line |
+|---|---|---|
+| I — finding the champion | §8.1–8.2 | two corrections take the closed form to parity with the simulation |
+| II — the descent refund ε | §8.3–8.5 | a coasting law plus a constant −0.13; cities want a flat 0.20, and braking is not the mechanism |
+| III — what transfers to other riders | §8.6, §8.8 | the energy law and the offset transfer; the ε skill and the time model's descent half do not |
+| IV — the map and its scale | §8.7, §8.9 | elevation sources bracket the truth; the behavioural constants carry a *(scale, terrain)* regime; a pre-registered goal is met |
+| V — the payoff | §8.10 | everything above compressed into a planner's recipe |
+
 ### 8.1 The longões scoreboard (44 power rides)
+
+*Act I — finding the champion.*
 
 We score each model variant by its median absolute percent error against the measured mechanical energy `∫P·dt`, the empirical benchmark for all 44 longões rides. The sign convention throughout is `Δ% = (model − empirical)/empirical`; brackets are bootstrap 95% CIs on the median (§7.1). The full scoreboard, best first:
 
@@ -462,6 +492,8 @@ The conservation identity `k_eff·legE = ΔKE + W_rr + W_aero + W_grav + W_brake
 
 ### 8.2 The sustained-climb fit `k_h ≈ 1` and the smoothing cross-check
 
+*Act I, continued — the deadband justified by the power meter, not by taste.*
+
 The deadband smoothing is justified directly against the power meter. Fitting the gravity coefficient `k_h` on **sustained** climbs only (mean slope > 3% over > 100 m), across 2535 such sections over the 44 rides:
 
 | | kJ |
@@ -482,6 +514,8 @@ So on real, sustained climbing the rider pays essentially the full `mg·Δh/k_ef
 The scalar is essentially unbiased (−0.5%) but carries roughly twice the scatter of the explicit deadband.
 
 ### 8.3 The ε closed-form fit (44 power rides)
+
+*Act II — the descent refund's geometry, and its stubborn −0.13.*
 
 The coasting-limit closed form `ε_coast(s) = min(1, α/(β·s))`, with `α/β = C_rr + ½ρC_dA(v_f+w)²/(mg)`, was tested against the per-ride descent-energy-balance ε measured from the FIT track (`ε_bal = (α·X₋ − E_legs,₋)/(β·H₋)` on 30 m cells, `α` evaluated at the *measured* flat speed):
 
@@ -506,6 +540,8 @@ Two limits sharpen the picture. First, the clamp-to-1 prediction is **reversed o
 
 ### 8.4 The censo ε-sweep (62 clean urban rides)
 
+*Act II, continued — the city bends ε to a flat 0.20.*
+
 The second dataset is 62 short urban São Paulo social rides (median 33 km / 454 m climb / 16.5 km/h / ~14 m·km⁻¹), modelled with a *generic* assumed rider (m = 78 kg, CdA = 0.40, C_rr = 0.008, 100% paved) — only the rider physics is assumed; geometry, regime powers, `v_f`, and `∫P·dt` are all derived from each activity. Sweeping ε:
 
 | model | med \|Δ%\| | 95% CI | med Δ% | mean Δ% |
@@ -528,6 +564,8 @@ The second dataset is 62 short urban São Paulo social rides (median 33 km / 454
 Three findings carry over to a completely different riding style. First, **all three models reproduce measured energy to ~4–7% median with a generic rider**, and the cheap poor-man's scalar `k_smooth` (3.9%) is as accurate as the full forward simulation (6.5%) — parity in the paired test too (the poor-man's is closer on 33 of 62 rides, sign test p = 0.70). Second, **descent recovery is physically real even in stop-go traffic**: setting ε = 0 over-predicts by +7…+11%, and the error floor sits at ε ≈ 0.15–0.20, with ε-sensitivity ~12–14 percentage points across the 0–0.29 ladder. Third, the geometric `ε_geom` (median 0.29) **over-credits recovery on urban stop-go riding** (it ignores the braking penalty), yielding ~3–5% under-prediction — so `ε_geom` is the right planning estimate on open, coastable routes, while a flat ε ≈ 0.20 fits urban stop-go.
 
 ### 8.5 The São Paulo negative result: ε is a constant, not braking-driven
+
+*Act II, closed — a negative result: braking density is not the mechanism.*
 
 A natural hypothesis is that the gap between the geometric prediction and the measured recovery in São Paulo's stop-go riding is set by braking density. It is not. On the 59 clean censo rides carrying a usable descent-balance ε (medians: ε_true 0.23, ε_coast 0.40, gap 0.15, sd 0.08), no candidate stop-go predictor explains the gap:
 
@@ -553,6 +591,8 @@ The conclusion is a **documented negative result**: the over-credit of `ε_coast
 The estimator table also carries the paper's **out-of-sample result**, and it is worth stating plainly: the −0.13 offset was calibrated on the open longões rides (§8.3) and applied to this urban set *frozen* — and it ties the flat constant that was selected in-sample **on this very set** (RMS 0.08 vs 0.08). The calibration transfers across riding regimes without refitting. The practical rule is therefore a constant — ε ≈ 0.20 (the sweep optimum) or the transferred `ε_coast − 0.13` (equivalent) for urban riding, or the pure descent-balance ε ≈ 0.23 for a direct measurement (the assumed C_rr = 0.008 may still be a touch low for rough city asphalt) — and the braking correction is dropped.
 
 ### 8.6 The cross-rider tests: the energy law and the offset transfer; the ε skill is rider-dependent
+
+*Act III — other riders: the law transfers, the skill is rider-dependent.*
 
 Datasets 4 and 5 ask the question the previous sections cannot: does any of this survive a **different rider**? Both are independent riders (neither a collective member); everything below uses estimators frozen from rider 1 — nothing is refit. The two riders give *different* answers, and the contrast is the point: what transfers is the energy law and the calibrated offset; the geometric ε *skill* transfers only for riders whose descents resemble the calibration rider's.
 
@@ -587,6 +627,8 @@ The net across three riders and meters: **the energy law and the calibrated −0
 
 ### 8.7 The DEM / `k_DEM` table
 
+*Act IV — the map as a parameter: elevation sources bracket the truth.*
+
 Because the closed-form law is linear in `h₊` and `h₋`, the dominant source of *parameter* error in deployment is the elevation source, not the physics. Across the 12 rides in SP tile S24W047 (3 m-hysteresis, bilinear sampling), taking the bare-earth IGC-SP 2010 5 m DTM as survey truth (it covers 10 of 12 rides):
 
 | source | res | Σ h₊ | vs IGC | `k_DEM` | per-ride median | min–max |
@@ -600,6 +642,8 @@ Because the closed-form law is linear in `h₊` and `h₋`, the dominant source 
 with `k_DEM = IGC / source`. Two independent facts make this table actionable. First, **the bare-earth / surface-model distinction dominates**: the two bare-earth sources (IGC 5 m and FABDEM 30 m) agree to within 6%, while the digital *surface* models that retain canopy and buildings (COP30 +18%, SRTM +34%) systematically inflate ascent. SRTM sits ~7 m above FABDEM, and all DEMs track the recorded track shape to ~7–8 m RMS. Second, **the sampling method matters as much as the source**: nearest-neighbour sampling snaps a sub-pixel track to a staircase and adds ~30 percentage points of spurious ascent (FABDEM goes from +35% to +65%), so along-track sampling must be bilinear. The barometric track is the opposite bias — it under-records by −11% to −21% vs IGC (worst on rough/gravel, up to 1.54×) but is uniquely correct at the bridges and tunnels the DTMs cannot see. FABDEM with bilinear sampling, corrected by `k_DEM ≈ 0.95`, is therefore the practical default for São Paulo planning **on hilly terrain**, landing within 5% of 5 m survey truth there — but this table was measured on 12 rides in a hilly tile, and the agreement **does not generalize to flat lowland riding**: there FABDEM's per-pixel noise accumulates as rollers (median h₊ +57% over 864 pooled São Paulo rides, +101–135% on the flattest corpora; one 27 km flat ride reads 391 m of ascent against the survey's 99 m), inflating predicted energy by ~+18% median (§8.9; journal Entry 19). Where a validated local survey exists (IGC-SP), it is load-bearing; FABDEM remains the fallback for terrain the survey does not cover.
 
 ### 8.8 Testing the time model: the ascent half transfers, the descent bridge does not
+
+*Act III, continued — time's twin law: the climb half transfers, the descent bridge fails.*
 
 Earlier drafts left the energy↔time dual of §5 as theory — no measured ride *time* had ever tested it. We close that gap here across all three datasets at once (`time_compare.py`; 43 longões, 58 censo, 441 P. Paz clean rides). The target is **moving time over powered segments** `T_mov = t₊ + t_flat + t₋` (points with power present and v ≥ 0.5 km/h; the three regime times sum to it exactly, and cover a median 99.7% of all moving time). Stops are behaviour, not physics, and are excluded — median stopped fraction is 25% (longões), 44% (censo), 11% (P. Paz). Predicted time is `t = x*/v_f`; we report `v_f` two ways, **power-conditioned** (`flatEqSpeed(P̄_flat)`, fully out-of-sample) as the headline and **speed-anchored** (measured `x_flat/t_flat`) only as a diagnostic, since the latter shares measured flat time with the target and is therefore partially in-sample.
 
@@ -626,6 +670,8 @@ Earlier drafts left the energy↔time dual of §5 as theory — no measured ride
 
 ### 8.9 Resolution is a parameter regime: the deployed DEM, a pre-registered accuracy goal, and scale-dependent constants
 
+*Act IV, continued — scale is a regime; the pre-registered goal is met.*
+
 Every constant calibrated so far — the −0.13 ε offset (30 m descent cells, §8.3), the noise grade `c` (§6.3), the ±2%/−1.5% regime thresholds — was fitted on profiles whose effective sampling is ~30 m. Three follow-up studies (journal Entries 19–21) test the law where it actually runs — the deployed 5 m survey raster of §9.1's routing engine — and they converge on this paper's final structural finding: **the closed form's behavioural constants carry an implicit sampling scale and terrain regime.** The rider physics (`m, C_dA, C_rr, ρ, k_eff`) is scale-free; the behavioural trio (`k_smooth`, the ε offset, the climb threshold) is not.
 
 **(a) The deployed 5 m DEM over-charges — by resolution, not by error.** Walking the per-edge law over the deployed IGC-SP-derived 5 m raster versus a 30 m average-resample of the *same* raster, on 922 São Paulo rides across all four corpora, the 5 m profiles over-charge energy by a paired median **+9.4 pp** (signed) on the urban censo rides and **+3.6 pp** pooled over the three riders' 864 rides (both p < 10⁻⁴). Both mechanisms of §6 are measured separately: roller inflation (`h₊` is higher at 5 m on 919 of 922 rides; censo median +14%) and grade-local ε collapse (the implied drop-weighted ε falls from 0.456 at 30 m to 0.414 at 5 m). The counter-intuitive part: on urban terrain the surveyed 5 m DTM is *worse* than the rider's own barometric track — real survey micro-relief that graded roads smooth away gets charged as if ridden. An aggregate-ε closed form is largely shielded (it degrades by only ~0.4–1.2 pp from 30 m to 5 m); the per-edge grade-local form is the exposed one. This is the study that disqualified FABDEM on flat lowland (§8.7) and put a pre-smoothing mitigation on the deployment roadmap.
@@ -645,6 +691,8 @@ The ablations carry the honest decomposition. Uncalibrated, the deployed baselin
 The section inverts the paper's opening frame, and it is worth saying plainly: within its family, the closed form is already good enough — **the constants, not the model, are the accuracy frontier**, they carry an implicit *(scale, terrain)* regime, and the per-rider ones are learnable from a rider's own history (~100–200 rides suffice for the goal above).
 
 ### 8.10 A planner's recipe
+
+*Act V — the payoff: everything above as a checklist.*
 
 Everything above compresses into a checklist for putting a kJ (and time) number on a candidate route, given only its geometry and a rider guess:
 
