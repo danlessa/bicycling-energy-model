@@ -595,6 +595,16 @@
   schema:text "By how much do portals (OSM bridge/tunnel spans as DEM corrections) affect model prediction accuracy and bias — (A) in the track-as-whole scenario against measured ∫P·dt, and (B) in the discretized optimal-route scenario?" ;
   dcterms:source :journal .
 
+:q27 a schema:Question ;
+  schema:text "Can the closed-form model's BLIND route predictions — made before the ride, with no measured power — be claimed with honest accuracy figures, retrospectively (historical planning records) and prospectively?" ;
+  dcterms:source :journal .
+
+:plan27 a p-plan:Plan ;
+  dcterms:type "pre-registered protocol (draft)" ;
+  schema:about :q27 ;
+  schema:text "Declared 2026-07-24, draft pending source confirmation. Phase 0: provenance-gated inventory of historical predictions (amora ph:energyEstimate with store/git timestamps; sheet revisions; dated artifacts) — inclusion list frozen before any measured energy is joined. Rules: blind requires document/machine provenance; post-ride revisions excluded; route-overlap ≥ 80% criterion; the self-fulfilling-pacing confound stated (rides are planned FROM the prediction); solo rides headline, group rides a stratum. Endpoints: med|Δ%| and bias vs measured ∫P·dt with bootstrap CIs and sign tests; registered distribution: pooled blind median in [7%, 25%]. Prospective arm: every future planned ride's prediction recorded pre-ride in amora, evaluated after ≥ 20 realized power rides. Analysis harness committed before outcomes are joined." ;
+  rdfs:comment "Addresses the article's first limitation (§10.4): the planning-mode benchmark. Results pending." .
+
 :plan26 a p-plan:Plan ;
   dcterms:type "pre-registered protocol" ;
   schema:about :q26a , :q26b ;

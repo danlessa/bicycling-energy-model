@@ -144,9 +144,9 @@
         "SoftwareSourceCode"
       ],
       "name": "harness/cda_estimate.py",
-      "url": "https://github.com/danlessa/bicycling-energy-model/blob/597882e86bd79c1c7f0fac97882aacff13be52c8/harness/cda_estimate.py",
+      "url": "https://github.com/danlessa/bicycling-energy-model/blob/3cc41894044a1a3bb56f0bce2c4a69c5f6e28a05/harness/cda_estimate.py",
       "sha256": "05974c7a1d0903453fc06c53c346fd7ed5238c3fe751c095dc727f2d6e43df88",
-      "version": "597882e86bd79c1c7f0fac97882aacff13be52c8",
+      "version": "3cc41894044a1a3bb56f0bce2c4a69c5f6e28a05",
       "programmingLanguage": "Python"
     },
     {
@@ -157,9 +157,9 @@
         "SoftwareSourceCode"
       ],
       "name": "harness/param_fit.py",
-      "url": "https://github.com/danlessa/bicycling-energy-model/blob/597882e86bd79c1c7f0fac97882aacff13be52c8/harness/param_fit.py",
+      "url": "https://github.com/danlessa/bicycling-energy-model/blob/3cc41894044a1a3bb56f0bce2c4a69c5f6e28a05/harness/param_fit.py",
       "sha256": "9e01f63cc40c45ecc63909cd9c3771d65fa7581132ea19be6ffc5740bb71e0bf",
-      "version": "597882e86bd79c1c7f0fac97882aacff13be52c8",
+      "version": "3cc41894044a1a3bb56f0bce2c4a69c5f6e28a05",
       "programmingLanguage": "Python"
     },
     {
