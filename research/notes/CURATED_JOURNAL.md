@@ -4,7 +4,7 @@ This is the **readable companion** to the lab journal
 ([MODEL_COMPARISON_JOURNAL.md](MODEL_COMPARISON_JOURNAL.md)). The two-journal
 rule: the **lab journal is the authoritative record** — verbatim prompts,
 pre-registrations, every number, every caveat, newest first. This file retells
-the same 24 entries as a story, oldest first, in plain language, keeping only
+the same entries as a story, oldest first, in plain language, keeping only
 the numbers that carry the plot. When they disagree, the lab journal wins.
 When a new entry lands there, add its retelling here.
 
@@ -23,7 +23,7 @@ cycling a route, reliably and robustly?** The formula in question:
 > *"Energy is a rolling+air cost per kilometre, plus a price for every metre
 > climbed, minus a partial refund for every metre descended."*
 
-The honest current answer, after 24 entries: **yes, with disciplined
+The honest current answer, after 26 entries: **yes, with disciplined
 corrections and per-rider calibration** — the corrected closed form is
 statistically **at parity with a full forward-dynamics simulation** (Entry 22)
 at a fraction of the compute, its accuracy transfers to riders it has never
@@ -372,6 +372,39 @@ harness has the referee geometry lacks: measured pedalling energy. That turns
 the smoothing scale into a *fittable parameter* (which is literally what
 Entry 20 fitted), a validation no located study performs.
 [[package]](../packages/entry24/ro-crate-preview.html)
+
+### Entry 25 — the grid note, now part of the record
+**Data:** none new — the canonical simujaules research note imported
+verbatim.
+
+Entry 23 was the condensed retelling; Entry 25 carries the **full canonical
+note** into this repo word-for-word (the ladder tables, the mechanism, all
+four attempts at beating the cost–accuracy law, the parametric-correction
+study, and the shipped-v57 scorecard), so the journal stays self-contained
+even if the sibling repo moves on.
+[[package]](../packages/entry25/ro-crate-preview.html)
+
+---
+
+## Next up — pre-registered, results pending
+
+### Entry 26 — direction ladders on real endpoints, and bridges that stop lying
+**Data (planned):** the Entry-19 corpus's 922 ride endpoints (private, never
+committed) plus OSM bridge/tunnel spans for the deployed raster's area.
+
+Two follow-up experiments with the protocol frozen before any run. **First**
+(follows Entries 23/19): re-measure the grid-connectivity bias with *real
+ride endpoints* instead of synthetic rings, across 8/16/32/64/128 directions
+as shipped in simujaules v57 — with a written decision rule for whether 16
+directions becomes the KPI default. **Second**: portals — simujaules' OSM
+bridge/tunnel corrections, which stop a bare-earth DEM from diving under
+every viaduct — measured two ways: (A) does portal-correcting the *profile*
+improve prediction accuracy and bias against measured energy on the 922
+rides? (B) how much do portals change *optimal-route* energies and
+budget-reach, and does the gain survive finer direction ladders?
+Predictions are registered as distributions this time — Entry 25's own
+scorecard taught that point ranges are overconfident.
+[[package]](../packages/entry26/ro-crate-preview.html)
 
 ---
 

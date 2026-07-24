@@ -577,3 +577,27 @@
   schema:text "The survey brackets our measurements: consumer-baro h₊ error is ~1–5% device-level, DEM per-point accuracy does NOT transfer to accumulated ascent, and the consensus direction is GPS-only under-reads while DEM correction over-reads — Entries 6 and 19 sit inside every located band, and Entry 19's flat-terrain FABDEM failure is sharper than anything located. The decidability point: h₊ has no true value, only a value at a smoothing scale, so geometry alone cannot adjudicate between sources — the measured-energy endpoint turns the smoothing scale into a fittable parameter (Entries 19–21), a validation no located study performs." ;
   cito:citesAsEvidence :ascent_error_lit ;
   dcterms:source :journal .
+
+# ── Entry 25 — the simujaules note, imported verbatim ────────────────────────
+
+:entry25 a schema:CreativeWork ;
+  dcterms:isPartOf :journal ;
+  dcterms:source :grid_sens_note ;
+  rdfs:comment "Verbatim import of the canonical simujaules grid-connectivity note (headings demoted one level). The study's claims and evidence are recorded under Entry 23 (:assert23); this entry makes the journal self-contained." .
+
+# ── Entry 26 — pre-registered follow-ups: direction ladder + portals ─────────
+
+:q26a a schema:Question ;
+  schema:text "By how much do 8/16/32/64/128 move directions change terrain-mode optimal energies when the sources/targets are the Entry-19 corpus's real ride endpoints, rather than Entry 23's synthetic rings?" ;
+  dcterms:source :journal .
+
+:q26b a schema:Question ;
+  schema:text "By how much do portals (OSM bridge/tunnel spans as DEM corrections) affect model prediction accuracy and bias — (A) in the track-as-whole scenario against measured ∫P·dt, and (B) in the discretized optimal-route scenario?" ;
+  dcterms:source :journal .
+
+:plan26 a p-plan:Plan ;
+  dcterms:type "pre-registered protocol" ;
+  schema:about :q26a , :q26b ;
+  schema:text "Declared before any run (2026-07-24). Q1: the shipped buildMoves ladder (nDirs 8–128, profile-integrated long edges, sq128 reference) on the deduplicated Entry-19 endpoint pairs (≥800 m apart), two physics bundles; primary endpoint per-pair E_opt(nDirs)/E_opt(128)−1 at 8 and 16; predictions as distributions (sq8 median in [8%,18%]; sq16 recovers 55–75%; monotone for ≥95% of pairs; no direction signature); decision rule: sq16 recommended as density/KPI default if it recovers ≥50% of the median gap at ≤3× wall time. Q2A: portal-corrected igc5/igc30 profiles (OSM spans, straight-deck interpolation) re-walked on all 922 rides, paired vs raw (predictions: bias down on touched rides; pooled median <1 pp; h₊ drops on ≥90% of touched). Q2B: endpoint pairs with vs without portals at nDirs 8/16 (assert ΔE ≤ 0; tail-dominated gains at river crossings; gains mostly nDirs-independent). Gates: no-portal byte-identity (the v19 no-op invariant), bit-identity vs the real energy-worker.js, distance identity of corrected profiles. Endpoints/coords never committed; aggregates only." ;
+  rdfs:comment "Results pending — assertions will be added when the harnesses run (Q2A in this repo beside igc_resolution_test.py; Q1/Q2B in the sibling simujaules repo)." ;
+  cito:extends :assert23 , :assert19 .

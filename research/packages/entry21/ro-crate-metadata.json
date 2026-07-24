@@ -129,9 +129,9 @@
         "SoftwareSourceCode"
       ],
       "name": "harness/scale_trio.py",
-      "url": "https://github.com/danlessa/bicycling-energy-model/blob/860eef75571b12de387d12a6f916e946d9e6d4c8/harness/scale_trio.py",
+      "url": "https://github.com/danlessa/bicycling-energy-model/blob/597882e86bd79c1c7f0fac97882aacff13be52c8/harness/scale_trio.py",
       "sha256": "8b0065cc5cc8edfb7cb36b4e5cab3f51fd966241928edfdf5f8ccb7fa9eb2e10",
-      "version": "860eef75571b12de387d12a6f916e946d9e6d4c8",
+      "version": "597882e86bd79c1c7f0fac97882aacff13be52c8",
       "programmingLanguage": "Python"
     },
     {

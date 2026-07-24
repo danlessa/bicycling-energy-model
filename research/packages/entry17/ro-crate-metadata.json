@@ -129,9 +129,9 @@
         "SoftwareSourceCode"
       ],
       "name": "harness/regime_compare.py",
-      "url": "https://github.com/danlessa/bicycling-energy-model/blob/860eef75571b12de387d12a6f916e946d9e6d4c8/harness/regime_compare.py",
+      "url": "https://github.com/danlessa/bicycling-energy-model/blob/597882e86bd79c1c7f0fac97882aacff13be52c8/harness/regime_compare.py",
       "sha256": "14e520f4e3217b82730a61b3ce9901d5286d110ca32276f7d85cf494724f0bd6",
-      "version": "860eef75571b12de387d12a6f916e946d9e6d4c8",
+      "version": "597882e86bd79c1c7f0fac97882aacff13be52c8",
       "programmingLanguage": "Python"
     },
     {
