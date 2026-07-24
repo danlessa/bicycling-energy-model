@@ -1,9 +1,6 @@
+# Prevendo a Demanda de Energia em Pedaladas de Bicicleta a partir de Estatísticas Acessíveis e um Fator de Recuperação na Descida
 
-# Energia de Rotas de Bicicleta em Forma Fechada: Duas Correções, um Offset de Recuperação na Descida que se Transfere entre Ciclistas, e um Dual Energia↔Tempo
-
-> **Working paper — notas de pesquisa do Pedal Hidrográfico** (v1.1, julho de 2026). Benchmarks autorrelatados; não revisado por pares. Duas ressalvas governam todos os números de acurácia: **(i)** ambos os motores são condicionados à potência *medida* de cada pedalada — os números medem a consistência da contabilidade de energia, não previsão cega (§10.4); **(ii)** a calibração de ε é intra-amostra no ciclista 1, e sua margem entre ciclistas sobre uma constante fixa é sensível ao ciclista e aos parâmetros (§8.6). As alegações de novidade são limitadas pelo corpus (§10.3). O livro-razão completo de limitações é a §10.4.
-
-> **Nota de série (julho de 2026).** Este working paper combinado está sendo dividido numa série em três peças: **Peça 1** — *Prevendo a Demanda de Energia em Pedaladas de Bicicleta a partir de Estatísticas Acessíveis e um Fator de Recuperação na Descida* ([piece1-energy-demand.pt-BR.md](piece1-energy-demand.pt-BR.md), v0.1 disponível); **Peça 2** — *Roteando rotas de bicicleta de menor energia* (em preparação; aguarda os resultados da entrada 26 do diário); **Peça 3** — *Prevendo durações de pedaladas a partir de uma métrica de distância efetiva* (em preparação). Este artigo combinado permanece o alvo canônico de citação até a série se completar.
+> **Working paper — notas de pesquisa do Pedal Hidrográfico** (Peça 1 de uma série em três partes; v0.1, julho de 2026 — separada do working paper combinado v1.1, que permanece o alvo canônico de citação até a série se completar). A série: **Peça 1** (este artigo) — a derivação e calibração da lei de energia em forma fechada; **Peça 2** — *Roteando rotas de bicicleta de menor energia* (em preparação); **Peça 3** — *Prevendo durações de pedaladas a partir de uma métrica de distância efetiva* (em preparação). Seções pertencentes às outras peças são mantidas como stubs numerados de ponteiro, para que as referências cruzadas permaneçam estáveis ao longo da série. Benchmarks autorrelatados; não revisado por pares. Duas ressalvas governam todos os números de acurácia: **(i)** ambos os motores são condicionados à potência *medida* de cada pedalada — os números medem a consistência da contabilidade de energia, não previsão cega (§10.4); **(ii)** a calibração de ε é intra-amostra no ciclista 1, e sua margem entre ciclistas sobre uma constante fixa é sensível ao ciclista e aos parâmetros (§8.6). As alegações de novidade são limitadas pelo corpus (§10.3).
 
 ## Resumo
 
@@ -11,9 +8,9 @@ O planejamento de pedaladas comunitárias de bicicleta precisa de um número log
 
 O termo subespecificado é o crédito de descida `ε ∈ [0,1]` — quanto da energia potencial da descida é recuperada em vez de perdida em arrasto excedente e frenagem. Damos a ele uma forma fechada no limite de inércia, `ε(s) = min(1, α/(β·s))`, ponderada pela queda ao longo do perfil, com um offset calibrado de −0,13. Ao longo de seis conjuntos de dados e três ciclistas (~1 400 pedaladas pontuadas, dois deles ciclistas independentes cujos históricos completos foram testados com toda constante congelada), o que se transfere de forma robusta é a **lei de energia** (~4–7% de mediana em cada corpus) e o **próprio offset** (gaps medidos 0,12–0,13 nos três ciclistas). A *habilidade* geométrica além de uma constante fixa é frágil: redução de RMS de 37% intra-amostra; uma vitória de ~35% congelada sobre um ciclista de inércia *sob a física genérica assumida, estreitando-se a um empate sob as constantes ajustadas do próprio ciclista*; empate-a-falha para um pedalador-de-descida rápido. A regra prática é simples — `ε_geom` em terreno aberto e inerciável, `ε ≈ 0,20` fixo no para-e-anda urbano — e a recuperação na descida é inequivocamente real (`ε = 0` superestima em todos os corpora).
 
-A energia tem um gêmeo temporal. Definir uma distância plana efetiva `x* = x + k₊·h₊ − k₋·h₋` faz de `k₋` a imagem temporal de `ε`, e os dois são inter-deriváveis através da potência de descida compartilhada — um vínculo sem precedente localizado, cujo limite degenerado de inércia re-deriva `ε_coast` de forma independente. Testada contra o tempo em movimento medido, a metade de subida transfere-se a um ciclista nunca visto (6,6% mediano vs 7,6% ingênuo) enquanto a ponte de descida não prevê a velocidade de descida medida: descidas são limitadas por comportamento, então `k₋`, como o resíduo de ε, é definido por *como* o ciclista desce, não pela geometria.
+A energia tem um gêmeo temporal — uma distância plana efetiva `x* = x + k₊·h₊ − k₋·h₋` cujo coeficiente de descida `k₋` é a imagem temporal de ε, os dois inter-deriváveis através da potência de descida compartilhada. Sua derivação e teste empírico são a **Peça 3** desta série (veredito lá: a metade de subida transfere-se a um ciclista nunca visto; a ponte de descida não prevê a velocidade de descida medida).
 
-A implantação acrescenta um achado final e estrutural: as constantes *comportamentais* da lei são **dependentes da escala**. No MDT de levantamento de 5 m usado em produção, a lei congelada cobra energia a mais em +3,6 a +9,4 pp em relação a um regime de 30 m (922 pedaladas); reajustar o trio de constantes (`k_smooth`, o offset de ε, o limiar de subida) como uma transferência pura de resolução — sem nunca tocar a energia medida — fecha essa lacuna no regime de terreno em que foi ajustado, com cada constante movendo-se exatamente como seu mecanismo prevê, mas não entre regimes: as constantes são funções de *(intervalo de amostragem, terreno)*, não universais (§8.9). Com uma pré-suavização leve do raster (σ = 10 m) mais constantes efetivas por ciclista calibradas no próprio histórico de cada um, o pipeline implantado cumpre uma meta pré-registrada de **±5% de erro / ±2% de viés** em pedaladas de validação para os três ciclistas — a calibração, não a suavização, é a alavanca. Ambos os motores e a lei compartilhada estão implantados em três ferramentas abertas e local-first (sampasimu, amora, quilojaules).
+A implantação acrescenta a ressalva que governa toda constante deste artigo: as constantes *comportamentais* da lei (`k_smooth`, o offset de ε, o limiar de subida) são **dependentes da escala** — funções do intervalo de amostragem da elevação e do regime de terreno, calibradas aqui numa escala efetiva de ~30 m (stub da §8.9). Com uma pré-suavização leve do raster (σ = 10 m) mais constantes efetivas por ciclista calibradas no próprio histórico de cada um, o pipeline implantado cumpre uma meta pré-registrada de **±5% de erro / ±2% de viés** em pedaladas de validação para os três ciclistas — a calibração, não a suavização, é a alavanca. A história de implantação e roteamento é a **Peça 2** desta série; ambos os motores e a lei compartilhada estão implantados em três ferramentas abertas e local-first (sampasimu, amora, quilojaules).
 
 ## Resumo em linguagem simples
 
@@ -27,8 +24,8 @@ A implantação acrescenta um achado final e estrutural: as constantes *comporta
 
 - *Encontrando o campeão (§3, §6, §8.1–8.2).* De fábrica, a fórmula erra ~19% para cima, por duas razões identificáveis: cobra arrasto aerodinâmico na velocidade de cruzeiro até nas subidas lentas (onde o arrasto é quase nulo), e paga gravidade por subida fantasma que é, na verdade, ruído do altímetro. Corrigidas as duas, a fórmula alcança **paridade estatística com a simulação completa** — a uma fração do custo.
 - *O reembolso de descida tem uma geometria (§4, §8.3–8.5).* Descer sem pedalar recupera `min(1, (α/β)/declividade)` da descida, menos um teimosamente constante 0,13 que codifica hábito de frenagem e pedalada. No para-e-anda urbano, um `ε ≈ 0,20` fixo funciona melhor — e, contra a intuição, a densidade de frenagem *não* é a razão: numa descida, a gravidade devolve o que o semáforo tirou, então ε permanece uma constante.
-- *Outros ciclistas (§8.6, §8.8).* Congelada sobre os históricos completos de dois ciclistas independentes (441 + 219 pedaladas), a lei de energia se transfere (~4–7% de erro mediano) e o offset de 0,13 reaparece — mas a *habilidade* geométrica do reembolso depende do ciclista: ajuda quem desce sem pedalar, não quem pedala na descida. O tempo tem uma lei gêmea; sua metade de subida se transfere a um ciclista novo, sua metade de descida não.
-- *O mapa é parte do modelo (§8.7, §8.9).* As fontes de elevação encurralam a verdade em vez de dizê-la, e as constantes comportamentais da lei assumem silenciosamente uma escala de amostragem de ~30 m — num MDT de levantamento de 5 m, afiado demais, a lei congelada cobra a mais. Com uma suavização leve do raster mais constantes por ciclista calibradas no próprio histórico (~100–200 pedaladas), o pipeline implantado cumpriu uma meta pré-registrada de **±5% de erro / ±2% de viés** em pedaladas de validação para os três ciclistas. As constantes, não a fórmula, são a fronteira de acurácia.
+- *Outros ciclistas (§8.6, §8.8).* Congelada sobre os históricos completos de dois ciclistas independentes (441 + 219 pedaladas), a lei de energia se transfere (~4–7% de erro mediano) e o offset de 0,13 reaparece — mas a *habilidade* geométrica do reembolso depende do ciclista: ajuda quem desce sem pedalar, não quem pedala na descida. O tempo tem uma lei gêmea — sua metade de subida se transfere, sua metade de descida não (o assunto da Peça 3).
+- *O mapa é parte do modelo (§8.7, §8.9).* As fontes de elevação encurralam a verdade em vez de dizê-la, e as constantes comportamentais da lei assumem silenciosamente uma escala de amostragem de ~30 m — num MDT de levantamento de 5 m, afiado demais, a lei congelada cobra a mais. Com uma suavização leve do raster mais constantes por ciclista calibradas no próprio histórico (~100–200 pedaladas), o pipeline implantado cumpriu uma meta pré-registrada de **±5% de erro / ±2% de viés** em pedaladas de validação para os três ciclistas. As constantes, não a fórmula, são a fronteira de acurácia (a história de implantação é o assunto da Peça 2).
 - *Barras de erro honestas (§7.1, §8.1).* Com intervalos de confiança e testes pareados, "a fórmula vence a simulação" virou "a fórmula empata com a simulação". Que continua sendo a vitória prática: o motor barato é o motor suficientemente preciso.
 
 **O que isto não é.** Ambos os motores recebem a potência de pedalada medida de cada atividade, então todo número de acurácia mede a consistência da contabilidade de energia — não previsão cega de rota (§10.4). O registro dia a dia da pesquisa — pré-registros, correções e resultados negativos incluídos — é o diário do projeto no repositório, com uma edição companheira legível.
@@ -61,22 +58,18 @@ Este artigo fecha essa lacuna e extrai uma consequência estrutural. Damos a `ε
 
 com `α/β` a *inclinação de resistência em plano* — a declividade cuja gravidade equilibra exatamente a resistência de rolamento mais aero em plano. Agregada com ponderação pela queda sobre um perfil e calibrada com um offset quase constante de `−0.13`, esta estimativa apenas-geométrica, `ε ≈ clamp₀₁(ε_coast − 0.13)`, corta o erro RMS contra um `ε` de balanço de energia na descida medido por potência em 37% em relação à melhor constante fixa em descidas reais (intra-amostra; §8.3). Crucialmente, rodamos a forma fechada e a simulação nas **mesmas** constantes físicas `(m, C_rr, C_dA, ρ, k_eff, wind)`, de modo que a lacuna residual entre elas é atribuível às *simplificações de modelagem, não aos parâmetros*.
 
-Observamos então que a energia tem um **gêmeo temporal**. O tempo não é `E/P` (degenerado numa inércia), portanto precisa de seu próprio modelo; definir uma *distância plana efetiva* `x* = x + k₊·h₊ − k₋·h₋` e ler o tempo a partir da velocidade em plano (`t = x*/v_f`) reproduz a mesma estrutura da lei de energia termo a termo. O coeficiente de subida `k₊ = v_f·β/P_climb` é limpo e independente da inclinação — a ideia de distância plana equivalente com precedente no ciclismo [Scarf & Grehan 2005; Scarf 2007] — enquanto o coeficiente de descida `k₋` é um parâmetro agregado e livre que cumpre exatamente o papel que `ε` cumpre para a energia, com precedente de crédito de tempo na descida [Langmuir 1984; Tobler 1993]. Cada metade tem precedente isoladamente; o que não tem precedente localizado no corpus mais próximo é o **vínculo**: `ε` e `k₋` ambos codificam a mesma velocidade oculta de descida `v_desc` e tornam-se inter-deriváveis através da potência na descida `P̄_desc`,
-
-```
-k₋ = (1/s)·[1 − (v_f/P̄_desc)·(α − ε·β·s)].
-```
+A energia também tem um **gêmeo temporal** — uma distância plana efetiva `x* = x + k₊·h₊ − k₋·h₋` lida a partir da velocidade em plano, cujo coeficiente de descida `k₋` cumpre para o tempo exatamente o papel que ε cumpre para a energia, os dois inter-deriváveis através da potência de descida compartilhada. Essa dualidade — sua derivação, precedentes e teste empírico contra o tempo em movimento medido — é a **Peça 3** desta série; aqui apenas notamos que seu limite degenerado de inércia re-deriva de forma independente o ε_coast da §4.2, uma verificação de consistência interna que a derivação de energia não precisou passar.
 
 ### 1.1 Contribuições
 
 - **Um fator de recuperação na descida `ε` em forma fechada, em nível de rota, avaliado contra potência medida.** Um único `ε ∈ [0,1]` agregado dentro de `E ≈ α·x + β·(h₊ − ε·h₋)`, com sua forma fechada no limite de inércia `ε(s) = min(1, α/(β·s))`, agregado ponderado pela queda e offset calibrado de `−0.13`. Nenhum precedente para tal `ε` agregado em forma fechada foi localizado no corpus mais próximo de potência no ciclismo, roteamento por elevação ou energia de VE/e-bike.
 - **Avaliação contra um `ε` de balanço de energia na descida medido por potência**: uma redução de 37% no RMS sobre a melhor constante fixa em descidas reais (s̄ ≥ 3%, n = 22; intra-amostra, §8.3). Congelado e testado em mais dois ciclistas independentes (§8.6): o offset de −0,13 recorre em ambos (gaps 0,12, 0,13), mas a habilidade geométrica além de uma constante fixa é **frágil** — uma vitória de ~35% para um ciclista de inércia sob a física genérica assumida que *estreita-se a um empate sob as constantes ajustadas do próprio ciclista* (§8.6), e inconclusiva-a-falha para um pedalador-de-descida rápido. O que se transfere robustamente entre os três ciclistas é a lei de energia e o offset; a geometria de ε acrescenta pouco além de uma constante fixa para qualquer dos ciclistas independentes.
-- **Uma dualidade energia↔tempo** `x* = x + k₊·h₊ − k₋·h₋` cujo coeficiente de descida `k₋` é o gêmeo temporal de `ε`, tornados inter-deriváveis através da potência na descida compartilhada `P̄_desc`. Ambas as metades têm arte anterior individualmente; a *derivação de `k₋` a partir da mesma potência na descida que `ε`* é, até onde sabemos, inédita. Testada contra o tempo em movimento medido nos três conjuntos de dados (§8.8): a **metade de subida transfere-se fora da amostra** (6,6% mediano vs 7,6% ingênuo no segundo ciclista, significativo, e superando um teto de coeficientes ajustados), enquanto a **ponte de descida não prevê a velocidade de descida medida** — `k₋` permanece um coeficiente livre, limitado por comportamento.
+- **Uma dualidade energia↔tempo** `x* = x + k₊·h₊ − k₋·h₋` — a irmã do lado do tempo da lei de ε — é desenvolvida, situada contra os precedentes e testada na **Peça 3** desta série; seu limite degenerado de inércia re-deriva de forma independente ε_coast (§4.2).
 - **Um desenho de comparação de constantes compartilhadas** que roda a forma fechada e uma simulação direta de Martin-1998 em constantes físicas idênticas, isolando o erro de modelagem do erro de parâmetro — junto com uma implementação de referência aberta e limpa da simulação (conservativa em energia, semi-implícita, com limite de frenagem, sem piso de energia cinética).
 - **Uma correção `k_smooth` para a subida acumulada fractal** dentro da lei em forma fechada. Como a subida medida depende da escala [Rapaport 2011], o `h₊` bruto conta a mais a energia por meio de ruído submétrico e ondulações curtas; uma banda morta por segmento de ~2 m (ou o escalar apenas-totais `k_smooth = 1 − c·x/h₊`, `c ≈ 3 m/km`) remove essa parte deixando as subidas sustentadas em força plena (`k_h = 1`).
 - **Avaliação em pedaladas urbanas e passeios coletivos reais e não competitivos** reproduzindo o `∫P·dt` medido com uma mediana de 3.6% (melhor variante em forma fechada) sobre 44 pedaladas com medidor de potência, com mediana de ~4–7% sobre 62 pedaladas urbanas em São Paulo com um ciclista genérico assumido, e com mediana de ~4–5% sobre o histórico de cada um de mais dois ciclistas independentes (441 + 219 pedaladas) com apenas a massa implicada pelos dados (§8.6) — com filtros explícitos de piso físico (`E_legs ≥ m·g·h₊/k_eff`) e de qualidade de dados de cadência — e um resultado negativo documentado de São Paulo (a pedalada urbana de para-e-anda faz `ε` comportar-se como uma constante aproximada em vez de acompanhar a densidade de frenagem).
 - **Uma tabela de viés de subida por MDE `k_DEM`** (um resultado de erro de parâmetro, não uma alegação de modelagem de destaque) quantificando como a escolha da fonte de elevação enviesa as entradas `h₊`/`h₋` da lei em forma fechada.
-- **Um resultado de dependência de escala, e uma calibração implantada que cumpre uma meta de acurácia pré-registrada.** As constantes comportamentais da lei (`k_smooth`, o offset de ε, o limiar de subida) são funções do intervalo de amostragem da elevação e do regime de terreno: a lei congelada cobra a mais num MDT de levantamento de 5 m (+3,6…+9,4 pp vs um regime de 30 m, 922 pedaladas), e um reajuste do trio a 5 m, independente de ciclista — ajustado puramente como transferência de resolução, nunca contra energia medida — fecha a lacuna no regime de terreno ajustado, com cada constante movendo-se como seu mecanismo prevê (§8.9). Sobre uma pré-suavização de raster com σ = 10 m, constantes efetivas por ciclista calibradas em metade do histórico de cada um cumprem **±5% de erro mediano / ±2% de viés na metade de validação, para os três ciclistas** — e as ablações mostram que a calibração, não a suavização, carrega a meta.
+- **Uma ressalva de dependência de escala carregada por todo o artigo.** As constantes comportamentais da lei (`k_smooth`, o offset de ε, o limiar de subida) são funções do intervalo de amostragem da elevação e do regime de terreno — calibradas aqui numa escala efetiva de ~30 m — e uma implantação calibrada cumpre uma meta pré-registrada de ±5% de erro / ±2% de viés em pedaladas de validação (stub da §8.9). O estudo de implantação/roteamento é a **Peça 2** desta série (entradas 19–21 do diário).
 - **Implantação** da lei compartilhada em três ferramentas abertas e local-first: *campos* de energia assimétricos sobre MDEs (sampasimu, que também implanta a mitigação de σ = 10 m), registros de kJ por pedalada (amora) e kJ por segmento via o gêmeo canônico (quilojaules).
 
 ## 2. Trabalhos relacionados
@@ -115,21 +108,9 @@ ponderada pela queda ao longo do perfil de descida e corrigida por um deslocamen
 
 O precedente localizado mais próximo para o *limite de inatividade/inércia* é [Bigazzi & Lindsey 2019], cuja condição de inclinação negativa `v² ≤ μ₁/(−μ₃)` zera a potência de tração em descidas suaves — mas eles a aplicam à *escolha* de velocidade em regime permanente por inclinação, nunca a um fator de recuperação em forma fechada em nível de rota. O primo estrutural no roteamento de VE ótimo em energia, [Ahmadi et al. 2024], usa um potencial gravitacional simétrico e independente do caminho `(M+m)·g·ΔH` — a recuperação é total e livre de `ε`, não um `ε < 1` calibrado. Em toda a literatura de roteamento de VE/e-bike e de pesquisa operacional, a recuperação na descida é sempre uma eficiência de regeneração por instante/por faixa de velocidade [Yuan et al. 2024], um potencial `mgΔh` simétrico, ou custos de arco negativos por aresta resolvidos numericamente [Perger & Auer 2020]; nenhum é um fator agregado em forma fechada em nível de rota em `[0,1]`. (Notamos explicitamente que ε *não* é a assimetria de eficiência muscular excêntrica/concêntrica de [Minetti et al. 2002]: ε é o orçamento de gravidade-e-freio do ciclista, não uma eficiência fisiológica. Invocamos Minetti apenas como analogia conceitual.)
 
-### 2.3 Distância plana equivalente e modelos de tempo de subida
+### 2.3–2.4 Modelos de tempo por distância plana equivalente e créditos de tempo na descida (→ Peça 3)
 
-A ideia de converter a subida em um comprimento equivalente de pedalada em plano é antiga nas literaturas de escolha de rota e de caminhada. [Scarf & Grehan 2005] dão uma "distância equivalente" para ciclismo em que 1 m de subida custa cerca de 8 m de plano; [Scarf 2007] refina a regra de Naismith para ciclismo para 1 m de subida ≈ 7.92 m horizontais; e [Norman 2004] dá equivalências análogas para corrida em subida. Nosso modelo de tempo por distância plana efetiva
-
-$$
-x^* = x + k_+\,h_+ - k_-\,h_-, \qquad k_+ = v_f\,\beta/P_{climb},
-$$
-
-estende — e não inventa — essa ideia de distância plana equivalente para a metade de subida: `k₊` converte a subida em tempo de plano e é, como Naismith, independente da inclinação em subidas íngremes (numa subida quase toda a potência vai para o levantamento, então `dt = m·g·dh/(k_eff·P_climb)` depende do ganho vertical, não do comprimento da estrada).
-
-### 2.4 Créditos de tempo na descida
-
-A metade de descida de `x*` tem seu próprio precedente. [Langmuir 1984] corrige a regra de Naismith com um termo de descida que *credita* descidas suaves (−10 min por 300 m em declividades de 5–12°) mas *penaliza* as íngremes (+10 min por 300 m acima de 12°); [Tobler 1993] dá a função de velocidade de caminhada `V = 6·e^(−3.5·|S+0.05|)`, cujo máximo está em uma descida de −2.86°, de modo que descidas suaves são mais rápidas que o plano. Esses são os precedentes de crédito de tempo na descida em nível de rota para nosso `k₋` agregado. Como conceito de tempo, `k₋` não é, portanto, novo, e o dizemos: a divisão crédito-suave/penalidade-íngreme de Langmuir é a *mesma assimetria* que nosso ε e o limite de frenagem codificam no lado da energia.
-
-A peça genuinamente aditiva é o **vínculo**, não qualquer das metades por si só. [Langmuir 1984] e [Tobler 1993] são ajustes empíricos de tempo nunca atrelados a um orçamento de energia. Em vez disso, *derivamos* o crédito de tempo na descida `k₋` e o fator de recuperação de energia ε da **mesma** potência na descida `P̄_desc`: ambos codificam a mesma velocidade oculta de descida `v_desc`, e igualar as expressões do lado do tempo (`v_desc = v_f/(1−k₋·s)`) e do lado da energia (`v_desc = P̄_desc/(α−ε·β·s)`) produz a única relação que os liga. Até onde sabemos, nenhum trabalho anterior deriva o crédito de tempo na descida da mesma potência de descida que o fator de recuperação; essa **dualidade energia↔tempo** (§5) é a contribuição inédita do modelo de tempo. Testamo-la empiricamente na §8.8: a metade de subida transfere-se aos tempos medidos de um segundo ciclista, mas a ponte de descida não prevê a velocidade de descida medida, então a dualidade permanece uma afirmação estrutural mais do que um preditor quantitativo de descida.
+Os trabalhos relacionados do modelo de tempo — regras tipo Naismith de distância plana equivalente [Scarf & Grehan 2005; Scarf 2007; Norman 2004] e créditos de tempo na descida em nível de rota [Langmuir 1984; Tobler 1993] — mudam-se com o modelo de tempo para a **Peça 3** desta série, que também afirma com precisão o que a dualidade acrescenta sobre cada metade. Os números 2.3–2.4 ficam reservados aqui para que as referências cruzadas da série permaneçam estáveis.
 
 ### 2.5 A subida acumulada como quantidade fractal
 
@@ -181,7 +162,7 @@ $$
 \alpha = \frac{C_{rr}\,m g + \tfrac12\,\rho\,C_d A\,(v_f + w)^2}{k_{eff}}, \qquad \beta = \frac{m g}{k_{eff}} .
 $$
 
-Aqui `α` é a energia por metro horizontal (rolamento + aero, cobrada na velocidade de referência em plano `v_f`), `β` é a energia por metro vertical, e `ε ∈ [0,1]` é o fator de recuperação na descida agregado desenvolvido na §5. Um clamp por aresta `max(0, α·dx − ε·β·|dh|)` nos segmentos de descida impede energia negativa de segmento. A energia das pernas é `E_leg = E_wheel/k_eff` (as pernas fornecem *mais* do que a roda recebe; `α, β` acima já são grandezas do lado da roda).
+Aqui `α` é a energia por metro horizontal (rolamento + aero, cobrada na velocidade de referência em plano `v_f`), `β` é a energia por metro vertical, e `ε ∈ [0,1]` é o fator de recuperação na descida agregado desenvolvido na §4. Um clamp por aresta `max(0, α·dx − ε·β·|dh|)` nos segmentos de descida impede energia negativa de segmento. A energia das pernas é `E_leg = E_wheel/k_eff` (as pernas fornecem *mais* do que a roda recebe; `α, β` acima já são grandezas do lado da roda).
 
 A forma atual (v2) refina isto com três correções, cada uma das quais remove um viés *sistemático* medido contra as pedaladas com medidor de potência:
 
@@ -275,82 +256,7 @@ Esta maquinaria de inferência — inverter uma identidade de energia para recup
 
 ## 5. Dualidade energia↔tempo: x* = x + k₊h₊ − k₋h₋
 
-### 5.1 Por que o tempo precisa de seu próprio modelo
-
-O caminho ingênuo $t = E/P$ é degenerado numa descida: tanto E → 0 quanto P → 0, de modo que o quociente fica mal definido. O tempo é fundamentalmente $\int ds/v$ e precisa de um modelo próprio. Definimos uma **distância plana efetiva** x* e lemos o tempo a partir da velocidade de referência em plano, $t = x^*/v_f$:
-
-$$
-x^* := x + k_+\,h_+ - k_-\,h_- .
-$$
-
-A estrutura espelha deliberadamente a lei de energia — uma linha de base horizontal, um termo de subida "limpo" e um termo de descida "agregado" — e o paralelo é exato.
-
-### 5.2 A metade de subida é limpa e independente da inclinação
-
-Numa subida quase toda a potência vai para o levantamento, $k_{eff} P_{climb} \approx m g\, v \sin\theta = m g\, dh/dt$, de modo que $dt = m g\, dh/(k_{eff} P_{climb})$ — o tempo de subida depende do **ganho vertical, não do comprimento da estrada**. Portanto
-
-$$
-k_+ = \frac{v_f\, m g}{k_{eff} P_{climb}} = \frac{v_f\,\beta}{P_{climb}}.
-$$
-
-(Um $k_+$ constante conta a mais ligeiramente a linha de base horizontal já presente em x em subidas suaves; o coeficiente exato é $v_f mg/(k_{eff}P_{climb}) - 1/s$, mas o termo $1/s$ desaparece em subidas íngremes.)
-
-Esta metade de subida **não é novidade**. É a instância ciclística da ideia de distância plana equivalente: regras do tipo Naismith que convertem um metro de subida num número fixo de metros planos — [Scarf & Grehan 2005] ("distância equivalente" no ciclismo, 1 m de subida ≈ 8 m em plano), [Scarf 2007] (1 m de subida ≈ 7.92 m horizontal), e as equivalências de corrida em subida de [Norman 2004]. Enquadramos x* como *estendendo* essa ideia, não como inventando-a.
-
-### 5.3 A metade de descida é agregada — o gêmeo temporal de ε
-
-O tempo de descida é **limitado pela velocidade**, não pelo levantamento: $t = x_-/v_{desc}$. Fixá-lo, em vez disso, à queda h₋ força $k_-$ a absorver a inclinação típica da descida,
-
-$$
-k_- \approx \frac{1 - v_f/v_{desc}}{\bar s},
-$$
-
-de modo que $k_-$ é um **parâmetro agregado** — desempenhando para o tempo exatamente o papel que ε desempenha para a energia. Agora testamos o modelo de tempo contra tempos de pedalada medidos (§8.8, uma perna empírica ausente de versões anteriores): a metade de subida transfere-se, mas `k₋` permanece efetivamente **livre e dependente do corpus** porque a ponte de descida abaixo não o fixa, empiricamente. A correspondência termo a termo é o coração estrutural da dualidade:
-
-|  | termo limpo | termo agregado |
-|---|---|---|
-| **energia** $\;\alpha x + \beta h_+ - \epsilon\,\beta h_-$ | $\beta = mg/k_{eff}$ | $\epsilon$ |
-| **tempo** $\;x + k_+ h_+ - k_- h_-$ | $k_+ = v_f\beta/P_{climb}$ | $k_-$ |
-
-Com $t = x^*/v_f$, a potência média $\bar P = E/t$ então se comporta corretamente em toda parte — ela vai a 0 numa descida por inércia (onde $E/P$ era degenerado) e recupera exatamente a potência em plano $\alpha v_f$ no plano.
-
-A metade de descida, como *conceito de tempo*, também **não é novidade**: créditos de tempo de descida no nível da rota estão estabelecidos na literatura de caminhada — [Langmuir 1984] (−10 min/300 m em descidas suaves 5–12°, +10 min/300 m em descidas íngremes > 12°) e [Tobler 1993] ($V = 6\,e^{-3.5|S+0.05|}$, velocidade atingindo o pico em −2.86°, de modo que descidas suaves são *mais rápidas* que o plano). A divisão crédito-suave/penalidade-íngreme de Langmuir é a mesma assimetria que ε e o limite de frenagem canônico codificam do lado da energia.
-
-### 5.4 A dualidade é a peça nova: ligar ε e k₋ através da potência na descida
-
-O que não tem precedente localizado é o **vínculo**. ε (o parâmetro agregado do lado da energia) e k₋ (seu correspondente do lado do tempo) não são deriváveis um do outro isoladamente, mas tornam-se assim através da **potência na descida** $\bar P_{desc}$ — sendo a potência a taxa de câmbio entre energia e tempo. Ambos codificam a mesma velocidade de descida oculta $v_{desc}$.
-
-Do lado do **tempo**, a distância efetiva da descida $x_-(1 - k_- s)$ deve tomar o tempo real $x_-/v_{desc}$:
-
-$$
-v_{desc} = \frac{v_f}{1 - k_- s}.
-$$
-
-Do lado da **energia**, a energia das pernas no trecho de descida do modelo por metro horizontal é $\alpha - \epsilon\,\beta s$, e a potência média é energia × velocidade:
-
-$$
-\bar P_{desc} = (\alpha - \epsilon\,\beta s)\,v_{desc}
-\;\Rightarrow\;
-v_{desc} = \frac{\bar P_{desc}}{\alpha - \epsilon\,\beta s}.
-$$
-
-Igualar as duas expressões para $v_{desc}$ dá a única relação de ponte
-
-$$
-\frac{v_f}{1 - k_- s} = \frac{\bar P_{desc}}{\alpha - \epsilon\,\beta\,s},
-$$
-
-e portanto, dados $\bar P_{desc}$ e a inclinação s, cada parâmetro agregado em termos do outro:
-
-$$
-k_- = \frac{1}{s}\!\left[1 - \frac{v_f}{\bar P_{desc}}(\alpha - \epsilon\,\beta s)\right],
-\qquad
-\epsilon = \frac{1}{\beta s}\!\left[\alpha - \frac{\bar P_{desc}}{v_f}(1 - k_- s)\right].
-$$
-
-**O caso degenerado é instrutivo.** Faça $\bar P_{desc} = 0$ (uma inércia pura): a ponte força $\alpha - \epsilon\,\beta s = 0$, isto é, $\epsilon = \alpha/(\beta s)$ — fixado apenas pela inclinação, independente da velocidade, recuperando exatamente o ε_coast do limite de inércia da §4.2 — enquanto $v_{desc}$, e portanto $k_-$, é determinado inteiramente pela velocidade terminal de inércia. Sem potência para ligá-los, os dois **desacoplam-se**: ε torna-se puramente geométrico, $k_-$ puramente aerodinâmico. Eles são inter-deriváveis apenas quando as pernas realizam trabalho mensurável na descida.
-
-Em suma: ambas as metades de x* têm precedente (§5.2, §5.3), mas nenhum trabalho anterior que localizamos deriva o crédito de tempo de descida k₋ da *mesma potência na descida* $\bar P_{desc}$ que fixa o fator de recuperação ε. A dualidade é a segunda contribuição estrutural do artigo — e somos precisos sobre que tipo de alegação ela é. É uma **derivação**, com uma previsão quantitativa falseável (a velocidade de descida da ponte), que testamos na §8.8 e encontramos insuficiente: descidas reais são limitadas por comportamento e freio, não por equilíbrio, então `k₋` permanece empírico. O que sobrevive é estrutural: a correspondência termo a termo organiza os dois modelos, e o limite degenerado de inércia *re-deriva independentemente* o ε_coast da §4.2 a partir do lado do tempo — uma checagem de consistência interna que a derivação de energia não era obrigada a passar.
+*Movida para a Peça 3.* A dualidade energia↔tempo — a distância plana efetiva `x* = x + k₊·h₊ − k₋·h₋`, a metade limpa de subida `k₊ = v_f·β/P_climb`, a metade agregada de descida `k₋` como gêmea temporal de ε, e a relação-ponte `k₋ = (1/s)[1 − (v_f/P̄_desc)(α − ε·β·s)]` — é desenvolvida e testada na **Peça 3** desta série. Dois fatos são estruturais para esta peça e ficam registrados aqui. Primeiro, o limite degenerado de inércia da ponte (`P̄_desc = 0`) força `ε = α/(β·s)` — re-derivando de forma independente o ε_coast da §4.2 pelo lado do tempo, uma verificação de consistência interna da derivação de energia. Segundo, o veredito empírico contra o tempo em movimento medido é dividido: a metade de subida transfere-se fora da amostra; a ponte de descida não prevê a velocidade de descida medida, então `k₋` permanece um coeficiente livre e dependente do corpus. (Enquanto isso: o working paper combinado §5 e a entrada 13 do diário.)
 
 ## 6. A subida acumulada depende da escala: a banda morta `k_smooth`
 
@@ -449,15 +355,15 @@ O mecanismo é diagnosticado, não assumido, via uma **verificação cruzada de 
 
 ## 8. Resultados
 
-**Como ler esta seção.** Dez subseções, uma história em cinco atos — o mesmo arco do diário do projeto. Cada subseção abaixo abre com seu lugar no arco:
+**Como ler esta seção.** Esta peça carrega os resultados da lei de energia; as duas subseções que pertencem às outras peças da série (§8.8 tempo → Peça 3, §8.9 implantação/escala → Peça 2) são mantidas como stubs numerados de ponteiro para que as referências cruzadas permaneçam estáveis:
 
 | ato | onde | uma linha |
 |---|---|---|
 | I — encontrando o campeão | §8.1–8.2 | duas correções levam a forma fechada à paridade com a simulação |
 | II — o reembolso de descida ε | §8.3–8.5 | uma lei de inércia mais um −0,13 constante; a cidade pede um 0,20 fixo, e a frenagem não é o mecanismo |
-| III — o que se transfere a outros ciclistas | §8.6, §8.8 | a lei de energia e o offset se transferem; a habilidade de ε e a metade de descida do modelo de tempo, não |
-| IV — o mapa e sua escala | §8.7, §8.9 | as fontes de elevação encurralam a verdade; as constantes comportamentais carregam um regime *(escala, terreno)*; uma meta pré-registrada é cumprida |
-| V — a recompensa | §8.10 | tudo acima comprimido numa receita para quem planeja |
+| III — o que se transfere a outros ciclistas | §8.6 | a lei de energia e o offset se transferem; a habilidade de ε, não |
+| os insumos | §8.7 | as fontes de elevação encurralam a verdade (`k_DEM`) |
+| a recompensa | §8.10 | tudo acima comprimido numa receita para quem planeja |
 
 ### 8.1 O placar dos longões (44 pedaladas com potência)
 
@@ -644,52 +550,11 @@ com `k_DEM = IGC / source`. Dois fatos independentes tornam esta tabela acionáv
 
 ### 8.8 Testando o modelo de tempo: a metade de subida transfere-se, a ponte de descida não
 
-*Ato III, continuação — a lei gêmea do tempo: a metade de subida se transfere, a ponte de descida falha.*
-
-Versões anteriores deixaram o dual energia↔tempo da §5 como teoria — nenhum *tempo* de pedalada medido jamais o testou. Fechamos essa lacuna aqui nos três conjuntos de dados de uma vez (`time_compare.py`; 43 longões, 58 censo, 441 P. Paz pedaladas limpas). O alvo é o **tempo em movimento sobre segmentos com potência** `T_mov = t₊ + t_plano + t₋` (pontos com potência presente e v ≥ 0,5 km/h; os três tempos de regime somam exatamente ao total e cobrem uma mediana de 99,7% de todo o tempo em movimento). Paradas são comportamento, não física, e são excluídas — a fração parada mediana é 25% (longões), 44% (censo), 11% (P. Paz). O tempo previsto é `t = x*/v_f`; reportamos `v_f` de dois modos, **condicionado à potência** (`flatEqSpeed(P̄_plano)`, totalmente fora da amostra) como manchete e **ancorado à velocidade** (medido `x_plano/t_plano`) apenas como diagnóstico, já que este último compartilha o tempo plano medido com o alvo e é, portanto, parcialmente intra-amostra.
-
-**Endpoint primário pré-declarado** (fixado antes de rodar): o modelo completo T1b — `v_f` condicionado à potência, `k₊ = v_f·β/P̄_climb − 1/s̄₊`, e um `k₋` escalar ajustado uma vez nos longões e congelado — vs `T_mov` nas 441 pedaladas de P. Paz. Resultado: **mediana |Δ%| = 6,6%** [IC 95% 5,9–7,2] (com sinal +3,8), contra a linha de base ingênua `x/v_f` de **7,6%** [7,0–8,5]. O ganho é **modesto mas estatisticamente real** — T1b supera T0 em 56% de 433 pedaladas (teste de sinal p = 0,011, Wilcoxon p < 0,001) — e robusto à massa (6,2 / 6,6 / 7,1% a 70 / 74,3 / 78 kg). Concentra-se onde o termo de subida deveria importar: no tercil mais montanhoso de P. Paz T0 12,0% → T1b 5,8%, enquanto o tercil mais plano fica inalterado (subgrupo exploratório).
-
-| preditor (`v_f` condicionado à potência) | longões (ajuste) | censo (congelado) | P. Paz (congelado) |
-|---|--:|--:|--:|
-| T0 ingênuo `x/v_f` | 16,8 | 20,8 | 7,6 |
-| Scarf literatura `k₊ = 8` | 8,9 | 14,5 | 8,4 |
-| **T1b completo (`k₊` físico, `k₋` congelado)** | **5,5** | **14,2** | **6,6** |
-| approxTime (por segmento `∫ds/v`) | 4,3 | 11,4 | 7,4 |
-| sim. canônica direta | 3,6 | 13,5 | 8,6 |
-| teto de distância-plana ajustado | 2,0 | 7,4 | 10,9 |
-
-**O `k₊` físico transfere-se melhor que um ajustado.** O teto justo não é uma regressão ingênua, mas o *mesmo* modelo de distância plana equivalente com `k₊, k₋` **ajustados** nos longões (mesmo `v_f` por pedalada), depois congelados. Intra-amostra ele vence (longões 2,0% vs 5,5%), porque o `k₊` só-gravidade subcobra o tempo de subida pela parcela de rolamento+aero que omite (~26%, a imagem temporal da sobrecobrança de subida da §8.2 — uma identidade de energia, não evidência de tempo independente). Mas **congelado no ciclista genuinamente novo a física vence: P. Paz 6,6% vs 10,9% do teto ajustado** — um único `k₊` ajustado super-generaliza entre ciclistas e velocidades, onde um `k₊` *físico* por pedalada se adapta. (Um ajuste linear ingênuo em segundos absolutos sem `v_f` por pedalada é ainda pior, 26,8% congelado; é por isso que a velocidade por pedalada é decisiva.) No censo urbano o teto ajustado vence, então a física é competitiva, não dominante. Com a velocidade plana *medida* (ancorada à velocidade, parcialmente intra-amostra) o termo de subida é inequívoco — P. Paz T0 5,2% → T1b 2,0% — confirmando que a forma está certa e o resíduo condicionado à potência é dominado pelo erro de previsão da velocidade plana, não pelos termos de relevo. Por isso também o `k₋` escalar ajustado fixa-se em 0 no modo condicionado à potência: `flatEqSpeed(P̄_plano)` superestima levemente a velocidade real em movimento no plano, então qualquer crédito de descida só piora a mediana; o ajuste ancorado à velocidade (`k₋ = 0,3`) mostra que o crédito é pequeno mas real.
-
-**A ponte de descida não é confirmada.** A ponte ε↔k₋ prevê a velocidade de descida `v_desc = P̄_desc/(α − ε·β·s̄₋)` (ε o estimador geométrico congelado). Contra a medida `x₋/t₋` em descidas reais (s̄₋ ≥ 3%, h₋ ≥ 50 m, x₋ ≥ 1 km) ela correlaciona apenas **0,59 / 0,08 / 0,14** (longões / censo / P. Paz) e superestima sistematicamente (mediana medida vs prevista 30 vs 38, 16 vs 37, 32 vs 52 km/h). A forma analítica não tem teto — perto da degeneração `α = ε·β·s̄` ela diverge para velocidades não físicas — e mesmo onde é finita omite o teto de velocidade segura que o motor canônico aplica: descidas reais são **limitadas por comportamento e teto**, não pelo equilíbrio aero-gravidade-potência. Então `k₋` permanece um coeficiente livre, dependente do corpus (mediana medida 5,9 rural, ≈0 a negativo urbano, 4,8 para P. Paz), *não* fixado pela ponte. Este é o espelho exato do achado do lado da energia (§8.4): a metade geométrica do modelo de descida credita a mais no para-e-anda porque a frenagem, não a física de inércia, define o resultado.
-
-![Tempo em movimento previsto vs medido](figs/fig7-time.svg)
-
-*Figura 7. Tempo em movimento previsto (T1b, condicionado à potência) vs medido, um ponto por pedalada, colorido por conjunto, na linha identidade. O modelo de distância plana equivalente de subida acompanha o tempo medido nos três corpora e em toda a faixa (pedaladas urbanas curtas a uma ultra de 35 horas), com pequeno viés dependente do corpus (P. Paz +3,8%, longões −5,2%); o resíduo é dominado pela previsão da velocidade plana, não pelos termos de relevo.*
-
-**Veredito — uma divisão calibrada.** A **metade de subida é empiricamente apoiada e transfere-se** entre ciclistas (modesta no agregado, concentrada em relevo, significativa, e superando um teto ajustado no novo ciclista); a lei de tempo de subida só-gravidade `k₊ = v_f·β/P̄_climb` é a peça transferível. A **metade de descida não é confirmada** — a ponte analítica ε↔k₋ não prevê a velocidade de descida medida, e `k₋` permanece um coeficiente empírico, limitado por comportamento. A dualidade *conceitual* (derivar ambos os botões da potência de descida compartilhada) permanece como afirmação estrutural do artigo; sua previsão *quantitativa* de descida não.
+*Movida para a Peça 3.* Testado contra o tempo em movimento medido nos três corpora, o veredito é dividido: a metade de subida de `x*` é empiricamente sustentada e transfere-se fora da amostra (o desfecho pré-declarado alcança 6,6% de mediana vs os 7,6% ingênuos em 441 pedaladas, teste de sinal p = 0,011, e supera um teto de coeficientes ajustados congelado no ciclista novo), enquanto a ponte de descida ε↔k₋ não prevê a velocidade de descida medida — descidas reais são limitadas por comportamento e por freio — então `k₋` permanece um coeficiente livre e dependente do corpus. Métodos completos, placares e figuras na **Peça 3** (enquanto isso: o working paper combinado §8.8 e a entrada 13 do diário).
 
 ### 8.9 Resolução é um regime de parâmetros: o MDT de produção, uma meta de acurácia pré-registrada, e constantes dependentes de escala
 
-*Ato IV, continuação — escala é um regime; a meta pré-registrada é cumprida.*
-
-Toda constante calibrada até aqui — o offset de ε de −0,13 (células de descida de 30 m, §8.3), a inclinação de ruído `c` (§6.3), os limiares de regime de ±2%/−1,5% — foi ajustada sobre perfis cuja amostragem efetiva é ~30 m. Três estudos de acompanhamento (entradas 19–21 do journal) testam a lei onde ela de fato roda — o raster de levantamento de 5 m do motor de roteamento da §9.1 — e convergem para o achado estrutural final deste artigo: **as constantes comportamentais da forma fechada carregam uma escala de amostragem e um regime de terreno implícitos.** A física do ciclista (`m, C_dA, C_rr, ρ, k_eff`) é livre de escala; o trio comportamental (`k_smooth`, o offset de ε, o limiar de subida) não é.
-
-**(a) O MDT de 5 m de produção cobra a mais — por resolução, não por defeito.** Caminhando a lei por aresta sobre o raster de 5 m derivado do IGC-SP usado em produção versus uma reamostragem média a 30 m do *mesmo* raster, em 922 pedaladas de São Paulo pelos quatro corpora, os perfis de 5 m cobram energia a mais numa mediana pareada de **+9,4 pp** (com sinal) nas pedaladas urbanas do censo e **+3,6 pp** agregando as 864 pedaladas dos três ciclistas (ambos p < 10⁻⁴). Os dois mecanismos da §6 são medidos separadamente: inflação de ondulações (`h₊` é maior a 5 m em 919 das 922 pedaladas; mediana do censo +14%) e colapso do ε local-por-inclinação (o ε implícito ponderado pela queda cai de 0,456 a 30 m para 0,414 a 5 m). A parte contraintuitiva: em terreno urbano o MDT de levantamento de 5 m é *pior* que a própria trilha barométrica do ciclista — microrrelevo real do levantamento, que as vias niveladas suavizam, é cobrado como se pedalado. Uma forma fechada com ε agregado fica em grande parte blindada (degrada só ~0,4–1,2 pp de 30 m para 5 m); a forma por aresta com ε local é a exposta. Este é o estudo que desqualificou o FABDEM em terreno plano (§8.7) e pôs uma mitigação de pré-suavização no roteiro de implantação.
-
-**(b) Uma meta de acurácia pré-registrada — cumprida, e a alavanca é a calibração, não a suavização.** O pipeline implantado consegue atingir **|Δ%| mediano < 5 com |viés| < 2%**? Protocolo (declarado antes de qualquer ajuste): divisão determinística 50/50 treino/validação dentro do conjunto de cobertura de cada ciclista; duas alavancas implantáveis — uma pré-suavização gaussiana normalizada por máscara do raster de 5 m (σ selecionado só no treino; σ\* = 10 m) e constantes efetivas por ciclista (`C_dA`, `C_rr`, `k_smooth`) ajustadas na metade de treino com a massa congelada no valor conhecido; uma única avaliação congelada na validação ao final:
-
-| corpus | n (validação) | med \|Δ%\| | med Δ% | critério (< 5 ∧ < ±2) |
-|---|--:|--:|--:|:--|
-| P. Paz | 121 | **3,69** | +0,96 | **PASSA** |
-| JAAM | 94 | **2,74** | +0,31 | **PASSA** |
-| autor (completo) | 216 | **4,94** | +0,81 | **PASSA** (margem de 0,06 pp) |
-
-As ablações carregam a decomposição honesta. Sem calibração, a linha de base implantada falha em dois dos três corpora (8,5 / 2,6 / 14,8); a suavização sozinha não a resgata (8,7 / 2,7 / 12,0); e a calibração *sem* suavização também passa nos três (3,66 / 2,25 / 4,95) — **depois da calibração, a suavização compra quase nada: a calibração por ciclista é a alavanca que carrega a meta**, com as constantes ajustadas absorvendo o viés de resolução. Duas ressalvas fazem parte do resultado: os valores ajustados são *efetivos*, não físicos (o `C_dA` de um ciclista pousa em 0,21 com `C_rr` 0,014 — eles absorvem erro residual de modelo e resolução, e o par só vale com o σ em que foi ajustado); e o corpus do autor passa com 0,06 pp de margem — no limite da especificação, não confortavelmente dentro.
-
-**(c) As constantes dependem da escala — e do terreno.** O teste mais afiado reajusta o trio comportamental **(`k_smooth`, offset de ε, limiar de subida)** a 5 m como uma *transferência pura de resolução*: compartilhado entre ciclistas, ajustado apenas para que a caminhada a 5 m reproduza a caminhada a 30 m pedalada a pedalada — as energias medidas nunca entram no ajuste, então o trio não pode absorver erro de física do ciclista por construção. O ajuste pousa em `k_smooth = 0,94`, offset de ε `= 0,063`, limiar de subida `= 2,5%`, e cada constante se move exatamente como seu mecanismo prevê: o offset cai a cerca da metade do 0,13 calibrado a 30 m (restaurando o ε implícito ponderado pela queda a ≈ seu valor de 30 m), e o ajuste só-de-`k_smooth` (0,884) pousa quase exatamente sobre a razão medida `h₊(30 m)/h₊(5 m)` (0,896) — o desconto de ondulações fazendo precisamente seu trabalho da §6. Assim recalibrado, o trio fecha a lacuna de resolução nos três corpora de ciclistas, pedalada a pedalada, a ~1 pp do alvo de 30 m. O que falseia a forma forte é o corpus de transferência: as pedaladas do censo, urbanas e planas — nunca usadas em ajuste algum, com proporcionalmente mais conteúdo de ondulação sub-30 m (razão de `h₊` 0,867 vs ~0,90 dos ciclistas) — fecham só cerca de metade da sua lacuna. **As constantes comportamentais são, portanto, funções de *(intervalo de amostragem Δx, regime de rugosidade do terreno)*, não só de Δx**: um trio constante é uma ponte honesta apenas-de-parâmetros dentro de um regime de terreno, enquanto a suavização por célula do raster transfere entre regimes (cada célula perde exatamente seu próprio relevo sub-σ) — e é por isso que o que vai para produção é a suavização, não constantes reajustadas (§9.1). E reajustar a física por ciclista *por cima* do trio corrigido ainda produz valores efetivos, não físicos — o erro comportamental residual (vácuo, posição, medidor) escapa para a constante que estiver livre.
-
-A seção inverte o enquadramento de abertura do artigo, e vale dizê-lo com todas as letras: dentro da sua família, a forma fechada já é boa o suficiente — **as constantes, não o modelo, são a fronteira de acurácia**, elas carregam um regime implícito de *(escala, terreno)*, e as constantes por ciclista são aprendíveis do próprio histórico do ciclista (~100–200 pedaladas bastam para a meta acima).
+*Movida para a Peça 2.* Três estudos de implantação (entradas 19–21 do diário) convergem para a ressalva que governa as constantes deste artigo: o trio comportamental (`k_smooth`, o offset de ε, o limiar de subida) carrega um *(intervalo de amostragem, regime de terreno)* implícito. A lei congelada cobra a mais no MDT de levantamento de 5 m em produção em +3,6 a +9,4 pp pareados contra um regime de 30 m (922 pedaladas); um reajuste do trio independente de ciclista — ajustado puramente como transferência de resolução, nunca contra energia medida — fecha a lacuna apenas dentro do regime de terreno em que foi ajustado; e uma pré-suavização de raster com σ = 10 m mais constantes efetivas por ciclista calibradas em metade do histórico de cada um cumpre uma meta pré-registrada de **±5% de erro / ±2% de viés** nas metades de validação para os três ciclistas, com as ablações mostrando que a calibração, não a suavização, é a alavanca. Protocolos completos e ablações na **Peça 2** (enquanto isso: o working paper combinado §8.9).
 
 ### 8.10 Uma receita para quem planeja
 
@@ -711,7 +576,7 @@ A mesma lei em forma fechada é o núcleo físico compartilhado de três projeto
 
 ### 9.1 sampasimu (Simujaules) — a lei em forma fechada como custo de grafo por aresta
 
-O sampasimu computa **campos de energia de ciclismo com custo assimétrico** sobre MDEs: Dijkstra em uma grade 8-conexa (mais rotas top-N por A\*, densidade multi-referência e caminhos de custo máximo por PD em camadas), inteiramente em um Web Worker, com um backend opcional em Rust+rayon mantido em paridade de bits em nível de byte. Todo motor é roteado por uma única função de custo, que é a realização por aresta da lei de energia da §3. Literalmente do `energy-worker.js`:
+O sampasimu computa **campos de energia de ciclismo de custo assimétrico** sobre MDEs (Dijkstra numa grade, rotas A\* top-N, densidade multi-referência, caminhos de custo máximo por DP em camadas), inteiramente num Web Worker, com um backend Rust opcional mantido em paridade bit a bit. Todo motor passa por uma única função de custo — a realização por aresta da lei de energia da §3, literal de `energy-worker.js`:
 
 ```js
 function v2Edge(dist, dh, c) {
@@ -729,19 +594,7 @@ function v2Edge(dist, dh, c) {
 }
 ```
 
-O pacote de custos decompõe `α` e `β` exatamente nas constantes da §3:
-
-- `aRoll = m·g·C_rr / k_eff` — kJ por metro de solo, cobrado em toda a distância;
-- `aAero = ½·ρ·CdA·v_f² / k_eff` — kJ por metro de solo, cobrado apenas *fora* das subidas;
-- `beta = m·g·k_s / k_eff` — kJ por metro de subida, com `k_s` o fator de suavização de perfil (§6.2–6.3; `k_s = 1` o desativa — o motor por aresta já paga o momentum de ondulações implicitamente, então a suavização é opcional);
-- `abRatio = C_rr + ½ρCdA·v_f²/(m·g)` (= α/β, calculado deliberadamente a partir dos coeficientes **não suavizados** mesmo quando `k_s < 1`, já que ε é um fator de geometria de inclinação, não de energia), com `epsOffset = 0.13` e `climbThr ≈ 0.02`.
-
-Por aresta direcionada (`dist` = comprimento de solo em metros, `dh` = subida com sinal):
-
-- **dh ≥ 0** (subida / plano): `aRoll·dist + (grade < climbThr ? aAero·dist : 0) + beta·dh`;
-- **dh < 0** (descida): `max(0, aRoll·dist + aAero·dist − ε·beta·|dh|)`, com o fator de recuperação geométrico `ε = clamp₀₁(min(1, abRatio·dist/|dh|) − 0.13)` calculado **por aresta** — uma escolha de realização não explicitada em `notas.md` ou §4, que definem o offset de −0,13 sobre o ε **agregado** ponderado pela queda (§4.1, §8.3). As duas coincidem exatamente onde o clamp não atua, e divergem apenas em perfis com parcela substancial de arestas de descida mais íngremes que a inclinação de piso de ε (≈14%). A forma por aresta é uma **realização orientada ao roteamento, não a mais física**: um custo de aresta de Dijkstra precisa ser localmente aditivo, o que força a escolha — mas ε é *por construção* um agregado ponderado pela queda (§4.1), que empacota fenômenos da descida inteira (aero excedente, frenagem, pedalada na descida) que uma única aresta não resolve. Dois fatos empíricos afinam isso (entrada 18 do journal). Primeiro, o `max(0,·)` final é **código morto demonstravelmente**: o ε local-por-inclinação mantém o custo de toda aresta de descida ≥ `0,13·α·d` (o mesmo piso da prova de admissibilidade do A\*), confirmado em ~1 400 pedaladas reais onde nunca disparou — nenhum crédito é jamais cortado pelo clamp (esse modo de falha pertence a um ε congelado-por-pedalada aplicado por aresta, uma construção diferente). Segundo, o desvio real em relação ao campeão agregado é **resolução**: o `ε(s)` local colapsa em arestas finas e íngremes, então numa grade de 5 m o custo por aresta fica *acima* da forma agregada, enquanto numa amostragem de ~30 m os dois praticamente empatam. Isso importa porque o raster usual da implantação é o MDT de levantamento IGC-SP de 5 m — caminhado cru, ele cobra a energia de pedalada a mais em +3,6 a +9,4 pp pareados frente a um regime de 30 m (§8.9). O sampasimu, portanto, agora pré-suaviza MDTs finos (pixel ≤ 10 m) no carregamento do MDE com a gaussiana normalizada por máscara validada de σ = 10 m (v55; sobrescrevível pelo usuário, e as alturas são suavizadas no lado do app e enviadas identicamente aos motores JS e Rust, então a paridade de bits fica intocada), e as constantes efetivas por ciclista da calibração da §8.9 são exatamente o painel de parâmetros do app. Para estimar a energia de uma *pedalada*, use o ε agregado; por aresta é o preço da aditividade num campo de roteamento — melhor pago numa grade efetiva grossa, que a pré-suavização fornece.
-
-Esta é a realização **assimétrica, com clamp na descida** de `E ≈ α·x + β·(h₊ − ε·h₋)`, com a direcionalidade (uma aresta é barata na descida, cara na subida) que torna o *campo* de energia assimétrico. A expressão `v2Edge` idêntica — com ε geométrico completo e o corte de aero na subida incluídos, não um termo de gravidade nu — é reutilizada para arestas de portal de ponte/túnel sobre `(deckLenM, ±dh)`, com a direção `reverse` lendo o custo da direção oposta — construída em paridade de bits entre os motores JS e Rust. **Implantação:** `https://simujaules.pedalhidrografi.co`.
+com `aRoll`, `aAero`, `beta` e `abRatio = α/β` decompondo exatamente as constantes da §3, `epsOffset = 0.13`, `climbThr ≈ 0.02`, e a recuperação geométrica `ε = clamp₀₁(min(1, abRatio·dist/|dh|) − 0.13)` computada **por aresta** — uma realização orientada pelo roteamento (um custo de aresta de Dijkstra precisa ser localmente aditivo), não a mais física, já que ε é por construção um agregado ponderado pela queda (§4.1). A análise dessa realização — seu clamp de descida provadamente morto, sua sensibilidade à resolução, a pré-suavização σ = 10 m em produção, os portais para pontes/túneis e o viés de conectividade de grade da própria busca — é a **Peça 2** desta série (entradas 18–21, 23, 25–26 do diário). **Implantação:** `https://simujaules.pedalhidrografi.co`.
 
 ### 9.2 amora — registrando kJ por pedalada em RDF
 
@@ -779,15 +632,7 @@ $$
 
 ponderada pela queda sobre um perfil e corrigida por um offset de calibração quase-constante, `ε ≈ clamp_[0,1]( ε_coast − 0.13 )`. Os primos mais próximos são todos construtos por instante ou por faixa de velocidade, nunca um crédito escalar em nível de rota: a fronteira de potência-trativa-zero em inclinação negativa de Bigazzi & Lindsey [Bigazzi & Lindsey 2019] é uma escolha de velocidade em regime permanente por inclinação, não um crédito `β·h₋`; a literatura de VE/e-bike e pesquisa operacional trata a recuperação na descida como uma eficiência de regeneração por instante [Yuan et al. 2024], um potencial *simétrico* separado `(M+m)g·ΔH` [Ahmadi et al. 2024], ou custos de arco negativos por aresta resolvidos numericamente [Perger & Auer 2020] — nunca um `ε < 1` calibrado dobrado numa forma fechada. O offset −0.13 é o único parâmetro empírico ajustável: ele absorve a pedalada/frenagem residual na descida que o ideal de inércia omite. Nas 44 pedaladas com potência ele é ajustado intra-amostra e transforma a mediana de ε_coast de 0.39 em `s̄ ≥ 3%` em 0.26 contra um medido de 0.27 (exemplo resolvido na §8.3); aplicado congelado ao conjunto do censo, empata com a constante fixa selecionada intra-amostra lá (RMS 0,08 vs 0,08, §8.5) — a calibração transfere-se entre regimes de pedalada, embora o ε geométrico em si credite a mais em terreno de para-e-anda (§8.4).
 
-**(ii) A dualidade energia↔tempo `x* = x + k₊·h₊ − k₋·h₋`.** Nenhuma das duas metades do modelo de tempo de distância plana efetiva é em si nova. A metade de subida `x + k₊·h₊` é a ideia de distância plana equivalente do ciclismo de [Scarf & Grehan 2005] (1 m de subida ≈ 8 m de plano), [Scarf 2007] e [Norman 2004]; a metade de descida `k₋` é o crédito de tempo na descida em nível de rota de [Langmuir 1984] (−10 min/300 m em descidas suaves de 5–12°, +10 min/300 m em descidas íngremes > 12°) e [Tobler 1993] (`V = 6·e^(−3.5|S+0.05|)`, velocidade com pico em −2.86°). O que não localizamos em lugar algum é o *vínculo*: que `k₋` é o gêmeo temporal de ε, derivável dele através da única velocidade de descida oculta `v_desc` uma vez conhecida a potência na descida `P̄_desc`,
-
-$$
-\frac{v_f}{1 - k_- s} = \frac{\bar P_{desc}}{\alpha - \epsilon\,\beta s}
-\;\;\Rightarrow\;\;
-k_- = \frac{1}{s}\!\left[1 - \frac{v_f}{\bar P_{desc}}\,(\alpha - \epsilon\,\beta s)\right],
-$$
-
-com o limite degenerado limpo de uma inércia pura (`P̄_desc = 0`): o vínculo força `ε = α/(β·s)`, fixado apenas pela inclinação, enquanto `k₋` é definido inteiramente pela velocidade terminal de inércia — então sem potência para ligá-los os dois parâmetros se desacoplam, ε puramente geométrico, `k₋` puramente aerodinâmico. Langmuir e Tobler são ajustes empíricos de tempo nunca atrelados a um balanço de energia; derivar o crédito de tempo na descida da *mesma* potência na descida que o fator de recuperação é a peça genuinamente aditiva. Seu status empírico é decidido na §8.8 e vale reafirmar com precisão: a única previsão quantitativa da ponte (a velocidade de descida) falha — descidas são limitadas por comportamento — enquanto a metade de subida transfere-se e o limite degenerado re-deriva ε_coast independentemente. O valor sobrevivente da dualidade é estrutural, e é assim que a reivindicamos.
+**(ii)** **A dualidade energia↔tempo** é a outra contribuição estrutural da série; é enunciada, situada contra seus precedentes e testada na **Peça 3**. Para esta peça ela contribui uma verificação de consistência interna, já usada na §4.2: seu limite degenerado de inércia re-deriva ε_coast de forma independente pelo lado do tempo.
 
 ### 10.2 O que é padrão, e o que é enquadramento aditivo
 

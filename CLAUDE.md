@@ -96,7 +96,11 @@ home of the *derivation* (`notas.md`) and the side-by-side comparison.
   `ascent-error-literature.md` (barometer/DEM ascent-error lit review, Entry 24),
   `censo-model-verification.md`, `VERIFICATION_NOTES.md`.
 - `research/article/` — the paper: `article-draft.md` + `article-draft.pt-BR.md`
-  (the working paper, EN + pt-BR), `figs/` (`make_figures.py` + the committed SVGs),
+  (the combined working paper, EN + pt-BR — canonical citation target), being split into a
+  three-piece series: `piece1-energy-demand{,.pt-BR}.md` (the closed-form energy law; keeps the
+  monolith's section numbers with pointer STUBS for §5/§8.8/§8.9 so cross-references stay
+  stable), Piece 2 (routing/simujaules; write after Entry 26 reports) and Piece 3 (time dual)
+  pending; a piece edit and its pt-BR mirror move in lockstep, `figs/` (`make_figures.py` + the committed SVGs),
   `modelo-assets/` and `build-modelo.sh` (builds the published pages at
   `simujaules.pedalhidrografi.co/modelo/` into the sibling simujaules repo).
   (DEM tooling lives in `harness/dem/`; `harness/dem/coords/` is gitignored —
