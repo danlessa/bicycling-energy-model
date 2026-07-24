@@ -83,9 +83,15 @@ home of the *derivation* (`notas.md`) and the side-by-side comparison.
   Their retired JS ancestors instead re-read each other's *source lines* at run time — that
   eval-the-siblings trick is gone; keep the modules importable.
 - `research/notes/` — the research record: `MODEL_COMPARISON_JOURNAL.md` (numbered
-  entries, newest first), `literature-context.md` + `simujaules-literature-context.md`
-  (positioning), `claims.ttl` (machine-readable claims–questions–evidence graph for
-  Entries 17–22; RO-Crate envelope at the repo root `ro-crate-metadata.json`),
+  entries, newest first — the **lab journal**, authoritative), `CURATED_JOURNAL.md`
+  (the readable retelling, oldest first, plain language — update it when a lab entry
+  lands; on disagreement the lab journal wins),
+  `literature-context.md` + `simujaules-literature-context.md`
+  (positioning), `claims.ttl` (machine-readable claims–questions–evidence graph covering
+  every journal entry, in widely-used vocabularies only — schema.org Claim/Question, CiTO,
+  PROV-O/P-Plan, Dublin Core; per-entry evidence-package RO-Crates under
+  `research/packages/` regenerate via `make_crates.py`; RO-Crate envelope at the repo
+  root `ro-crate-metadata.json`),
   `crr-cda-typical-values.md`, `dem-elevation-comparison.md`,
   `ascent-error-literature.md` (barometer/DEM ascent-error lit review, Entry 24),
   `censo-model-verification.md`, `VERIFICATION_NOTES.md`.

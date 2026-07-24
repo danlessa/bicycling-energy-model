@@ -8,8 +8,8 @@ resolve their inputs and this directory relative to their own location).
 | File | Producer | Journal entry |
 |---|---|---|
 | `model_comparison.csv` | `python3 harness/compare.py` | 1+ (longões scoreboard) |
-| `censo_comparison.csv` | `python3 harness/censo_compare.py` | 7 |
-| `eps_hypothesis.csv` | `python3 harness/eps_hypothesis.py` | 9 |
+| `censo_comparison.csv` | `python3 harness/censo_compare.py` | 9 |
+| `eps_hypothesis.csv` | `python3 harness/eps_hypothesis.py` | 8 |
 | `eps_sp.csv` | `python3 harness/eps_sp_test.py` | 10 |
 | `ppaz_comparison.csv` | `python3 harness/ppaz_compare.py` | 12 |
 | `time_comparison.csv` | `python3 harness/time_compare.py` | 13 |

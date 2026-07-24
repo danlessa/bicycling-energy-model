@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Entrada 01 — pacote de evidência</title>
+<style>
+:root {
+  --paper:#f6f9f8; --ink:#1d2b30; --muted:#5b7076; --accent:#16717f;
+  --panel:#ecf1f0; --line:#d4dedd;
+}
+@media (prefers-color-scheme: dark) {
+  :root { --paper:#131a1c; --ink:#d9e4e2; --muted:#8fa5a9; --accent:#56b4c2;
+          --panel:#1b2427; --line:#2c383b; }
+}
+:root[data-theme="dark"] { --paper:#131a1c; --ink:#d9e4e2; --muted:#8fa5a9;
+  --accent:#56b4c2; --panel:#1b2427; --line:#2c383b; }
+:root[data-theme="light"] { --paper:#f6f9f8; --ink:#1d2b30; --muted:#5b7076;
+  --accent:#16717f; --panel:#ecf1f0; --line:#d4dedd; }
+* { box-sizing:border-box; }
+body { margin:0; background:var(--paper); color:var(--ink);
+  font:16px/1.6 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+main { max-width:72ch; margin:0 auto; padding:2.5rem 1.25rem 4rem;
+  display:flex; flex-direction:column; gap:2rem; }
+h1, h2 { font-family:Palatino, "Palatino Linotype", Georgia, serif;
+  line-height:1.25; text-wrap:balance; margin:0; }
+h1 { font-size:1.6rem; }
+h2 { font-size:1.15rem; margin-bottom:.6rem; }
+.eyebrow { text-transform:uppercase; letter-spacing:.09em; font-size:.72rem;
+  color:var(--accent); margin-bottom:.4rem; }
+.badges { display:flex; flex-wrap:wrap; gap:.5rem; margin-top:.9rem;
+  font-size:.78rem; }
+.badges span { border:1px solid var(--line); border-radius:2px;
+  padding:.1rem .5rem; color:var(--muted); }
+blockquote { margin:0; padding:1rem 1.25rem; background:var(--panel);
+  border-left:3px solid var(--accent); font-size:1.02rem; }
+blockquote footer { margin-top:.6rem; font-size:.8rem; color:var(--muted); }
+p { margin:.4rem 0; }
+.muted { color:var(--muted); font-size:.88rem; }
+table { border-collapse:collapse; width:100%; font-size:.85rem; }
+th, td { text-align:left; padding:.45rem .6rem;
+  border-bottom:1px solid var(--line); vertical-align:top; }
+th { text-transform:uppercase; letter-spacing:.07em; font-size:.7rem;
+  color:var(--muted); font-weight:600; }
+.num { font-variant-numeric:tabular-nums; white-space:nowrap; }
+.tablewrap { overflow-x:auto; }
+code, pre { font-family:ui-monospace, "SF Mono", Menlo, monospace; }
+code { font-size:.92em; }
+.hash { color:var(--muted); }
+pre { background:var(--panel); border:1px solid var(--line); padding:1rem;
+  overflow-x:auto; font-size:.72rem; line-height:1.5; margin:0;
+  font-variant-numeric:tabular-nums; }
+a { color:var(--accent); }
+a:focus-visible { outline:2px solid var(--accent); outline-offset:2px; }
+ul { margin:.4rem 0; padding-left:1.2rem; }
+</style>
+</head>
+<body>
+<main>
+<header>
+  <div class="eyebrow">Pacote de evidência · RO-Crate (Process Run)</div>
+  <h1>Entrada 01 — methodology &amp; how the three energies are built</h1>
+  <div class="badges">
+    <span>2026-06-28</span>
+    <span>commit 860eef75571b</span>
+    <span>com execução de harness</span>
+  </div>
+</header>
+
+<section>
+  <h2>A afirmação</h2>
+  <blockquote>
+    The comparison is pinned: 44 of 52 catalogued rides have measured power and a track; the ground truth is raw Σ power·dt (coasting zeros included), matching the sheet&#x27;s Work Bike column to ~0.3% median; both engines read the same per-ride constants from the rider&#x27;s own sheet — nothing refit.
+    <footer>Conforme registrado no
+    <a href="https://github.com/danlessa/bicycling-energy-model/blob/main/research/notes/MODEL_COMPARISON_JOURNAL.md">diário de comparação de modelos</a> e no grafo de
+    afirmações (<a href="https://github.com/danlessa/bicycling-energy-model/blob/main/research/notes/claims.ttl">claims.ttl</a>) — a prosa da entrada
+    permanece a fonte autoritativa.</footer>
+  </blockquote>
+</section>
+
+<section>
+  <h2>Como foi produzida</h2>
+  <p>Instrumento(s): <code>harness/compare.py</code> (sha256 <code class='hash'>ca495731f309e1d4…</code>, <a href="https://github.com/danlessa/bicycling-energy-model/blob/860eef75571b12de387d12a6f916e946d9e6d4c8/harness/compare.py">fonte no commit</a>).</p>
+  <p class='muted'>Insumos primários: gravações de pedaladas privadas (FIT com GPS e potência) — fora do repositório e deste pacote; agregados sem coordenadas disponíveis sob pedido.</p>
+  <p class="muted">Reconstruir os pacotes:
+  <code>python3 research/packages/make_crates.py</code>.</p>
+</section>
+
+<section>
+  <h2>Arquivos de resultado (apenas hash — dados privados)</h2>
+  <p class="muted">CSVs por pedalada ficam fora do repositório (nomes e datas de
+  atividades privadas). Os hashes permitem a um verificador com acesso
+  consentido confirmar que recebeu os mesmos arquivos.</p>
+  <div class="tablewrap"><table>
+    <tr><th>arquivo</th><th>tamanho</th><th>sha256</th><th>regenera via</th></tr>
+    <tr><td><code>results/model_comparison.csv</code></td><td class='num'>9,617 B</td><td><code class='hash'>5980b25746013ed1…</code></td><td>python3 harness/compare.py</td></tr>
+  </table></div>
+</section>
+
+<section>
+  <h2>Contexto</h2>
+  <ul>
+    <li>Diário (entrada 1): <a href="https://github.com/danlessa/bicycling-energy-model/blob/main/research/notes/MODEL_COMPARISON_JOURNAL.md">MODEL_COMPARISON_JOURNAL.md</a></li>
+    <li>Grafo de afirmações: <a href="https://github.com/danlessa/bicycling-energy-model/blob/main/research/notes/claims.ttl">claims.ttl</a></li>
+    
+    <li>Pacote de pesquisa: <a href="https://doi.org/10.5281/zenodo.21282165">https://doi.org/10.5281/zenodo.21282165</a></li>
+    <li>Metadados legíveis por máquina: <code>ro-crate-metadata.json</code></li>
+  </ul>
+</section>
+</main>
+</body>
+</html>

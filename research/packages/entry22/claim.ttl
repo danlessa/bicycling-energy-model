@@ -1,0 +1,66 @@
+# Entry 22 claim slice — self-contained extract of research/notes/claims.ttl
+# for the Entry 22 evidence package (RO-Crate in this directory).
+#
+# Widely-used vocabularies only (same convention as claims.ttl since
+# 2026-07-24): schema.org Claim/Question, CiTO typed links (supports/disputes
+# carry evidence polarity), PROV-O, Dublin Core. Keep the assertion text in
+# sync with claims.ttl and the journal (the prose remains authoritative).
+#
+# Validate: python -c "import rdflib; rdflib.Graph().parse('research/packages/entry22/claim.ttl')"
+
+@prefix :        <https://danlessa.github.io/bicycling-energy-model/claims#> .
+@prefix cito:    <http://purl.org/spar/cito/> .
+@prefix prov:    <http://www.w3.org/ns/prov#> .
+@prefix schema:  <http://schema.org/> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:     <http://www.w3.org/2001/XMLSchema#> .
+
+# ── Instrument and inputs (per-ride CSVs are gitignored; hashes in the crate) ─
+
+:bootstrap_ci.py a schema:SoftwareSourceCode , prov:Entity ;
+  schema:name "bootstrap_ci.py" ;
+  rdfs:comment "Bootstrap 95% CIs (percentile, B=10^4, deterministic seed) + exact two-sided paired sign tests; gates every published median (±0.11) and exits non-zero on failure." .
+
+:model_comparison.csv a prov:Entity ;
+  rdfs:comment "gitignored; regenerates via `python3 harness/compare.py` (44 longões)" .
+:censo_comparison.csv a prov:Entity ;
+  rdfs:comment "gitignored; regenerates via `python3 harness/censo_compare.py` (62 clean censo rides)" .
+:ppaz_comparison.csv a prov:Entity ;
+  rdfs:comment "gitignored; regenerates via `python3 harness/ppaz_compare.py` (441 rides)" .
+:jaam_comparison.csv a prov:Entity ;
+  rdfs:comment "gitignored; regenerates via `python3 harness/jaam_compare.py` (219 rides)" .
+:time_comparison.csv a prov:Entity ;
+  rdfs:comment "gitignored; regenerates via `python3 harness/time_compare.py`" .
+
+# ── The run ──────────────────────────────────────────────────────────────────
+
+:run22 a prov:Activity ;
+  dcterms:date "2026-07-09"^^xsd:date ;
+  prov:used :bootstrap_ci.py ,
+            :model_comparison.csv , :censo_comparison.csv ,
+            :ppaz_comparison.csv , :jaam_comparison.csv , :time_comparison.csv ;
+  rdfs:comment "No engine runs, no FIT parsing — statistics over per-ride CSVs already written by the other harnesses. Re-executable: `python3 harness/bootstrap_ci.py` (exit 0 = all gates pass)." .
+
+# ── The claims ───────────────────────────────────────────────────────────────
+
+:assert-beats a schema:Claim ;
+  schema:text "(superseded) The champion closed form beats the forward simulation on the 44 longões (median 3.6% vs 5.1%)." ;
+  dcterms:description "demoted — median-point comparison unsupported by the paired test" .
+
+:assert22 a schema:Claim ;
+  cito:updates :assert-beats ;
+  schema:text "Champion vs canonical is statistical parity: bootstrap 95% CIs [2.0, 5.6] vs [3.8, 7.1] overlap; paired, the champion is closer on 25/44 rides (57%, sign test p = 0.45). Parity is still practically decisive — the closed form is the engine cheap enough to route with." ;
+  dcterms:description "parity, not 'beats' — article v0.16 reworded everywhere" ;
+  prov:wasGeneratedBy :run22 ;
+  cito:citesAsEvidence :model_comparison.csv .
+
+:assert22_ev1 a schema:Claim ;
+  cito:supports :assert22 ;
+  cito:citesAsEvidence :model_comparison.csv ;
+  schema:text "Longões medians reproduce under the ±0.11 gate; CIs overlap ([2.0, 5.6] vs [3.8, 7.1]); paired sign test 25/44 (57%), p = 0.4514." .
+
+:assert22_ev2 a schema:Claim ;
+  cito:supports :assert22 ;
+  cito:citesAsEvidence :ppaz_comparison.csv ;
+  schema:text "Rankings that ARE paired-significant stay: P. Paz pm·ε_geom beats sm·ε=0.20 on 76% and canonical on 60% (both p < 10⁻⁴); JAAM sm·ε=0.20 beats sm·ε_geom on 65% (p < 10⁻⁴)." .

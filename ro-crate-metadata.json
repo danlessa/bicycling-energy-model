@@ -25,9 +25,11 @@
         { "@id": "applet/index.html" },
         { "@id": "notas.md" },
         { "@id": "research/notes/MODEL_COMPARISON_JOURNAL.md" },
+        { "@id": "research/notes/CURATED_JOURNAL.md" },
         { "@id": "research/article/article-draft.md" },
         { "@id": "research/article/article-draft.pt-BR.md" },
         { "@id": "research/notes/claims.ttl" },
+        { "@id": "research/packages/" },
         { "@id": "analysis/" },
         { "@id": "harness/" },
         { "@id": "data/sample.gpx" },
@@ -93,12 +95,27 @@
       "translationOf": { "@id": "research/article/article-draft.md" }
     },
     {
+      "@id": "research/notes/CURATED_JOURNAL.md",
+      "@type": ["File", "CreativeWork"],
+      "name": "Curated journal (readable companion)",
+      "description": "Plain-language retelling of all 24 lab-journal entries, oldest first, organized as a narrative with per-entry links to the evidence packages. The lab journal remains authoritative; this is the reading edition.",
+      "encodingFormat": "text/markdown",
+      "isBasedOn": { "@id": "research/notes/MODEL_COMPARISON_JOURNAL.md" }
+    },
+    {
       "@id": "research/notes/claims.ttl",
       "@type": ["File", "Dataset"],
-      "name": "Claims–questions–evidence graph (journal Entries 17–22)",
-      "description": "RDF/Turtle graph: research questions, hypotheses, pre-registered protocols (P-Plan), harness runs (PROV-O), assertions with polarized evidence lines (SEPIO pattern), and typed inter-entry citation links (CiTO).",
+      "name": "Claims–questions–evidence graph (journal Entries 1–24)",
+      "description": "RDF/Turtle graph in widely-used vocabularies only: research questions and claims (schema.org), pre-registered protocols (P-Plan), harness runs (PROV-O), evidence polarity and inter-entry citation links as typed CiTO relations (supports/disputes/corrects/updates/qualifies), covering every journal entry.",
       "encodingFormat": "text/turtle",
       "about": { "@id": "./" }
+    },
+    {
+      "@id": "research/packages/",
+      "@type": "Dataset",
+      "name": "Per-entry evidence packages (nested RO-Crates)",
+      "description": "One evidence package per journal entry (entry01–entry24): nested RO-Crates (Workflow-Run Process Run profile where the entry has a harness run) holding the entry's claim, run provenance, hash-only descriptions of the gitignored per-ride artifacts, and a human-readable preview page. Entry 22 additionally carries its claim.ttl slice and the captured gated bootstrap_ci.py report. Regenerates via `python3 research/packages/make_crates.py`.",
+      "isPartOf": { "@id": "./" }
     },
     {
       "@id": "analysis/",
@@ -112,7 +129,7 @@
       "@id": "harness/",
       "@type": "Dataset",
       "name": "Validation harnesses",
-      "description": "Node.js harnesses that regenerate every published number from the raw recordings: compare, censo_compare, eps_hypothesis, eps_sp_test, time_compare, per-rider inventory+compare pairs (ppaz_*, jaam_*, danlessa_*), param_fit / cda_estimate, regime_compare, verify_v2edge_clamp, igc_resolution_test, goal_calibration, scale_trio, bootstrap_ci. Each ports the app's engines verbatim (hand-kept-in-sync).",
+      "description": "Python (stdlib-only) harnesses that regenerate every published number from the raw recordings: compare, censo_compare, eps_hypothesis, eps_sp_test, time_compare, per-rider inventory+compare pairs (ppaz_*, jaam_*, danlessa_*), param_fit / cda_estimate, regime_compare, verify_v2edge_clamp, igc_resolution_test, goal_calibration, scale_trio, bootstrap_ci. Each ports the app's engines verbatim (hand-kept-in-sync).",
       "isPartOf": { "@id": "./" }
     },
     {

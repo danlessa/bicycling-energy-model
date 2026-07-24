@@ -1,17 +1,19 @@
-# claims.ttl — machine-readable claims–questions–evidence graph for journal
-# Entries 17–22 (proof of concept; the prose remains authoritative in
-# research/notes/MODEL_COMPARISON_JOURNAL.md).
+# claims.ttl — machine-readable claims–questions–evidence graph for the
+# journal, Entries 1–24 (the prose remains authoritative in
+# research/notes/MODEL_COMPARISON_JOURNAL.md; Entries 17–22 were the original
+# proof of concept, Entries 1–16 and 23–24 were back/forward-filled 2026-07-24).
 #
-# Stack: schema.org + CiTO (typed links between claims/entries/artifacts),
-# PROV-O + P-Plan (pre-registrations and harness runs), and a small minted
-# vocabulary (phr:) following the SEPIO assertion/evidence-line PATTERN —
-# minted rather than imported so this sketch doesn't hardcode OBO numeric IDs;
-# swap phr:Assertion / phr:EvidenceLine for their SEPIO equivalents when
-# packaging for real.
+# Stack: widely-used vocabularies ONLY — schema.org (Claim/Question), CiTO
+# (typed links: citesAsEvidence, supports/disputes for evidence polarity,
+# corrects/updates/qualifies/extends between entries), PROV-O + P-Plan (runs
+# and pre-registered protocols), Dublin Core. The former minted phr: vocabulary
+# (SEPIO-pattern) was retired 2026-07-24: assertions are schema:Claim,
+# evidence lines are minted :assertN_evK nodes that cito:supports/cito:disputes
+# their assertion, hypotheses and pre-registrations are marked with
+# dcterms:type, verdicts live in dcterms:description.
 #
 # Validate: python -c "import rdflib; rdflib.Graph().parse('research/notes/claims.ttl')"
 
-@prefix phr:     <https://danlessa.github.io/bicycling-energy-model/vocab#> .
 @prefix :        <https://danlessa.github.io/bicycling-energy-model/claims#> .
 @prefix cito:    <http://purl.org/spar/cito/> .
 @prefix prov:    <http://www.w3.org/ns/prov#> .
@@ -20,24 +22,6 @@
 @prefix dcterms: <http://purl.org/dc/terms/> .
 @prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#> .
 @prefix xsd:     <http://www.w3.org/2001/XMLSchema#> .
-
-# ── Minted vocabulary (SEPIO-pattern) ────────────────────────────────────────
-
-phr:ResearchQuestion a rdfs:Class ;
-  rdfs:comment "A question posed to the research programme (the journal's verbatim prompts)." .
-phr:Hypothesis a rdfs:Class .
-phr:Assertion a rdfs:Class ;
-  rdfs:comment "A claim with polarized evidence lines (SEPIO pattern)." .
-phr:EvidenceLine a rdfs:Class .
-phr:PreRegisteredProtocol a rdfs:Class ; rdfs:subClassOf p-plan:Plan ;
-  rdfs:comment "Protocol + endpoints declared before any tuning/evaluation run." .
-
-phr:addresses      a rdfs:Property ; rdfs:comment "assertion/hypothesis → question" .
-phr:tests          a rdfs:Property ; rdfs:comment "protocol → hypothesis" .
-phr:hasEvidenceLine a rdfs:Property .
-phr:polarity       a rdfs:Property ; rdfs:comment "supporting | contradicting" .
-phr:evidence       a rdfs:Property ; rdfs:comment "evidence line → artifact/run/measured result" .
-phr:verdict        a rdfs:Property ; rdfs:comment "free-text verdict as recorded in the journal" .
 
 # ── Shared artifacts ─────────────────────────────────────────────────────────
 
@@ -69,9 +53,345 @@ phr:verdict        a rdfs:Property ; rdfs:comment "free-text verdict as recorded
 :scale_trio.csv a prov:Entity ;
   rdfs:comment "gitignored; regenerates via `python3 scale_trio.py`" .
 
+# Entry 22's inputs — per-ride CSVs written by the earlier harnesses:
+:model_comparison.csv a prov:Entity ;
+  rdfs:comment "gitignored; regenerates via `python3 harness/compare.py` (44 longões)" .
+:censo_comparison.csv a prov:Entity ;
+  rdfs:comment "gitignored; regenerates via `python3 harness/censo_compare.py`" .
+:ppaz_comparison.csv a prov:Entity ;
+  rdfs:comment "gitignored; regenerates via `python3 harness/ppaz_compare.py`" .
+:jaam_comparison.csv a prov:Entity ;
+  rdfs:comment "gitignored; regenerates via `python3 harness/jaam_compare.py`" .
+:time_comparison.csv a prov:Entity ;
+  rdfs:comment "gitignored; regenerates via `python3 harness/time_compare.py`" .
+
+# Scripts and artifacts for Entries 1–16 (scripts live in harness/):
+:compare.py a schema:SoftwareSourceCode , prov:Entity ;
+  schema:name "compare.py" ;
+  rdfs:comment "The longões scoreboard harness (44 power rides); also carries the Entry 5/7 per-regime, elevation-noise and sustained-climb blocks." .
+:censo_compare.py a schema:SoftwareSourceCode , prov:Entity ; schema:name "censo_compare.py" .
+:eps_hypothesis.py a schema:SoftwareSourceCode , prov:Entity ; schema:name "eps_hypothesis.py" .
+:eps_sp_test.py a schema:SoftwareSourceCode , prov:Entity ; schema:name "eps_sp_test.py" .
+:ppaz_compare.py a schema:SoftwareSourceCode , prov:Entity ; schema:name "ppaz_compare.py" .
+:jaam_compare.py a schema:SoftwareSourceCode , prov:Entity ; schema:name "jaam_compare.py" .
+:time_compare.py a schema:SoftwareSourceCode , prov:Entity ; schema:name "time_compare.py" .
+:cda_estimate.py a schema:SoftwareSourceCode , prov:Entity ; schema:name "cda_estimate.py" .
+:param_fit.py a schema:SoftwareSourceCode , prov:Entity ; schema:name "param_fit.py" .
+:danlessa_compare.py a schema:SoftwareSourceCode , prov:Entity ; schema:name "danlessa_compare.py" .
+:build_model_inputs.py a schema:SoftwareSourceCode , prov:Entity ; schema:name "build_model_inputs.py" .
+
+:eps_hypothesis.csv a prov:Entity ;
+  rdfs:comment "gitignored; regenerates via `python3 harness/eps_hypothesis.py`" .
+:eps_sp.csv a prov:Entity ;
+  rdfs:comment "gitignored; regenerates via `python3 harness/eps_sp_test.py`" .
+:cda_estimate.csv a prov:Entity ;
+  rdfs:comment "gitignored; regenerates via `python3 harness/cda_estimate.py`" .
+:param_fit.csv a prov:Entity ;
+  rdfs:comment "gitignored; regenerates via `python3 harness/param_fit.py`" .
+:danlessa_comparison.csv a prov:Entity ;
+  rdfs:comment "gitignored; regenerates via `python3 harness/danlessa_compare.py`" .
+
+:dem_comparison_doc a schema:CreativeWork ;
+  schema:name "dem-elevation-comparison.md" ;
+  schema:url <https://github.com/danlessa/bicycling-energy-model/blob/main/research/notes/dem-elevation-comparison.md> .
+:ascent_error_lit a schema:CreativeWork ;
+  schema:name "ascent-error-literature.md" ;
+  schema:url <https://github.com/danlessa/bicycling-energy-model/blob/main/research/notes/ascent-error-literature.md> .
+:grid_sens_note a schema:CreativeWork ;
+  schema:name "grid-connectivity-sensitivity-2026-07-11.md" ;
+  rdfs:comment "Canonical long-form note in the sibling simujaules repo (docs/), with the reproducible harness (grid-sens.mjs and companions, simujaules commits f83f2f9→17ee186)." .
+
+# ── Entry 1 — methodology ────────────────────────────────────────────────────
+
+:assert1 a schema:Claim ;
+  schema:text "The comparison is pinned: 44 of 52 catalogued rides have measured power and a track; the ground truth is raw Σ power·dt (coasting zeros included), matching the sheet's Work Bike column to ~0.3% median; both engines read the same per-ride constants from the rider's own sheet — nothing refit." ;
+  dcterms:description "methods reference for all later runs" ;
+  dcterms:source :journal .
+
+# ── Entry 2 — baseline ───────────────────────────────────────────────────────
+
+:q2 a schema:Question ;
+  schema:text "Out of the box, how close do the two models land on the 44 longões power rides?" .
+
+:run2 a prov:Activity ;
+  prov:used :compare.py ;
+  prov:generated :model_comparison.csv .
+
+:assert2 a schema:Claim ;
+  schema:about :q2 ;
+  schema:text "Baseline: the canonical forward simulation reproduces measured energy to 5.1% median with no bias; the approximate (climb-aero off) sits +19.2% high on essentially every ride — the uphill aero over-charge isolated as the dominant closed-form error." ;
+  prov:wasGeneratedBy :run2 ;
+  cito:citesAsEvidence :model_comparison.csv .
+
+# ── Entry 3 — climb-fraction correction ──────────────────────────────────────
+
+:q3 a schema:Question ;
+  schema:text "How does the approximate behave if the climb-fraction correction is folded into α?" .
+
+:run3 a prov:Activity ;
+  prov:used :compare.py ;
+  prov:generated :model_comparison.csv .
+
+:assert3 a schema:Claim ;
+  schema:about :q3 ;
+  cito:extends :assert2 ;
+  schema:text "The climb-fraction correction roughly halves the over-prediction (+19.2% → +8.5% median, better on 43/44 rides); zeroing climb aero beats charging it at v_c (8.7% vs 12.5% med|Δ%|) — climbs are slow enough that their real aero is closer to zero." ;
+  prov:wasGeneratedBy :run3 ;
+  cito:citesAsEvidence :model_comparison.csv .
+
+# ── Entry 4 — the v_f lever ──────────────────────────────────────────────────
+
+:q4 a schema:Question ;
+  schema:text "Can the sheet's P_flat/P_avg column be taken into account?" .
+
+:run4 a prov:Activity ;
+  prov:used :compare.py ;
+  prov:generated :model_comparison.csv .
+
+:assert4 a schema:Claim ;
+  schema:about :q4 ;
+  schema:text "v_f is the second lever after climb aero: sourcing it from the measured flat speed cuts the residual +8.5% → +2.7%; the sheet's 0.60 ratio nulls the bias (−0.5%) but only by over-correcting v_f — the data's flat power is ~94% of average power, not 60%." ;
+  prov:wasGeneratedBy :run4 ;
+  cito:citesAsEvidence :model_comparison.csv .
+
+# ── Entry 5 — per-regime split, h₊ noise, the deadband ───────────────────────
+
+:q5 a schema:Question ;
+  schema:text "Where does the remaining error live per regime, how much is elevation noise in h₊, and does a smoothing filter help?" .
+
+:run5 a prov:Activity ;
+  prov:used :compare.py ;
+  prov:generated :model_comparison.csv .
+
+:assert5 a schema:Claim ;
+  schema:about :q5 ;
+  schema:text "The approximate's entire error is a climb story (+26.7% climb regime vs ±4% flat); ~20% of raw h₊ is sub-3 m jitter, accounting for ~93% of the climb over-prediction; a 2 m deadband takes cf to 3.4% med|Δ%| — beating the raw canonical (5.1%) — while smoothing mildly HURTS the canonical, which is nearly immune to ascent noise but sensitive to regime reclassification." ;
+  dcterms:description "champion recipe found: cf + 2 m deadband; denoise h₊ for the approximate only" ;
+  prov:wasGeneratedBy :run5 ;
+  cito:citesAsEvidence :model_comparison.csv .
+
+# ── Entry 6 — external DEMs ──────────────────────────────────────────────────
+
+:q6 a schema:Question ;
+  schema:text "How does elevation from FABDEM/SRTM/COP30 differ from the recorded barometric track, and what is k_h for DEM-derived h₊/h₋?" .
+
+:run6 a prov:Activity ;
+  prov:used :build_model_inputs.py ;
+  prov:generated :dem_comparison_doc .
+
+:assert6 a schema:Claim ;
+  schema:about :q6 ;
+  schema:text "No single source is ground truth for ascent — they bracket it: the recorded baro under-reads (−11% raw / −21% smoothed vs the IGC 5 m DTM), the DSMs over-read (COP30 +18%, SRTM +34%), FABDEM lands +6%; nearest-neighbour sampling adds ~30 pp of staircase (use bilinear); the geometric k_DEM correction is the solid result, while the energy k_h (~0.8–0.9 estimated) stayed an open TODO." ;
+  prov:wasGeneratedBy :run6 ;
+  cito:citesAsEvidence :dem_comparison_doc .
+
+# ── Entry 7 — k_h on sustained climbs ────────────────────────────────────────
+
+:q7 a schema:Question ;
+  schema:text "What is k_h fitted on sustained ascent sections (mean slope > 3% over > 100 m)?" .
+
+:run7 a prov:Activity ;
+  prov:used :compare.py ;
+  prov:generated :model_comparison.csv .
+
+:assert7 a schema:Claim ;
+  schema:about :q7 ;
+  cito:qualifies :assert6 ;
+  schema:text "On sustained climbs k_h ≈ 0.96–1: the rider pays the full mg·Δh, so there is no uniform climbing discount; sustained climbing is only 54% of total ascent — the discount lives in rollers and noise — so the right correction is the per-profile deadband, not a scalar (cross-check: cf + 2 m deadband 3.6% vs canonical 5.1% vs scalar k_smooth 5.8%)." ;
+  prov:wasGeneratedBy :run7 ;
+  cito:citesAsEvidence :model_comparison.csv .
+
+# ── Entry 8 — a closed form for ε ────────────────────────────────────────────
+
+:q8 a schema:Question ;
+  schema:text "Is there a closed form for ε from each activity's route geometry alone?" .
+
+:run8 a prov:Activity ;
+  prov:used :eps_hypothesis.py ;
+  prov:generated :eps_hypothesis.csv .
+
+:assert8 a schema:Claim ;
+  schema:about :q8 ;
+  schema:text "ε is predictable from grade alone on real descents: ε ≈ clamp01(min(1, (α/β)/s̄) − 0.13), the −0.13 a near-constant offset for residual descent pedalling/braking; the remaining scatter is rider behaviour, not route geometry." ;
+  prov:wasGeneratedBy :run8 .
+
+:assert8_ev1 a schema:Claim ;
+  cito:supports :assert8 ;
+  cito:citesAsEvidence :eps_hypothesis.csv ;
+  schema:text "At s̄ ≥ 3% the calibrated estimator reaches RMS 0.08 vs a flat-median baseline 0.13 — a 37% RMS reduction (Entry 11's honest statistic); worked example RMC200 Mogi: predicted 0.46 vs measured 0.47." .
+
+:assert8_ev2 a schema:Claim ;
+  cito:disputes :assert8 ;
+  cito:citesAsEvidence :eps_hypothesis.csv ;
+  schema:text "The flat→ε→1 intuition is reversed (gentle rides are pedalled through dips, measured ε→0), curve/off-road penalties fit with the wrong sign, and over all 44 rides the estimator loses to the flat median — restrict to real descents." .
+
+# ── Entry 9 — the censo urban rides ──────────────────────────────────────────
+
+:q9 a schema:Question ;
+  schema:text "How do canonical / smooth-approximate / poor-man's fare on the collective's own urban stop-go rides, with an assumed generic rider?" .
+
+:run9 a prov:Activity ;
+  prov:used :censo_compare.py ;
+  prov:generated :censo_comparison.csv .
+
+:assert9 a schema:Claim ;
+  schema:about :q9 ;
+  schema:text "All three models reproduce measured energy to ~4–7% median with a generic assumed rider (poor-man's ε=0.20 best at 3.9%); ε_geom over-credits descent recovery on stop-go riding — the braking penalty the open rural rides could not isolate — giving the corpus rule: ε_geom on open coastable routes, flat ε ≈ 0.20 on urban stop-go; a physical-plausibility floor excluded 7 rides whose energy deficit is a power-channel problem, not walking." ;
+  prov:wasGeneratedBy :run9 ;
+  cito:citesAsEvidence :censo_comparison.csv .
+
+# ── Entry 10 — is São Paulo's ε braking-driven? ──────────────────────────────
+
+:q10 a schema:Question ;
+  schema:text "Is São Paulo's ε a braking-driven quantity, predictable from stop-go density?" .
+
+:hyp10 a schema:Claim ;
+  dcterms:type "hypothesis" ;
+  schema:about :q10 ;
+  schema:text "Urban stop-go suppresses descent recovery below the free-coasting closed form: ε_SP = clamp(ε_coast − Δε_brake), with Δε_brake read from forced decelerations in the speed trace." .
+
+:run10 a prov:Activity ;
+  prov:used :eps_sp_test.py ;
+  prov:generated :eps_sp.csv .
+
+:assert10 a schema:Claim ;
+  schema:about :q10 ;
+  dcterms:description "hypothesis refuted — São Paulo's ε is a constant" ;
+  schema:text "Refuted: no stop-go/braking predictor explains the per-ride gap (R² ≤ 0.07, two wrong-signed; the mechanistic correction over-corrects, RMS 0.19 vs flat-constant 0.08). Braking is invisible to ε because gravity re-supplies the braked-away speed on a descent — so ε ≈ 0.20 as a constant, and the rural −0.13 offset transfers to São Paulo essentially unchanged." ;
+  prov:wasGeneratedBy :run10 .
+
+:assert10_ev1 a schema:Claim ;
+  cito:disputes :hyp10 ;
+  cito:supports :assert10 ;
+  cito:citesAsEvidence :eps_sp.csv ;
+  schema:text "Contradicts hyp10 on 59 clean censo rides: best predictor R² 0.14 is v_f itself, not any braking/stop measure; Δε_brake median 0.34 ≫ the actual gap 0.15." .
+
+# ── Entry 11 — general review ────────────────────────────────────────────────
+
+:assert11 a schema:Claim ;
+  cito:updates :assert8 , :assert9 , :assert10 ;
+  schema:text "A 13-agent adversarially-verified review fixed a latent KE-floor bug (unreachable by any benchmark ride), the measuredFlatSpeed/epsFromBalance VSTOP gate (the one fix with real effect: censo ε_true 0.14 → 0.23), compressed-timestamp FIT decoding, signed drag in flatEqSpeed, and the app's interleaved-record loader; no published headline conclusion reversed. Methodological correction: the ε correlations (0.83/0.87) are part–whole — the honest statistic is RMS skill vs a flat baseline." ;
+  dcterms:description "numbers in Entries 7–10 are the corrected re-run values; Entries 2–6 left as historical record" ;
+  dcterms:source :journal .
+
+# ── Entry 12 — a second rider ────────────────────────────────────────────────
+
+:q12 a schema:Question ;
+  schema:text "Does anything transfer to a second, fully-independent rider (P. Paz, different body, meter and riding profile)?" .
+
+:run12 a prov:Activity ;
+  prov:used :ppaz_compare.py ;
+  prov:generated :ppaz_comparison.csv .
+
+:assert12 a schema:Claim ;
+  schema:about :q12 ;
+  schema:text "The frozen rider-1 estimator survives the transfer: clamp01(ε_coast − 0.13) beats even P. Paz's own best flat constant by ~35% (RMS 0.091 vs 0.139 at s̄ ≥ 3%); the −0.13 offset reproduces independently (measured gap 0.12); the energy law lands ~5–7% median with only mass data-implied (per-ride median m̂ 74.3 kg), and ε_geom is the best variant (+0.6% bias) on this open, coastable corpus." ;
+  prov:wasGeneratedBy :run12 ;
+  cito:citesAsEvidence :ppaz_comparison.csv ;
+  rdfs:comment "Qualified by Entry 14 (the ε skill is rider-dependent) and Entry 16 (under fitted physics the 35% win becomes a tie); framing corrected by Entry 14: P. Paz is an independent rider, not a collective member." .
+
+# ── Entry 13 — the time model tested ─────────────────────────────────────────
+
+:q13 a schema:Question ;
+  schema:text "Does the time model t = x*/v_f, x* = x + k₊·h₊ − k₋·h₋ predict measured moving time?" .
+
+:run13 a prov:Activity ;
+  prov:used :time_compare.py ;
+  prov:generated :time_comparison.csv .
+
+:assert13 a schema:Claim ;
+  schema:about :q13 ;
+  dcterms:description "a calibrated split, mirroring the energy-ε story: ascent transfers, descent bridge does not" ;
+  schema:text "The ascent half is empirically supported and transfers out-of-sample: the pre-declared endpoint T1b reaches 6.6% median vs the naive baseline's 7.6% on 441 P. Paz rides (sign test p = 0.011), concentrated on the hilliest tercile, and the physics k₊ beats a FITTED ceiling frozen on the new rider (6.6 vs 10.9). The descent bridge is NOT confirmed: the analytic ε↔k₋ form systematically over-predicts measured descent speed (corr 0.08–0.59) — real descents are behaviour- and cap-limited — so k₋ stays a free, corpus-dependent coefficient." ;
+  prov:wasGeneratedBy :run13 .
+
+:assert13_ev1 a schema:Claim ;
+  cito:supports :assert13 ;
+  cito:citesAsEvidence :time_comparison.csv ;
+  schema:text "T1b 6.6% vs T0 7.6% (sign p = 0.011, Wilcoxon p < 0.001), mass-robust; hilliest tercile 12.0% → 5.8% while the flattest is unchanged." .
+
+:assert13_ev2 a schema:Claim ;
+  cito:disputes :assert13 ;
+  cito:citesAsEvidence :time_comparison.csv ;
+  schema:text "Predicted descent speeds over-shoot measured (med 38 vs 30, 37 vs 16, 52 vs 32 km/h across the three corpora); the uncapped analytic form diverges near α = ε·β·s̄. Also corrected: the stable r₊ ≈ 1.26 is a near-tautology (the Entry-7 energy over-charge re-expressed), not independent time evidence." .
+
+# ── Entry 14 — a third rider qualifies the transfer ──────────────────────────
+
+:q14 a schema:Question ;
+  schema:text "Does a third fully-independent rider (JAAM) confirm the ε transfer?" .
+
+:run14 a prov:Activity ;
+  prov:used :jaam_compare.py ;
+  prov:generated :jaam_comparison.csv .
+
+:assert14 a schema:Claim ;
+  schema:about :q14 ;
+  cito:qualifies :assert12 ;
+  dcterms:description "the energy law and the −0.13 offset transfer; the geometric-ε skill is rider-dependent" ;
+  schema:text "The energy law and the −0.13 offset are consistent a third time (canonical 5.4% med|Δ%| with data-implied mass; smooth ε=0.20 best at 3.5%; offset 0.133, bootstrap CI 0.102–0.186) — but the geometric-ε skill does NOT transfer: it fails outright on JAAM's gentle-heavy bulk and is inconclusive on the thin real-descent subset. The skill works for riders who coast (P. Paz), not for riders who pedal descents (JAAM). Framing corrected: P. Paz and JAAM are independent third-party riders, not Pedal Hidrográfico members; only the censo is a collective corpus." ;
+  prov:wasGeneratedBy :run14 .
+
+:assert14_ev1 a schema:Claim ;
+  cito:supports :assert14 ;
+  cito:citesAsEvidence :jaam_comparison.csv ;
+  schema:text "Offset gap 0.133 [0.102, 0.186] matches the calibrated 0.13 and P. Paz's 0.12; energy 3.5–5.4% median on 219 clean rides." .
+
+:assert14_ev2 a schema:Claim ;
+  cito:disputes :assert12 ;
+  cito:supports :assert14 ;
+  cito:citesAsEvidence :jaam_comparison.csv ;
+  schema:text "Frozen estimator RMS 0.47 vs flat-constant 0.16 on the gentle bulk; on real descents (n = 21) −0.020 RMS difference with CI [−0.072, 0.024] straddling zero — inconclusive." .
+
+# ── Entry 15 — independent parameter estimation ──────────────────────────────
+
+:q15 a schema:Question ;
+  schema:text "Can CdA, C_rr, mass and per-activity wind be independently estimated from uncontrolled ride data, within plausible ranges, for every dataset?" .
+
+:run15 a prov:Activity ;
+  prov:used :cda_estimate.py , :param_fit.py ;
+  prov:generated :cda_estimate.csv , :param_fit.csv .
+
+:assert15 a schema:Claim ;
+  schema:about :q15 ;
+  cito:corrects :assert14 ;
+  schema:text "All four parameters are recoverable within the pre-stated plausible ranges for all three riders: mass from braking-free sustained climbs is CdA-robust (JAAM's implied 103 kg was genuine — rider-confirmed ≈ 100 ± 7 kg, retiring Entry 14's CdA-misspecification guess); CdA and C_rr become identifiable only once per-activity wind is modelled via a LINEARISED aero regression (flat-power, coast-down and climb-only methods all fail for CdA); the wind vector itself comes from GPS-bearing directional asymmetry, de-biased for regression attenuation." ;
+  prov:wasGeneratedBy :run15 .
+
+:assert15_ev1 a schema:Claim ;
+  cito:supports :assert15 ;
+  cito:citesAsEvidence :param_fit.csv ;
+  schema:text "P. Paz 80.7 kg / CdA 0.259 / C_rr 0.0053; JAAM 103 / 0.322 / 0.0107; author anchor 79.8 / 0.334 / 0.0083 — all inside target ranges; a synthetic-wind self-test exposed and then passed the CdA↔wind degeneracy." .
+
+# ── Entry 16 — fitted physics + the author's full export ─────────────────────
+
+:q16 a schema:Question ;
+  schema:text "Do the conclusions hold under the Entry-15 FITTED rider physics — and on the author's full 1597-ride export?" .
+
+:run16 a prov:Activity ;
+  prov:used :danlessa_compare.py ;
+  prov:generated :danlessa_comparison.csv .
+
+:assert16 a schema:Claim ;
+  schema:about :q16 ;
+  cito:updates :assert12 ;
+  dcterms:description "accuracy robust; the P. Paz 35% ε win demoted to a tie; mass machinery validated" ;
+  schema:text "The energy law's ~4–7% accuracy is robust to assumed-vs-fitted physics, but P. Paz's 35% ε win does not survive: under best-guess physics both independent riders TIE the geometric estimator against their own best flat constant (JAAM fully robust throughout). The author's full export validates the mass machinery (71–75 kg vs known ≈ 73; the earlier 79.8 was genuine brevet loadout) and the 0.13 offset, in-sample. Fitted CdA clusters at the aero-position value (0.26–0.34), ~35% below the assumed 0.40 — the flat-fit sees the tucked/drafting rider." ;
+  prov:wasGeneratedBy :run16 .
+
+:assert16_ev1 a schema:Claim ;
+  cito:supports :assert16 ;
+  cito:citesAsEvidence :danlessa_comparison.csv ;
+  schema:text "621 clean rides: canonical 6.1% median at +0.1% bias (the calibration rider, as expected); implied mass 74.5 kg [67.6–80.8]; offset gap 0.13 recurs." .
+
+:assert16_ev2 a schema:Claim ;
+  cito:disputes :assert12 ;
+  cito:supports :assert16 ;
+  cito:citesAsEvidence :ppaz_comparison.csv ;
+  schema:text "With fitted physics P. Paz's frozen-ε RMS advantage collapses 0.091-vs-0.139 → 0.083-vs-0.086 (tie), and the canonical bias flips +5.0 → −6.9%." .
+
 # ── Entry 17 — regime-decomposed closed form ─────────────────────────────────
 
-:q17 a phr:ResearchQuestion ;
+:q17 a schema:Question ;
   schema:text "Does a regime-decomposed closed form E_flat + E_climb + E_descent beat the champion?" ;
   dcterms:source :journal .
 
@@ -79,10 +399,10 @@ phr:verdict        a rdfs:Property ; rdfs:comment "free-text verdict as recorded
   prov:used :regime_compare.py ;
   prov:generated :regime_comparison.csv .
 
-:assert17 a phr:Assertion ;
-  phr:addresses :q17 ;
+:assert17 a schema:Claim ;
+  schema:about :q17 ;
   schema:text "Regime decomposition does not beat the champion: its win/loss pattern is a bias trade (a variant wins exactly where the champion's parameter bias points the other way), shown causally by the fitted-physics rerun." ;
-  phr:verdict "rejected alternative" ;
+  dcterms:description "rejected alternative" ;
   prov:wasGeneratedBy :run17 ;
   cito:citesAsEvidence :regime_comparison.csv .
 
@@ -93,30 +413,34 @@ phr:verdict        a rdfs:Property ; rdfs:comment "free-text verdict as recorded
   cito:corrects :assert17 ;
   rdfs:comment "Corrects Entry 17's attribution: R1a (frozen-ε per edge) is NOT the deployed sampasimu cost." .
 
-:assert18a a phr:Assertion ;
-  schema:text "v2Edge's trailing max(0,·) descent clamp is dead code: ε(s) keeps every descent edge cost at or above a strictly positive floor." ;
-  phr:hasEvidenceLine
-    [ a phr:EvidenceLine ; phr:polarity "supporting" ;
-      phr:evidence :verify_v2edge_clamp.py ;
-      schema:text "1.78M-combo synthetic sweep: global min pre-clamp cost +4.1e-4 kJ; middle-regime identity to 1e-12." ] ,
-    [ a phr:EvidenceLine ; phr:polarity "supporting" ;
-      phr:evidence :regime_comparison.csv ;
-      schema:text "Real data: min pre-clamp descent edge +4.6 J across 1402 rides (fitted physics: +3.9 J)." ] .
+:assert18a a schema:Claim ;
+  schema:text "v2Edge's trailing max(0,·) descent clamp is dead code: ε(s) keeps every descent edge cost at or above a strictly positive floor." .
 
-:assert18b a phr:Assertion ;
+:assert18a_ev1 a schema:Claim ;
+  cito:supports :assert18a ;
+  cito:citesAsEvidence :verify_v2edge_clamp.py ;
+  schema:text "1.78M-combo synthetic sweep: global min pre-clamp cost +4.1e-4 kJ; middle-regime identity to 1e-12." .
+
+:assert18a_ev2 a schema:Claim ;
+  cito:supports :assert18a ;
+  cito:citesAsEvidence :regime_comparison.csv ;
+  schema:text "Real data: min pre-clamp descent edge +4.6 J across 1402 rides (fitted physics: +3.9 J)." .
+
+:assert18b a schema:Claim ;
   schema:text "Grade-local ε is resolution-sensitive in a way the aggregate is not: R1d (deployed v2Edge) roughly ties the champion at ~30 m sampling and is strictly worse at 5 m." ;
-  phr:verdict "the Jensen more-credit prediction failed; the resolution effect dominates" ;
+  dcterms:description "the Jensen more-credit prediction failed; the resolution effect dominates" ;
   prov:wasGeneratedBy :run17 ;
   cito:citesAsEvidence :regime_comparison.csv .
 
 # ── Entry 19 — the deployed 5 m raster ───────────────────────────────────────
 
-:q19 a phr:ResearchQuestion ;
+:q19 a schema:Question ;
   schema:text "Most of the time we use the IGC-SP DTM at 5 m resolution — is this a concern?" ;
   dcterms:source :journal .
 
-:plan19 a phr:PreRegisteredProtocol ;
-  phr:tests :q19 ;
+:plan19 a p-plan:Plan ;
+  dcterms:type "pre-registered protocol" ;
+  schema:about :q19 ;
   schema:text "Paired v2Edge@igc5 vs @igc30 on 922 rides; decision rule: signed-bias gap > ~3–4 pp puts static ~30 m pre-smoothing on the roadmap." .
 
 :run19 a prov:Activity ;
@@ -124,28 +448,30 @@ phr:verdict        a rdfs:Property ; rdfs:comment "free-text verdict as recorded
   prov:used :igc_resolution_test.py ;
   prov:generated :igc_resolution_test.csv .
 
-:assert19 a phr:Assertion ;
-  phr:addresses :q19 ;
+:assert19 a schema:Claim ;
+  schema:about :q19 ;
   cito:extends :assert18b ;
   schema:text "The resolution over-charge transfers to the deployment: paired signed gap +9.44 pp (censo) and +3.64 pp (pooled riders) — the pre-registered decision rule is TRIGGERED." ;
-  prov:wasGeneratedBy :run19 ;
-  phr:hasEvidenceLine
-    [ a phr:EvidenceLine ; phr:polarity "supporting" ;
-      phr:evidence :igc_resolution_test.csv ;
-      schema:text "Both mechanisms measured separately: h₊(igc5) > h₊(igc30) on 919/922 rides; implied drop-weighted ε 0.414@5m vs 0.456@30m." ] .
+  prov:wasGeneratedBy :run19 .
 
-:assert19b a phr:Assertion ;
+:assert19_ev1 a schema:Claim ;
+  cito:supports :assert19 ;
+  cito:citesAsEvidence :igc_resolution_test.csv ;
+  schema:text "Both mechanisms measured separately: h₊(igc5) > h₊(igc30) on 919/922 rides; implied drop-weighted ε 0.414@5m vs 0.456@30m." .
+
+:assert19b a schema:Claim ;
   schema:text "FABDEM is unsuitable for energy computation on flat/urban terrain: pooled med|Δ%| 17.6 vs 7.1 (igc30); median h₊ +57% pooled, up to +135% on flat corpora." ;
   prov:wasGeneratedBy :run19 ;
-  cito:qualifies :journal .   # qualifies Entry 6's "two bare-earth sources agree within ~6%"
+  cito:qualifies :assert6 .   # qualifies Entry 6's "two bare-earth sources agree within ~6%"
 
 # ── Entry 20 — pre-registered goal ───────────────────────────────────────────
 
-:q20 a phr:ResearchQuestion ;
+:q20 a schema:Question ;
   schema:text "Can the deployed pipeline reach prediction error < ±5% with bias < ±2%?" .
 
-:plan20 a phr:PreRegisteredProtocol ;
-  phr:tests :q20 ;
+:plan20 a p-plan:Plan ;
+  dcterms:type "pre-registered protocol" ;
+  schema:about :q20 ;
   schema:text "Deterministic 50/50 hash split per rider; lever 1 = deployable Gaussian pre-smoothing σ ∈ {0,10,15,20,30,45} selected on train; lever 2 = per-rider (CdA, Crr, kSmooth) fitted on train; validation evaluated ONCE at frozen settings; pre-declared fallback ladder." .
 
 :run20 a prov:Activity ;
@@ -153,27 +479,34 @@ phr:verdict        a rdfs:Property ; rdfs:comment "free-text verdict as recorded
   prov:used :goal_calibration.py ;
   prov:generated :goal_calibration.csv .
 
-:assert20 a phr:Assertion ;
-  phr:addresses :q20 ;
+:assert20 a schema:Claim ;
+  schema:about :q20 ;
   schema:text "PASS: σ* = 10 m + per-rider effective (CdA, Crr, kSmooth) meets med|Δ%| < 5 and |bias| < 2 on all three riders' validation halves; the calibration, not the smoothing, is the lever; fitted values are effective, not physical." ;
-  prov:wasGeneratedBy :run20 ;
-  phr:hasEvidenceLine
-    [ a phr:EvidenceLine ; phr:polarity "supporting" ; phr:evidence :goal_calibration.csv ;
-      schema:text "Validation: ppaz 3.69/+0.96, jaam 2.74/+0.31, danlessa 4.94/+0.81 (0.06 pp margin)." ] ,
-    [ a phr:EvidenceLine ; phr:polarity "supporting" ; phr:evidence :goal_calibration.csv ;
-      schema:text "Ablation: σ=0 calibrated also passes (3.66/2.25/4.95) — post-calibration, smoothing buys ≈ nothing." ] .
+  prov:wasGeneratedBy :run20 .
+
+:assert20_ev1 a schema:Claim ;
+  cito:supports :assert20 ;
+  cito:citesAsEvidence :goal_calibration.csv ;
+  schema:text "Validation: ppaz 3.69/+0.96, jaam 2.74/+0.31, danlessa 4.94/+0.81 (0.06 pp margin)." .
+
+:assert20_ev2 a schema:Claim ;
+  cito:supports :assert20 ;
+  cito:citesAsEvidence :goal_calibration.csv ;
+  schema:text "Ablation: σ=0 calibrated also passes (3.66/2.25/4.95) — post-calibration, smoothing buys ≈ nothing." .
 
 # ── Entry 21 — the behavioural trio as a resolution transfer ─────────────────
 
-:q21 a phr:ResearchQuestion ;
+:q21 a schema:Question ;
   schema:text "Can the resolution gap be bridged through parameters on the closed form rather than editing the DEM?" .
 
-:h21 a phr:Hypothesis ;
-  phr:addresses :q21 ;
+:h21 a schema:Claim ;
+  dcterms:type "hypothesis" ;
+  schema:about :q21 ;
   schema:text "A single rider-independent re-calibration of the behavioural trio (k_s, ε₀, climbThr) at Δx = 5 m bridges the gap, with each constant moving as its mechanism predicts." .
 
-:plan21 a phr:PreRegisteredProtocol ;
-  phr:tests :h21 ;
+:plan21 a p-plan:Plan ;
+  dcterms:type "pre-registered protocol" ;
+  schema:about :h21 ;
   schema:text "Two-stage: the trio is fitted purely as a 5m→30m resolution transfer (measured energies never touched in stage 1); stage 2 evaluates accuracy once on validation; censo held out entirely as an out-of-sample transfer corpus; four coherence predictions P1–P4." .
 
 :run21 a prov:Activity ;
@@ -181,29 +514,66 @@ phr:verdict        a rdfs:Property ; rdfs:comment "free-text verdict as recorded
   prov:used :scale_trio.py ;
   prov:generated :scale_trio.csv .
 
-:assert21 a phr:Assertion ;
-  phr:addresses :q21 ;
+:assert21 a schema:Claim ;
+  schema:about :q21 ;
   cito:qualifies :h21 ;
   schema:text "The behavioural constants are functions of (Δx, terrain-roughness regime), not of Δx alone: the fitted trio (k_s 0.9375, ε₀ 0.0632, climbThr 0.025) bridges the gap per-ride on all three rider corpora but closes only ~55% of censo's gap." ;
-  phr:verdict "H21 partially supported — scope-limited to the terrain regime it was fitted on" ;
-  prov:wasGeneratedBy :run21 ;
-  phr:hasEvidenceLine
-    [ a phr:EvidenceLine ; phr:polarity "supporting" ; phr:evidence :scale_trio.csv ;
-      schema:text "E1 bridged on ppaz/jaam/danlessa (Δ ≤ 0.62 / ≤ 1.00 pp); P1, P2, P4 hold — k_s-only fit (0.8844) lands on the median h₊ ratio (0.8958)." ] ,
-    [ a phr:EvidenceLine ; phr:polarity "contradicting" ; phr:evidence :scale_trio.csv ;
-      schema:text "P3 fails: censo (never fitted, flattest terrain) not bridged (gap 4.44 pp); E2 gate fails on danlessa by 0.22 pp." ] .
+  dcterms:description "H21 partially supported — scope-limited to the terrain regime it was fitted on" ;
+  prov:wasGeneratedBy :run21 .
+
+:assert21_ev1 a schema:Claim ;
+  cito:supports :assert21 ;
+  cito:citesAsEvidence :scale_trio.csv ;
+  schema:text "E1 bridged on ppaz/jaam/danlessa (Δ ≤ 0.62 / ≤ 1.00 pp); P1, P2, P4 hold — k_s-only fit (0.8844) lands on the median h₊ ratio (0.8958)." .
+
+:assert21_ev2 a schema:Claim ;
+  cito:disputes :h21 ;
+  cito:citesAsEvidence :scale_trio.csv ;
+  schema:text "P3 fails: censo (never fitted, flattest terrain) not bridged (gap 4.44 pp); E2 gate fails on danlessa by 0.22 pp." .
 
 # ── Entry 22 — error bars; parity, not 'beats' ───────────────────────────────
 
-:assert-beats a phr:Assertion ;
+:assert-beats a schema:Claim ;
   schema:text "(superseded) The champion closed form beats the forward simulation on the 44 longões (median 3.6% vs 5.1%)." ;
-  phr:verdict "demoted — median-point comparison unsupported by the paired test" .
+  dcterms:description "demoted — median-point comparison unsupported by the paired test" .
 
 :run22 a prov:Activity ;
-  prov:used :bootstrap_ci.py .
+  prov:used :bootstrap_ci.py ,
+            :model_comparison.csv , :censo_comparison.csv ,
+            :ppaz_comparison.csv , :jaam_comparison.csv , :time_comparison.csv ;
+  rdfs:seeAlso <https://github.com/danlessa/bicycling-energy-model/tree/main/research/packages/entry22> .
 
-:assert22 a phr:Assertion ;
+:assert22 a schema:Claim ;
   cito:updates :assert-beats ;
   schema:text "Champion vs canonical is statistical parity: bootstrap 95% CIs [2.0, 5.6] vs [3.8, 7.1] overlap; paired, the champion is closer on 25/44 rides (57%, sign test p = 0.45). Parity is still practically decisive — the closed form is the engine cheap enough to route with." ;
   prov:wasGeneratedBy :run22 ;
-  cito:citesAsEvidence :regime_comparison.csv .
+  cito:citesAsEvidence :model_comparison.csv .
+
+# ── Entry 23 — move-grid connectivity bias (simujaules) ──────────────────────
+
+:q23 a schema:Question ;
+  schema:text "Does the 8-connected move grid make simujaules terrain mode overestimate optimal energy via route jaggedness?" .
+
+:run23 a prov:Activity ;
+  prov:used :grid_sens_note ;
+  rdfs:comment "Executed in the sibling simujaules repo (grid-sens.mjs and companion harnesses; self-validates bit-identical against the deployed energy-worker.js on every run); imported here." .
+
+:assert23 a schema:Claim ;
+  schema:about :q23 ;
+  dcterms:description "yes — one-sided bias confirmed; three mitigations shipped as simujaules v57 options" ;
+  schema:text "Yes — and terrain roughly doubles the pure-geometry prediction: sq8 sits +12.7% median (+47% p90) above a converged near-continuum reference on the deployed 5 m DTM; the mechanism is height oscillation under the asymmetric climb/descent cost, not octile distance. Profile-integrated sq16 recovers ≈⅔ of the bias; NAIVE long-edge costing flips the error's sign (the trap: it flattens the relief it crosses). Pre-registration scorecard against the shipped worker: wall-time confirmed, field-median borderline, budget-reach miscalibrated — pre-register distributions, not point ranges." ;
+  prov:wasGeneratedBy :run23 ;
+  cito:citesAsEvidence :grid_sens_note ;
+  rdfs:comment "Independent of Entry 19's cost-model resolution over-charge: this is a search-discretization bias on route-optimal energies; both are one-sided positive on fine DTMs." .
+
+# ── Entry 24 — ascent-error literature ───────────────────────────────────────
+
+:q24 a schema:Question ;
+  schema:text "What does the literature say a cumulative-ascent measurement is worth (consumer barometers, FABDEM, aerophotogrammetric DEMs) — and how do our entries compare?" .
+
+:assert24 a schema:Claim ;
+  schema:about :q24 ;
+  cito:extends :assert6 , :assert19b ;
+  schema:text "The survey brackets our measurements: consumer-baro h₊ error is ~1–5% device-level, DEM per-point accuracy does NOT transfer to accumulated ascent, and the consensus direction is GPS-only under-reads while DEM correction over-reads — Entries 6 and 19 sit inside every located band, and Entry 19's flat-terrain FABDEM failure is sharper than anything located. The decidability point: h₊ has no true value, only a value at a smoothing scale, so geometry alone cannot adjudicate between sources — the measured-energy endpoint turns the smoothing scale into a fittable parameter (Entries 19–21), a validation no located study performs." ;
+  cito:citesAsEvidence :ascent_error_lit ;
+  dcterms:source :journal .
