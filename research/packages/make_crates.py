@@ -95,7 +95,6 @@ ENTRIES = {
     24: ([], [], False, ["research/notes/ascent-error-literature.md"]),
     25: ([], [], False, []),
     26: ([], [], False, []),
-    27: ([], [], False, []),
 }
 
 # entry 22 reads the per-ride CSVs the other harnesses wrote

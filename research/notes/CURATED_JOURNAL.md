@@ -406,22 +406,6 @@ Predictions are registered as distributions this time — Entry 25's own
 scorecard taught that point ranges are overconfident.
 [[package]](../packages/entry26/ro-crate-preview.html)
 
-### Entry 27 — can we claim blind prediction? (protocol draft)
-**Data (planned):** historical planning-time predictions with provenance
-(amora's timestamped energy estimates, sheet revisions, dated artifacts) +
-every future planned ride, recorded before riding.
-
-The article's biggest honesty caveat is that all published accuracy is
-*power-conditioned* — the model always knew the ride's measured power. But
-the model HAS been used blind, for real planning. Entry 27 drafts the
-protocol for claiming that: an inventory of historical predictions gated by
-provenance (only predictions demonstrably made before the ride count), an
-inclusion list frozen before outcomes are joined, the self-fulfilling-pacing
-confound stated up front (rides are planned *from* the prediction), and a
-prospective arm that starts now. Registered expectation: blind lands worse
-than the 4–7% power-conditioned figures — somewhere in [7%, 25%] pooled.
-Results pending. [[package]](../packages/entry27/ro-crate-preview.html)
-
 ---
 
 ## Recurring terms, once
