@@ -33,10 +33,16 @@
       "mentions": [
         {
           "@id": "#claim"
+        },
+        {
+          "@id": "#run"
         }
       ],
       "subjectOf": {
         "@id": "https://github.com/danlessa/bicycling-energy-model/blob/main/research/notes/MODEL_COMPARISON_JOURNAL.md"
+      },
+      "conformsTo": {
+        "@id": "https://w3id.org/ro/wfrun/process/0.5"
       }
     },
     {
@@ -61,7 +67,7 @@
       "@id": "#claim",
       "@type": "Claim",
       "name": "Entry 26: pre-registered — the direction ladder on real ride endpoints, and portals (bridges/tunnels) in both the track and the search",
-      "text": "pre-registered — the direction ladder on real ride endpoints, and portals (bridges/tunnels) in both the track and the search",
+      "text": "The grid-connectivity bias survives the move from synthetic rings to real ride endpoints: under the app's default physics the 8-direction optimum sits 11.90% above the sq128 near-continuum reference (5.99/2.38/0.73% at 16/32/64), monotone on 86/86 pairs, with no lattice direction signature once corpus imbalance is removed (12.35 pp spread → 3.35 pp). But sq16 recovers only 49.69% of the gap [CI 45.9, 53.8], so the pre-registered ≥50% decision rule FAILS by 0.31 pp — while its CI straddles the threshold and the per-pair estimator reads 51.57%, which would pass.",
       "appearance": [
         {
           "@id": "https://github.com/danlessa/bicycling-energy-model/blob/main/research/notes/MODEL_COMPARISON_JOURNAL.md"
@@ -70,6 +76,131 @@
       "subjectOf": {
         "@id": "https://github.com/danlessa/bicycling-energy-model/blob/main/research/notes/claims.ttl"
       }
+    },
+    {
+      "@id": "#ride-recordings",
+      "@type": "Dataset",
+      "name": "Raw ride recordings (NOT distributed)",
+      "description": "FIT tracks (GPS + power) and source spreadsheets — excluded from version control and from this crate: location and private-activity data. Coordinate-stripped aggregates available on request.",
+      "conditionsOfAccess": "Available on request from the author, coordinates stripped."
+    },
+    {
+      "@id": "#results/e26_portal_profiles.csv",
+      "@type": "File",
+      "name": "results/e26_portal_profiles.csv",
+      "description": "Per-ride CSV — gitignored (rows carry ride names/dates tied to private activities); described hash-only, never distributed. Regenerates via `python3 harness/e26_portal_profiles.py`.",
+      "sha256": "1945fb9b01bf10796cb25f10541c49f2e8d48a64962fa8dc0ba839e06f30965a",
+      "contentSize": "99748",
+      "encodingFormat": "text/csv"
+    },
+    {
+      "@id": "#results/e26_grid.csv",
+      "@type": "File",
+      "name": "results/e26_grid.csv",
+      "description": "Per-ride CSV — gitignored (rows carry ride names/dates tied to private activities); described hash-only, never distributed. Regenerates via `node ../simujaules/docs/grid-e26.mjs`.",
+      "sha256": "9a4b62b59c60455f2017871f8996a5821a26f20141a16e258f59d01351910735",
+      "contentSize": "13119",
+      "encodingFormat": "text/csv"
+    },
+    {
+      "@id": "#results/e26_grid_cal.csv",
+      "@type": "File",
+      "name": "results/e26_grid_cal.csv",
+      "description": "Per-ride CSV — gitignored (rows carry ride names/dates tied to private activities); described hash-only, never distributed. Regenerates via `E26_BUNDLE=cal node ../simujaules/docs/grid-e26.mjs`.",
+      "sha256": "26c2b7e513be0d82a557fc184e0fe9c1acacce1c85fac1dc5ddab620568f2845",
+      "contentSize": "13167",
+      "encodingFormat": "text/csv"
+    },
+    {
+      "@id": "#results/e26_detour.csv",
+      "@type": "File",
+      "name": "results/e26_detour.csv",
+      "description": "Per-ride CSV — gitignored (rows carry ride names/dates tied to private activities); described hash-only, never distributed. Regenerates via `python3 harness/e26_detour.py`.",
+      "sha256": "85a2c0e928656817a67ea58681ba83e80348b90af0bc9e69b6534a1f8c70ecf9",
+      "contentSize": "46361",
+      "encodingFormat": "text/csv"
+    },
+    {
+      "@id": "#run",
+      "@type": "CreateAction",
+      "name": "Entry 26 harness run",
+      "description": "Re-executable from the repository and the private inputs; see the journal entry for protocol, endpoints and verdicts.",
+      "endTime": "2026-07-24",
+      "actionStatus": {
+        "@id": "http://schema.org/CompletedActionStatus"
+      },
+      "agent": {
+        "@id": "#danilo"
+      },
+      "instrument": [
+        {
+          "@id": "#harness/e26_pairs.py"
+        },
+        {
+          "@id": "#harness/e26_portal_profiles.py"
+        },
+        {
+          "@id": "#harness/e26_detour.py"
+        }
+      ],
+      "object": [
+        {
+          "@id": "#ride-recordings"
+        }
+      ],
+      "result": [
+        {
+          "@id": "#results/e26_portal_profiles.csv"
+        },
+        {
+          "@id": "#results/e26_grid.csv"
+        },
+        {
+          "@id": "#results/e26_grid_cal.csv"
+        },
+        {
+          "@id": "#results/e26_detour.csv"
+        }
+      ]
+    },
+    {
+      "@id": "#harness/e26_pairs.py",
+      "@type": [
+        "File",
+        "SoftwareApplication",
+        "SoftwareSourceCode"
+      ],
+      "name": "harness/e26_pairs.py",
+      "url": "https://github.com/danlessa/bicycling-energy-model/blob/9ddeee938eb0599ed3d266217fc947b1b48e200f/harness/e26_pairs.py",
+      "sha256": "7ba998f5e11ca065d4439b8ff766a85e0ed06f05aa1ae4f651ae19fa4f13f0d9",
+      "version": "9ddeee938eb0599ed3d266217fc947b1b48e200f",
+      "programmingLanguage": "Python"
+    },
+    {
+      "@id": "#harness/e26_portal_profiles.py",
+      "@type": [
+        "File",
+        "SoftwareApplication",
+        "SoftwareSourceCode"
+      ],
+      "name": "harness/e26_portal_profiles.py",
+      "url": "https://github.com/danlessa/bicycling-energy-model/blob/9ddeee938eb0599ed3d266217fc947b1b48e200f/harness/e26_portal_profiles.py",
+      "sha256": "0ad4e8a9c79883403237aea416d1d0caf64f7989be46dee04d5a8247777f4678",
+      "version": "9ddeee938eb0599ed3d266217fc947b1b48e200f",
+      "programmingLanguage": "Python"
+    },
+    {
+      "@id": "#harness/e26_detour.py",
+      "@type": [
+        "File",
+        "SoftwareApplication",
+        "SoftwareSourceCode"
+      ],
+      "name": "harness/e26_detour.py",
+      "url": "https://github.com/danlessa/bicycling-energy-model/blob/9ddeee938eb0599ed3d266217fc947b1b48e200f/harness/e26_detour.py",
+      "sha256": "dcedb5b1ba6678d1570530838c27df6d7415066ec02554f6e6e7a4eabc0093d9",
+      "version": "9ddeee938eb0599ed3d266217fc947b1b48e200f",
+      "programmingLanguage": "Python"
     },
     {
       "@id": "ro-crate-preview.html",

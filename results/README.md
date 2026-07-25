@@ -21,6 +21,11 @@ resolve their inputs and this directory relative to their own location).
 | `goal_calibration.csv` | `python3 harness/goal_calibration.py` | 20 |
 | `scale_trio.csv` | `python3 harness/scale_trio.py` | 21 |
 | `longoes_verify.csv` | `python3 harness/verify.py` | — (VERIFICATION_NOTES) |
+| `e26_pairs.json`, `e26_pair_rides.json` | `python3 harness/e26_pairs.py` | 26 (endpoint pairs; **GPS**) |
+| `e26_grid.csv`, `e26_grid_cal.csv` | `node ../simujaules/docs/grid-e26.mjs` (`E26_BUNDLE=cal`) | 26 (ladder + portals) |
+| `e26_portal_profiles.csv` | `python3 harness/e26_portal_profiles.py` | 26 (Q2A) |
+| `e26_detour.csv` | `python3 harness/e26_detour.py` | 26 (detour secondary) |
+| `e26_osm_cache/` | pulled by the two Entry-26 harnesses (offline on re-run) | 26 (OSM spans) |
 
 `python3 harness/bootstrap_ci.py` (Entry 22) reads these CSVs and gates the
 article's published medians against them.

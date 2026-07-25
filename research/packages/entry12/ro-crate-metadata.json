@@ -129,9 +129,9 @@
         "SoftwareSourceCode"
       ],
       "name": "harness/ppaz_compare.py",
-      "url": "https://github.com/danlessa/bicycling-energy-model/blob/597882e86bd79c1c7f0fac97882aacff13be52c8/harness/ppaz_compare.py",
+      "url": "https://github.com/danlessa/bicycling-energy-model/blob/9ddeee938eb0599ed3d266217fc947b1b48e200f/harness/ppaz_compare.py",
       "sha256": "ea943dbc656f7edb0c26561bbaded0c8f84da5e7e99af957b8e4718ba111f512",
-      "version": "597882e86bd79c1c7f0fac97882aacff13be52c8",
+      "version": "9ddeee938eb0599ed3d266217fc947b1b48e200f",
       "programmingLanguage": "Python"
     },
     {

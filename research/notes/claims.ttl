@@ -599,5 +599,81 @@
   dcterms:type "pre-registered protocol" ;
   schema:about :q26a , :q26b ;
   schema:text "Declared before any run (2026-07-24). Q1: the shipped buildMoves ladder (nDirs 8–128, profile-integrated long edges, sq128 reference) on the deduplicated Entry-19 endpoint pairs (≥800 m apart), two physics bundles; primary endpoint per-pair E_opt(nDirs)/E_opt(128)−1 at 8 and 16; predictions as distributions (sq8 median in [8%,18%]; sq16 recovers 55–75%; monotone for ≥95% of pairs; no direction signature); decision rule: sq16 recommended as density/KPI default if it recovers ≥50% of the median gap at ≤3× wall time. Q2A: portal-corrected igc5/igc30 profiles (OSM spans, straight-deck interpolation) re-walked on all 922 rides, paired vs raw (predictions: bias down on touched rides; pooled median <1 pp; h₊ drops on ≥90% of touched). Q2B: endpoint pairs with vs without portals at nDirs 8/16 (assert ΔE ≤ 0; tail-dominated gains at river crossings; gains mostly nDirs-independent). Gates: no-portal byte-identity (the v19 no-op invariant), bit-identity vs the real energy-worker.js, distance identity of corrected profiles. Endpoints/coords never committed; aggregates only." ;
-  rdfs:comment "Results pending — assertions will be added when the harnesses run (Q2A in this repo beside igc_resolution_test.py; Q1/Q2B in the sibling simujaules repo)." ;
   cito:extends :assert23 , :assert19 .
+
+# Entry 26 artifacts (all gitignored — GPS-derived or per-ride):
+:e26_pairs.py a schema:SoftwareSourceCode , prov:Entity ; schema:name "e26_pairs.py" .
+:grid-e26.mjs a schema:SoftwareSourceCode , prov:Entity ;
+  schema:name "grid-e26.mjs" ;
+  rdfs:comment "Lives in the sibling simujaules repo (docs/); drives the REAL energy-worker.js in a sandbox for both the direction ladder and the portal runs." .
+:e26_portal_profiles.py a schema:SoftwareSourceCode , prov:Entity ; schema:name "e26_portal_profiles.py" .
+:e26_detour.py a schema:SoftwareSourceCode , prov:Entity ; schema:name "e26_detour.py" .
+:e26_grid.csv a prov:Entity ;
+  rdfs:comment "gitignored; regenerates via `node ../simujaules/docs/grid-e26.mjs` (bundle 1)" .
+:e26_grid_cal.csv a prov:Entity ;
+  rdfs:comment "gitignored; regenerates via `E26_BUNDLE=cal node ../simujaules/docs/grid-e26.mjs`" .
+:e26_portal_profiles.csv a prov:Entity ;
+  rdfs:comment "gitignored; regenerates via `python3 harness/e26_portal_profiles.py`" .
+:e26_detour.csv a prov:Entity ;
+  rdfs:comment "gitignored; regenerates via `python3 harness/e26_detour.py`" .
+
+:run26a a prov:Activity ;
+  p-plan:correspondsToStep :plan26 ;
+  prov:used :e26_pairs.py , :grid-e26.mjs ;
+  prov:generated :e26_grid.csv , :e26_grid_cal.csv ;
+  rdfs:comment "Q1/Q2B: 86 of 90 endpoint pairs (4 over the 16 M-cell crop cap), two physics bundles, every field from the real energy-worker.js behind bit-identity and portal-no-op gates (max|Δ| = 0)." .
+
+:run26b a prov:Activity ;
+  p-plan:correspondsToStep :plan26 ;
+  prov:used :e26_portal_profiles.py ;
+  prov:generated :e26_portal_profiles.csv ;
+  rdfs:comment "Q2A: 922 rides, portal-corrected profiles vs raw, paired." .
+
+:assert26a a schema:Claim ;
+  schema:about :q26a ;
+  cito:extends :assert23 ;
+  dcterms:description "P1/P3/P4 confirmed under the app's defaults; P2 refuted; the decision rule has no bundle-free answer" ;
+  schema:text "The grid-connectivity bias survives the move from synthetic rings to real ride endpoints: under the app's default physics the 8-direction optimum sits 11.90% above the sq128 near-continuum reference (5.99/2.38/0.73% at 16/32/64), monotone on 86/86 pairs, with no lattice direction signature once corpus imbalance is removed (12.35 pp spread → 3.35 pp). But sq16 recovers only 49.69% of the gap [CI 45.9, 53.8], so the pre-registered ≥50% decision rule FAILS by 0.31 pp — while its CI straddles the threshold and the per-pair estimator reads 51.57%, which would pass." ;
+  prov:wasGeneratedBy :run26a ;
+  cito:citesAsEvidence :e26_grid.csv .
+
+:assert26b a schema:Claim ;
+  schema:about :q26a ;
+  cito:extends :assert26a , :assert21 ;
+  dcterms:description "the ladder verdict is a function of the rider's cost bundle, not of the grid alone" ;
+  schema:text "The grid bias scales with climb-dominance β/(aRoll+aAero), measuring what Entry 25 §7 asserted but never swept: halving the ratio (53.5:1 → 28.5:1 by swapping the app defaults for an Entry-20 calibrated rider set) nearly halves the sq8 gap (11.90% → 6.82%) and lifts sq16's recovery to 57.72%. Each declared bundle therefore CONFIRMS the prediction the other REFUTES — P1 holds on bundle 1 and fails low on bundle 2, P2 the reverse — and the pre-registered 'ship 16 directions?' rule flips from FAIL to PASS. A second, corpus-independent qualification: the gap shrinks with route length (15.79% on the shortest third of pairs vs 10.25% on the longest), which explains the apparent per-rider spread." ;
+  prov:wasGeneratedBy :run26a ;
+  cito:citesAsEvidence :e26_grid_cal.csv .
+
+:assert26c a schema:Claim ;
+  schema:about :q26b ;
+  dcterms:description "P5 confirmed on 9/10 strata, P6 confirmed, P7 refuted (junction-step artifact)" ;
+  schema:text "Portal-correcting the PROFILE moves measured-energy accuracy and bias in the right direction wherever viaducts exist: v2Edge@igc5 med|Δ%| 22.13 → 18.32 on the urban censo rides, 14.79 → 13.21 on the author's corpus, 10.24 → 9.35 pooled over 922 rides, with |bias| shrinking on 9 of 10 corpus × model strata (the exception is JAAM under the champion R0, whose already-negative bias moves 0.18 pp further negative)." ;
+  prov:wasGeneratedBy :run26b ;
+  cito:citesAsEvidence :e26_portal_profiles.csv .
+
+:assert26c_ev1 a schema:Claim ;
+  cito:disputes :plan26 ;
+  cito:supports :assert26c ;
+  cito:citesAsEvidence :e26_portal_profiles.csv ;
+  schema:text "P7 REFUTED with a mechanism: h₊ drops on 697/915 touched rides (76.2%), not ≥90% — censo 96.4% (median 20.1 m removed) but JAAM only 49.2% (median −0.1 m, ascent sometimes ADDED), and the ascent-rose group has shorter spans and less relief removed (1079 m / 2.3 m vs 1415 m / 16.3 m). Cause: junction steps where a deck endpoint sampled at the OSM abutment meets the 5 m profile grid. The artifact belongs to transplanting the portal model into a PROFILE; the deployed portal is a single Dijkstra edge with no junctions." .
+
+:assert26d a schema:Claim ;
+  schema:about :q26b ;
+  dcterms:description "P8 and P10 confirmed; P9 not evaluated; reach is the sensitive endpoint" ;
+  schema:text "In the discretized scenario portals leave the median optimal route identically unchanged (ΔE median 0.000 kJ — most optimal paths never need a bridge) with a large tail (down to −7.07% at 8 directions, −8.95% at 16; 33% of pairs improved), and the gains are broadly nDirs-independent. The sensitive endpoint is AREA: portals expand budget-reachable area on 79 of 86 pairs (+0.49% median at 8 directions, +0.64% at 16), so for accessibility KPIs portals matter more as an area correction than a per-route one. Portal benefit is itself bundle-dependent (33% → 21% of pairs improved under the calibrated set), for the same β reason as the ladder." ;
+  prov:wasGeneratedBy :run26a ;
+  cito:citesAsEvidence :e26_grid.csv .
+
+:assert26e a schema:Claim ;
+  schema:about :q26a ;
+  dcterms:description "secondary endpoint, uninformative as specified; interpretable only on genuine journeys" ;
+  schema:text "The pre-registered detour ratio E_opt/E_trackwalk is swamped by a corpus artifact: after the 800 m endpoint floor the surviving pairs are mostly near-loops (median route detour 12.4×, P. Paz 24.8×), so the pooled ratio of 0.070 measures 'this ride was not a journey'. Restricted to genuine journeys (track ≤ 2× straight line; 21 rides over 12 pairs) it reads 0.467 at sq8 and 0.421 at sq128 — on a real A→B journey roughly half the ride's energy is street-constraint and detour rather than terrain necessity. Related corpus fact: 595 of 922 rides (65%) are loops and are dropped by the floor." ;
+  prov:wasGeneratedBy :run26a ;
+  cito:citesAsEvidence :e26_detour.csv .
+
+:assert26f a schema:Claim ;
+  dcterms:type "methodological" ;
+  dcterms:description "process lessons and disclosed deviations" ;
+  schema:text "Three process findings. (1) PRIVACY: the first implementation pulled OSM spans per-pair using crop bboxes derived from ride endpoints — which invert back to those endpoints, often homes — contradicting the pre-registration's whole-raster pull; an adversarial harness review caught it mid-run, the 43 affected pairs were discarded, and the pull now covers a fixed 0.1° tile grid over the whole DEM (verified a strict superset of the per-pair pulls, so no coverage was lost). (2) The 'extra edges can only help' assert had to be relaxed from exact ΔE ≤ 0 to f32-aware (the engine stores E in f32, so portals reorder relaxation; worst residual 1.9e-6 kJ, rel 7.7e-8) and now reports its worst residual instead of implying zero. (3) Entry 25 §12's lesson 'pre-register distributions, not point ranges' needs a companion: pre-register the ESTIMATOR, since the decision rule's verdict changed with an equally-valid reading of 'recovers ≥50% of the median gap'." ;
+  dcterms:source :journal .

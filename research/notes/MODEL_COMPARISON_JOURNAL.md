@@ -197,6 +197,181 @@ identity with their tracks.
 artifact). Q1/Q2B live in the sibling simujaules repo (the `grid-sens.mjs` harness lineage,
 reading the locally-exported endpoint pairs). Nothing with coordinates is committed anywhere.
 
+### Results (same day) — the ladder gap reproduces on real endpoints but its VERDICT is bundle-conditional; portals pay where the DEM lies
+
+**Corpus.** [`e26_pairs.py`](../../harness/e26_pairs.py) turned the 922 Entry-19 rides into
+**90 unique endpoint pairs**: 595 rides (65%) were dropped by the pre-registered 800 m floor —
+they are *loops* that start and end at home — and 237 folded into a near-duplicate pair, so
+Experiment 1's real-endpoint corpus is the point-to-point subset (327 rides → 90 pairs; censo 25,
+ppaz 30, jaam 7, danlessa 28; median separation 4.6 km, max 38 km; one pair absorbs 58 rides).
+**86 of 90** computed; the other 4 exceed the harness's 16 M-cell crop cap (all long pairs,
+logged individually). A re-run of the exporter reproduces `e26_pairs.json` **byte-for-byte**.
+
+**Integrity.** Every field in Q1/Q2B is produced by the **real `energy-worker.js`** in a sandbox
+(shipped v57 `buildMoves`/long-edge tables, v19 `buildPortalAdj`) — nothing reimplemented. Gates:
+bit-identity of the harness's own 8-move field vs the worker **max|Δ| = 0** on every invocation;
+the v19 portal no-op (empty portal set ≡ none) **max|Δ| = 0**; every portal edge cost ≥ 0. Q2A:
+the no-op invariant holds float-exactly on all 7 zero-span rides, corrected-profile distance ≡ raw,
+and deck interpolation stays inside its abutment heights (worst exceedance 0.00e+00 m).
+
+#### Q1 — the direction ladder on real ride endpoints (86 pairs, `grid-e26.mjs`)
+
+Median `E_opt(n)/E_opt(128) − 1` at the target cell, per physics bundle:
+
+| bundle (climb-dominance β/(aRoll+aAero)) | sq8 | sq16 | sq32 | sq64 | sq16 recovery of the sq8 gap | t16/t8 |
+|---|--:|--:|--:|--:|--:|--:|
+| **1 — UI defaults** (53.5:1) | **11.90%** | 5.99% | 2.38% | 0.73% | **49.69%** [CI 45.9, 53.8] | 2.19× |
+| **2 — Entry-20 calibrated** (28.5:1) | **6.82%** | 2.88% | 1.03% | 0.32% | **57.72%** [CI 52.8, 61.8] | 2.12× |
+
+**The headline is that the two declared bundles disagree, and each confirms exactly what the other
+refutes.** Under bundle 1 the sq8 gap sits at 11.90% — inside the pre-registered [8, 18] band and
+close to Entry 23's +12.7% on synthetic rings, so **P1 CONFIRMED** — while sq16 recovers only
+**49.69%** of it, below the [55, 75] band with the whole bootstrap CI under 55%: **P2 REFUTED**.
+Under bundle 2 the gap nearly halves to 6.82% (**P1 REFUTED**, now *below* the band) and the
+recovery rises to 57.72% (**P2 CONFIRMED**). **P3 CONFIRMED** in both: 86/86 pairs are monotone
+non-increasing along the ladder. **P4 CONFIRMED**: the apparent heading signature (12.35 pp spread
+across 22.5° bins) collapses to **3.35 pp** once each pair is measured against its own corpus
+median — the raw "peak" bin was 9/13 ppaz pairs — so no lattice direction signature survives, the
+terrain-dominated regime of Entry 25 §6.
+
+**The pre-registered decision rule therefore has no bundle-free answer.** It asked for ≥ 50%
+recovery at ≤ 3× wall time. Bundle 1: **49.69% — FAIL by 0.31 pp** (time passes at 2.19×), so the
+8-direction default stands. Bundle 2: 57.72% — PASS, recommend 16. Worse for the rule's
+authority, bundle 1's verdict is not even resolvable: its CI [45.9, 53.8] straddles 50%, and the
+*per-pair* recovery estimator — equally consistent with the wording "recovers ≥ 50% of the median
+gap" — reads **51.57%** (IQR 47.4–57.0), which would PASS. Entry 25 §12's lesson was
+"pre-register distributions, not point ranges"; this entry adds **"pre-register the estimator,
+not just the threshold."**
+
+**Why the bundles differ — Entry 25 §7's untested claim, now measured.** That note predicted the
+bias "scales with β/(aRoll+aAero) ≈ 53:1, so heavier climb-dominance ⇒ larger bias; a strong-rider
+bundle would shrink it somewhat. Not swept here." Halving the ratio (53.5 → 28.5) roughly halves
+the sq8 gap (11.90 → 6.82%) and lifts sq16's relative recovery — the mechanism confirmed
+quantitatively, which is also why the ladder question cannot be settled independently of the rider.
+
+**A new mechanism the synthetic study could not see: pair LENGTH.** The per-corpus spread at sq8
+(ppaz **22.12%** vs jaam 7.80%, censo 10.81%, danlessa 10.98%) is not a rider or terrain effect —
+it tracks separation. The gap falls from **15.79%** on the shortest third of pairs to **10.25%** on
+the longest, and ppaz's pairs are by far the shortest (median 2.8 km vs censo's 11.9 km): a
+lattice's per-step error is a larger share of a small total. Entry 23's fixed ≥ 800 m rings held
+length roughly constant and so could not surface this.
+
+**Secondary — reach.** At the same budget, sq16 reaches **+9.01%** more area than sq8 (bundle 1;
++6.61% bundle 2) — the accessibility-KPI reading of the same bias.
+
+**Secondary — the detour ratio, and an honest failure of the endpoint as specified.**
+[`e26_detour.py`](../../harness/e26_detour.py) walks each pair's member rides on their own igc5
+profile under the *same* cost bundle as the grid (including g = 9.81, mirrored from the JS, so the
+ratio measures detour and not a gravity mismatch) and divides. Pooled over all 321 member rides the
+ratio is **0.070** — a meaningless number, because after the 800 m floor the surviving pairs are
+mostly *near-loops*: median route detour **12.4×**, ppaz **24.8×** (a 60–100 km ride whose ends are
+3 km apart). Restricted to genuine journeys (track ≤ 2× straight line; n = 21 rides over 12 pairs,
+median detour 1.73×) the ratio is **0.467** at sq8 and **0.421** at sq128: on a real A→B journey
+roughly **half** the ride's energy is street-constraint and detour rather than terrain necessity.
+The endpoint is reported both ways, with the stratification as the finding.
+
+#### Q2A — portals as PROFILE corrections, vs measured `∫P·dt` (922 rides, paired)
+
+`e26_portal_profiles.py` matched OSM spans to each track (≤ 25 m, heading ≤ 30° mod 180, ≥ 60% of
+the span covered — the disclosed operationalization of "proximity + heading"), replaced the sampled
+heights across each matched span with the v19 straight deck, and re-walked. Touched: **915/922**
+rides (median 17 spans/ride).
+
+| corpus | v2@igc5 med \|Δ%\| raw → portal | Δ bias | R0@igc5 med \|Δ%\| | v2@igc30 |
+|---|---|--:|---|---|
+| censo (58) | 22.13 → **18.32** | −3.81 | 5.59 → 4.88 | 12.29 → 9.64 |
+| ppaz (277) | 9.06 → 8.42 | −0.64 | 6.64 → 6.16 | 8.12 → 7.71 |
+| jaam (181) | 2.88 → 2.90 | +0.02 | 4.97 → 4.93 | 3.39 → 3.47 |
+| danlessa (406) | 14.79 → **13.21** | −1.72 | 5.92 → 5.66 | 9.87 → 8.37 |
+| **all (922)** | 10.24 → **9.35** | −0.95 | 5.78 → 5.56 | 7.41 → 6.88 |
+
+**P5 CONFIRMED on 9 of 10 strata** — stated properly as |bias| shrinking, since "bias moves DOWN"
+is the wrong test for a corpus whose raw bias is negative (the harness's pooled `Δbias < 0` scoring
+would have missed this). The exception is **jaam under the champion R0**, whose already-negative
+bias moves further negative (−4.52 → −4.70, |bias| +0.18 pp). **P6 CONFIRMED**: the pooled median
+moves < 1 pp (−0.90 pp v2, −0.23 pp R0) while the tail improvement concentrates on the
+viaduct-heavy censo exactly as predicted (touched-ride Δp90 −4.53 pp censo vs −2.70 pp riders).
+
+**P7 REFUTED — with a diagnosable mechanism.** h₊ drops on only **697/915 (76.2%)** of touched
+rides, not ≥ 90%. The split is systematic: censo drops on 96.4% (median 20.1 m removed), jaam on
+49.2% (median **−0.1 m** — ascent sometimes *added*), and the ascent-rose group has markedly
+shorter spans and less relief removed (median 1079 m / 2.3 m vs 1415 m / 16.3 m). The cause is
+**junction steps**: the deck endpoints are raster heights sampled at the exact OSM abutments while
+the neighbouring profile points come off the 5 m grid, so each splice can inject a small step, and
+on gentle terrain with many short spans those steps outweigh the dips removed. Note this artifact
+belongs to *transplanting the portal model into a profile* — the deployed portal is a single
+Dijkstra edge with no junctions, so Q2B is structurally immune. A blended splice (deck endpoints
+taken from the profile's own heights) is the obvious follow-up.
+
+#### Q2B — portals in the discretized (optimal-route) scenario
+
+| bundle | ΔE at B, med | ΔE min | pairs improved | reach gain @8 | reach gain @16 | pairs with reach gain |
+|---|--:|--:|--:|--:|--:|--:|
+| 1 — UI defaults | **0.000 kJ** | −7.07% | 28/86 (33%) | +0.49% | +0.64% | **79/86**, 78/86 |
+| 2 — calibrated | 0.000 kJ | −8.11% | 18/86 (21%) | +0.15% | +0.18% | 76/86, 73/86 |
+
+**P8 CONFIRMED** in the exact predicted shape: the median portal effect on a specific A→B optimum
+is **identically zero** (most optimal paths never need a bridge) while the tail is large — down to
+−7.07% at 8 directions and −8.95% at 16, i.e. −6.8 kJ on a 231 kJ pair. **P10 CONFIRMED**: the
+gains are broadly `nDirs`-independent (28 vs 27 pairs improved; if anything marginally larger at
+16). **P9 NOT EVALUATED** — "gains concentrate along the Pinheiros/Tietê corridors" is a spatial
+claim, and this harness deliberately emits no coordinates; testing it needs a separate mapping
+pass, which is left as follow-up rather than quietly scored. The **budget-reach** endpoint added
+during the run is the sensitive one: portals expand reachable area on **79 of 86** pairs even where
+the specific path is untouched — so for the 300 kJ accessibility mission portals matter more as an
+*area* correction than as a per-route one. Portal benefit is also bundle-dependent (33% → 21% of
+pairs improved), for the same reason as Q1: a lower β pays less for bridging a dip.
+
+**GATE amendment (disclosed).** The pre-registration wrote the "extra edges can only help" check as
+an exact `ΔE ≤ 0`. It fired on a real pair at **+1.9e-6 kJ on a 24.7 kJ path** — relative 7.7e-8,
+i.e. f32 epsilon: the engine stores E in **f32** (f64 heap keys), so adding portal edges reorders
+relaxation and a settled value can move in its last bit with the optimal path unchanged. The assert
+is now f32-aware (rel 4e-7 + 1e-6 kJ floor), **reports** the worst residual each session
+(1.907e-6 kJ, rel 7.7e-8 over the bundle-1 run; 0.000e+0 over bundle 2), and still aborts on any
+structural violation.
+
+#### Deviations from the pre-registration (all disclosed)
+
+1. **PRIVACY — the first implementation leaked endpoint geometry, and its results were discarded.**
+   The pre-registration said spans are "pulled for the `sampa_geral` bbox"; the harness as first
+   written instead pulled **per-pair crop bboxes** (endpoints + 2 km) from public Overpass mirrors,
+   and such a bbox inverts back to the pair's endpoints — which are often homes. Caught by an
+   adversarial review of the harness while it ran. It now pulls a **fixed 0.1° tile grid spanning
+   the whole DEM, unconditionally and once** (48 tiles, 5 761 ways), so every request is a function
+   of the DEM extent alone; the 43 pairs computed under the old scheme were thrown away rather than
+   reused. Verified pair-by-pair that the tile union is a strict *superset* of the per-pair pulls
+   (1514 ≥ 1496, 331 ≥ 315, 89 ≥ 87, 66 ≥ 64 ways), so the fix costs no coverage. The requests
+   already sent cannot be recalled; that is the cost of the error and it is recorded here.
+2. **f32 tolerance** on the portal monotonicity assert (above).
+3. **P9 not evaluated** (needs a mapping pass; no coordinates leave the harness).
+4. **4 of 90 pairs skipped** on the 16 M-cell crop cap — the four longest; the cap is a runtime
+   bound, disclosed per pair in the log, and it removes the pairs *least* affected by the bias
+   (the gap shrinks with length), so the reported medians are mildly conservative.
+5. **Bundle 2 keeps P_flat = 80 W** (only the rider constants swap): a routing field has no ride
+   to read a flat power from. Its (CdA, Crr, k_s) are Entry 20's *effective* values, not physical.
+6. **The detour ratio needed a journeys-only stratum** to mean anything (above).
+7. **G = 9.81 throughout** — `regime_compare.py`'s constant, which the whole DEM chain inherits
+   (it does NOT read `analysis/bem/engines.py`'s G), so every number here is directly comparable to
+   Entry 19's. Noted because the two definitions must be re-baselined together.
+8. A soft-failed Overpass response (HTTP 200 carrying `remark: runtime error…`) was cacheable in
+   the first implementation; it now deletes the cache file and fails loudly.
+
+**Net.** The grid-connectivity bias survives the move from synthetic rings to real ride endpoints
+(sq8 ≈ 12% above the near-continuum optimum under the app's own defaults, monotone, direction-blind)
+and gains two qualifications the synthetic study could not give: it **shrinks with pair length** and
+it **scales with the rider's climb-dominance** — so the pre-registered "ship 16 directions?"
+decision flips between two equally-declared physics bundles and cannot be answered bundle-free.
+Portals are the cleaner win: as profile corrections they move measured-energy accuracy and bias in
+the right direction on every corpus that has viaducts (censo −3.81 pp, pooled −0.90 pp), and as
+routing edges they leave the median route untouched while expanding reachable area on 92% of pairs.
+
+Tooling: `python3 harness/e26_pairs.py` → `node ../simujaules/docs/grid-e26.mjs`
+(`E26_BUNDLE=cal` for bundle 2, `E26_SMOKE=1` for a 5-pair check) →
+`python3 harness/e26_portal_profiles.py` → `python3 harness/e26_detour.py`
+(`E26_GRID=e26_grid_cal.csv` to score the other bundle). All outputs land in the gitignored
+`results/` (`e26_pairs.json`, `e26_pair_rides.json`, `e26_grid.csv`, `e26_grid_cal.csv`,
+`e26_portal_profiles.csv`, `e26_detour.csv`, `e26_osm_cache/`).
+
 ---
 
 ## 2026-07-24 — Entry 25: the simujaules grid-connectivity note, imported verbatim

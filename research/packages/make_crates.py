@@ -61,6 +61,10 @@ PRODUCER = {
     "igc_resolution_test.csv": "python3 harness/igc_resolution_test.py",
     "goal_calibration.csv": "python3 harness/goal_calibration.py",
     "scale_trio.csv": "python3 harness/scale_trio.py",
+    "e26_portal_profiles.csv": "python3 harness/e26_portal_profiles.py",
+    "e26_grid.csv": "node ../simujaules/docs/grid-e26.mjs",
+    "e26_grid_cal.csv": "E26_BUNDLE=cal node ../simujaules/docs/grid-e26.mjs",
+    "e26_detour.csv": "python3 harness/e26_detour.py",
 }
 
 # entry → (instrument harness scripts, result CSVs, uses private tracks,
@@ -94,7 +98,9 @@ ENTRIES = {
     23: ([], [], False, []),
     24: ([], [], False, ["research/notes/ascent-error-literature.md"]),
     25: ([], [], False, []),
-    26: ([], [], False, []),
+    26: (["harness/e26_pairs.py", "harness/e26_portal_profiles.py", "harness/e26_detour.py"],
+         ["e26_portal_profiles.csv", "e26_grid.csv", "e26_grid_cal.csv", "e26_detour.csv"],
+         True, []),
 }
 
 # entry 22 reads the per-ride CSVs the other harnesses wrote

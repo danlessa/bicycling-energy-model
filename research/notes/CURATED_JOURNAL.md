@@ -384,26 +384,52 @@ study, and the shipped-v57 scorecard), so the journal stays self-contained
 even if the sibling repo moves on.
 [[package]](../packages/entry25/ro-crate-preview.html)
 
----
+### Entry 26 — the grid's bias on real routes, and bridges that stop lying
+**Data:** 90 endpoint pairs distilled from the Entry-19 corpus's 922 rides
+(private, never committed) + OSM bridge/tunnel spans pulled for the whole
+DEM; 922 rides again for the profile half.
 
-## Next up — pre-registered, results pending
+Two pre-registered follow-ups, both answered.
 
-### Entry 26 — direction ladders on real endpoints, and bridges that stop lying
-**Data (planned):** the Entry-19 corpus's 922 ride endpoints (private, never
-committed) plus OSM bridge/tunnel spans for the deployed raster's area.
+**The direction ladder.** Entry 23 measured the 8-direction grid's
+overestimate on *synthetic* start/end points; this re-measures it on **real
+ride endpoints**. It survives the move: the 8-grid reads **≈12% above** the
+near-continuum optimum, monotonically improving with more directions
+(6% at 16, 2.4% at 32, 0.7% at 64), with no direction bias — exactly the
+terrain-dominated picture Entry 23 found. Two new qualifications, though.
+The gap **shrinks on longer routes** (15.8% on the shortest third of pairs
+vs 10.3% on the longest), which explains what first looked like a
+rider effect. And — the punchline — the gap **scales with how
+climb-dominated the rider's cost is**: swapping the app's default rider for
+a calibrated one (Entry 20's) halves both the climb-dominance ratio and the
+gap (12% → 6.8%). So the pre-registered decision "should the app ship 16
+directions?" **flips between two equally-legitimate rider settings** — it
+has no rider-free answer. Under the app's defaults the rule failed by
+0.31 pp (49.69% vs a 50% threshold), and its confidence interval straddles
+the threshold anyway. Entry 23 taught "pre-register distributions, not point
+ranges"; this one adds "pre-register the *estimator*, not just the
+threshold."
 
-Two follow-up experiments with the protocol frozen before any run. **First**
-(follows Entries 23/19): re-measure the grid-connectivity bias with *real
-ride endpoints* instead of synthetic rings, across 8/16/32/64/128 directions
-as shipped in simujaules v57 — with a written decision rule for whether 16
-directions becomes the KPI default. **Second**: portals — simujaules' OSM
-bridge/tunnel corrections, which stop a bare-earth DEM from diving under
-every viaduct — measured two ways: (A) does portal-correcting the *profile*
-improve prediction accuracy and bias against measured energy on the 922
-rides? (B) how much do portals change *optimal-route* energies and
-budget-reach, and does the gain survive finer direction ladders?
-Predictions are registered as distributions this time — Entry 25's own
-scorecard taught that point ranges are overconfident.
+**Portals** — simujaules' bridge/tunnel corrections, which stop a bare-earth
+DEM from diving into the valley under every viaduct. As *profile*
+corrections they help exactly where the DEM lies: urban censo rides improve
+from 22.1% to **18.3%** median error (bias likewise), the author's corpus by
+1.6 pp, pooled 922 rides from 10.2% to **9.4%** — and every corpus with
+viaducts moves toward the measured energy. As *routing* edges they leave the
+median route completely untouched (most optimal paths never need a bridge)
+but produce a long tail — up to −9% on individual routes — and, more useful
+for the 300 kJ mission, they **expand reachable area on 92% of route pairs**.
+One prediction failed instructively: total ascent didn't drop on 90% of
+corrected rides but only 76%, because splicing a flat deck into a profile
+injects small steps at its two ends. That artifact is specific to *profiles* —
+the app's real portal is a single routing edge with no splices.
+
+Also recorded honestly: 65% of all rides are loops (start ≈ end), so the
+route-pair corpus is the point-to-point minority; and an adversarial review
+of the harnesses mid-run caught that the first implementation was sending
+each pair's endpoint-derived bounding box to public map servers. Those
+results were **thrown away** and the pull rewritten to cover the whole DEM
+regardless of any ride.
 [[package]](../packages/entry26/ro-crate-preview.html)
 
 ---
