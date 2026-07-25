@@ -141,16 +141,18 @@ def num(s):
 
 
 # ---- Figure 1: error attribution — where the closed form's error comes from ----
-# Waterfall over the 44 power rides (compare.py, §8.1): baseline 19.3% → climb-aero fix
-# (cf split) 8.7% → + 2 m deadband 3.6%; canonical 5.1% as the dashed reference. The full
+# Waterfall over the 44 power rides (compare.py, §8.1): baseline 19.1% → climb-aero fix
+# (cf split) 8.6% → + 2 m deadband 3.5%; canonical 5.2% as the dashed reference.
+# HARDCODED — these mirror compare.py's scoreboard and must be re-synced whenever it
+# moves (they were missed in the Entry-27 gravity re-baseline and caught by an audit). The full
 # variant ranking stays in the §8.1 table — this figure carries the attribution story.
 def fig1():
     stages = [
-        ('baseline\n(off, raw h±)', 19.3),
-        ('+ climb-aero fix\n(cf α-split)', 8.7),
-        ('+ 2 m deadband\n(ascent noise)', 3.6),
+        ('baseline\n(off, raw h±)', 19.1),
+        ('+ climb-aero fix\n(cf α-split)', 8.6),
+        ('+ 2 m deadband\n(ascent noise)', 3.5),
     ]
-    CANON = 5.1
+    CANON = 5.2
     f = Fig(520, 340, pad=(40, 24, 66, 54))
     xr, yr = (0, 3), (0, 21)
     f.frame(xr, yr, '', 'median |Δ%| vs measured ∫P·dt',
@@ -185,7 +187,7 @@ def fig1():
     f.body.append(f'<line x1="{f.x0}" y1="{yc:.1f}" x2="{f.x1}" y2="{yc:.1f}" '
                   f'stroke="{GREEN}" stroke-width="1.6" stroke-dasharray="5 4"/>')
     f.body.append(f'<text x="{f.x0+8:.0f}" y="{yc-6:.1f}" {FONT} '
-                  f'font-size="11" fill="{GREEN}">canonical forward sim 5.1%</text>')
+                  f'font-size="11" fill="{GREEN}">canonical forward sim 5.2%</text>')
     f.save('fig1-attribution.svg')
 
 
@@ -259,6 +261,13 @@ def fig4():
     f.line([(0.13, 0), (1, 0.87)], xr, yr, GREEN, 2.0)                 # y = x − 0.13 (calibrated)
     for ec, eb, sb, be in P:
         r = 3 + 7 * math.sqrt(be / bmax)          # area ∝ descent energy β·H₋
+        # The figure CANNOT reproduce the harness's real-descent subset exactly:
+        # jaam_comparison.csv rounds sbar to 3 dp and TWO rides write as 0.030, so
+        # this test yields 21 (>=) or 19 (>) where the harness — working from the
+        # unrounded s̄ — counts 20.  Rather than fake a count, the legend states the
+        # CRITERION and no n; the exact n lives in the text, which quotes the
+        # harness.  (Do not 'fix' this by tuning the threshold; fix it by widening
+        # the CSV's precision if the exact subset is ever needed here.)
         real = sb >= 0.03
         f.dot(ec, eb, xr, yr, r, VERM if real else GREY, 0.55 if real else 0.30,
               stroke='#fff' if real else 'none', cls='s0' if real else 's1',
@@ -390,7 +399,7 @@ def fig8():
     f = Fig(440, 400, pad=(40, 18, 46, 54))
     f.frame(xr, yr, 'ε_coast  (geometry-only prediction)', 'ε_bal  (power-measured, rider 3)',
             xticks=[0, .25, .5, .75, 1], yticks=[-.25, 0, .25, .5, .75, 1],
-            title='Third rider JAAM — fits the 21 real descents, misses the gentle bulk')
+            title='Third rider JAAM — fits the real descents, misses the gentle bulk')
     f.line([(0, 0), (1, 1)], xr, yr, GREY, 1.2, dash='4 3')            # y = x
     f.line([(0.13, 0), (1, 0.87)], xr, yr, GREEN, 2.0)                 # y = x − 0.13 (FROZEN)
     for ec, eb, sb, hd in P:
@@ -401,7 +410,7 @@ def fig8():
               tip=f'ε_coast {ec:.2f} → ε_bal {eb:.2f} · s̄ {sb*100:.1f}% · H₋ {hd:.0f} m')
     f.body.append(f'<text x="{f.x1-10:.0f}" y="{f.y0+18:.0f}" text-anchor="end" {FONT} '
                   f'font-size="11" fill="{GREEN}">ε = ε_coast − 0.13 (frozen)</text>')
-    f.legend([('real descents (s̄ ≥ 3%, n = 21)', VERM, 's0'), ('gentle rides (bulk)', GREY, 's1')],
+    f.legend([('real descents (s̄ ≥ 3%)', VERM, 's0'), ('gentle rides (bulk)', GREY, 's1')],
              f.x0 + 12, f.y1 - 40)
     f.body.append(f'<text x="{f.x0+12:.0f}" y="{f.y1-4:.0f}" {FONT} font-size="10" '
                   f'fill="{GREY}">most of this rider\'s riding is gentle — measured ε_bal sits far below the line</text>')

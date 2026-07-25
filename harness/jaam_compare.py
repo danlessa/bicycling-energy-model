@@ -33,6 +33,7 @@ import gzip
 import json
 import math
 import os
+import random
 import struct
 import sys
 
@@ -855,6 +856,27 @@ for lab, sub in [("all clean rides", eOK), ("s̄ ≥ 3%", [r for r in eOK if r["
 
 # ---- TERRAIN / GEOGRAPHY STRATIFICATION (Note 3: JAAM spans SP + a non-SP tail,
 #      plain ↔ mountainous). Does the FROZEN estimator hold off the São Paulo band? ----
+# Paired bootstrap on the RMS DIFFERENCE (frozen − flat 0.20) over the real-descent
+# subset.  Entry 14 quotes this CI as the reason the subset is "inconclusive rather
+# than a tie", but until now no harness emitted it — it was computed ad hoc, so it
+# could not be regenerated when the subset moved (it shifted from n=21 to n=20 in the
+# Entry-27 re-baseline).  Deterministic seed, percentile method, same B as bootstrap_ci.
+_real = [r for r in eOK if r["sbar"] >= 0.03]
+if len(_real) >= 5:
+    _froz = [r["epsBal"] - clamp01(r["epsCoast"] - 0.13) for r in _real]
+    _flat = [r["epsBal"] - 0.20 for r in _real]
+    _rnd = random.Random(20260725)
+    _n, _B, _bs = len(_real), 10000, []
+    for _ in range(_B):
+        _idx = [_rnd.randrange(_n) for _ in range(_n)]
+        _bs.append(rms([_froz[i] for i in _idx]) - rms([_flat[i] for i in _idx]))
+    _bs.sort()
+    _lo, _hi = _bs[int(0.025 * _B)], _bs[int(0.975 * _B) - 1]
+    print(f"\n  paired bootstrap on RMS(frozen) − RMS(flat 0.20), real descents (n={_n}): "
+          f"{rms(_froz) - rms(_flat):+.3f} "
+          f"[95% CI {_lo:+.3f}, {_hi:+.3f}] · straddles zero: {_lo < 0 < _hi} "
+          f"(percentile, B=10⁴, seed 20260725)")
+
 print("\n----------------------------------------------------------------")
 print("TERRAIN / GEOGRAPHY CUTS — frozen clamp01(ε_coast−0.13), real descents (s̄ ≥ 3%)")
 print("note: JAAM power rides are ~93% São Paulo (medAlt ~737 m); the non-SP tail is small.")

@@ -198,8 +198,10 @@ gravity-insensitive; an assumed corpus is not.*
 
 **Time model: headline intact, secondary rows shift.** The pre-declared endpoint is unchanged —
 T1b **6.6%** vs the naive T0 **7.6%** on the 441 P. Paz rides (signed +3.8 → **+3.7**) — as are
-the descent-bridge numbers (correlation 0.59 / 0.08 / 0.14; median measured 30.1 vs predicted
-38.0 km/h; `k₋_meas` 5.85 rural). Secondary rows move by ≤0.1 pp: longões T1a/T1b 5.5 → **5.6**,
+the descent-bridge numbers *except one* (median measured 30.1 vs predicted 38.0 km/h and
+`k₋_meas` 5.85 rural both hold, but P. Paz's bridge correlation moves **0.14 → 0.15** — ε enters
+the bridge through `α − ε·β·s̄`, so both α and β carry the gravity change; caught by an
+adversarial audit of the article, and corrected here too). Secondary rows move by ≤0.1 pp: longões T1a/T1b 5.5 → **5.6**,
 T2 4.3 → **4.4**, T3 3.6 → **3.7**; censo TS 14.5 → **14.6**, T1a/T1b 14.2 → **14.3**,
 T3 13.5 → **13.6**, TF 7.4 → **7.3**; P. Paz T2 7.4 → **7.3**, T3 8.6 → **8.5**.
 
