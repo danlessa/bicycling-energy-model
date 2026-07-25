@@ -1,7 +1,7 @@
-# Empirical ride dataset — `data/activities/`
+# Empirical ride dataset — `data/inputs/activities/`
 
 Ground-truth rides for validating the energy model in
-[`applet/index.html`](../../applet/index.html): each carries an
+[`applet/index.html`](../../../applet/index.html): each carries an
 elevation profile and (where available) **measured power**, so the *approximate*
 closed-form law and the *canonical* forward-dynamics simulation can both be compared
 against the rider's actual `∫P·dt`.
@@ -9,7 +9,7 @@ against the rider's actual `∫P·dt`.
 ## Provenance
 
 Every ride is one hyperlink in the **Activity column (B)** of the **`Atividades v2`**
-sheet of `data/longoes.xlsx`. Sources, normalised to **`.fit`** wherever possible:
+sheet of `data/inputs/longoes.xlsx`. Sources, normalised to **`.fit`** wherever possible:
 
 | Source | Download | Auth | Power |
 |---|---|---|---|
@@ -35,13 +35,13 @@ and additionally carries weather-derived temperature the `.fit` omits.
 ## Layout
 
 ```
-data/activities/
+data/inputs/activities/
   manifest.json   # per-activity metadata + power summary (gitignored)
   rwgps/<source>_<id>.fit    # RideWithGPS trips & routes (gitignored)
   strava/<id>.{fit,gpx}      # Strava originals (gitignored)
 ```
 
-The scripts that populate and read this directory live in [`harness/`](../../harness/):
+The scripts that populate and read this directory live in [`src/harness/`](../../../src/harness/):
 `fetch.py` (downloader + power audit + csv builder, stdlib only) and `verify.py`
 (cross-checks `longoes.csv` against the track files) resolve this directory relative
 to their own location, so they can be run from anywhere.
@@ -63,7 +63,7 @@ personal metrics (weight, HR) but no GPS — `git add -f` to commit.
 ## Verification — `verify.py`
 
 `python3 verify.py` recomputes the *file-derivable* columns from each track (multi-format:
-RWGPS/Strava `.fit`, `.gpx`) and compares to `longoes.csv`, writing `results/longoes_verify.csv`.
+RWGPS/Strava `.fit`, `.gpx`) and compares to `longoes.csv`, writing `data/results/longoes_verify.csv`.
 Parameters/guesses (weight, CdA, headwind, ε, Crr, group) are not in the files and are
 skipped. Latest run — median & 90th-pctile of |Δ%| vs the sheet, n rides, # flagged:
 
@@ -92,10 +92,10 @@ distance/work vs the sheet).
 ```sh
 # from the repo root
 source .env                                    # RWGPS_API_KEY, RWGPS_AUTH_TOKEN
-python3 harness/fetch.py rwgps-fit             # RWGPS trips+routes as authed .fit (incl. private)
-python3 harness/fetch.py rwgps                 # fallback: public .json (no auth, adds temperature)
-python3 harness/fetch.py strava <cookiejar>    # Strava originals (Netscape cookie jar)
-python3 harness/fetch.py audit                 # recompute power summary into manifest.json
-python3 harness/fetch.py csv                   # (re)build longoes.csv
-python3 harness/verify.py                      # cross-check csv vs files
+python3 src/harness/fetch.py rwgps-fit         # RWGPS trips+routes as authed .fit (incl. private)
+python3 src/harness/fetch.py rwgps             # fallback: public .json (no auth, adds temperature)
+python3 src/harness/fetch.py strava <cookiejar> # Strava originals (Netscape cookie jar)
+python3 src/harness/fetch.py audit             # recompute power summary into manifest.json
+python3 src/harness/fetch.py csv               # (re)build longoes.csv
+python3 src/harness/verify.py                  # cross-check csv vs files
 ```
