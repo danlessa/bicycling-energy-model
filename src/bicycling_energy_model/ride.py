@@ -6,7 +6,11 @@ deadband tau = 2 m for the smoothed variants, auto v_f = flatEqSpeed(P_flat),
 vmax 38 km/h, vstart 15 km/h.
 """
 
+import gzip
+import hashlib
 import math
+import os
+import pickle
 
 from .engines import (G, approximate, canonical, deadband, flat_eq_speed,
                       resample_profile, v2_edge)
@@ -19,14 +23,63 @@ ENGINE_DX = 5
 TAU_SMOOTH = 2
 VMAX, VSTART = 38 / 3.6, 15 / 3.6
 
+# Bump on any change to pts_from_fit/pts_from_gpx's output shape (new/renamed
+# point field, changed units, ...) — a stale cache entry is a silent
+# correctness bug, not a crash, so the schema is part of the cache key.
+_CACHE_SCHEMA = 1
+_CACHE_DIR = None
 
-def load_pts(path):
-    """Track file (.fit or .gpx) -> point list."""
-    if str(path).lower().endswith(".gpx"):
-        with open(path, encoding="utf-8") as f:
-            return pts_from_gpx(f.read())
+
+def _cache_dir():
+    global _CACHE_DIR
+    if _CACHE_DIR is None:
+        # this file: src/bicycling_energy_model/ride.py -> repo root is two
+        # directories up from src/bicycling_energy_model/
+        pkg_dir = os.path.dirname(os.path.abspath(__file__))
+        root = os.path.dirname(os.path.dirname(pkg_dir))
+        _CACHE_DIR = os.path.join(root, "data", "results", "cache")
+        os.makedirs(_CACHE_DIR, exist_ok=True)
+    return _CACHE_DIR
+
+
+def load_pts(path, meta=None):
+    """Track file (.fit, .fit.gz, .gpx or .gpx.gz) -> point list, cached on
+    disk keyed by (path, size, mtime, schema) so repeat runs — and the
+    `<RIDER>_M`/`_CDA`/`_CRR` sensitivity sweeps, which re-read every ride in
+    a corpus per run — skip the parse entirely. Delete `data/results/cache/`
+    to force a full re-parse (its contents are our own pickled output, never
+    untrusted input, so unpickling them back is safe). `meta` is filled
+    exactly as `parse_fit` would (manufacturer, sport) for a FIT track;
+    always left untouched for GPX, which carries neither."""
+    path = str(path)
+    st = os.stat(path)
+    digest = hashlib.sha1(os.path.abspath(path).encode()).hexdigest()[:16]
+    key = (f"v{_CACHE_SCHEMA}_{digest}_{os.path.basename(path)}"
+           f".{st.st_size}.{int(st.st_mtime)}.pkl")
+    cache_path = os.path.join(_cache_dir(), key)
+    if os.path.exists(cache_path):
+        with open(cache_path, "rb") as f:
+            pts, cached_meta = pickle.load(f)
+        if meta is not None:
+            meta.update(cached_meta)
+        return pts
+
+    is_gz = path.lower().endswith(".gz")
+    raw_ext = path[:-3] if is_gz else path
     with open(path, "rb") as f:
-        return pts_from_fit(f.read())
+        buf = f.read()
+    if is_gz:
+        buf = gzip.decompress(buf)
+    m = {}
+    if raw_ext.lower().endswith(".gpx"):
+        pts = pts_from_gpx(buf.decode("utf-8", errors="replace"))
+    else:
+        pts = pts_from_fit(buf, m)
+    with open(cache_path, "wb") as f:
+        pickle.dump((pts, m), f, protocol=pickle.HIGHEST_PROTOCOL)
+    if meta is not None:
+        meta.update(m)
+    return pts
 
 
 def analyze_ride(pts, params, eps=0.20, v2_opts=None):

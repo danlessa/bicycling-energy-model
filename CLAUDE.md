@@ -50,10 +50,24 @@ home of the *derivation* and the side-by-side comparison.
   `fetch*.py` / `build_model_inputs.py` / `verify.py` and `dem/`
   (`dem/coords/` is gitignored — per-ride GPS).
   The `*_compare.py` take `<RIDER>_M`/`_CDA`/`_CRR` env overrides (Entry 16's
-  fitted-vs-assumed machinery). **`regime_compare.py`, `igc_resolution_test.py`
+  fitted-vs-assumed machinery); every harness that reads one **suffixes its own
+  output CSV** with the active override (`bem.env_suffix`, e.g.
+  `ppaz_comparison.PPAZ_M78.csv`) instead of overwriting the canonical file a
+  sweep must never touch — a sensitivity run and a real result cannot collide.
+  **`regime_compare.py`, `igc_resolution_test.py`
   and `goal_calibration.py` are import-safe** (driver under
   `if __name__ == "__main__"`): the DEM chain imports them (`igc` ← `regime`;
   `goal` ← `regime`+`igc`; `scale_trio` ← all three) — keep them importable.
+  Every FIT/GPX parse goes through `bicycling_energy_model.load_pts`, which
+  caches the parsed points on disk under `data/results/cache/` keyed on
+  (path, size, mtime, a schema version) — repeat runs and sensitivity sweeps
+  skip the parse entirely; delete the directory to force a re-parse, and bump
+  `ride.py`'s `_CACHE_SCHEMA` if a point's fields ever change (a stale cache
+  entry is a silent correctness bug, not a crash). `goal_calibration.py` and
+  `scale_trio.py` each re-run their whole analysis twice to prove determinism
+  (Entries 20–21's gates); `FAST=1` skips that second run and the cache-subset
+  rebuild during iteration — same result, just without the ×2 proof, so don't
+  use it for a number that ships.
 - `research/journal/` — `MODEL_COMPARISON_JOURNAL.md` (numbered entries, newest
   first — the **lab journal**, authoritative), `CURATED_JOURNAL.md` (the
   readable retelling, oldest first — update it when a lab entry lands; on

@@ -63,7 +63,6 @@ JS name → Python name (the .mjs's top-level definitions, in file order):
   erf → erf   pFromZ → p_from_z   pairedAbs → paired_abs        f → f
 """
 
-import gzip
 import json
 import math
 import os
@@ -74,8 +73,9 @@ REPO = os.path.dirname(os.path.dirname(HERE))
 sys.path.insert(0, os.path.join(REPO, "src"))
 
 from bicycling_energy_model import (approx_components, approx_time, canonical, climb_balance,  # noqa: F401,E402
-                                    deadband, empirical_kj, eps_geom, extract_regime_powers,
-                                    flat_eq_speed, haversine, is_finite, jsdiv, overall_mean_power,
+                                    deadband, empirical_kj, env_suffix, eps_geom,
+                                    extract_regime_powers, flat_eq_speed, haversine,
+                                    is_finite, jsdiv, load_pts, overall_mean_power,
                                     pts_from_gpx, push_stats, resample_profile)
 from bicycling_energy_model import build_profile as _bem_build_profile  # noqa: E402
 from bicycling_energy_model import parse_fit as _bem_parse_fit  # noqa: E402
@@ -388,13 +388,12 @@ def corr_of(xs, ys):
 
 
 def read_pts(file):
-    with open(os.path.join(DATA, file), "rb") as fh:
-        buf = fh.read()
-    if file.endswith(".gz"):
-        buf = gzip.decompress(buf)
-    if file.endswith(".gpx") or file.endswith(".gpx.gz"):
-        return pts_from_gpx(buf.decode("utf-8"))
-    return pts_from_fit(buf)
+    global FIT_MANUF
+    meta = {}
+    pts = load_pts(os.path.join(DATA, file), meta)
+    if meta:
+        FIT_MANUF = meta["manufacturer"]
+    return pts
 
 
 # ===== NEW: regime-decomposed closed form =====
@@ -1165,9 +1164,12 @@ def main():
     # ===== CSV (gitignored via data/results/*) =====
     csv = "\n".join([",".join(COLS)]
                     + [",".join(cell(r.get(k)) for k in COLS) for r in rows])
-    with open(os.path.join(RESULTS, "regime_comparison.csv"), "w", encoding="utf-8") as fh:
+    csv_name = "regime_comparison" + env_suffix(
+        "PPAZ_M", "PPAZ_CDA", "PPAZ_CRR", "JAAM_M", "JAAM_CDA", "JAAM_CRR",
+        "DANLESSA_M", "DANLESSA_CDA", "DANLESSA_CRR") + ".csv"
+    with open(os.path.join(RESULTS, csv_name), "w", encoding="utf-8") as fh:
         fh.write(csv + "\n")
-    print(f"\nwrote regime_comparison.csv ({len(rows)} rides: L {nL} C {nC} P {nP} J {nJ} "
+    print(f"\nwrote {csv_name} ({len(rows)} rides: L {nL} C {nC} P {nP} J {nJ} "
           f"D {nD}, skipped {zwTot} Zwift)")
 
 

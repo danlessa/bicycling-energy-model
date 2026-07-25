@@ -35,8 +35,8 @@ sys.path.insert(0, os.path.join(REPO, "src"))
 
 from bicycling_energy_model import (approx_components, build_profile, canonical, deadband,
                                     empirical_kj, eps_geom, extract_regime_powers, flat_eq_speed,
-                                    is_finite, overall_mean_power, pts_from_fit, push_stats,
-                                    resample_profile)
+                                    is_finite, load_pts, overall_mean_power, pts_from_fit,
+                                    push_stats, resample_profile)
 from bicycling_energy_model.engines import G
 from bicycling_energy_model.jsfmt import js_str, to_fixed
 
@@ -70,9 +70,7 @@ for e in man:
     if not os.path.exists(fp):
         continue
     try:
-        with open(fp, "rb") as fh:
-            buf = fh.read()
-        pts = pts_from_fit(buf)
+        pts = load_pts(fp)
         if not has_power(pts):
             continue                                    # benchmark needs power
         info = build_profile([q["x"] for q in pts], [q["alt"] for q in pts])

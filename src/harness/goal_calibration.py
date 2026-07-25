@@ -49,6 +49,10 @@ Phases (A = python, above):
 
   python3 src/harness/goal_calibration.py   → report on stdout (timings on stderr) +
                                               goal_calibration.csv (gitignored via data/results/*)
+  FAST=1 python3 src/harness/goal_calibration.py  → iteration only: skip the cache- and
+                                              Phase-C-determinism ×2 reruns (same result, no
+                                              re-proof of determinism — don't use for a
+                                              published number)
 
 MODULE IS IMPORT-SAFE — importing it runs nothing and touches no file; the driver lives in main().
 
@@ -93,7 +97,7 @@ from regime_compare import (CLIMB_THR, DESC_THR, ENGINE_DX, G, PHYS,  # noqa: E4
                             empirical_kj, flat_eq_speed, jquote, med_of,
                             point_regime_data, pts_from_fit, pw_from, r1d_v2_edge,
                             resample_profile)
-from bicycling_energy_model import is_finite  # noqa: E402
+from bicycling_energy_model import env_suffix, is_finite  # noqa: E402
 from bicycling_energy_model.jsfmt import js_str, to_exponential, to_fixed  # noqa: E402
 
 DATA = os.path.join(REPO, "data", "inputs", "activities")
@@ -109,6 +113,9 @@ def raster_for(sig):
 
 
 SMOKE = bool(os.environ.get('GOAL_SMOKE'))   # debug only: 3 rides/corpus, no count asserts
+FAST = bool(os.environ.get('FAST'))          # iteration only: skip the cache/Phase-C determinism
+                                              # double-run (still uses run 1's output; only the
+                                              # ×2-identical PROOF is skipped, not the result)
 EXPECT = {"ppaz": 277, "jaam": 181, "danlessa": 406}
 CORPORA = ['ppaz', 'jaam', 'danlessa']
 
@@ -732,24 +739,34 @@ def main():
          f"{hilly['corpus']}/{hilly['ride']} ({f(_km, 1)} km): h₊ = "
          + ' '.join(f"σ{s}:{f(hp[i], 1)}" for i, s in enumerate(SIGMAS)))
 
-    # cache determinism (subset rebuild, byte-identical)
-    t0 = now_ms()
-    cd = cache_determinism_check()
-    print(f"cache determinism subset check: {cd['checked']} rides, "
-          f"{to_fixed((now_ms() - t0) / 1000, 0)} s", file=sys.stderr)
-    gate('cache determinism (every-40th-ride rebuild byte-identical)', cd["bad"] == 0,
-         f"{cd['checked']} rides rechecked, {cd['bad']} mismatches")
+    # cache determinism (subset rebuild, byte-identical) — skipped under FAST=1
+    if FAST:
+        print('FAST=1: skipping the cache-determinism subset rebuild', file=sys.stderr)
+    else:
+        t0 = now_ms()
+        cd = cache_determinism_check()
+        print(f"cache determinism subset check: {cd['checked']} rides, "
+              f"{to_fixed((now_ms() - t0) / 1000, 0)} s", file=sys.stderr)
+        gate('cache determinism (every-40th-ride rebuild byte-identical)', cd["bad"] == 0,
+             f"{cd['checked']} rides rechecked, {cd['bad']} mismatches")
 
-    # (4) determinism: full Phase C twice → identical reports
+    # (4) determinism: full Phase C twice → identical reports. Under FAST=1, run
+    # only once (run1 is what feeds the CSV/report either way) and skip the ×2 proof.
     print('Phase C run 1…', file=sys.stderr)
     tC1 = now_ms()
     run1 = run_phase_c(bin_sha, meta_sha)
-    print(f"Phase C run 1: {to_fixed((now_ms() - tC1) / 1000, 0)} s; run 2…", file=sys.stderr)
-    tC2 = now_ms()
-    run2 = run_phase_c(bin_sha, meta_sha)
-    print(f"Phase C run 2: {to_fixed((now_ms() - tC2) / 1000, 0)} s", file=sys.stderr)
-    gate('determinism: Phase C ×2 → identical reports', run1["report"] == run2["report"],
-         f"sha256 run1={sha256hex(run1['report'])[0:12]} run2={sha256hex(run2['report'])[0:12]}")
+    print(f"Phase C run 1: {to_fixed((now_ms() - tC1) / 1000, 0)} s", file=sys.stderr)
+    if FAST:
+        print('FAST=1: skipping Phase C run 2 (the ×2-identical determinism proof)',
+              file=sys.stderr)
+        run2 = run1
+    else:
+        print('run 2…', file=sys.stderr)
+        tC2 = now_ms()
+        run2 = run_phase_c(bin_sha, meta_sha)
+        print(f"Phase C run 2: {to_fixed((now_ms() - tC2) / 1000, 0)} s", file=sys.stderr)
+        gate('determinism: Phase C ×2 → identical reports', run1["report"] == run2["report"],
+             f"sha256 run1={sha256hex(run1['report'])[0:12]} run2={sha256hex(run2['report'])[0:12]}")
 
     # (3) dead-clamp: min pre-clamp descent edge across every walked profile at every parameter set
     gate('dead-clamp: min pre-clamp descent edge > 0',
@@ -790,9 +807,12 @@ def main():
             rec[f"d_fr_s{s}"] = d_pct(r[f"v2fr_s{s}"], r["emp"])
             rec[f"hplus_s{s}"] = r[f"hplus_s{s}"]
         lines.append(",".join(cell4(rec.get(k)) for k in cols))
-    with open(os.path.join(RESULTS, 'goal_calibration.csv'), "w", encoding="utf-8") as fh:
+    csv_name = 'goal_calibration' + env_suffix(
+        "PPAZ_M", "PPAZ_CDA", "PPAZ_CRR", "JAAM_M", "JAAM_CDA", "JAAM_CRR",
+        "DANLESSA_M", "DANLESSA_CDA", "DANLESSA_CRR") + '.csv'
+    with open(os.path.join(RESULTS, csv_name), "w", encoding="utf-8") as fh:
         fh.write("\n".join(lines) + "\n")
-    print(f"\nwrote goal_calibration.csv ({len(rides)} rides) · "
+    print(f"\nwrote {csv_name} ({len(rides)} rides) · "
           f"sampleMs={js_json(IGC.sample_ms)}")
     sys.exit(0 if ok else 1)
 

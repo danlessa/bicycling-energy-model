@@ -32,7 +32,6 @@ Reads data/inputs/activities/strava_danlessa_manifest.json (+ gitignored tracks)
 writes data/results/danlessa_comparison.csv. Run: python3 src/harness/danlessa_compare.py
 """
 
-import gzip
 import json
 import math
 import os
@@ -44,8 +43,8 @@ sys.path.insert(0, os.path.join(REPO, "src"))
 
 from bicycling_energy_model import (approx_components, build_profile, canonical,
                                     climb_balance, deadband, empirical_kj,
-                                    eps_geom, extract_regime_powers,
-                                    flat_eq_speed, is_finite, jsdiv,
+                                    env_suffix, eps_geom, extract_regime_powers,
+                                    flat_eq_speed, is_finite, jsdiv, load_pts,
                                     overall_mean_power, pts_from_fit,
                                     push_stats, resample_profile)
 from bicycling_energy_model.engines import G
@@ -158,12 +157,8 @@ print(f"AUTHOR (danlessa) FULL-EXPORT VERIFICATION — {len(CAND)} candidate rid
 
 def read_pts(file):
     global FIT_MANUF
-    with open(os.path.join(DATA, file), "rb") as fh:
-        buf = fh.read()
-    if file.endswith(".gz"):
-        buf = gzip.decompress(buf)
     meta = {}
-    pts = pts_from_fit(buf, meta)
+    pts = load_pts(os.path.join(DATA, file), meta)
     FIT_MANUF = meta["manufacturer"]
     return pts
 
@@ -394,6 +389,7 @@ def cell(v):
 
 csv_text = "\n".join([",".join(cols)]
                      + [",".join(cell(r[k]) for k in cols) for r in rows])
-with open(os.path.join(RESULTS, "danlessa_comparison.csv"), "w") as fh:
+CSV_NAME = f"danlessa_comparison{env_suffix('DANLESSA_M', 'DANLESSA_CDA', 'DANLESSA_CRR')}.csv"
+with open(os.path.join(RESULTS, CSV_NAME), "w") as fh:
     fh.write(csv_text + "\n")
-print(f"\nwrote danlessa_comparison.csv ({len(rows)} rides)")
+print(f"\nwrote {CSV_NAME} ({len(rows)} rides)")

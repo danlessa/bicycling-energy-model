@@ -71,7 +71,7 @@ from regime_compare import (ASSUMED, CLIMB_THR, DESC_THR, ENGINE_DX, G,  # noqa:
                             med_of, overall_mean_power, paired_abs, parse_fit,
                             point_regime_data, pts_from_fit, pw_from, r0_champion,
                             r1d_v2_edge, resample_profile)
-from bicycling_energy_model import approx_components, is_finite, jsdiv  # noqa: E402
+from bicycling_energy_model import approx_components, env_suffix, is_finite, jsdiv  # noqa: E402
 from bicycling_energy_model.jsfmt import js_str, to_exponential, to_fixed  # noqa: E402
 
 DATA = os.path.join(REPO, "data", "inputs", "activities")
@@ -676,9 +676,12 @@ def main():
     out = [",".join(COLS)]
     for r in rows:
         out.append(",".join(cell4(r.get(k)) for k in COLS))
-    with open(os.path.join(RESULTS, 'igc_resolution_test.csv'), "w", encoding="utf-8") as fh:
+    csv_name = 'igc_resolution_test' + env_suffix(
+        "PPAZ_M", "PPAZ_CDA", "PPAZ_CRR", "JAAM_M", "JAAM_CDA", "JAAM_CRR",
+        "DANLESSA_M", "DANLESSA_CDA", "DANLESSA_CRR") + '.csv'
+    with open(os.path.join(RESULTS, csv_name), "w", encoding="utf-8") as fh:
         fh.write("\n".join(out) + "\n")
-    print(f"\nwrote igc_resolution_test.csv ({len(rows)} rides)")
+    print(f"\nwrote {csv_name} ({len(rows)} rides)")
     sys.exit(0 if ok[0] else 1)
 
 

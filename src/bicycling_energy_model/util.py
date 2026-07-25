@@ -1,6 +1,7 @@
 """Small shared helpers the harnesses used to carry as per-file copies."""
 
 import math
+import os
 
 
 def is_finite(x):
@@ -28,3 +29,15 @@ def jsdiv(a, b):
         return float("nan")
     neg = (a < 0) != (math.copysign(1.0, b) < 0)
     return float("-inf") if neg else float("inf")
+
+
+def env_suffix(*names):
+    """Build a filename suffix from whichever of `names` are set in the
+    environment, e.g. env_suffix('PPAZ_M', 'PPAZ_CDA') with PPAZ_M=78 set
+    returns '.PPAZ_M78'; '' if none are set. A `<RIDER>_M`/`_CDA`/`_CRR`
+    sensitivity sweep must not silently overwrite the canonical CSV that
+    downstream harnesses and bootstrap_ci's gates trust — this lets a harness
+    route an active override to its own file instead."""
+    parts = [f"{n}{os.environ[n]}".replace(".", "p").replace("-", "m")
+             for n in names if os.environ.get(n)]
+    return ("." + "_".join(parts)) if parts else ""

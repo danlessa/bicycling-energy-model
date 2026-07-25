@@ -34,7 +34,6 @@ jsdiv. Only epsCellsPz remains harness-local below, ported faithfully.
 Output: console report + ppaz_comparison.csv (gitignored via data/results/*).
 """
 
-import gzip
 import json
 import math
 import os
@@ -46,8 +45,8 @@ sys.path.insert(0, os.path.join(REPO, "src"))
 
 from bicycling_energy_model import (approx_components, build_profile, canonical,
                                     climb_balance, deadband, empirical_kj,
-                                    eps_geom, extract_regime_powers,
-                                    flat_eq_speed, is_finite, jsdiv,
+                                    env_suffix, eps_geom, extract_regime_powers,
+                                    flat_eq_speed, is_finite, jsdiv, load_pts,
                                     overall_mean_power, pts_from_fit,
                                     push_stats, resample_profile)
 from bicycling_energy_model.engines import G
@@ -173,11 +172,7 @@ print(f"P. PAZ SECOND-RIDER VERIFICATION — {len(CAND)} candidate rides (ride, 
 
 
 def read_pts(file, meta=None):
-    with open(os.path.join(DATA, file), "rb") as fh:
-        buf = fh.read()
-    if file.endswith(".gz"):
-        buf = gzip.decompress(buf)
-    return pts_from_fit(buf, meta)
+    return load_pts(os.path.join(DATA, file), meta)
 
 
 # ---- PASS A: implied total mass from the sustained-climb balance ----
@@ -428,6 +423,7 @@ def cell(v):
 cols = list(rows[0].keys())
 csv_text = "\n".join([",".join(cols)]
                      + [",".join(cell(r.get(k)) for k in cols) for r in rows])
-with open(os.path.join(RESULTS, "ppaz_comparison.csv"), "w", encoding="utf-8") as fh:
+CSV_NAME = f"ppaz_comparison{env_suffix('PPAZ_M', 'PPAZ_CDA', 'PPAZ_CRR')}.csv"
+with open(os.path.join(RESULTS, CSV_NAME), "w", encoding="utf-8") as fh:
     fh.write(csv_text + "\n")
-print(f"\nwrote ppaz_comparison.csv ({len(rows)} rides)")
+print(f"\nwrote {CSV_NAME} ({len(rows)} rides)")

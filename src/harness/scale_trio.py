@@ -52,6 +52,9 @@ Entry-19 censo rides, and igc5 profiles for the censo rides.
   python3 src/harness/scale_trio.py    → report on stdout (timings stderr) + scale_trio.csv
                                          (gitignored via data/results/*)
   SCALE_SMOKE=1 python3 src/harness/scale_trio.py  → debug: 3 rides/corpus, count/number gates skipped
+  FAST=1 python3 src/harness/scale_trio.py  → iteration only: skip the supp-cache- and
+                                       analysis-determinism ×2 reruns (same result, no re-proof
+                                       of determinism — don't use for a published number)
 
 JS name → Python name (this file's own top-level definitions, in file order):
   SCRATCH, DEM5, DEM30, GOAL_BIN, GOAL_META, SMOKE, SUPP_BIN, SUPP_META, EXPECT, CORPORA,
@@ -101,7 +104,7 @@ from regime_compare import (ASSUMED, CLIMB_THR, DESC_THR, ENGINE_DX, G,  # noqa:
                             flat_eq_speed, has_power, jquote,
                             med_of, overall_mean_power, point_regime_data,
                             pts_from_fit, pw_from, r1d_v2_edge, resample_profile)
-from bicycling_energy_model import is_finite, jsdiv  # noqa: E402
+from bicycling_energy_model import env_suffix, is_finite, jsdiv  # noqa: E402
 from bicycling_energy_model.jsfmt import js_str, to_exponential, to_fixed  # noqa: E402
 
 DATA = os.path.join(REPO, "data", "inputs", "activities")
@@ -114,6 +117,9 @@ DEM30 = os.path.join(SCRATCH, 'sampa_geral_30m.tif')
 GOAL_BIN = os.path.join(SCRATCH, 'goal_profiles.bin')
 GOAL_META = os.path.join(SCRATCH, 'goal_profiles.meta.json')
 SMOKE = bool(os.environ.get('SCALE_SMOKE'))
+FAST = bool(os.environ.get('FAST'))          # iteration only: skip the supp-cache/analysis
+                                              # determinism double-run (run 1's output is still
+                                              # what's reported; only the ×2-identical proof goes)
 SUPP_BIN = os.path.join(SCRATCH,
                         'scale_trio_profiles_smoke.bin' if SMOKE else 'scale_trio_profiles.bin')
 SUPP_META = os.path.join(
@@ -1003,22 +1009,32 @@ def main():
     gate('Entry-20 σ=0 uncalibrated validation med|Δ%| ≡ 8.53/2.64/14.84 (tol 0.01)',
          SMOKE or worst < 0.01, ' '.join(f"{c}={f(got[c], 3)}" for c in CORPORA))
 
-    # supp cache determinism (subset rebuild, byte-identical)
-    t0 = now_ms()
-    cd = supp_determinism_check()
-    print(f"supp cache determinism subset check: {cd['checked']} rides, "
-          f"{to_fixed((now_ms() - t0) / 1000, 0)} s", file=sys.stderr)
-    gate('supp cache determinism (every-40th-ride rebuild byte-identical)', cd["bad"] == 0,
-         f"{cd['checked']} rides rechecked, {cd['bad']} mismatches")
+    # supp cache determinism (subset rebuild, byte-identical) — skipped under FAST=1
+    if FAST:
+        print('FAST=1: skipping the supp-cache-determinism subset rebuild', file=sys.stderr)
+    else:
+        t0 = now_ms()
+        cd = supp_determinism_check()
+        print(f"supp cache determinism subset check: {cd['checked']} rides, "
+              f"{to_fixed((now_ms() - t0) / 1000, 0)} s", file=sys.stderr)
+        gate('supp cache determinism (every-40th-ride rebuild byte-identical)', cd["bad"] == 0,
+             f"{cd['checked']} rides rechecked, {cd['bad']} mismatches")
 
+    # Under FAST=1, run only once (run1 is what feeds the CSV/report either way)
+    # and skip the ×2-identical determinism proof.
     print('analysis run 1…', file=sys.stderr)
     run1 = run_analysis(g_bin_sha, s_bin_sha)
-    print('analysis run 2…', file=sys.stderr)
-    run2 = run_analysis(g_bin_sha, s_bin_sha)
-    gate('determinism: full analysis ×2 → identical report + CSV',
-         run1["report"] == run2["report"] and run1["csv"] == run2["csv"],
-         f"report sha {sha256hex(run1['report'])[0:12]}/{sha256hex(run2['report'])[0:12]} · "
-         f"csv sha {sha256hex(run1['csv'])[0:12]}/{sha256hex(run2['csv'])[0:12]}")
+    if FAST:
+        print('FAST=1: skipping analysis run 2 (the ×2-identical determinism proof)',
+              file=sys.stderr)
+        run2 = run1
+    else:
+        print('analysis run 2…', file=sys.stderr)
+        run2 = run_analysis(g_bin_sha, s_bin_sha)
+        gate('determinism: full analysis ×2 → identical report + CSV',
+             run1["report"] == run2["report"] and run1["csv"] == run2["csv"],
+             f"report sha {sha256hex(run1['report'])[0:12]}/{sha256hex(run2['report'])[0:12]} · "
+             f"csv sha {sha256hex(run1['csv'])[0:12]}/{sha256hex(run2['csv'])[0:12]}")
     gate('stage-1 decomposition ≡ verbatim v2EdgeK at all fitted/reported sets (tol 1e-6 kJ)',
          run1["decWorst"] < 1e-6, f"max |Δ| {to_exponential(run1['decWorst'], 2)} kJ")
     gate('walkStatsK ≡ v2EdgeK on every diagnostic walk', run1["wsMax"] < 1e-9,
@@ -1041,9 +1057,12 @@ def main():
             ok = False
     print('SANITY: ALL PASS' if ok else 'SANITY: FAILURES ABOVE')
 
-    with open(os.path.join(RESULTS, 'scale_trio.csv'), "w", encoding="utf-8") as fh:
+    csv_name = 'scale_trio' + env_suffix(
+        "PPAZ_M", "PPAZ_CDA", "PPAZ_CRR", "JAAM_M", "JAAM_CDA", "JAAM_CRR",
+        "DANLESSA_M", "DANLESSA_CDA", "DANLESSA_CRR") + '.csv'
+    with open(os.path.join(RESULTS, csv_name), "w", encoding="utf-8") as fh:
         fh.write(run1["csv"])
-    print(f"\nwrote scale_trio.csv ({len(rides)} rides) · sampleMs={js_json(IGC.sample_ms)}")
+    print(f"\nwrote {csv_name} ({len(rides)} rides) · sampleMs={js_json(IGC.sample_ms)}")
     sys.exit(0 if ok else 1)
 
 

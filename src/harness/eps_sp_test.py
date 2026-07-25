@@ -29,7 +29,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 REPO = os.path.dirname(os.path.dirname(HERE))
 sys.path.insert(0, os.path.join(REPO, "src"))
 
-from bicycling_energy_model import is_finite, jsdiv, pts_from_fit
+from bicycling_energy_model import is_finite, jsdiv, load_pts
 from bicycling_energy_model.engines import G
 from bicycling_energy_model.jsfmt import js_str, to_fixed
 
@@ -155,8 +155,7 @@ for e in man:
     if not os.path.exists(fp):
         continue
     try:
-        with open(fp, "rb") as fh:
-            pts = pts_from_fit(fh.read())
+        pts = load_pts(fp)
         if not any(q.get("power") is not None for q in pts):
             continue
         p = dict(ASSUMED)

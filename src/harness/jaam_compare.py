@@ -29,7 +29,6 @@ Reads data/inputs/activities/strava_jaam_manifest.json (+ gitignored tracks);
 writes data/results/jaam_comparison.csv. Run: python3 src/harness/jaam_compare.py
 """
 
-import gzip
 import json
 import math
 import os
@@ -42,8 +41,8 @@ sys.path.insert(0, os.path.join(REPO, "src"))
 
 from bicycling_energy_model import (approx_components, build_profile, canonical,
                                     climb_balance, deadband, empirical_kj,
-                                    eps_geom, extract_regime_powers,
-                                    flat_eq_speed, is_finite, jsdiv,
+                                    env_suffix, eps_geom, extract_regime_powers,
+                                    flat_eq_speed, is_finite, jsdiv, load_pts,
                                     overall_mean_power, pts_from_fit,
                                     push_stats, resample_profile)
 from bicycling_energy_model.engines import G
@@ -165,12 +164,8 @@ print(f"JAAM THIRD-RIDER VERIFICATION — {len(CAND)} candidate rides (ride, pow
 def read_pts(file):
     """Returns (pts, manufacturer) — manufacturer is the file_id probe the
     .mjs kept in the FIT_MANUF global (260 = Zwift)."""
-    with open(os.path.join(DATA, file), "rb") as fh:
-        buf = fh.read()
-    if file.endswith(".gz"):
-        buf = gzip.decompress(buf)
     meta = {}
-    pts = pts_from_fit(buf, meta)
+    pts = load_pts(os.path.join(DATA, file), meta)
     return pts, meta["manufacturer"]
 
 
@@ -451,6 +446,7 @@ def cell(v):
 cols = list(rows[0].keys())
 csv_text = "\n".join([",".join(cols)]
                      + [",".join(cell(r.get(k)) for k in cols) for r in rows])
-with open(os.path.join(RESULTS, "jaam_comparison.csv"), "w", encoding="utf-8") as fh:
+CSV_NAME = f"jaam_comparison{env_suffix('JAAM_M', 'JAAM_CDA', 'JAAM_CRR')}.csv"
+with open(os.path.join(RESULTS, CSV_NAME), "w", encoding="utf-8") as fh:
     fh.write(csv_text + "\n")
-print(f"\nwrote jaam_comparison.csv ({len(rows)} rides)")
+print(f"\nwrote {CSV_NAME} ({len(rows)} rides)")

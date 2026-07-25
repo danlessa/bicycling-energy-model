@@ -30,7 +30,6 @@ Design (fixed after an adversarial methods review — see the plan / Entry 13):
 Output: console report + time_comparison.csv (gitignored via data/results/*).
 """
 
-import gzip
 import json
 import math
 import os
@@ -41,8 +40,8 @@ REPO = os.path.dirname(os.path.dirname(HERE))
 sys.path.insert(0, os.path.join(REPO, "src"))
 
 from bicycling_energy_model import (approx_components, approx_time, build_profile,
-                                    canonical, deadband, empirical_kj,
-                                    flat_eq_speed, is_finite, jsdiv,
+                                    canonical, deadband, empirical_kj, env_suffix,
+                                    flat_eq_speed, is_finite, jsdiv, load_pts,
                                     overall_mean_power, pts_from_fit,
                                     pts_from_gpx, resample_profile)
 from bicycling_energy_model.engines import G
@@ -279,15 +278,10 @@ def corr_of(xs, ys):
 
 def read_pts(file):
     global FIT_MANUF
-    with open(os.path.join(DATA, file), "rb") as fh:
-        buf = fh.read()
-    if file.endswith(".gz"):
-        buf = gzip.decompress(buf)
-    if file.endswith(".gpx") or file.endswith(".gpx.gz"):
-        return pts_from_gpx(buf.decode("utf-8", errors="replace"))
     meta = {}
-    pts = pts_from_fit(buf, meta)
-    FIT_MANUF = meta["manufacturer"]
+    pts = load_pts(os.path.join(DATA, file), meta)
+    if meta:
+        FIT_MANUF = meta["manufacturer"]
     return pts
 
 
@@ -773,6 +767,7 @@ def csv_cell(v):
 csv_text = "\n".join([",".join(cols + ["T1b_pred", "T0_pred"])]
                      + [",".join([csv_cell(r.get(k)) for k in cols]
                                  + [f(r["_T1b"], 1), f(r["_T0"], 1)]) for r in clean])
-with open(os.path.join(RESULTS, "time_comparison.csv"), "w") as fh:
+CSV_NAME = f"time_comparison{env_suffix('PPAZ_M')}.csv"
+with open(os.path.join(RESULTS, CSV_NAME), "w") as fh:
     fh.write(csv_text + "\n")
-print(f"\nwrote time_comparison.csv ({len(clean)} rides)")
+print(f"\nwrote {CSV_NAME} ({len(clean)} rides)")

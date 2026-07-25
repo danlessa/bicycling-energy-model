@@ -30,7 +30,7 @@ from .profiles import haversine, build_profile, pts_from_gpx
 from .regime import (climb_balance, eps_from_balance, extract_regime_powers,
                      measured_flat_speed, push_stats)
 from .ride import analyze_ride, load_pts
-from .util import is_finite, jsdiv
+from .util import env_suffix, is_finite, jsdiv
 
 __all__ = [
     "G", "flat_eq_speed", "resample_profile", "smooth_elevation", "deadband",
@@ -40,4 +40,5 @@ __all__ = [
     "extract_regime_powers", "eps_from_balance", "measured_flat_speed",
     "analyze_ride", "load_pts",
     "approx_components", "climb_balance", "push_stats", "is_finite", "jsdiv",
+    "env_suffix",
 ]

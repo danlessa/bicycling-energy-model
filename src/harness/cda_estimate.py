@@ -27,11 +27,9 @@ affect the output and are not reproduced here.
 Output: console report + data/results/cda_estimate.csv.
 """
 
-import gzip
 import json
 import math
 import os
-import re
 import sys
 from datetime import datetime
 
@@ -39,7 +37,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 REPO = os.path.dirname(os.path.dirname(HERE))
 sys.path.insert(0, os.path.join(REPO, "src"))
 
-from bicycling_energy_model import finish_pts, is_finite, jsdiv, pts_from_fit
+from bicycling_energy_model import finish_pts, is_finite, jsdiv, load_pts, pts_from_fit
 from bicycling_energy_model.engines import G
 from bicycling_energy_model.jsfmt import js_str, to_fixed
 
@@ -48,199 +46,8 @@ RESULTS = os.path.join(REPO, "data", "results")
 os.makedirs(RESULTS, exist_ok=True)
 
 
-# ---- pipeline copies whose bodies differ from reference.mjs ----
-
-def haversine(a, b):
-    R = 6371000
-    to_r = math.pi / 180
-    s1 = math.sin((b["lat"] - a["lat"]) * to_r / 2)
-    s2 = math.sin((b["lon"] - a["lon"]) * to_r / 2)
-    s = s1 * s1 + math.cos(a["lat"] * to_r) * math.cos(b["lat"] * to_r) * (s2 * s2)
-    return 2 * R * math.asin(min(1, math.sqrt(s)))
-
-
-_TRKPT = re.compile(r'<trkpt\b([^>]*)>([\s\S]*?)</trkpt>')
-_LAT = re.compile(r'lat="([-\d.]+)"')
-_LON = re.compile(r'lon="([-\d.]+)"')
-_ELE = re.compile(r'<ele>\s*([-\d.]+)')
-_TIME = re.compile(r'<time>\s*([^<]+)')
-_POWER = re.compile(r'<(?:\w+:)?power>\s*([\d.]+)')
-
-
-def _date_parse(s):
-    """Date.parse(s)/1000 for the ISO-8601 stamps GPX carries (NaN when
-    unparseable, as JS)."""
-    try:
-        return datetime.fromisoformat(s.strip().replace("Z", "+00:00")).timestamp()
-    except ValueError:
-        return float("nan")
-
-
-def pts_from_gpx(text):
-    out = []
-    for m in _TRKPT.finditer(text):
-        la = _LAT.search(m.group(1))
-        lo = _LON.search(m.group(1))
-        if not la or not lo:
-            continue
-        ele = _ELE.search(m.group(2))
-        tm = _TIME.search(m.group(2))
-        pw = _POWER.search(m.group(2))
-        out.append({"lat": float(la.group(1)), "lon": float(lo.group(1)),
-                    "alt": float(ele.group(1)) if ele else float("nan"),
-                    "t": _date_parse(tm.group(1)) if tm else None,
-                    "power": float(pw.group(1)) if pw else None})
-    if len(out) < 2:
-        raise ValueError("GPX poucos pontos")
-    cum = 0.0
-    pts = [{"x": 0, "alt": out[0]["alt"], "power": out[0].get("power"), "t": out[0].get("t")}]
-    for i in range(1, len(out)):
-        cum += haversine(out[i - 1], out[i])
-        pts.append({"x": cum, "alt": out[i]["alt"], "power": out[i].get("power"),
-                    "t": out[i].get("t")})
-    finish_pts(pts)
-    return pts
-
-
-# ===== Independent CdA / mass / C_rr estimation (Entry 15) =====
-
-KEFF = 0.98
-
-
-def rho_at(h):
-    if h != h:   # Math.min/Math.max propagate NaN (Python's min/max do not)
-        return float("nan")
-    x = 11000 if h > 11000 else h        # Math.min(h, 11000)
-    x = x if x > 0 else 0                # Math.max(0, ·)
-    return 1.225 * math.pow(1 - 2.25577e-5 * x, 5.25588)
-
-
-def median(xs):
-    s = sorted(x for x in xs if is_finite(x))
-    if not s:
-        return float("nan")
-    k = (len(s) - 1) / 2
-    return (s[math.floor(k)] + s[math.ceil(k)]) / 2
-
-
-def ols3(A, B, C, E):
-    """3-param no-intercept least squares  E = θ1·A + θ2·B + θ3·C (Gauss on the 3×3)."""
-    n = len(E)
-    M = [[0, 0, 0], [0, 0, 0], [0, 0, 0]]
-    y = [0, 0, 0]
-    syy = 0.0
-    my = 0.0
-    for e in E:
-        my += e
-    my = jsdiv(my, n)
-    for i in range(n):
-        f = [A[i], B[i], C[i]]
-        for a in range(3):
-            for b in range(3):
-                M[a][b] += f[a] * f[b]
-            y[a] += f[a] * E[i]
-        syy += (E[i] - my) * (E[i] - my)   # (E[i] - my) ** 2 — V8's x**2 is x*x
-    # Gaussian elimination on the 3×3
-    m = [list(M[i]) + [y[i]] for i in range(3)]
-    for c in range(3):
-        piv = c
-        for r in range(c + 1, 3):
-            if abs(m[r][c]) > abs(m[piv][c]):
-                piv = r
-        m[c], m[piv] = m[piv], m[c]
-        if abs(m[c][c]) < 1e-12:
-            return {"theta": [float("nan")] * 3, "r2": float("nan"), "n": n}
-        for r in range(3):
-            if r != c:
-                f = jsdiv(m[r][c], m[c][c])
-                for k in range(c, 4):
-                    m[r][k] -= f * m[c][k]
-    theta = [jsdiv(m[0][3], m[0][0]), jsdiv(m[1][3], m[1][1]), jsdiv(m[2][3], m[2][2])]
-    sse = 0.0
-    for i in range(n):
-        e = E[i] - theta[0] * A[i] - theta[1] * B[i] - theta[2] * C[i]
-        sse += e * e
-    return {"theta": theta, "r2": 1 - jsdiv(sse, syy), "n": n}
-
-
-def ols2_fixed(A, B, C, E, cda_fix):
-    """2-param no-intercept LS with CdA FIXED: subtract aero, fit E' = m·A + (Crr·m)·B."""
-    s11 = s12 = s22 = y1 = y2 = 0.0
-    for i in range(len(E)):
-        Ep = E[i] - cda_fix * C[i]
-        s11 += A[i] * A[i]
-        s12 += A[i] * B[i]
-        s22 += B[i] * B[i]
-        y1 += A[i] * Ep
-        y2 += B[i] * Ep
-    det = s11 * s22 - s12 * s12
-    if abs(det) < 1e-9:
-        return {"m": float("nan"), "crr": float("nan")}
-    m = jsdiv(y1 * s22 - y2 * s12, det)
-    crr_m = jsdiv(s11 * y2 - s12 * y1, det)
-    return {"m": m, "crr": jsdiv(crr_m, m)}
-
-
-def corr(xs, ys):
-    n = len(xs)
-    mx = 0.0
-    my = 0.0
-    for i in range(n):
-        mx += xs[i]
-        my += ys[i]
-    mx = jsdiv(mx, n)
-    my = jsdiv(my, n)
-    sxy = sxx = syy = 0.0
-    for i in range(n):
-        sxy += (xs[i] - mx) * (ys[i] - my)
-        sxx += (xs[i] - mx) * (xs[i] - mx)   # ** 2 → x*x
-        syy += (ys[i] - my) * (ys[i] - my)
-    return jsdiv(sxy, math.sqrt(sxx * syy))
-
-
-def bootstrap3(A, B, C, E, reps=400):
-    """Bootstrap CIs on (m, CdA, Crr) — segments resampled with a fixed LCG.
-    The seed step runs in DOUBLE arithmetic then ToInt32, exactly as JS
-    (`seed * 1103515245` exceeds 2^53, so it rounds — Python ints would not)."""
-    n = len(E)
-    state = [12345]
-
-    def rnd():
-        prod = float(state[0]) * 1103515245.0 + 12345.0   # double, as JS
-        state[0] = int(prod) & 0x7FFFFFFF                 # ToInt32 then & 0x7fffffff
-        return state[0] / 0x7FFFFFFF
-
-    ms, cdas, crrs = [], [], []
-    for _ in range(reps):
-        a, b, c, e = [], [], [], []
-        for _i in range(n):
-            j = math.floor(rnd() * n)
-            a.append(A[j])
-            b.append(B[j])
-            c.append(C[j])
-            e.append(E[j])
-        f = ols3(a, b, c, e)
-        if not is_finite(f["theta"][0]):
-            continue
-        ms.append(f["theta"][0])
-        cdas.append(f["theta"][2])
-        crrs.append(jsdiv(f["theta"][1], f["theta"][0]))
-
-    def ci(arr):
-        s = sorted(arr)
-        return [s[math.floor(0.025 * len(s))], s[math.floor(0.975 * len(s))]]
-
-    return {"mCI": ci(ms), "cdaCI": ci(cdas), "crrCI": ci(crrs)}
-
-
 def read_pts(file):
-    with open(os.path.join(DATA, file), "rb") as fh:
-        buf = fh.read()
-    if file.endswith(".gz") and not file.endswith(".gpx.gz"):
-        buf = gzip.decompress(buf)
-    if file.endswith(".gpx"):
-        return pts_from_gpx(buf.decode("utf8"))
-    return pts_from_fit(buf)
+    return load_pts(os.path.join(DATA, file))
 
 
 def grade30(pts):
