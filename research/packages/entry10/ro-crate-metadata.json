@@ -39,7 +39,7 @@
         }
       ],
       "subjectOf": {
-        "@id": "https://github.com/danlessa/bicycling-energy-model/blob/main/research/notes/MODEL_COMPARISON_JOURNAL.md"
+        "@id": "https://github.com/danlessa/bicycling-energy-model/blob/main/research/journal/MODEL_COMPARISON_JOURNAL.md"
       },
       "conformsTo": {
         "@id": "https://w3id.org/ro/wfrun/process/0.5"
@@ -52,7 +52,7 @@
       "email": "danilo.lessa@gmail.com"
     },
     {
-      "@id": "https://github.com/danlessa/bicycling-energy-model/blob/main/research/notes/MODEL_COMPARISON_JOURNAL.md",
+      "@id": "https://github.com/danlessa/bicycling-energy-model/blob/main/research/journal/MODEL_COMPARISON_JOURNAL.md",
       "@type": "CreativeWork",
       "name": "Model comparison journal",
       "encodingFormat": "text/markdown"
@@ -70,7 +70,7 @@
       "text": "Refuted: no stop-go/braking predictor explains the per-ride gap (R² ≤ 0.07, two wrong-signed; the mechanistic correction over-corrects, RMS 0.19 vs flat-constant 0.08). Braking is invisible to ε because gravity re-supplies the braked-away speed on a descent — so ε ≈ 0.20 as a constant, and the rural −0.13 offset transfers to São Paulo essentially unchanged.",
       "appearance": [
         {
-          "@id": "https://github.com/danlessa/bicycling-energy-model/blob/main/research/notes/MODEL_COMPARISON_JOURNAL.md"
+          "@id": "https://github.com/danlessa/bicycling-energy-model/blob/main/research/journal/MODEL_COMPARISON_JOURNAL.md"
         }
       ],
       "subjectOf": {
@@ -85,10 +85,10 @@
       "conditionsOfAccess": "Available on request from the author, coordinates stripped."
     },
     {
-      "@id": "#results/eps_sp.csv",
+      "@id": "#data/results/eps_sp.csv",
       "@type": "File",
-      "name": "results/eps_sp.csv",
-      "description": "Per-ride CSV — gitignored (rows carry ride names/dates tied to private activities); described hash-only, never distributed. Regenerates via `python3 harness/eps_sp_test.py`.",
+      "name": "data/results/eps_sp.csv",
+      "description": "Per-ride CSV — gitignored (rows carry ride names/dates tied to private activities); described hash-only, never distributed. Regenerates via `python3 src/harness/eps_sp_test.py`.",
       "sha256": "4d23a5a47abfe722a0397d640b9b7107961cdf640911831b28905ecd779b4d77",
       "contentSize": "4441",
       "encodingFormat": "text/csv"
@@ -107,7 +107,7 @@
       },
       "instrument": [
         {
-          "@id": "#harness/eps_sp_test.py"
+          "@id": "#src/harness/eps_sp_test.py"
         }
       ],
       "object": [
@@ -117,21 +117,21 @@
       ],
       "result": [
         {
-          "@id": "#results/eps_sp.csv"
+          "@id": "#data/results/eps_sp.csv"
         }
       ]
     },
     {
-      "@id": "#harness/eps_sp_test.py",
+      "@id": "#src/harness/eps_sp_test.py",
       "@type": [
         "File",
         "SoftwareApplication",
         "SoftwareSourceCode"
       ],
-      "name": "harness/eps_sp_test.py",
-      "url": "https://github.com/danlessa/bicycling-energy-model/blob/2de78046a481e5ce72c0380f5d053c6bb0dbbbee/harness/eps_sp_test.py",
-      "sha256": "943cfad551e20f91c86c7e30592edc8f10fb6960d8c3febf2811b4077f98588d",
-      "version": "2de78046a481e5ce72c0380f5d053c6bb0dbbbee",
+      "name": "src/harness/eps_sp_test.py",
+      "url": "https://github.com/danlessa/bicycling-energy-model/blob/cf52def91651b94f2b4e7b0ca2c32e67b92688ec/src/harness/eps_sp_test.py",
+      "sha256": "0e9356ebb6b7015f6e720662ecea638adf9babd83fc5f5b33ee8fb5eee0b57c2",
+      "version": "cf52def91651b94f2b4e7b0ca2c32e67b92688ec",
       "programmingLanguage": "Python"
     },
     {

@@ -36,7 +36,7 @@
         }
       ],
       "subjectOf": {
-        "@id": "https://github.com/danlessa/bicycling-energy-model/blob/main/research/notes/MODEL_COMPARISON_JOURNAL.md"
+        "@id": "https://github.com/danlessa/bicycling-energy-model/blob/main/research/journal/MODEL_COMPARISON_JOURNAL.md"
       },
       "citation": [
         {
@@ -51,7 +51,7 @@
       "email": "danilo.lessa@gmail.com"
     },
     {
-      "@id": "https://github.com/danlessa/bicycling-energy-model/blob/main/research/notes/MODEL_COMPARISON_JOURNAL.md",
+      "@id": "https://github.com/danlessa/bicycling-energy-model/blob/main/research/journal/MODEL_COMPARISON_JOURNAL.md",
       "@type": "CreativeWork",
       "name": "Model comparison journal",
       "encodingFormat": "text/markdown"
@@ -69,7 +69,7 @@
       "text": "A 13-agent adversarially-verified review fixed a latent KE-floor bug (unreachable by any benchmark ride), the measuredFlatSpeed/epsFromBalance VSTOP gate (the one fix with real effect: censo ε_true 0.14 → 0.23), compressed-timestamp FIT decoding, signed drag in flatEqSpeed, and the app's interleaved-record loader; no published headline conclusion reversed. Methodological correction: the ε correlations (0.83/0.87) are part–whole — the honest statistic is RMS skill vs a flat baseline.",
       "appearance": [
         {
-          "@id": "https://github.com/danlessa/bicycling-energy-model/blob/main/research/notes/MODEL_COMPARISON_JOURNAL.md"
+          "@id": "https://github.com/danlessa/bicycling-energy-model/blob/main/research/journal/MODEL_COMPARISON_JOURNAL.md"
         }
       ],
       "subjectOf": {

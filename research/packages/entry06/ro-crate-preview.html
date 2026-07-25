@@ -62,7 +62,7 @@ ul { margin:.4rem 0; padding-left:1.2rem; }
   <h1>Entrada 06 — external DEMs (FABDEM/SRTM/COP30) and k_h for DEM-derived h₊/h₋</h1>
   <div class="badges">
     <span>2026-06-28</span>
-    <span>commit 2de78046a481</span>
+    <span>commit cf52def91651</span>
     <span>com execução de harness</span>
   </div>
 </header>
@@ -72,7 +72,7 @@ ul { margin:.4rem 0; padding-left:1.2rem; }
   <blockquote>
     No single source is ground truth for ascent — they bracket it: the recorded baro under-reads (−11% raw / −21% smoothed vs the IGC 5 m DTM), the DSMs over-read (COP30 +18%, SRTM +34%), FABDEM lands +6%; nearest-neighbour sampling adds ~30 pp of staircase (use bilinear); the geometric k_DEM correction is the solid result, while the energy k_h (~0.8–0.9 estimated) stayed an open TODO.
     <footer>Conforme registrado no
-    <a href="https://github.com/danlessa/bicycling-energy-model/blob/main/research/notes/MODEL_COMPARISON_JOURNAL.md">diário de comparação de modelos</a> e no grafo de
+    <a href="https://github.com/danlessa/bicycling-energy-model/blob/main/research/journal/MODEL_COMPARISON_JOURNAL.md">diário de comparação de modelos</a> e no grafo de
     afirmações (<a href="https://github.com/danlessa/bicycling-energy-model/blob/main/research/notes/claims.ttl">claims.ttl</a>) — a prosa da entrada
     permanece a fonte autoritativa.</footer>
   </blockquote>
@@ -80,7 +80,7 @@ ul { margin:.4rem 0; padding-left:1.2rem; }
 
 <section>
   <h2>Como foi produzida</h2>
-  <p>Instrumento(s): <code>harness/build_model_inputs.py</code> (sha256 <code class='hash'>2694490acdeaa17f…</code>, <a href="https://github.com/danlessa/bicycling-energy-model/blob/2de78046a481e5ce72c0380f5d053c6bb0dbbbee/harness/build_model_inputs.py">fonte no commit</a>).</p>
+  <p>Instrumento(s): <code>src/harness/build_model_inputs.py</code> (sha256 <code class='hash'>2694490acdeaa17f…</code>, <a href="https://github.com/danlessa/bicycling-energy-model/blob/cf52def91651b94f2b4e7b0ca2c32e67b92688ec/src/harness/build_model_inputs.py">fonte no commit</a>).</p>
   <p class='muted'>Insumos primários: gravações de pedaladas privadas (FIT com GPS e potência) — fora do repositório e deste pacote; agregados sem coordenadas disponíveis sob pedido.</p>
   <p class="muted">Reconstruir os pacotes:
   <code>python3 research/packages/make_crates.py</code>.</p>
@@ -89,7 +89,7 @@ ul { margin:.4rem 0; padding-left:1.2rem; }
 <section>
   <h2>Contexto</h2>
   <ul>
-    <li>Diário (entrada 6): <a href="https://github.com/danlessa/bicycling-energy-model/blob/main/research/notes/MODEL_COMPARISON_JOURNAL.md">MODEL_COMPARISON_JOURNAL.md</a></li>
+    <li>Diário (entrada 6): <a href="https://github.com/danlessa/bicycling-energy-model/blob/main/research/journal/MODEL_COMPARISON_JOURNAL.md">MODEL_COMPARISON_JOURNAL.md</a></li>
     <li>Grafo de afirmações: <a href="https://github.com/danlessa/bicycling-energy-model/blob/main/research/notes/claims.ttl">claims.ttl</a></li>
     <li>Documento relacionado: <a href="https://github.com/danlessa/bicycling-energy-model/blob/main/research/notes/dem-elevation-comparison.md">research/notes/dem-elevation-comparison.md</a></li>
     <li>Pacote de pesquisa: <a href="https://doi.org/10.5281/zenodo.21282165">https://doi.org/10.5281/zenodo.21282165</a></li>

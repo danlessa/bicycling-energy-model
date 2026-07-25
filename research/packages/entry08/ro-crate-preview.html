@@ -62,7 +62,7 @@ ul { margin:.4rem 0; padding-left:1.2rem; }
   <h1>Entrada 08 — a closed form for ε from route geometry</h1>
   <div class="badges">
     <span>2026-06-28</span>
-    <span>commit 2de78046a481</span>
+    <span>commit cf52def91651</span>
     <span>com execução de harness</span>
   </div>
 </header>
@@ -70,9 +70,9 @@ ul { margin:.4rem 0; padding-left:1.2rem; }
 <section>
   <h2>A afirmação</h2>
   <blockquote>
-    ε is predictable from grade alone on real descents: ε ≈ clamp01(min(1, (α/β)/s̄) − 0.13), the −0.13 a near-constant offset for residual descent pedalling/braking; the remaining scatter is rider behaviour, not route geometry.
+    ε is predictable from grade alone on real descents: ε ≈ clamp01(min(1, (α/β)/s̄) − ε₀), with ε₀ ≈ 0.13 the near-constant COASTING DEFICIT — the share of the descent pure coasting would refund but the rider does not collect, through residual descent pedalling and pre-corner braking; the remaining scatter is rider behaviour, not route geometry.
     <footer>Conforme registrado no
-    <a href="https://github.com/danlessa/bicycling-energy-model/blob/main/research/notes/MODEL_COMPARISON_JOURNAL.md">diário de comparação de modelos</a> e no grafo de
+    <a href="https://github.com/danlessa/bicycling-energy-model/blob/main/research/journal/MODEL_COMPARISON_JOURNAL.md">diário de comparação de modelos</a> e no grafo de
     afirmações (<a href="https://github.com/danlessa/bicycling-energy-model/blob/main/research/notes/claims.ttl">claims.ttl</a>) — a prosa da entrada
     permanece a fonte autoritativa.</footer>
   </blockquote>
@@ -80,7 +80,7 @@ ul { margin:.4rem 0; padding-left:1.2rem; }
 
 <section>
   <h2>Como foi produzida</h2>
-  <p>Instrumento(s): <code>harness/eps_hypothesis.py</code> (sha256 <code class='hash'>76c2e656640ec606…</code>, <a href="https://github.com/danlessa/bicycling-energy-model/blob/2de78046a481e5ce72c0380f5d053c6bb0dbbbee/harness/eps_hypothesis.py">fonte no commit</a>).</p>
+  <p>Instrumento(s): <code>src/harness/eps_hypothesis.py</code> (sha256 <code class='hash'>7d17e1185d64c31f…</code>, <a href="https://github.com/danlessa/bicycling-energy-model/blob/cf52def91651b94f2b4e7b0ca2c32e67b92688ec/src/harness/eps_hypothesis.py">fonte no commit</a>).</p>
   <p class='muted'>Insumos primários: gravações de pedaladas privadas (FIT com GPS e potência) — fora do repositório e deste pacote; agregados sem coordenadas disponíveis sob pedido.</p>
   <p class="muted">Reconstruir os pacotes:
   <code>python3 research/packages/make_crates.py</code>.</p>
@@ -93,16 +93,16 @@ ul { margin:.4rem 0; padding-left:1.2rem; }
   consentido confirmar que recebeu os mesmos arquivos.</p>
   <div class="tablewrap"><table>
     <tr><th>arquivo</th><th>tamanho</th><th>sha256</th><th>regenera via</th></tr>
-    <tr><td><code>results/eps_hypothesis.csv</code></td><td class='num'>6,271 B</td><td><code class='hash'>e10b86a4d357d308…</code></td><td>python3 harness/eps_hypothesis.py</td></tr>
+    <tr><td><code>data/results/eps_hypothesis.csv</code></td><td class='num'>6,269 B</td><td><code class='hash'>176429bbeda0337d…</code></td><td>python3 src/harness/eps_hypothesis.py</td></tr>
   </table></div>
 </section>
 
 <section>
   <h2>Contexto</h2>
   <ul>
-    <li>Diário (entrada 8): <a href="https://github.com/danlessa/bicycling-energy-model/blob/main/research/notes/MODEL_COMPARISON_JOURNAL.md">MODEL_COMPARISON_JOURNAL.md</a></li>
+    <li>Diário (entrada 8): <a href="https://github.com/danlessa/bicycling-energy-model/blob/main/research/journal/MODEL_COMPARISON_JOURNAL.md">MODEL_COMPARISON_JOURNAL.md</a></li>
     <li>Grafo de afirmações: <a href="https://github.com/danlessa/bicycling-energy-model/blob/main/research/notes/claims.ttl">claims.ttl</a></li>
-    <li>Documento relacionado: <a href="https://github.com/danlessa/bicycling-energy-model/blob/main/notas.md">notas.md</a></li>
+    <li>Documento relacionado: <a href="https://github.com/danlessa/bicycling-energy-model/blob/main/research/notes/original_notes.md">research/notes/original_notes.md</a></li>
     <li>Pacote de pesquisa: <a href="https://doi.org/10.5281/zenodo.21282165">https://doi.org/10.5281/zenodo.21282165</a></li>
     <li>Metadados legíveis por máquina: <code>ro-crate-metadata.json</code></li>
   </ul>

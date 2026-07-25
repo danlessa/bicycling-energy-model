@@ -62,7 +62,7 @@ ul { margin:.4rem 0; padding-left:1.2rem; }
   <h1>Entrada 21 — hypothesis — the resolution gap is a parameter problem, not a DEM problem</h1>
   <div class="badges">
     <span>2026-07-07</span>
-    <span>commit 2de78046a481</span>
+    <span>commit cf52def91651</span>
     <span>com execução de harness</span>
   </div>
 </header>
@@ -72,7 +72,7 @@ ul { margin:.4rem 0; padding-left:1.2rem; }
   <blockquote>
     The behavioural constants are functions of (Δx, terrain-roughness regime), not of Δx alone: the fitted trio (k_s 0.9375, ε₀ 0.0632, climbThr 0.025) bridges the gap per-ride on all three rider corpora but closes only ~55% of censo&#x27;s gap.
     <footer>Conforme registrado no
-    <a href="https://github.com/danlessa/bicycling-energy-model/blob/main/research/notes/MODEL_COMPARISON_JOURNAL.md">diário de comparação de modelos</a> e no grafo de
+    <a href="https://github.com/danlessa/bicycling-energy-model/blob/main/research/journal/MODEL_COMPARISON_JOURNAL.md">diário de comparação de modelos</a> e no grafo de
     afirmações (<a href="https://github.com/danlessa/bicycling-energy-model/blob/main/research/notes/claims.ttl">claims.ttl</a>) — a prosa da entrada
     permanece a fonte autoritativa.</footer>
   </blockquote>
@@ -80,7 +80,7 @@ ul { margin:.4rem 0; padding-left:1.2rem; }
 
 <section>
   <h2>Como foi produzida</h2>
-  <p>Instrumento(s): <code>harness/scale_trio.py</code> (sha256 <code class='hash'>8b0065cc5cc8edfb…</code>, <a href="https://github.com/danlessa/bicycling-energy-model/blob/2de78046a481e5ce72c0380f5d053c6bb0dbbbee/harness/scale_trio.py">fonte no commit</a>).</p>
+  <p>Instrumento(s): <code>src/harness/scale_trio.py</code> (sha256 <code class='hash'>97d1311cc4a9d44b…</code>, <a href="https://github.com/danlessa/bicycling-energy-model/blob/cf52def91651b94f2b4e7b0ca2c32e67b92688ec/src/harness/scale_trio.py">fonte no commit</a>).</p>
   <p class='muted'>Insumos primários: gravações de pedaladas privadas (FIT com GPS e potência) — fora do repositório e deste pacote; agregados sem coordenadas disponíveis sob pedido.</p>
   <p class="muted">Reconstruir os pacotes:
   <code>python3 research/packages/make_crates.py</code>.</p>
@@ -93,14 +93,14 @@ ul { margin:.4rem 0; padding-left:1.2rem; }
   consentido confirmar que recebeu os mesmos arquivos.</p>
   <div class="tablewrap"><table>
     <tr><th>arquivo</th><th>tamanho</th><th>sha256</th><th>regenera via</th></tr>
-    <tr><td><code>results/scale_trio.csv</code></td><td class='num'>225,412 B</td><td><code class='hash'>cbea51c84e6c46e7…</code></td><td>python3 harness/scale_trio.py</td></tr>
+    <tr><td><code>data/results/scale_trio.csv</code></td><td class='num'>225,344 B</td><td><code class='hash'>d5e6794fc01227ba…</code></td><td>python3 src/harness/scale_trio.py</td></tr>
   </table></div>
 </section>
 
 <section>
   <h2>Contexto</h2>
   <ul>
-    <li>Diário (entrada 21): <a href="https://github.com/danlessa/bicycling-energy-model/blob/main/research/notes/MODEL_COMPARISON_JOURNAL.md">MODEL_COMPARISON_JOURNAL.md</a></li>
+    <li>Diário (entrada 21): <a href="https://github.com/danlessa/bicycling-energy-model/blob/main/research/journal/MODEL_COMPARISON_JOURNAL.md">MODEL_COMPARISON_JOURNAL.md</a></li>
     <li>Grafo de afirmações: <a href="https://github.com/danlessa/bicycling-energy-model/blob/main/research/notes/claims.ttl">claims.ttl</a></li>
     
     <li>Pacote de pesquisa: <a href="https://doi.org/10.5281/zenodo.21282165">https://doi.org/10.5281/zenodo.21282165</a></li>

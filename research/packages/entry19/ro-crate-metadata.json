@@ -39,7 +39,7 @@
         }
       ],
       "subjectOf": {
-        "@id": "https://github.com/danlessa/bicycling-energy-model/blob/main/research/notes/MODEL_COMPARISON_JOURNAL.md"
+        "@id": "https://github.com/danlessa/bicycling-energy-model/blob/main/research/journal/MODEL_COMPARISON_JOURNAL.md"
       },
       "conformsTo": {
         "@id": "https://w3id.org/ro/wfrun/process/0.5"
@@ -52,7 +52,7 @@
       "email": "danilo.lessa@gmail.com"
     },
     {
-      "@id": "https://github.com/danlessa/bicycling-energy-model/blob/main/research/notes/MODEL_COMPARISON_JOURNAL.md",
+      "@id": "https://github.com/danlessa/bicycling-energy-model/blob/main/research/journal/MODEL_COMPARISON_JOURNAL.md",
       "@type": "CreativeWork",
       "name": "Model comparison journal",
       "encodingFormat": "text/markdown"
@@ -67,10 +67,10 @@
       "@id": "#claim",
       "@type": "Claim",
       "name": "Entry 19: the app on its usual DEM — v2Edge on the deployed IGC-SP 5 m raster vs a 30 m resample",
-      "text": "The resolution over-charge transfers to the deployment: paired signed gap +9.44 pp (censo) and +3.64 pp (pooled riders) — the pre-registered decision rule is TRIGGERED.",
+      "text": "The resolution over-charge transfers to the deployment: paired signed gap +9.41 pp (censo) and +3.64 pp (pooled riders) — the pre-registered decision rule is TRIGGERED.",
       "appearance": [
         {
-          "@id": "https://github.com/danlessa/bicycling-energy-model/blob/main/research/notes/MODEL_COMPARISON_JOURNAL.md"
+          "@id": "https://github.com/danlessa/bicycling-energy-model/blob/main/research/journal/MODEL_COMPARISON_JOURNAL.md"
         }
       ],
       "subjectOf": {
@@ -85,12 +85,12 @@
       "conditionsOfAccess": "Available on request from the author, coordinates stripped."
     },
     {
-      "@id": "#results/igc_resolution_test.csv",
+      "@id": "#data/results/igc_resolution_test.csv",
       "@type": "File",
-      "name": "results/igc_resolution_test.csv",
-      "description": "Per-ride CSV — gitignored (rows carry ride names/dates tied to private activities); described hash-only, never distributed. Regenerates via `python3 harness/igc_resolution_test.py`.",
-      "sha256": "a3dda97174a03c96f90d95d62dd250a87ae56785729095c0ced11dcc5e9c251f",
-      "contentSize": "308376",
+      "name": "data/results/igc_resolution_test.csv",
+      "description": "Per-ride CSV — gitignored (rows carry ride names/dates tied to private activities); described hash-only, never distributed. Regenerates via `python3 src/harness/igc_resolution_test.py`.",
+      "sha256": "7c3f6ea6cacf474747f94768bb926884cfa740c6a086a90ed0b00c10057de617",
+      "contentSize": "308387",
       "encodingFormat": "text/csv"
     },
     {
@@ -107,7 +107,7 @@
       },
       "instrument": [
         {
-          "@id": "#harness/igc_resolution_test.py"
+          "@id": "#src/harness/igc_resolution_test.py"
         }
       ],
       "object": [
@@ -117,21 +117,21 @@
       ],
       "result": [
         {
-          "@id": "#results/igc_resolution_test.csv"
+          "@id": "#data/results/igc_resolution_test.csv"
         }
       ]
     },
     {
-      "@id": "#harness/igc_resolution_test.py",
+      "@id": "#src/harness/igc_resolution_test.py",
       "@type": [
         "File",
         "SoftwareApplication",
         "SoftwareSourceCode"
       ],
-      "name": "harness/igc_resolution_test.py",
-      "url": "https://github.com/danlessa/bicycling-energy-model/blob/2de78046a481e5ce72c0380f5d053c6bb0dbbbee/harness/igc_resolution_test.py",
-      "sha256": "03c34c87132bd7a7e76e448b22bc9ced18826b1d816a8193bb2c55c3ae177457",
-      "version": "2de78046a481e5ce72c0380f5d053c6bb0dbbbee",
+      "name": "src/harness/igc_resolution_test.py",
+      "url": "https://github.com/danlessa/bicycling-energy-model/blob/cf52def91651b94f2b4e7b0ca2c32e67b92688ec/src/harness/igc_resolution_test.py",
+      "sha256": "5575d3584d5080efbcb66e41deda92c43ed104f81282d4f3fb3bea6b7ce18566",
+      "version": "cf52def91651b94f2b4e7b0ca2c32e67b92688ec",
       "programmingLanguage": "Python"
     },
     {

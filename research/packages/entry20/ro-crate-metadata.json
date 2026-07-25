@@ -39,7 +39,7 @@
         }
       ],
       "subjectOf": {
-        "@id": "https://github.com/danlessa/bicycling-energy-model/blob/main/research/notes/MODEL_COMPARISON_JOURNAL.md"
+        "@id": "https://github.com/danlessa/bicycling-energy-model/blob/main/research/journal/MODEL_COMPARISON_JOURNAL.md"
       },
       "conformsTo": {
         "@id": "https://w3id.org/ro/wfrun/process/0.5"
@@ -52,7 +52,7 @@
       "email": "danilo.lessa@gmail.com"
     },
     {
-      "@id": "https://github.com/danlessa/bicycling-energy-model/blob/main/research/notes/MODEL_COMPARISON_JOURNAL.md",
+      "@id": "https://github.com/danlessa/bicycling-energy-model/blob/main/research/journal/MODEL_COMPARISON_JOURNAL.md",
       "@type": "CreativeWork",
       "name": "Model comparison journal",
       "encodingFormat": "text/markdown"
@@ -70,7 +70,7 @@
       "text": "PASS: σ* = 10 m + per-rider effective (CdA, Crr, kSmooth) meets med|Δ%| < 5 and |bias| < 2 on all three riders' validation halves; the calibration, not the smoothing, is the lever; fitted values are effective, not physical.",
       "appearance": [
         {
-          "@id": "https://github.com/danlessa/bicycling-energy-model/blob/main/research/notes/MODEL_COMPARISON_JOURNAL.md"
+          "@id": "https://github.com/danlessa/bicycling-energy-model/blob/main/research/journal/MODEL_COMPARISON_JOURNAL.md"
         }
       ],
       "subjectOf": {
@@ -85,12 +85,12 @@
       "conditionsOfAccess": "Available on request from the author, coordinates stripped."
     },
     {
-      "@id": "#results/goal_calibration.csv",
+      "@id": "#data/results/goal_calibration.csv",
       "@type": "File",
-      "name": "results/goal_calibration.csv",
-      "description": "Per-ride CSV — gitignored (rows carry ride names/dates tied to private activities); described hash-only, never distributed. Regenerates via `python3 harness/goal_calibration.py`.",
-      "sha256": "1243e09fb6e03a349878d7765586d00ca335990420dc37cd680989f70ff2773d",
-      "contentSize": "209791",
+      "name": "data/results/goal_calibration.csv",
+      "description": "Per-ride CSV — gitignored (rows carry ride names/dates tied to private activities); described hash-only, never distributed. Regenerates via `python3 src/harness/goal_calibration.py`.",
+      "sha256": "0da1efa31dd05c6e413f627b59feb3ff4ba4e28b45adbe7aa4fa312441fa1d2e",
+      "contentSize": "209805",
       "encodingFormat": "text/csv"
     },
     {
@@ -107,7 +107,7 @@
       },
       "instrument": [
         {
-          "@id": "#harness/goal_calibration.py"
+          "@id": "#src/harness/goal_calibration.py"
         }
       ],
       "object": [
@@ -117,21 +117,21 @@
       ],
       "result": [
         {
-          "@id": "#results/goal_calibration.csv"
+          "@id": "#data/results/goal_calibration.csv"
         }
       ]
     },
     {
-      "@id": "#harness/goal_calibration.py",
+      "@id": "#src/harness/goal_calibration.py",
       "@type": [
         "File",
         "SoftwareApplication",
         "SoftwareSourceCode"
       ],
-      "name": "harness/goal_calibration.py",
-      "url": "https://github.com/danlessa/bicycling-energy-model/blob/2de78046a481e5ce72c0380f5d053c6bb0dbbbee/harness/goal_calibration.py",
-      "sha256": "fc9edb34ef386259de467856ccb91360f719c69d4d3beb135334d7330ee4ac04",
-      "version": "2de78046a481e5ce72c0380f5d053c6bb0dbbbee",
+      "name": "src/harness/goal_calibration.py",
+      "url": "https://github.com/danlessa/bicycling-energy-model/blob/cf52def91651b94f2b4e7b0ca2c32e67b92688ec/src/harness/goal_calibration.py",
+      "sha256": "12f6b9b92974afe4f805efa36008f332393df15cf24660de37c4122f06380b64",
+      "version": "cf52def91651b94f2b4e7b0ca2c32e67b92688ec",
       "programmingLanguage": "Python"
     },
     {

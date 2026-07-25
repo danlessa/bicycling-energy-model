@@ -36,7 +36,7 @@
         }
       ],
       "subjectOf": {
-        "@id": "https://github.com/danlessa/bicycling-energy-model/blob/main/research/notes/MODEL_COMPARISON_JOURNAL.md"
+        "@id": "https://github.com/danlessa/bicycling-energy-model/blob/main/research/journal/MODEL_COMPARISON_JOURNAL.md"
       }
     },
     {
@@ -46,7 +46,7 @@
       "email": "danilo.lessa@gmail.com"
     },
     {
-      "@id": "https://github.com/danlessa/bicycling-energy-model/blob/main/research/notes/MODEL_COMPARISON_JOURNAL.md",
+      "@id": "https://github.com/danlessa/bicycling-energy-model/blob/main/research/journal/MODEL_COMPARISON_JOURNAL.md",
       "@type": "CreativeWork",
       "name": "Model comparison journal",
       "encodingFormat": "text/markdown"
@@ -64,7 +64,7 @@
       "text": "Yes — and terrain roughly doubles the pure-geometry prediction: sq8 sits +12.7% median (+47% p90) above a converged near-continuum reference on the deployed 5 m DTM; the mechanism is height oscillation under the asymmetric climb/descent cost, not octile distance. Profile-integrated sq16 recovers ≈⅔ of the bias; NAIVE long-edge costing flips the error's sign (the trap: it flattens the relief it crosses). Pre-registration scorecard against the shipped worker: wall-time confirmed, field-median borderline, budget-reach miscalibrated — pre-register distributions, not point ranges.",
       "appearance": [
         {
-          "@id": "https://github.com/danlessa/bicycling-energy-model/blob/main/research/notes/MODEL_COMPARISON_JOURNAL.md"
+          "@id": "https://github.com/danlessa/bicycling-energy-model/blob/main/research/journal/MODEL_COMPARISON_JOURNAL.md"
         }
       ],
       "subjectOf": {

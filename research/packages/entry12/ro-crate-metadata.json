@@ -39,7 +39,7 @@
         }
       ],
       "subjectOf": {
-        "@id": "https://github.com/danlessa/bicycling-energy-model/blob/main/research/notes/MODEL_COMPARISON_JOURNAL.md"
+        "@id": "https://github.com/danlessa/bicycling-energy-model/blob/main/research/journal/MODEL_COMPARISON_JOURNAL.md"
       },
       "conformsTo": {
         "@id": "https://w3id.org/ro/wfrun/process/0.5"
@@ -52,7 +52,7 @@
       "email": "danilo.lessa@gmail.com"
     },
     {
-      "@id": "https://github.com/danlessa/bicycling-energy-model/blob/main/research/notes/MODEL_COMPARISON_JOURNAL.md",
+      "@id": "https://github.com/danlessa/bicycling-energy-model/blob/main/research/journal/MODEL_COMPARISON_JOURNAL.md",
       "@type": "CreativeWork",
       "name": "Model comparison journal",
       "encodingFormat": "text/markdown"
@@ -67,10 +67,10 @@
       "@id": "#claim",
       "@type": "Claim",
       "name": "Entry 12: a second rider — the frozen ε estimator survives the transfer",
-      "text": "The frozen rider-1 estimator survives the transfer: clamp01(ε_coast − 0.13) beats even P. Paz's own best flat constant by ~35% (RMS 0.091 vs 0.139 at s̄ ≥ 3%); the −0.13 offset reproduces independently (measured gap 0.12); the energy law lands ~5–7% median with only mass data-implied (per-ride median m̂ 74.3 kg), and ε_geom is the best variant (+0.6% bias) on this open, coastable corpus.",
+      "text": "The frozen rider-1 estimator survives the transfer: clamp01(ε_coast − 0.13) beats even P. Paz's own best flat constant by ~35% (RMS 0.091 vs 0.139 at s̄ ≥ 3%); the −0.13 offset reproduces independently (measured gap 0.12); the energy law lands ~5–7% median with only mass data-implied (per-ride median m̂ 74.5 kg), and ε_geom is the best variant (+0.6% bias) on this open, coastable corpus.",
       "appearance": [
         {
-          "@id": "https://github.com/danlessa/bicycling-energy-model/blob/main/research/notes/MODEL_COMPARISON_JOURNAL.md"
+          "@id": "https://github.com/danlessa/bicycling-energy-model/blob/main/research/journal/MODEL_COMPARISON_JOURNAL.md"
         }
       ],
       "subjectOf": {
@@ -85,10 +85,10 @@
       "conditionsOfAccess": "Available on request from the author, coordinates stripped."
     },
     {
-      "@id": "#results/ppaz_comparison.csv",
+      "@id": "#data/results/ppaz_comparison.csv",
       "@type": "File",
-      "name": "results/ppaz_comparison.csv",
-      "description": "Per-ride CSV — gitignored (rows carry ride names/dates tied to private activities); described hash-only, never distributed. Regenerates via `python3 harness/ppaz_compare.py`.",
+      "name": "data/results/ppaz_comparison.csv",
+      "description": "Per-ride CSV — gitignored (rows carry ride names/dates tied to private activities); described hash-only, never distributed. Regenerates via `python3 src/harness/ppaz_compare.py`.",
       "sha256": "f501456006f633b93463e71654589860869b28dbba42adea30f2b3be17c9d3c1",
       "contentSize": "105177",
       "encodingFormat": "text/csv"
@@ -107,7 +107,7 @@
       },
       "instrument": [
         {
-          "@id": "#harness/ppaz_compare.py"
+          "@id": "#src/harness/ppaz_compare.py"
         }
       ],
       "object": [
@@ -117,21 +117,21 @@
       ],
       "result": [
         {
-          "@id": "#results/ppaz_comparison.csv"
+          "@id": "#data/results/ppaz_comparison.csv"
         }
       ]
     },
     {
-      "@id": "#harness/ppaz_compare.py",
+      "@id": "#src/harness/ppaz_compare.py",
       "@type": [
         "File",
         "SoftwareApplication",
         "SoftwareSourceCode"
       ],
-      "name": "harness/ppaz_compare.py",
-      "url": "https://github.com/danlessa/bicycling-energy-model/blob/2de78046a481e5ce72c0380f5d053c6bb0dbbbee/harness/ppaz_compare.py",
-      "sha256": "3d2ffe46cbf82e597a2bfe6dff74907bf4b80d35d1630ad6bd99849b5d52208d",
-      "version": "2de78046a481e5ce72c0380f5d053c6bb0dbbbee",
+      "name": "src/harness/ppaz_compare.py",
+      "url": "https://github.com/danlessa/bicycling-energy-model/blob/cf52def91651b94f2b4e7b0ca2c32e67b92688ec/src/harness/ppaz_compare.py",
+      "sha256": "807f2243bdba56e2319a7aa6f7a909822ba1c285e4182eaa8dd1792bea5c6020",
+      "version": "cf52def91651b94f2b4e7b0ca2c32e67b92688ec",
       "programmingLanguage": "Python"
     },
     {

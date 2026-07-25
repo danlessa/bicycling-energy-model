@@ -104,7 +104,7 @@
       <div class="row" style="margin-top:8px"><label>Carregar GPX/FIT</label><input type="file" id="gpxFile" accept=".gpx,.xml,.fit,application/gpx+xml,application/xml,text/xml,application/octet-stream" style="max-width:158px;font-size:12px"></div>
       <div class="hint" id="gpxInfo"></div>
       <div class="row" style="margin-top:8px"><label>Resolução do motor (dx)</label><input type="number" id="engineDx" value="5" min="0" max="500" step="1"><span class="unit">m</span></div>
-      <div class="row"><label title="Suaviza a elevação (filtro deadband) antes de somar h₊/h₋ no modelo APROXIMADO — remove o ruído sub-τ do DEM/track que infla a subida (notas.md v2, k_h). O canônico fica na elevação crua. 0 = desligado.">Suavização de h₊ (só aprox.)</label><input type="number" id="tauSmooth" value="2" min="0" max="20" step="0.5"><span class="unit">m</span></div>
+      <div class="row"><label title="Suaviza a elevação (filtro deadband) antes de somar h₊/h₋ no modelo APROXIMADO — remove o ruído sub-τ do DEM/track que infla a subida (research/notes/original_notes.md v2, k_h). O canônico fica na elevação crua. 0 = desligado.">Suavização de h₊ (só aprox.)</label><input type="number" id="tauSmooth" value="2" min="0" max="20" step="0.5"><span class="unit">m</span></div>
       <div class="hint">0 = nativa (GPX: pontos do arquivo). Menor dx = mais fino e lento; reamostra o perfil para o passo do integrador.</div>
     </div>
 
@@ -130,7 +130,7 @@
       <div class="hint" id="epsHint">—</div>
       <div class="row"><label></label><button class="mini" id="matchEps">casar ε com a energia das pernas →</button></div>
       <div class="row"><label></label><button class="mini" id="fitEps" title="Recuperação real na descida do FIT: (α·X₋ − energia das pernas nas descidas)/(β·H₋), ponderada pelo desnível. α usa a vel. de plano MEDIDA no FIT.">ε do FIT (recuperação real) →</button></div>
-      <div class="row"><label></label><button class="mini" id="geomEps" title="ε estimado só pela GEOMETRIA (fórmula fechada, notas.md): ε ≈ clamp(Σ h₋·min(1, α/β·s)/H₋ − 0.13), ponderado pelo desnível em células de 30 m. Usa a vel. de plano do MODELO — dispensa potência. Para PLANEJAMENTO; com FIT carregado, prefira 'ε do FIT'.">ε da geometria (fórmula fechada) →</button></div>
+      <div class="row"><label></label><button class="mini" id="geomEps" title="ε estimado só pela GEOMETRIA (fórmula fechada, research/notes/original_notes.md): ε ≈ clamp(Σ h₋·min(1, α/β·s)/H₋ − 0.13), ponderado pelo desnível em células de 30 m. Usa a vel. de plano do MODELO — dispensa potência. Para PLANEJAMENTO; com FIT carregado, prefira 'ε do FIT'.">ε da geometria (fórmula fechada) →</button></div>
       <div class="row"><label title="Aero de α na subida — rolamento sempre cobrado; descidas inalteradas. 'cheia' = v_f (modelo original); '≈0' = zera na subida; 'a v_c' = à velocidade quase-estável de subida k_eff·P/(C_rr·mg·cosθ+mg·sinθ), limitada a v_f.">Aero na subida</label><select id="climbAeroMode"><option value="off">cheia (v_f)</option><option value="zero">≈ 0</option><option value="vc">a v_c</option></select></div>
       <div class="row"><label>Mostrar termo α / β</label></div>
       <div class="stat"><span class="k">α (custo horizontal)</span><span id="alphaOut">—</span></div>
@@ -140,7 +140,7 @@
     <div class="panel">
       <h2>v2Edge (Simujaules — implantado)</h2>
       <div class="row"><label title="Desconto de rolagem: escala SÓ o β (cobrança de subida E crédito de descida). O α/β do ε local fica SEM k_s — ε é fator de geometria do grade, não de energia. Ajustado por ciclista no Entry 20 (0,55–0,98, valor EFETIVO).">k<sub>s</sub> (desconto em β)</label><input type="number" id="ksmooth" value="1" min="0.5" max="1" step="0.01"><span class="unit"></span></div>
-      <div class="row"><label title="Offset empírico de recuperação na descida, ε(s) = clamp₀₁(min(1, (α/β)/s) − ε₀). Calibrado em 0,13 sobre células de 30 m (Entry 8).">ε₀ (offset de recuperação)</label><input type="number" id="epsOffset" value="13" min="0" max="30" step="0.5"><span class="unit">%</span></div>
+      <div class="row"><label title="Déficit de inércia: a parcela da descida que a inércia pura devolveria mas o ciclista não recolhe, porque pedala na descida e freia antes das curvas. ε(s) = clamp₀₁(min(1, (α/β)/s) − ε₀). Calibrado em 0,13 sobre células de 30 m (Entry 8).">ε₀ (déficit de inércia)</label><input type="number" id="epsOffset" value="13" min="0" max="30" step="0.5"><span class="unit">%</span></div>
       <div class="row"><label></label><button class="mini" id="trioDx5" title="Entry 21: o trio comportamental (k_s, ε₀, limiar de subida) re-calibrado como transferência de resolução 30 m → 5 m: k_s 0,94 · ε₀ 6,3% · limiar 2,5%. Faz a ponte em terreno aberto/montanhoso; NÃO transfere pro urbano plano (censo). Também move o limiar de subida compartilhado.">trio p/ Δx = 5 m (Entry 21) →</button></div>
       <div class="hint">Anda o MESMO perfil cru do canônico (sem deadband). O ε local ao grade é sensível à resolução: compare dx = 5 m × 30 m (Entradas 18–19).</div>
     </div>
@@ -295,8 +295,8 @@
       urbano plano).</p>
       <p><b>Validação</b> (journal; 44 longões + 62 censo + 441 + 219 + 1597 pedaladas de três ciclistas
       independentes, todas com potenciômetro): o aproximado com deadband τ = 2 m atinge mediana
-      |Δ| ≈ 3,6% vs 5,1% do canônico nos longões — <b>paridade estatística</b> (Entry 22: CIs se
-      sobrepõem, sign test p = 0,45), o que na prática decide a favor da forma fechada, barata o
+      |Δ| ≈ 3,5% vs 5,2% do canônico nos longões — <b>paridade estatística</b> (Entry 22: CIs se
+      sobrepõem, sign test p = 0,65), o que na prática decide a favor da forma fechada, barata o
       bastante pra rotear. CdA/C<sub>rr</sub>/k<sub>s</sub> ajustados são valores <b>efetivos</b>
       (absorvem viés residual de modelo/resolução), não físicos (Entradas 15, 16, 20).</p>
       <p style="color:#5a6673">Ferramenta de estudo, fora do PWA — não entra no <code>deploy.sh</code> nem no service worker.</p>
@@ -377,7 +377,7 @@ function resampleProfile(src, dx) {
 // Deadband (backlash) filter on the elevation of a profile: ignores moves smaller
 // than tau (m) and tracks larger ones — de-noises the sub-tau DEM/track jitter that
 // inflates h₊ (and h₋). The closed-form β·h₊ term is LINEAR in ascent, so that noise
-// over-predicts climb energy directly (see notas.md "v2", k_h). Applied to the
+// over-predicts climb energy directly (see research/notes/original_notes.md "v2", k_h). Applied to the
 // approximate path only — the canonical sim's energy ≈ distance·power, nearly immune
 // to ascent noise, so smoothing it is counter-productive. tau=0 ⇒ unchanged.
 function smoothElevation(src, tau) {
@@ -480,7 +480,7 @@ function canonical(prof, pw, p) {
 }
 
 // ---------- approximate model (closed form + engine clamp check) ----------
-// Climb-aero correction (opts.climbAeroMode, see notas.md) on segments steeper
+// Climb-aero correction (opts.climbAeroMode, see research/notes/original_notes.md) on segments steeper
 // than opts.climbThr — rolling stays on all x, descents untouched:
 //   'off'  full flat-speed aero (v_f) everywhere — the original model
 //   'zero' aero set to 0 on climbs
@@ -567,7 +567,7 @@ function v2Edge(prof, p, vf, opts) {
   return { E, minPreClamp, epsImplied: Hd > 0 ? epsW / Hd : NaN, hminus: Hd };
 }
 
-// ---------- approximate TIME model (notas.md "effective flat distance") ----------
+// ---------- approximate TIME model (research/notes/original_notes.md "effective flat distance") ----------
 // t = x*/v_f with x* = x + k₊·h₊ − k₋·h₋, computed per-segment as Σ ds/v(s): climb at
 // v_c ≈ keff·P/(Crr·mg·cosθ+mg·sinθ) capped at v_f, flat at v_f, descent at the
 // P_desc+gravity equilibrium capped at v_max. Reports the effective k₊ (clean ≈
@@ -814,11 +814,12 @@ function epsFromFIT(pts, p) {
   return Hd < 1 ? null : { eps: (alpha * Xd - Ed) / (beta * Hd), vf };
 }
 
-// Geometry-only closed-form ε (notas.md "Closed form: predicting ε"; Journal Entry 8).
+// Geometry-only closed-form ε (research/notes/original_notes.md "Closed form: predicting ε"; Journal Entry 8).
 // Coasting limit of ε(s): with idle legs ε(s)=min(1, α/(β·s)), drop-weighted over 30 m
-// descent cells, then a constant −0.13 (residual descent pedalling/braking) calibrated
+// descent cells, then the constant coasting deficit ε₀ = 0.13 (the refund the rider does
+// not collect: residual descent pedalling and pre-corner braking) calibrated
 // against the measured descent-balance ε. α uses the MODEL v_f, so it needs NO power
-// track — a planning estimate. Validated on real descents (corr 0.83–0.87 at s̄ ≥ 3%);
+// track — a planning estimate. Validated on real descents (corr 0.77 at s̄ ≥ 3%, 0.82 at ≥ 3.5%);
 // scatters ±~0.1, and tends high on near-flat rides (which carry ~no descent energy).
 function epsGeom(prof, p, vf) {
   const mg = p.m * G, beta = mg / p.keff, aeroSpd = vf + p.wind;
@@ -1046,7 +1047,7 @@ function recompute() {
   if (physProfile) prof = dx > 0 ? resampleProfile(physProfile, dx) : physProfile;
   else { const Dm = num('dist') * 1000; prof = resample(Dm, dx > 0 ? dx : Dm / (NS - 1)); }
   // raw ascent/descent — canonical & the geometry readout stay on this. The
-  // APPROXIMATE runs on the deadband-smoothed elevation (k_h correction, notas v2).
+  // APPROXIMATE runs on the deadband-smoothed elevation (k_h correction, original_notes.md v2).
   let hpRaw = 0, hmRaw = 0;
   for (let i = 1; i < prof.x.length; i++) { const dh = prof.h[i] - prof.h[i - 1]; if (dh >= 0) hpRaw += dh; else hmRaw += -dh; }
   const profA = smoothElevation(prof, num('tauSmooth'));

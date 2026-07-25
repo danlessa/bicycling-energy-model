@@ -39,7 +39,7 @@
         }
       ],
       "subjectOf": {
-        "@id": "https://github.com/danlessa/bicycling-energy-model/blob/main/research/notes/MODEL_COMPARISON_JOURNAL.md"
+        "@id": "https://github.com/danlessa/bicycling-energy-model/blob/main/research/journal/MODEL_COMPARISON_JOURNAL.md"
       },
       "conformsTo": {
         "@id": "https://w3id.org/ro/wfrun/process/0.5"
@@ -52,7 +52,7 @@
       "email": "danilo.lessa@gmail.com"
     },
     {
-      "@id": "https://github.com/danlessa/bicycling-energy-model/blob/main/research/notes/MODEL_COMPARISON_JOURNAL.md",
+      "@id": "https://github.com/danlessa/bicycling-energy-model/blob/main/research/journal/MODEL_COMPARISON_JOURNAL.md",
       "@type": "CreativeWork",
       "name": "Model comparison journal",
       "encodingFormat": "text/markdown"
@@ -70,7 +70,7 @@
       "text": "Regime decomposition does not beat the champion: its win/loss pattern is a bias trade (a variant wins exactly where the champion's parameter bias points the other way), shown causally by the fitted-physics rerun.",
       "appearance": [
         {
-          "@id": "https://github.com/danlessa/bicycling-energy-model/blob/main/research/notes/MODEL_COMPARISON_JOURNAL.md"
+          "@id": "https://github.com/danlessa/bicycling-energy-model/blob/main/research/journal/MODEL_COMPARISON_JOURNAL.md"
         }
       ],
       "subjectOf": {
@@ -85,12 +85,12 @@
       "conditionsOfAccess": "Available on request from the author, coordinates stripped."
     },
     {
-      "@id": "#results/regime_comparison.csv",
+      "@id": "#data/results/regime_comparison.csv",
       "@type": "File",
-      "name": "results/regime_comparison.csv",
-      "description": "Per-ride CSV — gitignored (rows carry ride names/dates tied to private activities); described hash-only, never distributed. Regenerates via `python3 harness/regime_compare.py`.",
-      "sha256": "0a8c51d70d88fd13332b389215a00a7e1b617eb1ad3530d788dc13a88c58a883",
-      "contentSize": "549879",
+      "name": "data/results/regime_comparison.csv",
+      "description": "Per-ride CSV — gitignored (rows carry ride names/dates tied to private activities); described hash-only, never distributed. Regenerates via `python3 src/harness/regime_compare.py`.",
+      "sha256": "6ecbbd2b88ac217287368a91e6528f5bf116c252e1067e8c32743d355e7c22dc",
+      "contentSize": "549824",
       "encodingFormat": "text/csv"
     },
     {
@@ -107,7 +107,7 @@
       },
       "instrument": [
         {
-          "@id": "#harness/regime_compare.py"
+          "@id": "#src/harness/regime_compare.py"
         }
       ],
       "object": [
@@ -117,21 +117,21 @@
       ],
       "result": [
         {
-          "@id": "#results/regime_comparison.csv"
+          "@id": "#data/results/regime_comparison.csv"
         }
       ]
     },
     {
-      "@id": "#harness/regime_compare.py",
+      "@id": "#src/harness/regime_compare.py",
       "@type": [
         "File",
         "SoftwareApplication",
         "SoftwareSourceCode"
       ],
-      "name": "harness/regime_compare.py",
-      "url": "https://github.com/danlessa/bicycling-energy-model/blob/2de78046a481e5ce72c0380f5d053c6bb0dbbbee/harness/regime_compare.py",
-      "sha256": "9b50523c463d4968408c2759c2ff7af8f110187b0b0c90335db86ac908df1049",
-      "version": "2de78046a481e5ce72c0380f5d053c6bb0dbbbee",
+      "name": "src/harness/regime_compare.py",
+      "url": "https://github.com/danlessa/bicycling-energy-model/blob/cf52def91651b94f2b4e7b0ca2c32e67b92688ec/src/harness/regime_compare.py",
+      "sha256": "072ca47d1540fde0aa7a27265d0aa239051686174b46597306bdef5d1c112ebb",
+      "version": "cf52def91651b94f2b4e7b0ca2c32e67b92688ec",
       "programmingLanguage": "Python"
     },
     {

@@ -165,7 +165,7 @@ cat > "$TMP/foot.pt.html" <<'EOF'
 <a href="https://creativecommons.org/licenses/by/4.0/deed.pt-br">CC BY 4.0</a>.
 Gerado de <a href="https://github.com/danlessa/bicycling-energy-model"><code>article-draft.pt-BR.md</code></a>
 por <code>research/article/build-modelo.sh</code>; a proveniência das análises está no
-<a href="https://github.com/danlessa/bicycling-energy-model/blob/main/research/notes/MODEL_COMPARISON_JOURNAL.md">journal do repositório</a>.
+<a href="https://github.com/danlessa/bicycling-energy-model/blob/main/research/journal/MODEL_COMPARISON_JOURNAL.md">journal do repositório</a>.
 Parte da pesquisa do <a href="https://pedalhidrografi.co">Pedal Hidrográfico</a> — <em>seguir as águas</em>.</p></footer>
 EOF
 cat > "$TMP/foot.en.html" <<'EOF'
@@ -173,7 +173,7 @@ cat > "$TMP/foot.en.html" <<'EOF'
 <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>.
 Generated from <a href="https://github.com/danlessa/bicycling-energy-model"><code>article-draft.md</code></a>
 by <code>research/article/build-modelo.sh</code>; analysis provenance lives in the
-<a href="https://github.com/danlessa/bicycling-energy-model/blob/main/research/notes/MODEL_COMPARISON_JOURNAL.md">repository journal</a>.
+<a href="https://github.com/danlessa/bicycling-energy-model/blob/main/research/journal/MODEL_COMPARISON_JOURNAL.md">repository journal</a>.
 Part of the <a href="https://pedalhidrografi.co">Pedal Hidrográfico</a> research — <em>seguir as águas</em>.</p></footer>
 EOF
 

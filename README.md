@@ -30,7 +30,7 @@ dependencies. You can:
   profile, displacement energy, and the climb-aero correction (`off` / `≈0` /
   `v_c`) against canonical;
 - read the **v2Edge** card — the per-edge realisation Simujaules actually
-  deploys for routing (grade-local `ε(s)`, `k_s`, `ε₀`; journal Entries 18–21),
+  deploys for routing (grade-local `ε(s)`, `k_s`, the coasting deficit `ε₀`; Entries 18–21),
   with its implied drop-weighted ε, the live dead-clamp readout, and a button
   applying Entry 21's Δx = 5 m re-calibrated trio. Its grade-local ε is
   resolution-sensitive: move the engine `dx` between 5 and 30 m on a real
@@ -38,16 +38,17 @@ dependencies. You can:
 
 ## Independent verification (Python)
 
-The whole workflow is also available in **pure Python** under `analysis/`
-(`bem/` package + `analysis/journal.qmd`, an executable Quarto mirror of the
-research journal). The Python port's equivalence to the JS engines is
-machine-checked by `python3 analysis/parity/run_parity.py`, which extracts
-the verbatim JS at run time and compares 8 000+ values to float64 round-off
-— so the analysis can be reviewed without trusting the port by eye.
+The whole workflow is also available in **pure Python**: the
+`src/bicycling_energy_model/` package holds the engines/parsers, and
+`research/journal/journal.qmd` is an executable Quarto mirror of the
+research journal. While the port was being established, its equivalence to
+the original JS engines was machine-checked by a JS parity harness (8 000+
+values agreeing to float64 round-off); that check is now retired — the
+Python package is the single implementation — and git history keeps it.
 
 ## Theory
 
-**`notas.md`** holds the derivations: the energy law and its `α`, `β`, `ε`
+**`research/notes/original_notes.md`** holds the derivations: the energy law and its `α`, `β`, `ε`
 coefficients; the local recovery `ε(s)` and its descent-height-weighted
 aggregate; the climb-aero over-charge correction; the time model
 (effective-flat-distance `x* = x + k₊·h₊ − k₋·h₋`, with `k₊ = v_f·β/P_climb`
@@ -56,23 +57,23 @@ descent power.
 
 ## Data
 
-`data/` — `sample.gpx` (tiny GPX fixture) and `flecha_power.csv` (per-second
+`data/inputs/` — `sample.gpx` (tiny GPX fixture) and `flecha_power.csv` (per-second
 power / altitude / grade / regime export from a long brevet, used for the
 empirical-ε and statistics work; no GPS coordinates). Raw `*.fit` tracks, the
-per-rider spreadsheets, and the downloaded activity dirs under `data/activities/`
+per-rider spreadsheets, and the downloaded activity dirs under `data/inputs/activities/`
 are **gitignored** — they carry GPS tracks and private activity links. The
-harnesses write their per-ride result CSVs to `results/` (also gitignored;
-see `results/README.md` for the file → producer map).
+harnesses write their per-ride result CSVs to `data/results/` (also gitignored;
+see `data/results/README.md` for the file → producer map).
 
 The model has been validated against power-meter rides from **three riders** — the
 author (44 long "longões" + 62 urban "censo" rides) plus **two independent riders**
 (P. Paz, 441 rides; JAAM, 219 rides; neither a Pedal Hidrográfico member, each shared
 with consent). Frozen and tested on the two independent riders, the energy law and the
-−0.13 offset transfer, while the geometric ε *skill* proves rider-dependent (it wins for
+coasting deficit ε₀ ≈ 0.13 transfer, while the geometric ε *skill* proves rider-dependent (it wins for
 a coaster, is inconclusive for a fast descent-pedaller). The **time** model
 (`x* = x + k₊·h₊ − k₋·h₋`) is also tested against measured moving time (`time_compare.py`):
 the ascent half transfers, the descent bridge does not. The harnesses live in
-`harness/` — all **Python, stdlib-only**, importing the engines from `analysis/bem`
+`src/harness/` — all **Python, stdlib-only**, importing the engines from `src/bicycling_energy_model`
 (`compare.py`, `censo_compare.py`, `eps_hypothesis.py`, `eps_sp_test.py`,
 `ppaz_inventory.py`, `ppaz_compare.py`, `jaam_inventory.py`, `jaam_compare.py`,
 `time_compare.py`, `regime_compare.py`, …) — and the write-ups — including the working

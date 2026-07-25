@@ -2,9 +2,9 @@
 """Regenerate the article figures as dependency-free SVGs (stdlib only).
 
 Reads the harness CSV outputs (all gitignored — they need the local tracks):
-  results/model_comparison.csv     (compare.py)
-  results/eps_hypothesis.csv       (eps_hypothesis.py)
-  results/censo_comparison.csv     (censo_compare.py)
+  data/results/model_comparison.csv     (compare.py)
+  data/results/eps_hypothesis.csv       (eps_hypothesis.py)
+  data/results/censo_comparison.csv     (censo_compare.py)
 
 Writes research/article/figs/fig{1..5}.svg (committed — they carry no GPS, only
 per-ride energies and ε, whose ride names are already public in the article).
@@ -19,7 +19,7 @@ import csv, math, os, statistics as st
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.abspath(os.path.join(HERE, '..', '..', '..'))
-RES = os.path.join(ROOT, 'results')
+RES = os.path.join(ROOT, 'data', 'results')
 
 # Okabe-Ito
 BLUE, VERM, GREEN, GREY, INK = '#0072B2', '#D55E00', '#009E73', '#9aa0a6', '#222222'

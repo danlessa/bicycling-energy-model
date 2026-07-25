@@ -39,7 +39,7 @@
         }
       ],
       "subjectOf": {
-        "@id": "https://github.com/danlessa/bicycling-energy-model/blob/main/research/notes/MODEL_COMPARISON_JOURNAL.md"
+        "@id": "https://github.com/danlessa/bicycling-energy-model/blob/main/research/journal/MODEL_COMPARISON_JOURNAL.md"
       },
       "conformsTo": {
         "@id": "https://w3id.org/ro/wfrun/process/0.5"
@@ -52,7 +52,7 @@
       "email": "danilo.lessa@gmail.com"
     },
     {
-      "@id": "https://github.com/danlessa/bicycling-energy-model/blob/main/research/notes/MODEL_COMPARISON_JOURNAL.md",
+      "@id": "https://github.com/danlessa/bicycling-energy-model/blob/main/research/journal/MODEL_COMPARISON_JOURNAL.md",
       "@type": "CreativeWork",
       "name": "Model comparison journal",
       "encodingFormat": "text/markdown"
@@ -70,7 +70,7 @@
       "text": "The approximate's entire error is a climb story (+26.7% climb regime vs ±4% flat); ~20% of raw h₊ is sub-3 m jitter, accounting for ~93% of the climb over-prediction; a 2 m deadband takes cf to 3.4% med|Δ%| — beating the raw canonical (5.1%) — while smoothing mildly HURTS the canonical, which is nearly immune to ascent noise but sensitive to regime reclassification.",
       "appearance": [
         {
-          "@id": "https://github.com/danlessa/bicycling-energy-model/blob/main/research/notes/MODEL_COMPARISON_JOURNAL.md"
+          "@id": "https://github.com/danlessa/bicycling-energy-model/blob/main/research/journal/MODEL_COMPARISON_JOURNAL.md"
         }
       ],
       "subjectOf": {
@@ -85,10 +85,10 @@
       "conditionsOfAccess": "Available on request from the author, coordinates stripped."
     },
     {
-      "@id": "#results/model_comparison.csv",
+      "@id": "#data/results/model_comparison.csv",
       "@type": "File",
-      "name": "results/model_comparison.csv",
-      "description": "Per-ride CSV — gitignored (rows carry ride names/dates tied to private activities); described hash-only, never distributed. Regenerates via `python3 harness/compare.py`.",
+      "name": "data/results/model_comparison.csv",
+      "description": "Per-ride CSV — gitignored (rows carry ride names/dates tied to private activities); described hash-only, never distributed. Regenerates via `python3 src/harness/compare.py`.",
       "sha256": "3e0a811c1dc688758ec4493f0d8eb5804a92b3503c0820bcc18f012d7a0a0742",
       "contentSize": "9619",
       "encodingFormat": "text/csv"
@@ -107,7 +107,7 @@
       },
       "instrument": [
         {
-          "@id": "#harness/compare.py"
+          "@id": "#src/harness/compare.py"
         }
       ],
       "object": [
@@ -117,21 +117,21 @@
       ],
       "result": [
         {
-          "@id": "#results/model_comparison.csv"
+          "@id": "#data/results/model_comparison.csv"
         }
       ]
     },
     {
-      "@id": "#harness/compare.py",
+      "@id": "#src/harness/compare.py",
       "@type": [
         "File",
         "SoftwareApplication",
         "SoftwareSourceCode"
       ],
-      "name": "harness/compare.py",
-      "url": "https://github.com/danlessa/bicycling-energy-model/blob/2de78046a481e5ce72c0380f5d053c6bb0dbbbee/harness/compare.py",
-      "sha256": "e6b2cdbda2e87e6fe06518b7bf57f1b81a68ae983fdf527c30d6a8beeb3c9c82",
-      "version": "2de78046a481e5ce72c0380f5d053c6bb0dbbbee",
+      "name": "src/harness/compare.py",
+      "url": "https://github.com/danlessa/bicycling-energy-model/blob/cf52def91651b94f2b4e7b0ca2c32e67b92688ec/src/harness/compare.py",
+      "sha256": "28623013e7d4dea86614fda962647dc6c84109be230975dc856fb33ae6a952bd",
+      "version": "cf52def91651b94f2b4e7b0ca2c32e67b92688ec",
       "programmingLanguage": "Python"
     },
     {

@@ -39,14 +39,14 @@
         }
       ],
       "subjectOf": {
-        "@id": "https://github.com/danlessa/bicycling-energy-model/blob/main/research/notes/MODEL_COMPARISON_JOURNAL.md"
+        "@id": "https://github.com/danlessa/bicycling-energy-model/blob/main/research/journal/MODEL_COMPARISON_JOURNAL.md"
       },
       "conformsTo": {
         "@id": "https://w3id.org/ro/wfrun/process/0.5"
       },
       "citation": [
         {
-          "@id": "https://github.com/danlessa/bicycling-energy-model/blob/main/notas.md"
+          "@id": "https://github.com/danlessa/bicycling-energy-model/blob/main/research/notes/original_notes.md"
         }
       ]
     },
@@ -57,7 +57,7 @@
       "email": "danilo.lessa@gmail.com"
     },
     {
-      "@id": "https://github.com/danlessa/bicycling-energy-model/blob/main/research/notes/MODEL_COMPARISON_JOURNAL.md",
+      "@id": "https://github.com/danlessa/bicycling-energy-model/blob/main/research/journal/MODEL_COMPARISON_JOURNAL.md",
       "@type": "CreativeWork",
       "name": "Model comparison journal",
       "encodingFormat": "text/markdown"
@@ -72,10 +72,10 @@
       "@id": "#claim",
       "@type": "Claim",
       "name": "Entry 8: a closed form for ε from route geometry",
-      "text": "ε is predictable from grade alone on real descents: ε ≈ clamp01(min(1, (α/β)/s̄) − 0.13), the −0.13 a near-constant offset for residual descent pedalling/braking; the remaining scatter is rider behaviour, not route geometry.",
+      "text": "ε is predictable from grade alone on real descents: ε ≈ clamp01(min(1, (α/β)/s̄) − ε₀), with ε₀ ≈ 0.13 the near-constant COASTING DEFICIT — the share of the descent pure coasting would refund but the rider does not collect, through residual descent pedalling and pre-corner braking; the remaining scatter is rider behaviour, not route geometry.",
       "appearance": [
         {
-          "@id": "https://github.com/danlessa/bicycling-energy-model/blob/main/research/notes/MODEL_COMPARISON_JOURNAL.md"
+          "@id": "https://github.com/danlessa/bicycling-energy-model/blob/main/research/journal/MODEL_COMPARISON_JOURNAL.md"
         }
       ],
       "subjectOf": {
@@ -90,12 +90,12 @@
       "conditionsOfAccess": "Available on request from the author, coordinates stripped."
     },
     {
-      "@id": "#results/eps_hypothesis.csv",
+      "@id": "#data/results/eps_hypothesis.csv",
       "@type": "File",
-      "name": "results/eps_hypothesis.csv",
-      "description": "Per-ride CSV — gitignored (rows carry ride names/dates tied to private activities); described hash-only, never distributed. Regenerates via `python3 harness/eps_hypothesis.py`.",
-      "sha256": "e10b86a4d357d308d592defb24e62a88dd12fa03d3b5afba5d867d21567ad266",
-      "contentSize": "6271",
+      "name": "data/results/eps_hypothesis.csv",
+      "description": "Per-ride CSV — gitignored (rows carry ride names/dates tied to private activities); described hash-only, never distributed. Regenerates via `python3 src/harness/eps_hypothesis.py`.",
+      "sha256": "176429bbeda0337d13275ca14d151da7ca2c540e485aca60d649d2b202af6b97",
+      "contentSize": "6269",
       "encodingFormat": "text/csv"
     },
     {
@@ -112,7 +112,7 @@
       },
       "instrument": [
         {
-          "@id": "#harness/eps_hypothesis.py"
+          "@id": "#src/harness/eps_hypothesis.py"
         }
       ],
       "object": [
@@ -122,27 +122,27 @@
       ],
       "result": [
         {
-          "@id": "#results/eps_hypothesis.csv"
+          "@id": "#data/results/eps_hypothesis.csv"
         }
       ]
     },
     {
-      "@id": "#harness/eps_hypothesis.py",
+      "@id": "#src/harness/eps_hypothesis.py",
       "@type": [
         "File",
         "SoftwareApplication",
         "SoftwareSourceCode"
       ],
-      "name": "harness/eps_hypothesis.py",
-      "url": "https://github.com/danlessa/bicycling-energy-model/blob/2de78046a481e5ce72c0380f5d053c6bb0dbbbee/harness/eps_hypothesis.py",
-      "sha256": "76c2e656640ec6067de8ccd02f6eee1a75fc115c97d1dc071adb71a73f6544a1",
-      "version": "2de78046a481e5ce72c0380f5d053c6bb0dbbbee",
+      "name": "src/harness/eps_hypothesis.py",
+      "url": "https://github.com/danlessa/bicycling-energy-model/blob/cf52def91651b94f2b4e7b0ca2c32e67b92688ec/src/harness/eps_hypothesis.py",
+      "sha256": "7d17e1185d64c31fb308065a021c788c5c9eaf0b0c7962bc52d4af4e8eaabdef",
+      "version": "cf52def91651b94f2b4e7b0ca2c32e67b92688ec",
       "programmingLanguage": "Python"
     },
     {
-      "@id": "https://github.com/danlessa/bicycling-energy-model/blob/main/notas.md",
+      "@id": "https://github.com/danlessa/bicycling-energy-model/blob/main/research/notes/original_notes.md",
       "@type": "CreativeWork",
-      "name": "notas.md",
+      "name": "research/notes/original_notes.md",
       "encodingFormat": "text/markdown"
     },
     {

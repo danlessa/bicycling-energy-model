@@ -39,7 +39,7 @@
         }
       ],
       "subjectOf": {
-        "@id": "https://github.com/danlessa/bicycling-energy-model/blob/main/research/notes/MODEL_COMPARISON_JOURNAL.md"
+        "@id": "https://github.com/danlessa/bicycling-energy-model/blob/main/research/journal/MODEL_COMPARISON_JOURNAL.md"
       },
       "conformsTo": {
         "@id": "https://w3id.org/ro/wfrun/process/0.5"
@@ -52,7 +52,7 @@
       "email": "danilo.lessa@gmail.com"
     },
     {
-      "@id": "https://github.com/danlessa/bicycling-energy-model/blob/main/research/notes/MODEL_COMPARISON_JOURNAL.md",
+      "@id": "https://github.com/danlessa/bicycling-energy-model/blob/main/research/journal/MODEL_COMPARISON_JOURNAL.md",
       "@type": "CreativeWork",
       "name": "Model comparison journal",
       "encodingFormat": "text/markdown"
@@ -67,10 +67,10 @@
       "@id": "#claim",
       "@type": "Claim",
       "name": "Entry 16: does it hold with the *real* rider physics? + the author's full export",
-      "text": "The energy law's ~4–7% accuracy is robust to assumed-vs-fitted physics, but P. Paz's 35% ε win does not survive: under best-guess physics both independent riders TIE the geometric estimator against their own best flat constant (JAAM fully robust throughout). The author's full export validates the mass machinery (71–75 kg vs known ≈ 73; the earlier 79.8 was genuine brevet loadout) and the 0.13 offset, in-sample. Fitted CdA clusters at the aero-position value (0.26–0.34), ~35% below the assumed 0.40 — the flat-fit sees the tucked/drafting rider.",
+      "text": "The energy law's ~4–7% accuracy is robust to assumed-vs-fitted physics, but P. Paz's 35% ε win does not survive: under best-guess physics both independent riders TIE the geometric estimator against their own best flat constant (JAAM fully robust throughout). The author's full export validates the mass machinery (71–75 kg vs known ≈ 73; the earlier 79.9 was genuine brevet loadout) and the 0.13 offset, in-sample. Fitted CdA clusters at the aero-position value (0.26–0.34), ~35% below the assumed 0.40 — the flat-fit sees the tucked/drafting rider.",
       "appearance": [
         {
-          "@id": "https://github.com/danlessa/bicycling-energy-model/blob/main/research/notes/MODEL_COMPARISON_JOURNAL.md"
+          "@id": "https://github.com/danlessa/bicycling-energy-model/blob/main/research/journal/MODEL_COMPARISON_JOURNAL.md"
         }
       ],
       "subjectOf": {
@@ -85,10 +85,10 @@
       "conditionsOfAccess": "Available on request from the author, coordinates stripped."
     },
     {
-      "@id": "#results/danlessa_comparison.csv",
+      "@id": "#data/results/danlessa_comparison.csv",
       "@type": "File",
-      "name": "results/danlessa_comparison.csv",
-      "description": "Per-ride CSV — gitignored (rows carry ride names/dates tied to private activities); described hash-only, never distributed. Regenerates via `python3 harness/danlessa_compare.py`.",
+      "name": "data/results/danlessa_comparison.csv",
+      "description": "Per-ride CSV — gitignored (rows carry ride names/dates tied to private activities); described hash-only, never distributed. Regenerates via `python3 src/harness/danlessa_compare.py`.",
       "sha256": "03868d6792a42eebf7a82cef26f41d67b465a874cd2eaf2927413aad53c57619",
       "contentSize": "155474",
       "encodingFormat": "text/csv"
@@ -107,7 +107,7 @@
       },
       "instrument": [
         {
-          "@id": "#harness/danlessa_compare.py"
+          "@id": "#src/harness/danlessa_compare.py"
         }
       ],
       "object": [
@@ -117,21 +117,21 @@
       ],
       "result": [
         {
-          "@id": "#results/danlessa_comparison.csv"
+          "@id": "#data/results/danlessa_comparison.csv"
         }
       ]
     },
     {
-      "@id": "#harness/danlessa_compare.py",
+      "@id": "#src/harness/danlessa_compare.py",
       "@type": [
         "File",
         "SoftwareApplication",
         "SoftwareSourceCode"
       ],
-      "name": "harness/danlessa_compare.py",
-      "url": "https://github.com/danlessa/bicycling-energy-model/blob/2de78046a481e5ce72c0380f5d053c6bb0dbbbee/harness/danlessa_compare.py",
-      "sha256": "a303b7d77f48f9c7f46e025e1a615bea4c70733daf345fd6f49144f142e96850",
-      "version": "2de78046a481e5ce72c0380f5d053c6bb0dbbbee",
+      "name": "src/harness/danlessa_compare.py",
+      "url": "https://github.com/danlessa/bicycling-energy-model/blob/cf52def91651b94f2b4e7b0ca2c32e67b92688ec/src/harness/danlessa_compare.py",
+      "sha256": "0135b3fd388050b4d57d9ad19529a2749748eda2530db8f65b5bed7e3df78a7e",
+      "version": "cf52def91651b94f2b4e7b0ca2c32e67b92688ec",
       "programmingLanguage": "Python"
     },
     {

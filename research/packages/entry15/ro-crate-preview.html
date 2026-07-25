@@ -62,7 +62,7 @@ ul { margin:.4rem 0; padding-left:1.2rem; }
   <h1>Entrada 15 — independently estimating CdA, C_rr, mass and wind — what the data can and cannot give</h1>
   <div class="badges">
     <span>2026-07-03</span>
-    <span>commit 2de78046a481</span>
+    <span>commit cf52def91651</span>
     <span>com execução de harness</span>
   </div>
 </header>
@@ -72,7 +72,7 @@ ul { margin:.4rem 0; padding-left:1.2rem; }
   <blockquote>
     All four parameters are recoverable within the pre-stated plausible ranges for all three riders: mass from braking-free sustained climbs is CdA-robust (JAAM&#x27;s implied 103 kg was genuine — rider-confirmed ≈ 100 ± 7 kg, retiring Entry 14&#x27;s CdA-misspecification guess); CdA and C_rr become identifiable only once per-activity wind is modelled via a LINEARISED aero regression (flat-power, coast-down and climb-only methods all fail for CdA); the wind vector itself comes from GPS-bearing directional asymmetry, de-biased for regression attenuation.
     <footer>Conforme registrado no
-    <a href="https://github.com/danlessa/bicycling-energy-model/blob/main/research/notes/MODEL_COMPARISON_JOURNAL.md">diário de comparação de modelos</a> e no grafo de
+    <a href="https://github.com/danlessa/bicycling-energy-model/blob/main/research/journal/MODEL_COMPARISON_JOURNAL.md">diário de comparação de modelos</a> e no grafo de
     afirmações (<a href="https://github.com/danlessa/bicycling-energy-model/blob/main/research/notes/claims.ttl">claims.ttl</a>) — a prosa da entrada
     permanece a fonte autoritativa.</footer>
   </blockquote>
@@ -80,7 +80,7 @@ ul { margin:.4rem 0; padding-left:1.2rem; }
 
 <section>
   <h2>Como foi produzida</h2>
-  <p>Instrumento(s): <code>harness/cda_estimate.py</code> (sha256 <code class='hash'>b1ef77e287c1a332…</code>, <a href="https://github.com/danlessa/bicycling-energy-model/blob/2de78046a481e5ce72c0380f5d053c6bb0dbbbee/harness/cda_estimate.py">fonte no commit</a>), <code>harness/param_fit.py</code> (sha256 <code class='hash'>169729a283185656…</code>, <a href="https://github.com/danlessa/bicycling-energy-model/blob/2de78046a481e5ce72c0380f5d053c6bb0dbbbee/harness/param_fit.py">fonte no commit</a>).</p>
+  <p>Instrumento(s): <code>src/harness/cda_estimate.py</code> (sha256 <code class='hash'>2e755b795268f80c…</code>, <a href="https://github.com/danlessa/bicycling-energy-model/blob/cf52def91651b94f2b4e7b0ca2c32e67b92688ec/src/harness/cda_estimate.py">fonte no commit</a>), <code>src/harness/param_fit.py</code> (sha256 <code class='hash'>5b0bab8106f9ebe7…</code>, <a href="https://github.com/danlessa/bicycling-energy-model/blob/cf52def91651b94f2b4e7b0ca2c32e67b92688ec/src/harness/param_fit.py">fonte no commit</a>).</p>
   <p class='muted'>Insumos primários: gravações de pedaladas privadas (FIT com GPS e potência) — fora do repositório e deste pacote; agregados sem coordenadas disponíveis sob pedido.</p>
   <p class="muted">Reconstruir os pacotes:
   <code>python3 research/packages/make_crates.py</code>.</p>
@@ -93,15 +93,15 @@ ul { margin:.4rem 0; padding-left:1.2rem; }
   consentido confirmar que recebeu os mesmos arquivos.</p>
   <div class="tablewrap"><table>
     <tr><th>arquivo</th><th>tamanho</th><th>sha256</th><th>regenera via</th></tr>
-    <tr><td><code>results/cda_estimate.csv</code></td><td class='num'>307 B</td><td><code class='hash'>03331d5ce8e1f85e…</code></td><td>python3 harness/cda_estimate.py</td></tr>
-<tr><td><code>results/param_fit.csv</code></td><td class='num'>252 B</td><td><code class='hash'>e1215037b00c244c…</code></td><td>python3 harness/param_fit.py</td></tr>
+    <tr><td><code>data/results/cda_estimate.csv</code></td><td class='num'>307 B</td><td><code class='hash'>03331d5ce8e1f85e…</code></td><td>python3 src/harness/cda_estimate.py</td></tr>
+<tr><td><code>data/results/param_fit.csv</code></td><td class='num'>252 B</td><td><code class='hash'>e1215037b00c244c…</code></td><td>python3 src/harness/param_fit.py</td></tr>
   </table></div>
 </section>
 
 <section>
   <h2>Contexto</h2>
   <ul>
-    <li>Diário (entrada 15): <a href="https://github.com/danlessa/bicycling-energy-model/blob/main/research/notes/MODEL_COMPARISON_JOURNAL.md">MODEL_COMPARISON_JOURNAL.md</a></li>
+    <li>Diário (entrada 15): <a href="https://github.com/danlessa/bicycling-energy-model/blob/main/research/journal/MODEL_COMPARISON_JOURNAL.md">MODEL_COMPARISON_JOURNAL.md</a></li>
     <li>Grafo de afirmações: <a href="https://github.com/danlessa/bicycling-energy-model/blob/main/research/notes/claims.ttl">claims.ttl</a></li>
     
     <li>Pacote de pesquisa: <a href="https://doi.org/10.5281/zenodo.21282165">https://doi.org/10.5281/zenodo.21282165</a></li>

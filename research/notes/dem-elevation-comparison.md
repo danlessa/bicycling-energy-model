@@ -2,8 +2,8 @@
 
 Does an external DEM give a better elevation/ascent than the device's recorded track?
 This bears directly on the `k_h` ascent-noise work
-([MODEL_COMPARISON_JOURNAL.md](MODEL_COMPARISON_JOURNAL.md) Entry 5,
-[../notas.md](../../notas.md) v2): the closed-form climb term `β·h₊` is linear in ascent, so
+([MODEL_COMPARISON_JOURNAL.md](../journal/MODEL_COMPARISON_JOURNAL.md) Entry 5,
+[original_notes.md](original_notes.md) v2): the closed-form climb term `β·h₊` is linear in ascent, so
 the *ascent source* matters a lot. Three 30 m global DEMs — and a 5 m local DTM — were
 sampled at every track point and compared to the recorded barometric elevation.
 
@@ -14,8 +14,8 @@ sampled at every track point and compared to the recorded barometric elevation.
   limited to the São Paulo region, covering 10 of the 12 test rides
 
 All three are WGS84, ~30 m, read with GDAL (`gdallocationinfo`). Scripts:
-[harness/dem/extract_coords.py](../../harness/dem/extract_coords.py) (track → lon/lat/ele per ride),
-[harness/dem/compare_dem.py](../../harness/dem/compare_dem.py) (sample + compare).
+[src/harness/dem/extract_coords.py](../../src/harness/dem/extract_coords.py) (track → lon/lat/ele per ride),
+[src/harness/dem/compare_dem.py](../../src/harness/dem/compare_dem.py) (sample + compare).
 
 **Sampling matters: use bilinear, not nearest.** `gdallocationinfo` defaults to **nearest
 neighbour** (the containing pixel's value). On a 30 m grid sampled by a ~50 m-spaced,

@@ -39,7 +39,7 @@
         }
       ],
       "subjectOf": {
-        "@id": "https://github.com/danlessa/bicycling-energy-model/blob/main/research/notes/MODEL_COMPARISON_JOURNAL.md"
+        "@id": "https://github.com/danlessa/bicycling-energy-model/blob/main/research/journal/MODEL_COMPARISON_JOURNAL.md"
       },
       "conformsTo": {
         "@id": "https://w3id.org/ro/wfrun/process/0.5"
@@ -52,7 +52,7 @@
       "email": "danilo.lessa@gmail.com"
     },
     {
-      "@id": "https://github.com/danlessa/bicycling-energy-model/blob/main/research/notes/MODEL_COMPARISON_JOURNAL.md",
+      "@id": "https://github.com/danlessa/bicycling-energy-model/blob/main/research/journal/MODEL_COMPARISON_JOURNAL.md",
       "@type": "CreativeWork",
       "name": "Model comparison journal",
       "encodingFormat": "text/markdown"
@@ -70,7 +70,7 @@
       "text": "All three models reproduce measured energy to ~4–7% median with a generic assumed rider (poor-man's ε=0.20 best at 3.9%); ε_geom over-credits descent recovery on stop-go riding — the braking penalty the open rural rides could not isolate — giving the corpus rule: ε_geom on open coastable routes, flat ε ≈ 0.20 on urban stop-go; a physical-plausibility floor excluded 7 rides whose energy deficit is a power-channel problem, not walking.",
       "appearance": [
         {
-          "@id": "https://github.com/danlessa/bicycling-energy-model/blob/main/research/notes/MODEL_COMPARISON_JOURNAL.md"
+          "@id": "https://github.com/danlessa/bicycling-energy-model/blob/main/research/journal/MODEL_COMPARISON_JOURNAL.md"
         }
       ],
       "subjectOf": {
@@ -85,10 +85,10 @@
       "conditionsOfAccess": "Available on request from the author, coordinates stripped."
     },
     {
-      "@id": "#results/censo_comparison.csv",
+      "@id": "#data/results/censo_comparison.csv",
       "@type": "File",
-      "name": "results/censo_comparison.csv",
-      "description": "Per-ride CSV — gitignored (rows carry ride names/dates tied to private activities); described hash-only, never distributed. Regenerates via `python3 harness/censo_compare.py`.",
+      "name": "data/results/censo_comparison.csv",
+      "description": "Per-ride CSV — gitignored (rows carry ride names/dates tied to private activities); described hash-only, never distributed. Regenerates via `python3 src/harness/censo_compare.py`.",
       "sha256": "fd40d2f7a3b08ce18827f2132c15e183a46143189f84be8b5c21f10c5b1ddb1d",
       "contentSize": "16284",
       "encodingFormat": "text/csv"
@@ -107,7 +107,7 @@
       },
       "instrument": [
         {
-          "@id": "#harness/censo_compare.py"
+          "@id": "#src/harness/censo_compare.py"
         }
       ],
       "object": [
@@ -117,21 +117,21 @@
       ],
       "result": [
         {
-          "@id": "#results/censo_comparison.csv"
+          "@id": "#data/results/censo_comparison.csv"
         }
       ]
     },
     {
-      "@id": "#harness/censo_compare.py",
+      "@id": "#src/harness/censo_compare.py",
       "@type": [
         "File",
         "SoftwareApplication",
         "SoftwareSourceCode"
       ],
-      "name": "harness/censo_compare.py",
-      "url": "https://github.com/danlessa/bicycling-energy-model/blob/2de78046a481e5ce72c0380f5d053c6bb0dbbbee/harness/censo_compare.py",
-      "sha256": "b06dc3707608325479207a233acd0bfc7b48c920f4aac07ac28e440eab87a3ce",
-      "version": "2de78046a481e5ce72c0380f5d053c6bb0dbbbee",
+      "name": "src/harness/censo_compare.py",
+      "url": "https://github.com/danlessa/bicycling-energy-model/blob/cf52def91651b94f2b4e7b0ca2c32e67b92688ec/src/harness/censo_compare.py",
+      "sha256": "187ba5d5e29400ab3e80bcbc11daaff8ec34b6df246c864be36720fd271dac5c",
+      "version": "cf52def91651b94f2b4e7b0ca2c32e67b92688ec",
       "programmingLanguage": "Python"
     },
     {

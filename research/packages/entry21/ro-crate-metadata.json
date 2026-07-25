@@ -39,7 +39,7 @@
         }
       ],
       "subjectOf": {
-        "@id": "https://github.com/danlessa/bicycling-energy-model/blob/main/research/notes/MODEL_COMPARISON_JOURNAL.md"
+        "@id": "https://github.com/danlessa/bicycling-energy-model/blob/main/research/journal/MODEL_COMPARISON_JOURNAL.md"
       },
       "conformsTo": {
         "@id": "https://w3id.org/ro/wfrun/process/0.5"
@@ -52,7 +52,7 @@
       "email": "danilo.lessa@gmail.com"
     },
     {
-      "@id": "https://github.com/danlessa/bicycling-energy-model/blob/main/research/notes/MODEL_COMPARISON_JOURNAL.md",
+      "@id": "https://github.com/danlessa/bicycling-energy-model/blob/main/research/journal/MODEL_COMPARISON_JOURNAL.md",
       "@type": "CreativeWork",
       "name": "Model comparison journal",
       "encodingFormat": "text/markdown"
@@ -70,7 +70,7 @@
       "text": "The behavioural constants are functions of (Δx, terrain-roughness regime), not of Δx alone: the fitted trio (k_s 0.9375, ε₀ 0.0632, climbThr 0.025) bridges the gap per-ride on all three rider corpora but closes only ~55% of censo's gap.",
       "appearance": [
         {
-          "@id": "https://github.com/danlessa/bicycling-energy-model/blob/main/research/notes/MODEL_COMPARISON_JOURNAL.md"
+          "@id": "https://github.com/danlessa/bicycling-energy-model/blob/main/research/journal/MODEL_COMPARISON_JOURNAL.md"
         }
       ],
       "subjectOf": {
@@ -85,12 +85,12 @@
       "conditionsOfAccess": "Available on request from the author, coordinates stripped."
     },
     {
-      "@id": "#results/scale_trio.csv",
+      "@id": "#data/results/scale_trio.csv",
       "@type": "File",
-      "name": "results/scale_trio.csv",
-      "description": "Per-ride CSV — gitignored (rows carry ride names/dates tied to private activities); described hash-only, never distributed. Regenerates via `python3 harness/scale_trio.py`.",
-      "sha256": "cbea51c84e6c46e7825915310314f71b33a3d3c764e9bacfb664778885c41a0f",
-      "contentSize": "225412",
+      "name": "data/results/scale_trio.csv",
+      "description": "Per-ride CSV — gitignored (rows carry ride names/dates tied to private activities); described hash-only, never distributed. Regenerates via `python3 src/harness/scale_trio.py`.",
+      "sha256": "d5e6794fc01227bab6bb2550836e3cb7c2fe3b7e1445fb5f0d2f997208ace8a2",
+      "contentSize": "225344",
       "encodingFormat": "text/csv"
     },
     {
@@ -107,7 +107,7 @@
       },
       "instrument": [
         {
-          "@id": "#harness/scale_trio.py"
+          "@id": "#src/harness/scale_trio.py"
         }
       ],
       "object": [
@@ -117,21 +117,21 @@
       ],
       "result": [
         {
-          "@id": "#results/scale_trio.csv"
+          "@id": "#data/results/scale_trio.csv"
         }
       ]
     },
     {
-      "@id": "#harness/scale_trio.py",
+      "@id": "#src/harness/scale_trio.py",
       "@type": [
         "File",
         "SoftwareApplication",
         "SoftwareSourceCode"
       ],
-      "name": "harness/scale_trio.py",
-      "url": "https://github.com/danlessa/bicycling-energy-model/blob/2de78046a481e5ce72c0380f5d053c6bb0dbbbee/harness/scale_trio.py",
-      "sha256": "8b0065cc5cc8edfb7cb36b4e5cab3f51fd966241928edfdf5f8ccb7fa9eb2e10",
-      "version": "2de78046a481e5ce72c0380f5d053c6bb0dbbbee",
+      "name": "src/harness/scale_trio.py",
+      "url": "https://github.com/danlessa/bicycling-energy-model/blob/cf52def91651b94f2b4e7b0ca2c32e67b92688ec/src/harness/scale_trio.py",
+      "sha256": "97d1311cc4a9d44b614756201d8eba6a9b676b75429c70fb0be129f7a827085b",
+      "version": "cf52def91651b94f2b4e7b0ca2c32e67b92688ec",
       "programmingLanguage": "Python"
     },
     {

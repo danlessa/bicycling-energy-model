@@ -3,15 +3,15 @@
 These notes record how the per-ride dataset derived from `longoes.xlsx`
 (sheet **`Atividades v2`**) was cross-checked against the downloaded activity
 tracks, and what the check found. The dataset lives in
-[data/activities/](../../data/activities/), the downloader and verifier in
-[harness/](../../harness/); this file is the human-readable summary.
+[data/inputs/activities/](../../data/inputs/activities/), the downloader and verifier in
+[src/harness/](../../src/harness/); this file is the human-readable summary.
 
-- **What was checked:** the values in [longoes.csv](../../data/activities/longoes.csv)
+- **What was checked:** the values in [longoes.csv](../../data/inputs/activities/longoes.csv)
   (transcribed from the spreadsheet) against the file-derivable quantities
   recomputed from each ride's track.
-- **Tool:** [harness/verify.py](../../harness/verify.py) — a
+- **Tool:** [src/harness/verify.py](../../src/harness/verify.py) — a
   dependency-free multi-format track reader (RideWithGPS/Strava `.fit`, `.gpx`).
-  Run `python3 harness/verify.py`; per-ride detail lands in `results/longoes_verify.csv`.
+  Run `python3 src/harness/verify.py`; per-ride detail lands in `data/results/longoes_verify.csv`.
 - **Date of run:** 2026-06-28.
 
 ## Dataset
@@ -122,7 +122,7 @@ authenticated `.fit` exports (which preserve power/HR/speed/elevation — Paraty
 RWGPS `.fit` export **omits the weather-derived temperature** the JSON carried, so
 temperature comparisons dropped from 49 to 28 rides. Temperature only affects air
 density (ρ) and the CSV's temperature columns come from the spreadsheet regardless,
-so this was accepted. `python3 harness/fetch.py rwgps` re-pulls the JSON (with temperature)
+so this was accepted. `python3 src/harness/fetch.py rwgps` re-pulls the JSON (with temperature)
 if needed.
 
 ## Reproduce
@@ -130,6 +130,6 @@ if needed.
 ```sh
 # from the repo root
 source .env                          # RWGPS_API_KEY, RWGPS_AUTH_TOKEN (for .fit / private trip)
-python3 harness/fetch.py csv         # (re)build longoes.csv from the sheet + manifest
-python3 harness/verify.py            # prints the table above; writes results/longoes_verify.csv
+python3 src/harness/fetch.py csv     # (re)build longoes.csv from the sheet + manifest
+python3 src/harness/verify.py        # prints the table above; writes data/results/longoes_verify.csv
 ```

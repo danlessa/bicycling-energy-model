@@ -34,7 +34,7 @@ smooth · ε=geom                    n=219  med|Δ%|=  5.49 [4.4, 6.4]  medΔ%= 
 PAIRED sm_0.20 vs sm_geom: A closer on 140/215 (65%), sign test p=0.0000
 
 == Time model, P. Paz (§8.8 primary endpoint) ==
-T1b full (frozen)                  n=441  med|Δ%|=  6.58 [5.9, 7.3]  medΔ%=   3.74 [2.7, 4.7] GATE-OK
-T0 naive x/v_f                     n=441  med|Δ%|=  7.65 [7.0, 8.6]  medΔ%=  -0.49 [-2.0, 0.8] GATE-OK
+T1b full (frozen)                  n=441  med|Δ%|=  6.60 [5.9, 7.2]  medΔ%=   3.79 [2.8, 4.7] GATE-OK
+T0 naive x/v_f                     n=441  med|Δ%|=  7.64 [7.0, 8.5]  medΔ%=  -0.45 [-2.0, 0.9] GATE-OK
 
 all gates pass

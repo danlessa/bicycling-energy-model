@@ -10,8 +10,8 @@ writes research/packages/entryNN/ holding ONLY aggregates and hashes:
   bootstrap_ci_report.txt  (entry 22 only) captured stdout of the gated run
   claim.ttl                (entry 22 only, hand-written — not regenerated)
 
-The entry→artifact registry below follows results/README.md (file → producer
-→ journal entry). Gitignored per-ride CSVs and raw tracks are described
+The entry→artifact registry below follows data/results/README.md (file →
+producer → journal entry). Gitignored per-ride CSVs and raw tracks are described
 hash-only / by reference — never copied into a crate.
 
 Deterministic by construction: no wall-clock timestamps (dates come from the
@@ -31,79 +31,81 @@ import sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 REPO = os.path.abspath(os.path.join(HERE, "..", ".."))
-RESULTS = os.path.join(REPO, "results")
-JOURNAL = os.path.join(REPO, "research", "notes", "MODEL_COMPARISON_JOURNAL.md")
+RESULTS = os.path.join(REPO, "data", "results")
+JOURNAL = os.path.join(REPO, "research", "journal", "MODEL_COMPARISON_JOURNAL.md")
 CLAIMS_TTL = os.path.join(REPO, "research", "notes", "claims.ttl")
 
 DOI = "https://doi.org/10.5281/zenodo.21282165"
 GITHUB = "https://github.com/danlessa/bicycling-energy-model"
-JOURNAL_URL = f"{GITHUB}/blob/main/research/notes/MODEL_COMPARISON_JOURNAL.md"
+JOURNAL_URL = f"{GITHUB}/blob/main/research/journal/MODEL_COMPARISON_JOURNAL.md"
 CLAIMS_URL = f"{GITHUB}/blob/main/research/notes/claims.ttl"
 PROFILE = "https://w3id.org/ro/wfrun/process/0.5"
 
 HEADER_RE = re.compile(r"^## (?P<date>[0-9-]+) — Entry (?P<n>\d+): (?P<title>.+)$",
                        re.M)
 
-# results/README.md mapping: output CSV → producer. Regeneration commands for
-# the hash-only result entities.
+# data/results/README.md mapping: output CSV → producer. Regeneration commands
+# for the hash-only result entities.
 PRODUCER = {
-    "model_comparison.csv": "python3 harness/compare.py",
-    "censo_comparison.csv": "python3 harness/censo_compare.py",
-    "eps_hypothesis.csv": "python3 harness/eps_hypothesis.py",
-    "eps_sp.csv": "python3 harness/eps_sp_test.py",
-    "ppaz_comparison.csv": "python3 harness/ppaz_compare.py",
-    "time_comparison.csv": "python3 harness/time_compare.py",
-    "jaam_comparison.csv": "python3 harness/jaam_compare.py",
-    "cda_estimate.csv": "python3 harness/cda_estimate.py",
-    "param_fit.csv": "python3 harness/param_fit.py",
-    "danlessa_comparison.csv": "python3 harness/danlessa_compare.py",
-    "regime_comparison.csv": "python3 harness/regime_compare.py",
-    "igc_resolution_test.csv": "python3 harness/igc_resolution_test.py",
-    "goal_calibration.csv": "python3 harness/goal_calibration.py",
-    "scale_trio.csv": "python3 harness/scale_trio.py",
-    "e26_portal_profiles.csv": "python3 harness/e26_portal_profiles.py",
+    "model_comparison.csv": "python3 src/harness/compare.py",
+    "censo_comparison.csv": "python3 src/harness/censo_compare.py",
+    "eps_hypothesis.csv": "python3 src/harness/eps_hypothesis.py",
+    "eps_sp.csv": "python3 src/harness/eps_sp_test.py",
+    "ppaz_comparison.csv": "python3 src/harness/ppaz_compare.py",
+    "time_comparison.csv": "python3 src/harness/time_compare.py",
+    "jaam_comparison.csv": "python3 src/harness/jaam_compare.py",
+    "cda_estimate.csv": "python3 src/harness/cda_estimate.py",
+    "param_fit.csv": "python3 src/harness/param_fit.py",
+    "danlessa_comparison.csv": "python3 src/harness/danlessa_compare.py",
+    "regime_comparison.csv": "python3 src/harness/regime_compare.py",
+    "igc_resolution_test.csv": "python3 src/harness/igc_resolution_test.py",
+    "goal_calibration.csv": "python3 src/harness/goal_calibration.py",
+    "scale_trio.csv": "python3 src/harness/scale_trio.py",
+    "e26_portal_profiles.csv": "python3 src/harness/e26_portal_profiles.py",
     "e26_grid.csv": "node ../simujaules/docs/grid-e26.mjs",
     "e26_grid_cal.csv": "E26_BUNDLE=cal node ../simujaules/docs/grid-e26.mjs",
-    "e26_detour.csv": "python3 harness/e26_detour.py",
+    "e26_detour.csv": "python3 src/harness/e26_detour.py",
 }
 
 # entry → (instrument harness scripts, result CSVs, uses private tracks,
-# related committed docs). Follows results/README.md; entries without a
+# related committed docs). Follows data/results/README.md; entries without a
 # harness run (derivations, reviews, external analyses) get claim-only crates.
 ENTRIES = {
-    1: (["harness/compare.py"], ["model_comparison.csv"], True, []),
-    2: (["harness/compare.py"], ["model_comparison.csv"], True, []),
-    3: (["harness/compare.py"], ["model_comparison.csv"], True, []),
-    4: (["harness/compare.py"], ["model_comparison.csv"], True, []),
-    5: (["harness/compare.py"], ["model_comparison.csv"], True, []),
-    6: (["harness/build_model_inputs.py"], [], True,
+    1: (["src/harness/compare.py"], ["model_comparison.csv"], True, []),
+    2: (["src/harness/compare.py"], ["model_comparison.csv"], True, []),
+    3: (["src/harness/compare.py"], ["model_comparison.csv"], True, []),
+    4: (["src/harness/compare.py"], ["model_comparison.csv"], True, []),
+    5: (["src/harness/compare.py"], ["model_comparison.csv"], True, []),
+    6: (["src/harness/build_model_inputs.py"], [], True,
         ["research/notes/dem-elevation-comparison.md"]),
-    7: (["harness/compare.py"], ["model_comparison.csv"], True, []),
-    8: (["harness/eps_hypothesis.py"], ["eps_hypothesis.csv"], True, ["notas.md"]),
-    9: (["harness/censo_compare.py"], ["censo_comparison.csv"], True, []),
-    10: (["harness/eps_sp_test.py"], ["eps_sp.csv"], True, []),
+    7: (["src/harness/compare.py"], ["model_comparison.csv"], True, []),
+    8: (["src/harness/eps_hypothesis.py"], ["eps_hypothesis.csv"], True,
+        ["research/notes/original_notes.md"]),
+    9: (["src/harness/censo_compare.py"], ["censo_comparison.csv"], True, []),
+    10: (["src/harness/eps_sp_test.py"], ["eps_sp.csv"], True, []),
     11: ([], [], False, ["research/notes/VERIFICATION_NOTES.md"]),
-    12: (["harness/ppaz_compare.py"], ["ppaz_comparison.csv"], True, []),
-    13: (["harness/time_compare.py"], ["time_comparison.csv"], True, []),
-    14: (["harness/jaam_compare.py"], ["jaam_comparison.csv"], True, []),
-    15: (["harness/cda_estimate.py", "harness/param_fit.py"],
+    12: (["src/harness/ppaz_compare.py"], ["ppaz_comparison.csv"], True, []),
+    13: (["src/harness/time_compare.py"], ["time_comparison.csv"], True, []),
+    14: (["src/harness/jaam_compare.py"], ["jaam_comparison.csv"], True, []),
+    15: (["src/harness/cda_estimate.py", "src/harness/param_fit.py"],
          ["cda_estimate.csv", "param_fit.csv"], True, []),
-    16: (["harness/danlessa_compare.py"], ["danlessa_comparison.csv"], True, []),
-    17: (["harness/regime_compare.py"], ["regime_comparison.csv"], True, []),
-    18: (["harness/regime_compare.py"], ["regime_comparison.csv"], True, []),
-    19: (["harness/igc_resolution_test.py"], ["igc_resolution_test.csv"], True, []),
-    20: (["harness/goal_calibration.py"], ["goal_calibration.csv"], True, []),
-    21: (["harness/scale_trio.py"], ["scale_trio.csv"], True, []),
-    22: (["harness/bootstrap_ci.py"], [], False, []),
+    16: (["src/harness/danlessa_compare.py"], ["danlessa_comparison.csv"], True, []),
+    17: (["src/harness/regime_compare.py"], ["regime_comparison.csv"], True, []),
+    18: (["src/harness/regime_compare.py"], ["regime_comparison.csv"], True, []),
+    19: (["src/harness/igc_resolution_test.py"], ["igc_resolution_test.csv"], True, []),
+    20: (["src/harness/goal_calibration.py"], ["goal_calibration.csv"], True, []),
+    21: (["src/harness/scale_trio.py"], ["scale_trio.csv"], True, []),
+    22: (["src/harness/bootstrap_ci.py"], [], False, []),
     23: ([], [], False, []),
     24: ([], [], False, ["research/notes/ascent-error-literature.md"]),
     25: ([], [], False, []),
-    26: (["harness/e26_pairs.py", "harness/e26_portal_profiles.py", "harness/e26_detour.py"],
+    26: (["src/harness/e26_pairs.py", "src/harness/e26_portal_profiles.py", "src/harness/e26_detour.py"],
          ["e26_portal_profiles.csv", "e26_grid.csv", "e26_grid_cal.csv", "e26_detour.csv"],
          True, []),
-    27: (["harness/bootstrap_ci.py", "analysis/parity/run_parity.py"],
+    27: (["src/harness/bootstrap_ci.py"],
          ["model_comparison.csv", "censo_comparison.csv", "eps_sp.csv",
           "igc_resolution_test.csv"], False, []),
+    28: (["src/harness/bootstrap_ci.py"], [], False, []),
 }
 
 # entry 22 reads the per-ride CSVs the other harnesses wrote
@@ -141,9 +143,9 @@ def csv_entity(name):
     if not os.path.exists(path):
         return None
     return {
-        "@id": f"#results/{name}",
+        "@id": f"#data/results/{name}",
         "@type": "File",
-        "name": f"results/{name}",
+        "name": f"data/results/{name}",
         "description": (f"Per-ride CSV — gitignored (rows carry ride names/dates "
                         f"tied to private activities); described hash-only, never "
                         f"distributed. Regenerates via `{PRODUCER[name]}`."),
@@ -505,7 +507,7 @@ def render_preview(n, date, title, graph, commit, report_text):
 
 def main():
     # entry 22's gated run first — any gate failure aborts the whole build
-    run = subprocess.run([sys.executable, os.path.join(REPO, "harness", "bootstrap_ci.py")],
+    run = subprocess.run([sys.executable, os.path.join(REPO, "src", "harness", "bootstrap_ci.py")],
                          capture_output=True, text=True)
     if run.returncode != 0:
         sys.stderr.write(run.stdout + run.stderr)

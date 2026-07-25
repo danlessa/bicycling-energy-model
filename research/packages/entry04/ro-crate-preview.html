@@ -62,7 +62,7 @@ ul { margin:.4rem 0; padding-left:1.2rem; }
   <h1>Entrada 04 — the `P_flat/P_avg` term and the `v_f` lever</h1>
   <div class="badges">
     <span>2026-06-28</span>
-    <span>commit 2de78046a481</span>
+    <span>commit cf52def91651</span>
     <span>com execução de harness</span>
   </div>
 </header>
@@ -72,7 +72,7 @@ ul { margin:.4rem 0; padding-left:1.2rem; }
   <blockquote>
     v_f is the second lever after climb aero: sourcing it from the measured flat speed cuts the residual +8.5% → +2.7%; the sheet&#x27;s 0.60 ratio nulls the bias (−0.5%) but only by over-correcting v_f — the data&#x27;s flat power is ~94% of average power, not 60%.
     <footer>Conforme registrado no
-    <a href="https://github.com/danlessa/bicycling-energy-model/blob/main/research/notes/MODEL_COMPARISON_JOURNAL.md">diário de comparação de modelos</a> e no grafo de
+    <a href="https://github.com/danlessa/bicycling-energy-model/blob/main/research/journal/MODEL_COMPARISON_JOURNAL.md">diário de comparação de modelos</a> e no grafo de
     afirmações (<a href="https://github.com/danlessa/bicycling-energy-model/blob/main/research/notes/claims.ttl">claims.ttl</a>) — a prosa da entrada
     permanece a fonte autoritativa.</footer>
   </blockquote>
@@ -80,7 +80,7 @@ ul { margin:.4rem 0; padding-left:1.2rem; }
 
 <section>
   <h2>Como foi produzida</h2>
-  <p>Instrumento(s): <code>harness/compare.py</code> (sha256 <code class='hash'>e6b2cdbda2e87e6f…</code>, <a href="https://github.com/danlessa/bicycling-energy-model/blob/2de78046a481e5ce72c0380f5d053c6bb0dbbbee/harness/compare.py">fonte no commit</a>).</p>
+  <p>Instrumento(s): <code>src/harness/compare.py</code> (sha256 <code class='hash'>28623013e7d4dea8…</code>, <a href="https://github.com/danlessa/bicycling-energy-model/blob/cf52def91651b94f2b4e7b0ca2c32e67b92688ec/src/harness/compare.py">fonte no commit</a>).</p>
   <p class='muted'>Insumos primários: gravações de pedaladas privadas (FIT com GPS e potência) — fora do repositório e deste pacote; agregados sem coordenadas disponíveis sob pedido.</p>
   <p class="muted">Reconstruir os pacotes:
   <code>python3 research/packages/make_crates.py</code>.</p>
@@ -93,14 +93,14 @@ ul { margin:.4rem 0; padding-left:1.2rem; }
   consentido confirmar que recebeu os mesmos arquivos.</p>
   <div class="tablewrap"><table>
     <tr><th>arquivo</th><th>tamanho</th><th>sha256</th><th>regenera via</th></tr>
-    <tr><td><code>results/model_comparison.csv</code></td><td class='num'>9,619 B</td><td><code class='hash'>3e0a811c1dc68875…</code></td><td>python3 harness/compare.py</td></tr>
+    <tr><td><code>data/results/model_comparison.csv</code></td><td class='num'>9,619 B</td><td><code class='hash'>3e0a811c1dc68875…</code></td><td>python3 src/harness/compare.py</td></tr>
   </table></div>
 </section>
 
 <section>
   <h2>Contexto</h2>
   <ul>
-    <li>Diário (entrada 4): <a href="https://github.com/danlessa/bicycling-energy-model/blob/main/research/notes/MODEL_COMPARISON_JOURNAL.md">MODEL_COMPARISON_JOURNAL.md</a></li>
+    <li>Diário (entrada 4): <a href="https://github.com/danlessa/bicycling-energy-model/blob/main/research/journal/MODEL_COMPARISON_JOURNAL.md">MODEL_COMPARISON_JOURNAL.md</a></li>
     <li>Grafo de afirmações: <a href="https://github.com/danlessa/bicycling-energy-model/blob/main/research/notes/claims.ttl">claims.ttl</a></li>
     
     <li>Pacote de pesquisa: <a href="https://doi.org/10.5281/zenodo.21282165">https://doi.org/10.5281/zenodo.21282165</a></li>

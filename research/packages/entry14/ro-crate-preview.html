@@ -62,7 +62,7 @@ ul { margin:.4rem 0; padding-left:1.2rem; }
   <h1>Entrada 14 — a third rider (JAAM) qualifies the transfer — and a framing correction</h1>
   <div class="badges">
     <span>2026-07-03</span>
-    <span>commit 2de78046a481</span>
+    <span>commit cf52def91651</span>
     <span>com execução de harness</span>
   </div>
 </header>
@@ -72,7 +72,7 @@ ul { margin:.4rem 0; padding-left:1.2rem; }
   <blockquote>
     The energy law and the −0.13 offset are consistent a third time (canonical 5.4% med|Δ%| with data-implied mass; smooth ε=0.20 best at 3.5%; offset 0.133, bootstrap CI 0.102–0.186) — but the geometric-ε skill does NOT transfer: it fails outright on JAAM&#x27;s gentle-heavy bulk and is inconclusive on the thin real-descent subset. The skill works for riders who coast (P. Paz), not for riders who pedal descents (JAAM). Framing corrected: P. Paz and JAAM are independent third-party riders, not Pedal Hidrográfico members; only the censo is a collective corpus.
     <footer>Conforme registrado no
-    <a href="https://github.com/danlessa/bicycling-energy-model/blob/main/research/notes/MODEL_COMPARISON_JOURNAL.md">diário de comparação de modelos</a> e no grafo de
+    <a href="https://github.com/danlessa/bicycling-energy-model/blob/main/research/journal/MODEL_COMPARISON_JOURNAL.md">diário de comparação de modelos</a> e no grafo de
     afirmações (<a href="https://github.com/danlessa/bicycling-energy-model/blob/main/research/notes/claims.ttl">claims.ttl</a>) — a prosa da entrada
     permanece a fonte autoritativa.</footer>
   </blockquote>
@@ -80,7 +80,7 @@ ul { margin:.4rem 0; padding-left:1.2rem; }
 
 <section>
   <h2>Como foi produzida</h2>
-  <p>Instrumento(s): <code>harness/jaam_compare.py</code> (sha256 <code class='hash'>5de4a0fbc49e3f85…</code>, <a href="https://github.com/danlessa/bicycling-energy-model/blob/2de78046a481e5ce72c0380f5d053c6bb0dbbbee/harness/jaam_compare.py">fonte no commit</a>).</p>
+  <p>Instrumento(s): <code>src/harness/jaam_compare.py</code> (sha256 <code class='hash'>8b414abe6c3ca56a…</code>, <a href="https://github.com/danlessa/bicycling-energy-model/blob/cf52def91651b94f2b4e7b0ca2c32e67b92688ec/src/harness/jaam_compare.py">fonte no commit</a>).</p>
   <p class='muted'>Insumos primários: gravações de pedaladas privadas (FIT com GPS e potência) — fora do repositório e deste pacote; agregados sem coordenadas disponíveis sob pedido.</p>
   <p class="muted">Reconstruir os pacotes:
   <code>python3 research/packages/make_crates.py</code>.</p>
@@ -93,14 +93,14 @@ ul { margin:.4rem 0; padding-left:1.2rem; }
   consentido confirmar que recebeu os mesmos arquivos.</p>
   <div class="tablewrap"><table>
     <tr><th>arquivo</th><th>tamanho</th><th>sha256</th><th>regenera via</th></tr>
-    <tr><td><code>results/jaam_comparison.csv</code></td><td class='num'>55,153 B</td><td><code class='hash'>7abd3b7fbdabb4c4…</code></td><td>python3 harness/jaam_compare.py</td></tr>
+    <tr><td><code>data/results/jaam_comparison.csv</code></td><td class='num'>55,153 B</td><td><code class='hash'>7abd3b7fbdabb4c4…</code></td><td>python3 src/harness/jaam_compare.py</td></tr>
   </table></div>
 </section>
 
 <section>
   <h2>Contexto</h2>
   <ul>
-    <li>Diário (entrada 14): <a href="https://github.com/danlessa/bicycling-energy-model/blob/main/research/notes/MODEL_COMPARISON_JOURNAL.md">MODEL_COMPARISON_JOURNAL.md</a></li>
+    <li>Diário (entrada 14): <a href="https://github.com/danlessa/bicycling-energy-model/blob/main/research/journal/MODEL_COMPARISON_JOURNAL.md">MODEL_COMPARISON_JOURNAL.md</a></li>
     <li>Grafo de afirmações: <a href="https://github.com/danlessa/bicycling-energy-model/blob/main/research/notes/claims.ttl">claims.ttl</a></li>
     
     <li>Pacote de pesquisa: <a href="https://doi.org/10.5281/zenodo.21282165">https://doi.org/10.5281/zenodo.21282165</a></li>

@@ -39,7 +39,7 @@
         }
       ],
       "subjectOf": {
-        "@id": "https://github.com/danlessa/bicycling-energy-model/blob/main/research/notes/MODEL_COMPARISON_JOURNAL.md"
+        "@id": "https://github.com/danlessa/bicycling-energy-model/blob/main/research/journal/MODEL_COMPARISON_JOURNAL.md"
       },
       "conformsTo": {
         "@id": "https://w3id.org/ro/wfrun/process/0.5"
@@ -57,7 +57,7 @@
       "email": "danilo.lessa@gmail.com"
     },
     {
-      "@id": "https://github.com/danlessa/bicycling-energy-model/blob/main/research/notes/MODEL_COMPARISON_JOURNAL.md",
+      "@id": "https://github.com/danlessa/bicycling-energy-model/blob/main/research/journal/MODEL_COMPARISON_JOURNAL.md",
       "@type": "CreativeWork",
       "name": "Model comparison journal",
       "encodingFormat": "text/markdown"
@@ -75,7 +75,7 @@
       "text": "No single source is ground truth for ascent — they bracket it: the recorded baro under-reads (−11% raw / −21% smoothed vs the IGC 5 m DTM), the DSMs over-read (COP30 +18%, SRTM +34%), FABDEM lands +6%; nearest-neighbour sampling adds ~30 pp of staircase (use bilinear); the geometric k_DEM correction is the solid result, while the energy k_h (~0.8–0.9 estimated) stayed an open TODO.",
       "appearance": [
         {
-          "@id": "https://github.com/danlessa/bicycling-energy-model/blob/main/research/notes/MODEL_COMPARISON_JOURNAL.md"
+          "@id": "https://github.com/danlessa/bicycling-energy-model/blob/main/research/journal/MODEL_COMPARISON_JOURNAL.md"
         }
       ],
       "subjectOf": {
@@ -103,7 +103,7 @@
       },
       "instrument": [
         {
-          "@id": "#harness/build_model_inputs.py"
+          "@id": "#src/harness/build_model_inputs.py"
         }
       ],
       "object": [
@@ -113,16 +113,16 @@
       ]
     },
     {
-      "@id": "#harness/build_model_inputs.py",
+      "@id": "#src/harness/build_model_inputs.py",
       "@type": [
         "File",
         "SoftwareApplication",
         "SoftwareSourceCode"
       ],
-      "name": "harness/build_model_inputs.py",
-      "url": "https://github.com/danlessa/bicycling-energy-model/blob/2de78046a481e5ce72c0380f5d053c6bb0dbbbee/harness/build_model_inputs.py",
+      "name": "src/harness/build_model_inputs.py",
+      "url": "https://github.com/danlessa/bicycling-energy-model/blob/cf52def91651b94f2b4e7b0ca2c32e67b92688ec/src/harness/build_model_inputs.py",
       "sha256": "2694490acdeaa17f3b1a8319021438fe7015ed139490b358ab94c4e7bf1e748d",
-      "version": "2de78046a481e5ce72c0380f5d053c6bb0dbbbee",
+      "version": "cf52def91651b94f2b4e7b0ca2c32e67b92688ec",
       "programmingLanguage": "Python"
     },
     {

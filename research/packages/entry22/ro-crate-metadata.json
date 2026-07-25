@@ -46,7 +46,7 @@
         }
       ],
       "subjectOf": {
-        "@id": "https://github.com/danlessa/bicycling-energy-model/blob/main/research/notes/MODEL_COMPARISON_JOURNAL.md"
+        "@id": "https://github.com/danlessa/bicycling-energy-model/blob/main/research/journal/MODEL_COMPARISON_JOURNAL.md"
       },
       "conformsTo": {
         "@id": "https://w3id.org/ro/wfrun/process/0.5"
@@ -59,7 +59,7 @@
       "email": "danilo.lessa@gmail.com"
     },
     {
-      "@id": "https://github.com/danlessa/bicycling-energy-model/blob/main/research/notes/MODEL_COMPARISON_JOURNAL.md",
+      "@id": "https://github.com/danlessa/bicycling-energy-model/blob/main/research/journal/MODEL_COMPARISON_JOURNAL.md",
       "@type": "CreativeWork",
       "name": "Model comparison journal",
       "encodingFormat": "text/markdown"
@@ -86,10 +86,10 @@
       "@id": "#claim",
       "@type": "Claim",
       "name": "Entry 22: error bars for the headline medians — the champion \"beats\" the sim only on the median, so the article now claims parity",
-      "text": "Champion vs canonical is statistical parity: bootstrap 95% CIs [2.0, 5.6] vs [3.8, 7.1] overlap; paired, the champion is closer on 25/44 rides (57%, sign test p = 0.45). Parity is still practically decisive — the closed form is the engine cheap enough to route with.",
+      "text": "Champion vs canonical is statistical parity: bootstrap 95% CIs [2.0, 5.6] vs [3.8, 7.3] overlap; paired, the champion is closer on 24/44 rides (55%, sign test p = 0.65). Parity is still practically decisive — the closed form is the engine cheap enough to route with.",
       "appearance": [
         {
-          "@id": "https://github.com/danlessa/bicycling-energy-model/blob/main/research/notes/MODEL_COMPARISON_JOURNAL.md"
+          "@id": "https://github.com/danlessa/bicycling-energy-model/blob/main/research/journal/MODEL_COMPARISON_JOURNAL.md"
         }
       ],
       "subjectOf": [
@@ -102,48 +102,48 @@
       ]
     },
     {
-      "@id": "#results/model_comparison.csv",
+      "@id": "#data/results/model_comparison.csv",
       "@type": "File",
-      "name": "results/model_comparison.csv",
-      "description": "Per-ride CSV — gitignored (rows carry ride names/dates tied to private activities); described hash-only, never distributed. Regenerates via `python3 harness/compare.py`.",
+      "name": "data/results/model_comparison.csv",
+      "description": "Per-ride CSV — gitignored (rows carry ride names/dates tied to private activities); described hash-only, never distributed. Regenerates via `python3 src/harness/compare.py`.",
       "sha256": "3e0a811c1dc688758ec4493f0d8eb5804a92b3503c0820bcc18f012d7a0a0742",
       "contentSize": "9619",
       "encodingFormat": "text/csv"
     },
     {
-      "@id": "#results/censo_comparison.csv",
+      "@id": "#data/results/censo_comparison.csv",
       "@type": "File",
-      "name": "results/censo_comparison.csv",
-      "description": "Per-ride CSV — gitignored (rows carry ride names/dates tied to private activities); described hash-only, never distributed. Regenerates via `python3 harness/censo_compare.py`.",
+      "name": "data/results/censo_comparison.csv",
+      "description": "Per-ride CSV — gitignored (rows carry ride names/dates tied to private activities); described hash-only, never distributed. Regenerates via `python3 src/harness/censo_compare.py`.",
       "sha256": "fd40d2f7a3b08ce18827f2132c15e183a46143189f84be8b5c21f10c5b1ddb1d",
       "contentSize": "16284",
       "encodingFormat": "text/csv"
     },
     {
-      "@id": "#results/ppaz_comparison.csv",
+      "@id": "#data/results/ppaz_comparison.csv",
       "@type": "File",
-      "name": "results/ppaz_comparison.csv",
-      "description": "Per-ride CSV — gitignored (rows carry ride names/dates tied to private activities); described hash-only, never distributed. Regenerates via `python3 harness/ppaz_compare.py`.",
+      "name": "data/results/ppaz_comparison.csv",
+      "description": "Per-ride CSV — gitignored (rows carry ride names/dates tied to private activities); described hash-only, never distributed. Regenerates via `python3 src/harness/ppaz_compare.py`.",
       "sha256": "f501456006f633b93463e71654589860869b28dbba42adea30f2b3be17c9d3c1",
       "contentSize": "105177",
       "encodingFormat": "text/csv"
     },
     {
-      "@id": "#results/jaam_comparison.csv",
+      "@id": "#data/results/jaam_comparison.csv",
       "@type": "File",
-      "name": "results/jaam_comparison.csv",
-      "description": "Per-ride CSV — gitignored (rows carry ride names/dates tied to private activities); described hash-only, never distributed. Regenerates via `python3 harness/jaam_compare.py`.",
+      "name": "data/results/jaam_comparison.csv",
+      "description": "Per-ride CSV — gitignored (rows carry ride names/dates tied to private activities); described hash-only, never distributed. Regenerates via `python3 src/harness/jaam_compare.py`.",
       "sha256": "7abd3b7fbdabb4c4751d0a47fa59d62af451c031d8b877d1f8c9cabcfb9ba75e",
       "contentSize": "55153",
       "encodingFormat": "text/csv"
     },
     {
-      "@id": "#results/time_comparison.csv",
+      "@id": "#data/results/time_comparison.csv",
       "@type": "File",
-      "name": "results/time_comparison.csv",
-      "description": "Per-ride CSV — gitignored (rows carry ride names/dates tied to private activities); described hash-only, never distributed. Regenerates via `python3 harness/time_compare.py`.",
-      "sha256": "5d19d5c7783a7db9ebf4a8fb49e049472992f84cd1df28a1d02c7a9c7a4d4969",
-      "contentSize": "143584",
+      "name": "data/results/time_comparison.csv",
+      "description": "Per-ride CSV — gitignored (rows carry ride names/dates tied to private activities); described hash-only, never distributed. Regenerates via `python3 src/harness/time_compare.py`.",
+      "sha256": "4ef32cbee3228ff8c267794fb9e467a0f72afb3c7494adce594788ade954d6b7",
+      "contentSize": "143539",
       "encodingFormat": "text/csv"
     },
     {
@@ -160,24 +160,24 @@
       },
       "instrument": [
         {
-          "@id": "#harness/bootstrap_ci.py"
+          "@id": "#src/harness/bootstrap_ci.py"
         }
       ],
       "object": [
         {
-          "@id": "#results/model_comparison.csv"
+          "@id": "#data/results/model_comparison.csv"
         },
         {
-          "@id": "#results/censo_comparison.csv"
+          "@id": "#data/results/censo_comparison.csv"
         },
         {
-          "@id": "#results/ppaz_comparison.csv"
+          "@id": "#data/results/ppaz_comparison.csv"
         },
         {
-          "@id": "#results/jaam_comparison.csv"
+          "@id": "#data/results/jaam_comparison.csv"
         },
         {
-          "@id": "#results/time_comparison.csv"
+          "@id": "#data/results/time_comparison.csv"
         }
       ],
       "result": [
@@ -187,16 +187,16 @@
       ]
     },
     {
-      "@id": "#harness/bootstrap_ci.py",
+      "@id": "#src/harness/bootstrap_ci.py",
       "@type": [
         "File",
         "SoftwareApplication",
         "SoftwareSourceCode"
       ],
-      "name": "harness/bootstrap_ci.py",
-      "url": "https://github.com/danlessa/bicycling-energy-model/blob/2de78046a481e5ce72c0380f5d053c6bb0dbbbee/harness/bootstrap_ci.py",
-      "sha256": "2431519ac5c621f9732ee836cd5d0534c56800c2c187f4cd8c9bbf085920ae69",
-      "version": "2de78046a481e5ce72c0380f5d053c6bb0dbbbee",
+      "name": "src/harness/bootstrap_ci.py",
+      "url": "https://github.com/danlessa/bicycling-energy-model/blob/cf52def91651b94f2b4e7b0ca2c32e67b92688ec/src/harness/bootstrap_ci.py",
+      "sha256": "191247caced055e2ae394105f697a99d9c99e64bf1c034a7d38035d7bf780b7f",
+      "version": "cf52def91651b94f2b4e7b0ca2c32e67b92688ec",
       "programmingLanguage": "Python"
     },
     {
@@ -205,7 +205,7 @@
       "name": "bootstrap_ci.py report (aggregates only)",
       "description": "Captured stdout: medians, bootstrap CIs, sign tests and gate status per corpus. Aggregate statistics only — no ride-level data.",
       "encodingFormat": "text/plain",
-      "sha256": "cc6737e478a2dc3649c772fc08e74283dc15ca97a5ba4c5ea063486cbfce4b76"
+      "sha256": "d43569f82ae1bf5e3c054ea291e186f4f45d070dcb18a0562a393b55c777c2cd"
     },
     {
       "@id": "ro-crate-preview.html",

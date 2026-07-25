@@ -39,7 +39,7 @@
         }
       ],
       "subjectOf": {
-        "@id": "https://github.com/danlessa/bicycling-energy-model/blob/main/research/notes/MODEL_COMPARISON_JOURNAL.md"
+        "@id": "https://github.com/danlessa/bicycling-energy-model/blob/main/research/journal/MODEL_COMPARISON_JOURNAL.md"
       },
       "conformsTo": {
         "@id": "https://w3id.org/ro/wfrun/process/0.5"
@@ -52,7 +52,7 @@
       "email": "danilo.lessa@gmail.com"
     },
     {
-      "@id": "https://github.com/danlessa/bicycling-energy-model/blob/main/research/notes/MODEL_COMPARISON_JOURNAL.md",
+      "@id": "https://github.com/danlessa/bicycling-energy-model/blob/main/research/journal/MODEL_COMPARISON_JOURNAL.md",
       "@type": "CreativeWork",
       "name": "Model comparison journal",
       "encodingFormat": "text/markdown"
@@ -70,7 +70,7 @@
       "text": "A 0.24% reduction in gravity moves the assumed-parameter corpora and leaves the fitted ones alone. Longões: champion 3.6 → 3.5, canonical 5.1 → 5.2, off 19.3 → 19.1 med|Δ%|; censo: canonical 6.5 → 6.6, smooth ε=0.15 5.0 → 4.8, while the poor-man's ε=0.20 headline holds at 3.9. Every rider-corpus result is unchanged to four figures (P. Paz 4.9/+0.6 and the frozen-ε 0.091-vs-0.139 win; JAAM 3.5/+0.4; the author 6.1), as is the ε closed form (37% RMS skill, correlations 0.30/0.60/0.77/0.82, part–whole 0.72/0.99) and the time model's endpoint (T1b 6.6 vs T0 7.6). Direction as predicted: less gravity charges less for climbing, so over-predicting variants improve and the under-predicting canonical worsens. Conservation residual unchanged at 1.77e-8; cross-language parity unchanged at 8514 comparisons ≤ 1e-9.",
       "appearance": [
         {
-          "@id": "https://github.com/danlessa/bicycling-energy-model/blob/main/research/notes/MODEL_COMPARISON_JOURNAL.md"
+          "@id": "https://github.com/danlessa/bicycling-energy-model/blob/main/research/journal/MODEL_COMPARISON_JOURNAL.md"
         }
       ],
       "subjectOf": {
@@ -78,39 +78,39 @@
       }
     },
     {
-      "@id": "#results/model_comparison.csv",
+      "@id": "#data/results/model_comparison.csv",
       "@type": "File",
-      "name": "results/model_comparison.csv",
-      "description": "Per-ride CSV — gitignored (rows carry ride names/dates tied to private activities); described hash-only, never distributed. Regenerates via `python3 harness/compare.py`.",
+      "name": "data/results/model_comparison.csv",
+      "description": "Per-ride CSV — gitignored (rows carry ride names/dates tied to private activities); described hash-only, never distributed. Regenerates via `python3 src/harness/compare.py`.",
       "sha256": "3e0a811c1dc688758ec4493f0d8eb5804a92b3503c0820bcc18f012d7a0a0742",
       "contentSize": "9619",
       "encodingFormat": "text/csv"
     },
     {
-      "@id": "#results/censo_comparison.csv",
+      "@id": "#data/results/censo_comparison.csv",
       "@type": "File",
-      "name": "results/censo_comparison.csv",
-      "description": "Per-ride CSV — gitignored (rows carry ride names/dates tied to private activities); described hash-only, never distributed. Regenerates via `python3 harness/censo_compare.py`.",
+      "name": "data/results/censo_comparison.csv",
+      "description": "Per-ride CSV — gitignored (rows carry ride names/dates tied to private activities); described hash-only, never distributed. Regenerates via `python3 src/harness/censo_compare.py`.",
       "sha256": "fd40d2f7a3b08ce18827f2132c15e183a46143189f84be8b5c21f10c5b1ddb1d",
       "contentSize": "16284",
       "encodingFormat": "text/csv"
     },
     {
-      "@id": "#results/eps_sp.csv",
+      "@id": "#data/results/eps_sp.csv",
       "@type": "File",
-      "name": "results/eps_sp.csv",
-      "description": "Per-ride CSV — gitignored (rows carry ride names/dates tied to private activities); described hash-only, never distributed. Regenerates via `python3 harness/eps_sp_test.py`.",
+      "name": "data/results/eps_sp.csv",
+      "description": "Per-ride CSV — gitignored (rows carry ride names/dates tied to private activities); described hash-only, never distributed. Regenerates via `python3 src/harness/eps_sp_test.py`.",
       "sha256": "4d23a5a47abfe722a0397d640b9b7107961cdf640911831b28905ecd779b4d77",
       "contentSize": "4441",
       "encodingFormat": "text/csv"
     },
     {
-      "@id": "#results/igc_resolution_test.csv",
+      "@id": "#data/results/igc_resolution_test.csv",
       "@type": "File",
-      "name": "results/igc_resolution_test.csv",
-      "description": "Per-ride CSV — gitignored (rows carry ride names/dates tied to private activities); described hash-only, never distributed. Regenerates via `python3 harness/igc_resolution_test.py`.",
-      "sha256": "a3dda97174a03c96f90d95d62dd250a87ae56785729095c0ced11dcc5e9c251f",
-      "contentSize": "308376",
+      "name": "data/results/igc_resolution_test.csv",
+      "description": "Per-ride CSV — gitignored (rows carry ride names/dates tied to private activities); described hash-only, never distributed. Regenerates via `python3 src/harness/igc_resolution_test.py`.",
+      "sha256": "7c3f6ea6cacf474747f94768bb926884cfa740c6a086a90ed0b00c10057de617",
+      "contentSize": "308387",
       "encodingFormat": "text/csv"
     },
     {
@@ -127,51 +127,35 @@
       },
       "instrument": [
         {
-          "@id": "#harness/bootstrap_ci.py"
-        },
-        {
-          "@id": "#analysis/parity/run_parity.py"
+          "@id": "#src/harness/bootstrap_ci.py"
         }
       ],
       "result": [
         {
-          "@id": "#results/model_comparison.csv"
+          "@id": "#data/results/model_comparison.csv"
         },
         {
-          "@id": "#results/censo_comparison.csv"
+          "@id": "#data/results/censo_comparison.csv"
         },
         {
-          "@id": "#results/eps_sp.csv"
+          "@id": "#data/results/eps_sp.csv"
         },
         {
-          "@id": "#results/igc_resolution_test.csv"
+          "@id": "#data/results/igc_resolution_test.csv"
         }
       ]
     },
     {
-      "@id": "#harness/bootstrap_ci.py",
+      "@id": "#src/harness/bootstrap_ci.py",
       "@type": [
         "File",
         "SoftwareApplication",
         "SoftwareSourceCode"
       ],
-      "name": "harness/bootstrap_ci.py",
-      "url": "https://github.com/danlessa/bicycling-energy-model/blob/2de78046a481e5ce72c0380f5d053c6bb0dbbbee/harness/bootstrap_ci.py",
-      "sha256": "2431519ac5c621f9732ee836cd5d0534c56800c2c187f4cd8c9bbf085920ae69",
-      "version": "2de78046a481e5ce72c0380f5d053c6bb0dbbbee",
-      "programmingLanguage": "Python"
-    },
-    {
-      "@id": "#analysis/parity/run_parity.py",
-      "@type": [
-        "File",
-        "SoftwareApplication",
-        "SoftwareSourceCode"
-      ],
-      "name": "analysis/parity/run_parity.py",
-      "url": "https://github.com/danlessa/bicycling-energy-model/blob/2de78046a481e5ce72c0380f5d053c6bb0dbbbee/analysis/parity/run_parity.py",
-      "sha256": "d48df837ffc1a4fa6616704de7ef050f81636fbf90d08afaf63775eb55656f6f",
-      "version": "2de78046a481e5ce72c0380f5d053c6bb0dbbbee",
+      "name": "src/harness/bootstrap_ci.py",
+      "url": "https://github.com/danlessa/bicycling-energy-model/blob/cf52def91651b94f2b4e7b0ca2c32e67b92688ec/src/harness/bootstrap_ci.py",
+      "sha256": "191247caced055e2ae394105f697a99d9c99e64bf1c034a7d38035d7bf780b7f",
+      "version": "cf52def91651b94f2b4e7b0ca2c32e67b92688ec",
       "programmingLanguage": "Python"
     },
     {

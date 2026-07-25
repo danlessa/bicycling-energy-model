@@ -39,7 +39,7 @@
         }
       ],
       "subjectOf": {
-        "@id": "https://github.com/danlessa/bicycling-energy-model/blob/main/research/notes/MODEL_COMPARISON_JOURNAL.md"
+        "@id": "https://github.com/danlessa/bicycling-energy-model/blob/main/research/journal/MODEL_COMPARISON_JOURNAL.md"
       },
       "conformsTo": {
         "@id": "https://w3id.org/ro/wfrun/process/0.5"
@@ -52,7 +52,7 @@
       "email": "danilo.lessa@gmail.com"
     },
     {
-      "@id": "https://github.com/danlessa/bicycling-energy-model/blob/main/research/notes/MODEL_COMPARISON_JOURNAL.md",
+      "@id": "https://github.com/danlessa/bicycling-energy-model/blob/main/research/journal/MODEL_COMPARISON_JOURNAL.md",
       "@type": "CreativeWork",
       "name": "Model comparison journal",
       "encodingFormat": "text/markdown"
@@ -70,7 +70,7 @@
       "text": "All four parameters are recoverable within the pre-stated plausible ranges for all three riders: mass from braking-free sustained climbs is CdA-robust (JAAM's implied 103 kg was genuine — rider-confirmed ≈ 100 ± 7 kg, retiring Entry 14's CdA-misspecification guess); CdA and C_rr become identifiable only once per-activity wind is modelled via a LINEARISED aero regression (flat-power, coast-down and climb-only methods all fail for CdA); the wind vector itself comes from GPS-bearing directional asymmetry, de-biased for regression attenuation.",
       "appearance": [
         {
-          "@id": "https://github.com/danlessa/bicycling-energy-model/blob/main/research/notes/MODEL_COMPARISON_JOURNAL.md"
+          "@id": "https://github.com/danlessa/bicycling-energy-model/blob/main/research/journal/MODEL_COMPARISON_JOURNAL.md"
         }
       ],
       "subjectOf": {
@@ -85,19 +85,19 @@
       "conditionsOfAccess": "Available on request from the author, coordinates stripped."
     },
     {
-      "@id": "#results/cda_estimate.csv",
+      "@id": "#data/results/cda_estimate.csv",
       "@type": "File",
-      "name": "results/cda_estimate.csv",
-      "description": "Per-ride CSV — gitignored (rows carry ride names/dates tied to private activities); described hash-only, never distributed. Regenerates via `python3 harness/cda_estimate.py`.",
+      "name": "data/results/cda_estimate.csv",
+      "description": "Per-ride CSV — gitignored (rows carry ride names/dates tied to private activities); described hash-only, never distributed. Regenerates via `python3 src/harness/cda_estimate.py`.",
       "sha256": "03331d5ce8e1f85e7fb81a6691bc3593a501555c941d7119f496288f7b965f42",
       "contentSize": "307",
       "encodingFormat": "text/csv"
     },
     {
-      "@id": "#results/param_fit.csv",
+      "@id": "#data/results/param_fit.csv",
       "@type": "File",
-      "name": "results/param_fit.csv",
-      "description": "Per-ride CSV — gitignored (rows carry ride names/dates tied to private activities); described hash-only, never distributed. Regenerates via `python3 harness/param_fit.py`.",
+      "name": "data/results/param_fit.csv",
+      "description": "Per-ride CSV — gitignored (rows carry ride names/dates tied to private activities); described hash-only, never distributed. Regenerates via `python3 src/harness/param_fit.py`.",
       "sha256": "e1215037b00c244c443a725423603ae3c9cdcffd99a3d915994145a6d271769d",
       "contentSize": "252",
       "encodingFormat": "text/csv"
@@ -116,10 +116,10 @@
       },
       "instrument": [
         {
-          "@id": "#harness/cda_estimate.py"
+          "@id": "#src/harness/cda_estimate.py"
         },
         {
-          "@id": "#harness/param_fit.py"
+          "@id": "#src/harness/param_fit.py"
         }
       ],
       "object": [
@@ -129,37 +129,37 @@
       ],
       "result": [
         {
-          "@id": "#results/cda_estimate.csv"
+          "@id": "#data/results/cda_estimate.csv"
         },
         {
-          "@id": "#results/param_fit.csv"
+          "@id": "#data/results/param_fit.csv"
         }
       ]
     },
     {
-      "@id": "#harness/cda_estimate.py",
+      "@id": "#src/harness/cda_estimate.py",
       "@type": [
         "File",
         "SoftwareApplication",
         "SoftwareSourceCode"
       ],
-      "name": "harness/cda_estimate.py",
-      "url": "https://github.com/danlessa/bicycling-energy-model/blob/2de78046a481e5ce72c0380f5d053c6bb0dbbbee/harness/cda_estimate.py",
-      "sha256": "b1ef77e287c1a332f88212254aec909dfddc91dc1b5aa68d59555c2ba36a8868",
-      "version": "2de78046a481e5ce72c0380f5d053c6bb0dbbbee",
+      "name": "src/harness/cda_estimate.py",
+      "url": "https://github.com/danlessa/bicycling-energy-model/blob/cf52def91651b94f2b4e7b0ca2c32e67b92688ec/src/harness/cda_estimate.py",
+      "sha256": "2e755b795268f80cc593a2023821630445a5c9e1913dd308ac9e7795bad4ce77",
+      "version": "cf52def91651b94f2b4e7b0ca2c32e67b92688ec",
       "programmingLanguage": "Python"
     },
     {
-      "@id": "#harness/param_fit.py",
+      "@id": "#src/harness/param_fit.py",
       "@type": [
         "File",
         "SoftwareApplication",
         "SoftwareSourceCode"
       ],
-      "name": "harness/param_fit.py",
-      "url": "https://github.com/danlessa/bicycling-energy-model/blob/2de78046a481e5ce72c0380f5d053c6bb0dbbbee/harness/param_fit.py",
-      "sha256": "169729a28318565666881c17576ebb50ebc99e3a05ce5a0d8dba1f9b852656cc",
-      "version": "2de78046a481e5ce72c0380f5d053c6bb0dbbbee",
+      "name": "src/harness/param_fit.py",
+      "url": "https://github.com/danlessa/bicycling-energy-model/blob/cf52def91651b94f2b4e7b0ca2c32e67b92688ec/src/harness/param_fit.py",
+      "sha256": "5b0bab8106f9ebe72d421b333f9244d3827b1dfc8848f8884084b90c9d7e68b7",
+      "version": "cf52def91651b94f2b4e7b0ca2c32e67b92688ec",
       "programmingLanguage": "Python"
     },
     {

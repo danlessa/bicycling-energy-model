@@ -39,7 +39,7 @@
         }
       ],
       "subjectOf": {
-        "@id": "https://github.com/danlessa/bicycling-energy-model/blob/main/research/notes/MODEL_COMPARISON_JOURNAL.md"
+        "@id": "https://github.com/danlessa/bicycling-energy-model/blob/main/research/journal/MODEL_COMPARISON_JOURNAL.md"
       },
       "conformsTo": {
         "@id": "https://w3id.org/ro/wfrun/process/0.5"
@@ -52,7 +52,7 @@
       "email": "danilo.lessa@gmail.com"
     },
     {
-      "@id": "https://github.com/danlessa/bicycling-energy-model/blob/main/research/notes/MODEL_COMPARISON_JOURNAL.md",
+      "@id": "https://github.com/danlessa/bicycling-energy-model/blob/main/research/journal/MODEL_COMPARISON_JOURNAL.md",
       "@type": "CreativeWork",
       "name": "Model comparison journal",
       "encodingFormat": "text/markdown"
@@ -70,7 +70,7 @@
       "text": "The ascent half is empirically supported and transfers out-of-sample: the pre-declared endpoint T1b reaches 6.6% median vs the naive baseline's 7.6% on 441 P. Paz rides (sign test p = 0.011), concentrated on the hilliest tercile, and the physics k₊ beats a FITTED ceiling frozen on the new rider (6.6 vs 10.9). The descent bridge is NOT confirmed: the analytic ε↔k₋ form systematically over-predicts measured descent speed (corr 0.08–0.59) — real descents are behaviour- and cap-limited — so k₋ stays a free, corpus-dependent coefficient.",
       "appearance": [
         {
-          "@id": "https://github.com/danlessa/bicycling-energy-model/blob/main/research/notes/MODEL_COMPARISON_JOURNAL.md"
+          "@id": "https://github.com/danlessa/bicycling-energy-model/blob/main/research/journal/MODEL_COMPARISON_JOURNAL.md"
         }
       ],
       "subjectOf": {
@@ -85,12 +85,12 @@
       "conditionsOfAccess": "Available on request from the author, coordinates stripped."
     },
     {
-      "@id": "#results/time_comparison.csv",
+      "@id": "#data/results/time_comparison.csv",
       "@type": "File",
-      "name": "results/time_comparison.csv",
-      "description": "Per-ride CSV — gitignored (rows carry ride names/dates tied to private activities); described hash-only, never distributed. Regenerates via `python3 harness/time_compare.py`.",
-      "sha256": "5d19d5c7783a7db9ebf4a8fb49e049472992f84cd1df28a1d02c7a9c7a4d4969",
-      "contentSize": "143584",
+      "name": "data/results/time_comparison.csv",
+      "description": "Per-ride CSV — gitignored (rows carry ride names/dates tied to private activities); described hash-only, never distributed. Regenerates via `python3 src/harness/time_compare.py`.",
+      "sha256": "4ef32cbee3228ff8c267794fb9e467a0f72afb3c7494adce594788ade954d6b7",
+      "contentSize": "143539",
       "encodingFormat": "text/csv"
     },
     {
@@ -107,7 +107,7 @@
       },
       "instrument": [
         {
-          "@id": "#harness/time_compare.py"
+          "@id": "#src/harness/time_compare.py"
         }
       ],
       "object": [
@@ -117,21 +117,21 @@
       ],
       "result": [
         {
-          "@id": "#results/time_comparison.csv"
+          "@id": "#data/results/time_comparison.csv"
         }
       ]
     },
     {
-      "@id": "#harness/time_compare.py",
+      "@id": "#src/harness/time_compare.py",
       "@type": [
         "File",
         "SoftwareApplication",
         "SoftwareSourceCode"
       ],
-      "name": "harness/time_compare.py",
-      "url": "https://github.com/danlessa/bicycling-energy-model/blob/2de78046a481e5ce72c0380f5d053c6bb0dbbbee/harness/time_compare.py",
-      "sha256": "13e0dfe0db2a880d3e8dd7d3a1ddbb609927a846df10c00cb02e42158917e72b",
-      "version": "2de78046a481e5ce72c0380f5d053c6bb0dbbbee",
+      "name": "src/harness/time_compare.py",
+      "url": "https://github.com/danlessa/bicycling-energy-model/blob/cf52def91651b94f2b4e7b0ca2c32e67b92688ec/src/harness/time_compare.py",
+      "sha256": "7a9736bed26b9079670821c8d894b0201b8fb9cb384a866f6daaba89609be3f1",
+      "version": "cf52def91651b94f2b4e7b0ca2c32e67b92688ec",
       "programmingLanguage": "Python"
     },
     {

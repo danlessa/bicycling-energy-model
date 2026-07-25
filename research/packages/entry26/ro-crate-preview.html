@@ -62,7 +62,7 @@ ul { margin:.4rem 0; padding-left:1.2rem; }
   <h1>Entrada 26 — pre-registered — the direction ladder on real ride endpoints, and portals (bridges/tunnels) in both the track and the search</h1>
   <div class="badges">
     <span>2026-07-24</span>
-    <span>commit 2de78046a481</span>
+    <span>commit cf52def91651</span>
     <span>com execução de harness</span>
   </div>
 </header>
@@ -72,7 +72,7 @@ ul { margin:.4rem 0; padding-left:1.2rem; }
   <blockquote>
     The grid-connectivity bias survives the move from synthetic rings to real ride endpoints: under the app&#x27;s default physics the 8-direction optimum sits 11.90% above the sq128 near-continuum reference (5.99/2.38/0.73% at 16/32/64), monotone on 86/86 pairs, with no lattice direction signature once corpus imbalance is removed (12.35 pp spread → 3.35 pp). But sq16 recovers only 49.69% of the gap [CI 45.9, 53.8], so the pre-registered ≥50% decision rule FAILS by 0.31 pp — while its CI straddles the threshold and the per-pair estimator reads 51.57%, which would pass.
     <footer>Conforme registrado no
-    <a href="https://github.com/danlessa/bicycling-energy-model/blob/main/research/notes/MODEL_COMPARISON_JOURNAL.md">diário de comparação de modelos</a> e no grafo de
+    <a href="https://github.com/danlessa/bicycling-energy-model/blob/main/research/journal/MODEL_COMPARISON_JOURNAL.md">diário de comparação de modelos</a> e no grafo de
     afirmações (<a href="https://github.com/danlessa/bicycling-energy-model/blob/main/research/notes/claims.ttl">claims.ttl</a>) — a prosa da entrada
     permanece a fonte autoritativa.</footer>
   </blockquote>
@@ -80,7 +80,7 @@ ul { margin:.4rem 0; padding-left:1.2rem; }
 
 <section>
   <h2>Como foi produzida</h2>
-  <p>Instrumento(s): <code>harness/e26_pairs.py</code> (sha256 <code class='hash'>7ba998f5e11ca065…</code>, <a href="https://github.com/danlessa/bicycling-energy-model/blob/2de78046a481e5ce72c0380f5d053c6bb0dbbbee/harness/e26_pairs.py">fonte no commit</a>), <code>harness/e26_portal_profiles.py</code> (sha256 <code class='hash'>0ad4e8a9c7988340…</code>, <a href="https://github.com/danlessa/bicycling-energy-model/blob/2de78046a481e5ce72c0380f5d053c6bb0dbbbee/harness/e26_portal_profiles.py">fonte no commit</a>), <code>harness/e26_detour.py</code> (sha256 <code class='hash'>dcedb5b1ba6678d1…</code>, <a href="https://github.com/danlessa/bicycling-energy-model/blob/2de78046a481e5ce72c0380f5d053c6bb0dbbbee/harness/e26_detour.py">fonte no commit</a>).</p>
+  <p>Instrumento(s): <code>src/harness/e26_pairs.py</code> (sha256 <code class='hash'>0d204d535f4eb98f…</code>, <a href="https://github.com/danlessa/bicycling-energy-model/blob/cf52def91651b94f2b4e7b0ca2c32e67b92688ec/src/harness/e26_pairs.py">fonte no commit</a>), <code>src/harness/e26_portal_profiles.py</code> (sha256 <code class='hash'>e3dfae907e526445…</code>, <a href="https://github.com/danlessa/bicycling-energy-model/blob/cf52def91651b94f2b4e7b0ca2c32e67b92688ec/src/harness/e26_portal_profiles.py">fonte no commit</a>), <code>src/harness/e26_detour.py</code> (sha256 <code class='hash'>6d50d70811835e11…</code>, <a href="https://github.com/danlessa/bicycling-energy-model/blob/cf52def91651b94f2b4e7b0ca2c32e67b92688ec/src/harness/e26_detour.py">fonte no commit</a>).</p>
   <p class='muted'>Insumos primários: gravações de pedaladas privadas (FIT com GPS e potência) — fora do repositório e deste pacote; agregados sem coordenadas disponíveis sob pedido.</p>
   <p class="muted">Reconstruir os pacotes:
   <code>python3 research/packages/make_crates.py</code>.</p>
@@ -93,17 +93,17 @@ ul { margin:.4rem 0; padding-left:1.2rem; }
   consentido confirmar que recebeu os mesmos arquivos.</p>
   <div class="tablewrap"><table>
     <tr><th>arquivo</th><th>tamanho</th><th>sha256</th><th>regenera via</th></tr>
-    <tr><td><code>results/e26_portal_profiles.csv</code></td><td class='num'>99,748 B</td><td><code class='hash'>1945fb9b01bf1079…</code></td><td>python3 harness/e26_portal_profiles.py</td></tr>
-<tr><td><code>results/e26_grid.csv</code></td><td class='num'>13,119 B</td><td><code class='hash'>9a4b62b59c60455f…</code></td><td>node ../simujaules/docs/grid-e26.mjs</td></tr>
-<tr><td><code>results/e26_grid_cal.csv</code></td><td class='num'>13,167 B</td><td><code class='hash'>26c2b7e513be0d82…</code></td><td>E26_BUNDLE=cal node ../simujaules/docs/grid-e26.mjs</td></tr>
-<tr><td><code>results/e26_detour.csv</code></td><td class='num'>46,361 B</td><td><code class='hash'>85a2c0e928656817…</code></td><td>python3 harness/e26_detour.py</td></tr>
+    <tr><td><code>data/results/e26_portal_profiles.csv</code></td><td class='num'>99,748 B</td><td><code class='hash'>1945fb9b01bf1079…</code></td><td>python3 src/harness/e26_portal_profiles.py</td></tr>
+<tr><td><code>data/results/e26_grid.csv</code></td><td class='num'>13,119 B</td><td><code class='hash'>9a4b62b59c60455f…</code></td><td>node ../simujaules/docs/grid-e26.mjs</td></tr>
+<tr><td><code>data/results/e26_grid_cal.csv</code></td><td class='num'>13,167 B</td><td><code class='hash'>26c2b7e513be0d82…</code></td><td>E26_BUNDLE=cal node ../simujaules/docs/grid-e26.mjs</td></tr>
+<tr><td><code>data/results/e26_detour.csv</code></td><td class='num'>46,361 B</td><td><code class='hash'>85a2c0e928656817…</code></td><td>python3 src/harness/e26_detour.py</td></tr>
   </table></div>
 </section>
 
 <section>
   <h2>Contexto</h2>
   <ul>
-    <li>Diário (entrada 26): <a href="https://github.com/danlessa/bicycling-energy-model/blob/main/research/notes/MODEL_COMPARISON_JOURNAL.md">MODEL_COMPARISON_JOURNAL.md</a></li>
+    <li>Diário (entrada 26): <a href="https://github.com/danlessa/bicycling-energy-model/blob/main/research/journal/MODEL_COMPARISON_JOURNAL.md">MODEL_COMPARISON_JOURNAL.md</a></li>
     <li>Grafo de afirmações: <a href="https://github.com/danlessa/bicycling-energy-model/blob/main/research/notes/claims.ttl">claims.ttl</a></li>
     
     <li>Pacote de pesquisa: <a href="https://doi.org/10.5281/zenodo.21282165">https://doi.org/10.5281/zenodo.21282165</a></li>

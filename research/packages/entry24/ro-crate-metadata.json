@@ -36,7 +36,7 @@
         }
       ],
       "subjectOf": {
-        "@id": "https://github.com/danlessa/bicycling-energy-model/blob/main/research/notes/MODEL_COMPARISON_JOURNAL.md"
+        "@id": "https://github.com/danlessa/bicycling-energy-model/blob/main/research/journal/MODEL_COMPARISON_JOURNAL.md"
       },
       "citation": [
         {
@@ -51,7 +51,7 @@
       "email": "danilo.lessa@gmail.com"
     },
     {
-      "@id": "https://github.com/danlessa/bicycling-energy-model/blob/main/research/notes/MODEL_COMPARISON_JOURNAL.md",
+      "@id": "https://github.com/danlessa/bicycling-energy-model/blob/main/research/journal/MODEL_COMPARISON_JOURNAL.md",
       "@type": "CreativeWork",
       "name": "Model comparison journal",
       "encodingFormat": "text/markdown"
@@ -69,7 +69,7 @@
       "text": "The survey brackets our measurements: consumer-baro h₊ error is ~1–5% device-level, DEM per-point accuracy does NOT transfer to accumulated ascent, and the consensus direction is GPS-only under-reads while DEM correction over-reads — Entries 6 and 19 sit inside every located band, and Entry 19's flat-terrain FABDEM failure is sharper than anything located. The decidability point: h₊ has no true value, only a value at a smoothing scale, so geometry alone cannot adjudicate between sources — the measured-energy endpoint turns the smoothing scale into a fittable parameter (Entries 19–21), a validation no located study performs.",
       "appearance": [
         {
-          "@id": "https://github.com/danlessa/bicycling-energy-model/blob/main/research/notes/MODEL_COMPARISON_JOURNAL.md"
+          "@id": "https://github.com/danlessa/bicycling-energy-model/blob/main/research/journal/MODEL_COMPARISON_JOURNAL.md"
         }
       ],
       "subjectOf": {

@@ -39,7 +39,7 @@
         }
       ],
       "subjectOf": {
-        "@id": "https://github.com/danlessa/bicycling-energy-model/blob/main/research/notes/MODEL_COMPARISON_JOURNAL.md"
+        "@id": "https://github.com/danlessa/bicycling-energy-model/blob/main/research/journal/MODEL_COMPARISON_JOURNAL.md"
       },
       "conformsTo": {
         "@id": "https://w3id.org/ro/wfrun/process/0.5"
@@ -52,7 +52,7 @@
       "email": "danilo.lessa@gmail.com"
     },
     {
-      "@id": "https://github.com/danlessa/bicycling-energy-model/blob/main/research/notes/MODEL_COMPARISON_JOURNAL.md",
+      "@id": "https://github.com/danlessa/bicycling-energy-model/blob/main/research/journal/MODEL_COMPARISON_JOURNAL.md",
       "@type": "CreativeWork",
       "name": "Model comparison journal",
       "encodingFormat": "text/markdown"
@@ -70,7 +70,7 @@
       "text": "The energy law and the −0.13 offset are consistent a third time (canonical 5.4% med|Δ%| with data-implied mass; smooth ε=0.20 best at 3.5%; offset 0.133, bootstrap CI 0.102–0.186) — but the geometric-ε skill does NOT transfer: it fails outright on JAAM's gentle-heavy bulk and is inconclusive on the thin real-descent subset. The skill works for riders who coast (P. Paz), not for riders who pedal descents (JAAM). Framing corrected: P. Paz and JAAM are independent third-party riders, not Pedal Hidrográfico members; only the censo is a collective corpus.",
       "appearance": [
         {
-          "@id": "https://github.com/danlessa/bicycling-energy-model/blob/main/research/notes/MODEL_COMPARISON_JOURNAL.md"
+          "@id": "https://github.com/danlessa/bicycling-energy-model/blob/main/research/journal/MODEL_COMPARISON_JOURNAL.md"
         }
       ],
       "subjectOf": {
@@ -85,10 +85,10 @@
       "conditionsOfAccess": "Available on request from the author, coordinates stripped."
     },
     {
-      "@id": "#results/jaam_comparison.csv",
+      "@id": "#data/results/jaam_comparison.csv",
       "@type": "File",
-      "name": "results/jaam_comparison.csv",
-      "description": "Per-ride CSV — gitignored (rows carry ride names/dates tied to private activities); described hash-only, never distributed. Regenerates via `python3 harness/jaam_compare.py`.",
+      "name": "data/results/jaam_comparison.csv",
+      "description": "Per-ride CSV — gitignored (rows carry ride names/dates tied to private activities); described hash-only, never distributed. Regenerates via `python3 src/harness/jaam_compare.py`.",
       "sha256": "7abd3b7fbdabb4c4751d0a47fa59d62af451c031d8b877d1f8c9cabcfb9ba75e",
       "contentSize": "55153",
       "encodingFormat": "text/csv"
@@ -107,7 +107,7 @@
       },
       "instrument": [
         {
-          "@id": "#harness/jaam_compare.py"
+          "@id": "#src/harness/jaam_compare.py"
         }
       ],
       "object": [
@@ -117,21 +117,21 @@
       ],
       "result": [
         {
-          "@id": "#results/jaam_comparison.csv"
+          "@id": "#data/results/jaam_comparison.csv"
         }
       ]
     },
     {
-      "@id": "#harness/jaam_compare.py",
+      "@id": "#src/harness/jaam_compare.py",
       "@type": [
         "File",
         "SoftwareApplication",
         "SoftwareSourceCode"
       ],
-      "name": "harness/jaam_compare.py",
-      "url": "https://github.com/danlessa/bicycling-energy-model/blob/2de78046a481e5ce72c0380f5d053c6bb0dbbbee/harness/jaam_compare.py",
-      "sha256": "5de4a0fbc49e3f851908cbb0edca689ad1af991cd117b5be6cd00af549b99e22",
-      "version": "2de78046a481e5ce72c0380f5d053c6bb0dbbbee",
+      "name": "src/harness/jaam_compare.py",
+      "url": "https://github.com/danlessa/bicycling-energy-model/blob/cf52def91651b94f2b4e7b0ca2c32e67b92688ec/src/harness/jaam_compare.py",
+      "sha256": "8b414abe6c3ca56a4e668dd704a84241d7deb8c212a5a33533adf13f274050a2",
+      "version": "cf52def91651b94f2b4e7b0ca2c32e67b92688ec",
       "programmingLanguage": "Python"
     },
     {
