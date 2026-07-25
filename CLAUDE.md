@@ -157,8 +157,13 @@ locally **and** imports `bem`'s engines, so moving one without the others mixes 
 gravities inside a single computation — move them together or not at all. Three sites
 keep **9.81 deliberately** because they mirror the cost bundle *sampasimu deploys*:
 `verify_v2edge_clamp.py`, `e26_detour.py`'s `G_JS`, and the frozen `reference.mjs`
-header comment. Consequence to remember: until simujaules is re-based too, the applet's
-`v2Edge` readout differs from the deployed app by the gravity ratio (≈0.24%).
+header comment. simujaules was re-based in step (its v63, `26c26e5`: one documented `G_SP` in
+`app.js` plus its seven `docs/grid-*` mirrors), so the applet and the deployed app agree again —
+but note its Rust backend holds **no** gravity constant (it receives the derived cost bundle, so
+JS↔Rust parity is gravity-blind), and the shift is a two-term trade rather than one ratio: β and
+`a_roll` −0.2406%, `a_aero` **+0.096%** (lower g ⇒ less rolling drag ⇒ `v_f` +0.048%), net ≈−0.2%
+on a mixed edge. Still outstanding: the published `/modelo/` pages are built from THIS repo by
+`research/build-modelo.sh` and still show pre-re-baseline numbers.
 
 ## Invariants — easy to break, hard to notice
 

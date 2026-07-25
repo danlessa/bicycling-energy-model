@@ -240,9 +240,24 @@ this entry gets a follow-up.
   the same logic as the censo scoreboard. Following the Entry 11 precedent, earlier entries keep
   the numbers they were written with; this entry is the pointer to the current values.
 - **Entries 2–6 keep their historical numbers** (the same convention Entry 11 established).
-- **`sampasimu` is not re-based.** Until it is, the applet's `v2Edge` readout differs from the
-  deployed app by the gravity ratio (≈0.24%) — recorded in `CLAUDE.md`, and a cross-repo decision
-  rather than something to fix from here.
+- **`sampasimu` WAS re-based the same day** (simujaules `26c26e5`, v63, committed but not yet
+  pushed/deployed), so the divergence this entry originally recorded is closed at the source
+  level: `app.js` now carries a single documented `G_SP = 9.7864` feeding the one cost bundle it
+  ships to `energy-worker.js`, `graph-engine.js` and the Rust backend, and its seven `docs/grid-*`
+  mirrors moved with it. Two facts from that pass are worth importing here. **(i) The Rust backend
+  has no gravity constant at all** — it receives the derived `{aRoll, aAero, beta, abRatio}` bundle
+  over the wire, so the JS↔Rust bit-parity invariant is *gravity-blind* (its 97 energy cases still
+  match at max |Δ| = 0, but they do not exercise this constant; what pins it there is
+  `test-energy-v2.mjs`). **(ii) The shift is not a single ratio.** β and `a_roll` fall 0.2406%, but
+  `a_aero` *rises* 0.096% — lower gravity means less rolling drag, so the flat-equilibrium speed
+  `v_f` rises 0.048% and the aero term follows — and `abRatio` rises 0.193%. Net on a mixed
+  flat/±5% edge: **−0.197%**. So "0.24%" is the climb-dominated figure and ≈0.2% the mixed one; the
+  numbers in this entry are unaffected (they are measured, not scaled), but the *mechanism* is a
+  two-term trade, not one multiplier.
+- **The published `/modelo/` pages are now stale.** Those HTML/PDF builds live in the simujaules
+  repo but are generated from *this* repo by `research/build-modelo.sh`, so re-publishing the
+  re-baselined article is a follow-up here, not there. Until then the deployed paper shows
+  pre-re-baseline numbers.
 
 **Net.** A 0.24% change in one constant moves nine published medians by ≤0.2 pp, moves none of the
 rider-transfer results at all, strengthens the parity claim, softens one transfer claim from "ties"

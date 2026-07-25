@@ -89,7 +89,7 @@
       "@type": "File",
       "name": "results/cda_estimate.csv",
       "description": "Per-ride CSV — gitignored (rows carry ride names/dates tied to private activities); described hash-only, never distributed. Regenerates via `python3 harness/cda_estimate.py`.",
-      "sha256": "b68e9ca18df6d3f3546f2a95750071f2d13ec071195f96000ece443f4732ebc1",
+      "sha256": "03331d5ce8e1f85e7fb81a6691bc3593a501555c941d7119f496288f7b965f42",
       "contentSize": "307",
       "encodingFormat": "text/csv"
     },
@@ -98,7 +98,7 @@
       "@type": "File",
       "name": "results/param_fit.csv",
       "description": "Per-ride CSV — gitignored (rows carry ride names/dates tied to private activities); described hash-only, never distributed. Regenerates via `python3 harness/param_fit.py`.",
-      "sha256": "8cb79d29d21d41852012a27356cd76dd1731da898e9f939b78c67ffe66e568b9",
+      "sha256": "e1215037b00c244c443a725423603ae3c9cdcffd99a3d915994145a6d271769d",
       "contentSize": "252",
       "encodingFormat": "text/csv"
     },
@@ -144,9 +144,9 @@
         "SoftwareSourceCode"
       ],
       "name": "harness/cda_estimate.py",
-      "url": "https://github.com/danlessa/bicycling-energy-model/blob/4f68850c44236c6d789971639c679d0a2c6b53c7/harness/cda_estimate.py",
+      "url": "https://github.com/danlessa/bicycling-energy-model/blob/1f522969ad7f40f9935574ebcd4002558b291812/harness/cda_estimate.py",
       "sha256": "b1ef77e287c1a332f88212254aec909dfddc91dc1b5aa68d59555c2ba36a8868",
-      "version": "4f68850c44236c6d789971639c679d0a2c6b53c7",
+      "version": "1f522969ad7f40f9935574ebcd4002558b291812",
       "programmingLanguage": "Python"
     },
     {
@@ -157,9 +157,9 @@
         "SoftwareSourceCode"
       ],
       "name": "harness/param_fit.py",
-      "url": "https://github.com/danlessa/bicycling-energy-model/blob/4f68850c44236c6d789971639c679d0a2c6b53c7/harness/param_fit.py",
+      "url": "https://github.com/danlessa/bicycling-energy-model/blob/1f522969ad7f40f9935574ebcd4002558b291812/harness/param_fit.py",
       "sha256": "169729a28318565666881c17576ebb50ebc99e3a05ce5a0d8dba1f9b852656cc",
-      "version": "4f68850c44236c6d789971639c679d0a2c6b53c7",
+      "version": "1f522969ad7f40f9935574ebcd4002558b291812",
       "programmingLanguage": "Python"
     },
     {

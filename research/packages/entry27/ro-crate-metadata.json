@@ -156,9 +156,9 @@
         "SoftwareSourceCode"
       ],
       "name": "harness/bootstrap_ci.py",
-      "url": "https://github.com/danlessa/bicycling-energy-model/blob/4f68850c44236c6d789971639c679d0a2c6b53c7/harness/bootstrap_ci.py",
+      "url": "https://github.com/danlessa/bicycling-energy-model/blob/1f522969ad7f40f9935574ebcd4002558b291812/harness/bootstrap_ci.py",
       "sha256": "2431519ac5c621f9732ee836cd5d0534c56800c2c187f4cd8c9bbf085920ae69",
-      "version": "4f68850c44236c6d789971639c679d0a2c6b53c7",
+      "version": "1f522969ad7f40f9935574ebcd4002558b291812",
       "programmingLanguage": "Python"
     },
     {
@@ -169,9 +169,9 @@
         "SoftwareSourceCode"
       ],
       "name": "analysis/parity/run_parity.py",
-      "url": "https://github.com/danlessa/bicycling-energy-model/blob/4f68850c44236c6d789971639c679d0a2c6b53c7/analysis/parity/run_parity.py",
+      "url": "https://github.com/danlessa/bicycling-energy-model/blob/1f522969ad7f40f9935574ebcd4002558b291812/analysis/parity/run_parity.py",
       "sha256": "d48df837ffc1a4fa6616704de7ef050f81636fbf90d08afaf63775eb55656f6f",
-      "version": "4f68850c44236c6d789971639c679d0a2c6b53c7",
+      "version": "1f522969ad7f40f9935574ebcd4002558b291812",
       "programmingLanguage": "Python"
     },
     {
