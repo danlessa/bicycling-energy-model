@@ -60,7 +60,7 @@ os.makedirs(RESULTS, exist_ok=True)
 
 FIT_MANUF = None   # file_id manufacturer, set by parse_fit (kept for parity; unused here)
 
-KEFF, G = 0.98, 9.81
+KEFF, G = 0.98, 9.7864
 TO_R = math.pi / 180
 
 

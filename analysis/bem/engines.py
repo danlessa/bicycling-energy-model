@@ -13,82 +13,59 @@ climbThr, descThr (grade fractions).
 """
 
 import math
-import numpy as np
 
-G = 9.81
+# São Paulo's local gravity, from IAG-USP absolute-gravimetry measurements
+# (9.7864 m/s²), not the 9.80665 standard or the 9.81 textbook value: every
+# corpus in this repo is ridden in the São Paulo metropolitan region, so the
+# local value is the physical one.  This constant is hand-kept-in-sync across
+# the applet, `bem`, every harness and the parity preamble — a re-baseline that
+# moves one and not the others silently mixes two gravities inside a single
+# computation (see the journal's re-baseline entry).
+G = 9.7864
 
 _INF = float("inf")
 
-def solve_cubic(a: float,
-                b: float,
-                c: float,
-                d: float) -> list[float]:
-    # Normalize the cubic equation to the form: x^3 + px + q = 0
-    # a x^3 + b x^2 + c x + d = 0
-    # => x^3 + (b/a) x^2 + (c/a) x + (d/a) = 0
-    # Let x = y - b/(3a), then we can eliminate the x^2 term.
 
-    # Step 1: Normalize the equation
-    if a == 0:
-        raise ValueError("Not a cubic equation")
-
-    # Normalize to x^3 + px + q = 0
-    p = (3 * c * a - b**2) / (3 * a**2)
-    q = (2 * b**3 - 9 * a * b * c + 27 * a**2 * d) / (27 * a**3)
-
-    # Step 2: Use Cardano’s formula
-    delta = (q / 2)**2 + (p / 3)**3
-
-    if delta > 0:
-        # One real root and two complex roots
-        root: float = -q / 2 + np.sqrt(delta)
-        return [root]
-    elif delta == 0:
-        # All roots are real and at least two are equal
-        root: float = -q / 2
-        return [root, -q / 2, -q / 2]
-    else:
-        # Three real roots (casus irreducibilis)
-        root1: float = 2 * np.sqrt(-p / 3) * np.cos(np.arccos(-q / (2 * np.sqrt(-p / 3)**3)) / 3)
-        root2: float = 2 * np.sqrt(-p / 3) * np.cos(np.arccos(-q / (2 * np.sqrt(-p / 3)**3)) / 3 + 2 * np.pi / 3)
-        root3: float = 2 * np.sqrt(-p / 3) * np.cos(np.arccos(-q / (2 * np.sqrt(-p / 3)**3)) / 3 + 4 * np.pi / 3)
-        return [root1, root2, root3]
-
-def flat_eq_speed(P, p) -> float:
+def flat_eq_speed(P: float,
+                  p: dict[str, float]) -> float:
     """Flat-equilibrium GROUND speed at pedal power P (JS flatEqSpeed).
 
-    Solves (Crr*mg + 0.5*rho*CdA*(v+w)**2) * v = keff*P using Cardano's formula.
+    Solves `(Crr*mg + 0.5*rho*CdA*rel*|rel|) * v = keff*P` for v, with the
+    SIGNED drag `rel = v + wind` the engines use, by the applet's
+    monotone-safe bisection — mirrored step for step (same bracket, same 60
+    halvings, same midpoint return) because a closed form is NOT worth the
+    divergence: `wheel(v)` is only monotone for `rel >= 0`, so under a strong
+    tailwind the solver first bisects the monotone branch [-w, 40] and falls
+    back to [0, -w].  (A Cardano closed form was tried and reverted: it needs
+    numpy, breaks this file's stdlib-only rule, and its casus-irreducibilis /
+    depressed-cubic branches are a correctness liability for no measurable
+    gain — 60 halvings on [0, 40] already resolve v to ~3e-17.)
     """
     a = p["Crr"] * p["m"] * G
     b = 0.5 * p["rho"] * p["CdA"]
     w = p.get("wind", 0.0) or 0.0
 
-    # Coefficients of the cubic equation
-    # a x^3 + b x^2 + c x + d = 0
-    # where x = v
-    # a = 0.5 * rho * CdA
-    # b = 0.5 * rho * CdA * 2w
-    # c = 0.5 * rho * CdA * w^2 + Crr * m * g
-    # d = -keff * P
+    def wheel(v: float) -> float:
+        rel = v + w
+        return (a + b * rel * abs(rel)) * v
 
-    # Coefficients
-    coeff_a = b
-    coeff_b = b * 2 * w
-    coeff_c = b * w**2 + a
-    coeff_d = -p["keff"] * P
-
-    # Solve the cubic equation using Cardano's formula
-    roots = solve_cubic(coeff_a, coeff_b, coeff_c, coeff_d)
-
-    # Filter out complex roots and negative values
-    real_roots = [root.real for root in roots if np.isreal(root) and root.real >= 0]
-
-    # Return the maximum real, non-negative root (since speed can't be negative)
-    return max(real_roots) if real_roots else 0.0
+    target = p["keff"] * P
+    lo, hi = max(0.0, -w), 40.0
+    if wheel(lo) > target:
+        hi = lo
+        lo = 0.0
+    for _ in range(60):
+        v = (lo + hi) / 2
+        if wheel(v) < target:
+            lo = v
+        else:
+            hi = v
+    return (lo + hi) / 2
 
 
-def resample_profile(src, dx):
-    """Resample an arbitrary {x,h} profile onto a uniform dx grid (JS resampleProfile)."""
+def resample_profile(src: dict,
+                     dx: float) -> dict[str, list[float]]:
+    """Resample an arbitrary {x,h} profile onto a uniform dx grid."""
     sx, sh = src["x"], src["h"]
     total = sx[len(sx) - 1]
     # JS Math.round is half-UP (floor(x+0.5)); Python round() is half-even —
@@ -108,7 +85,8 @@ def resample_profile(src, dx):
     return {"x": x, "h": h}
 
 
-def deadband(h, tau):
+def deadband(h: list,
+             tau: float) -> list[float]:
     """Deadband (backlash) filter on an elevation ARRAY (compare.mjs deadband)."""
     out = [0.0] * len(h)
     y = h[0]
@@ -122,34 +100,39 @@ def deadband(h, tau):
     return out
 
 
-def smooth_elevation(src, tau):
+def smooth_elevation(src: dict,
+                     tau: float):
     """Deadband filter on a PROFILE, tau<=0 returns it unchanged (JS smoothElevation)."""
     if not tau > 0:
         return src
     return {"x": src["x"], "h": deadband(src["h"], tau)}
 
 
-def ascent_hyst(h, tau):
+def ascent_hyst(h: list[float],
+                tau: float) -> float:
     """Cumulative ascent with hysteresis threshold tau (compare.mjs ascentHyst)."""
     gain = 0.0
+
     if tau <= 0:
         for i in range(1, len(h)):
             d = h[i] - h[i - 1]
             if d > 0:
                 gain += d
-        return gain
-    ref = h[0]
-    for i in range(1, len(h)):
-        d = h[i] - ref
-        if d >= tau:
-            gain += d
-            ref = h[i]
-        elif d <= -tau:
-            ref = h[i]
+    else:
+        ref = h[0]
+        for i in range(1, len(h)):
+            d = h[i] - ref
+            if d >= tau:
+                gain += d
+                ref = h[i]
+            elif d <= -tau:
+                ref = h[i]
     return gain
 
 
-def canonical(prof, pw, p):
+def canonical(prof: dict[str, list[float]],
+              pw: dict[str, float],
+              p: dict[str, float]) -> dict:
     """Forward-dynamics simulation (JS canonical): distance-marching with
     adaptive sub-steps and the SEMI-IMPLICIT propulsion update (safeguarded
     Newton on g(u) = u - A/sqrt(u) - B) — conserves energy exactly; leg
@@ -162,7 +145,8 @@ def canonical(prof, pw, p):
     KEinit = 0.5 * m * p["vstart"] * p["vstart"]
     KE = KEinit
     legE = t = Wrr = Waero = Wgrav = Wbrake = 0.0
-    legER = [0.0, 0.0, 0.0]  # per-regime legE bookkeeping [descent, flat, climb] (no dynamics effect)
+    # per-regime legE bookkeeping [descent, flat, climb] (no dynamics effect)
+    legER = [0.0, 0.0, 0.0]
     speed = [0.0] * n
     brk = [0] * n
     regime = [0] * n
@@ -264,7 +248,11 @@ def canonical(prof, pw, p):
     }
 
 
-def approximate(prof, p, vf, eps, opts=None):
+def approximate(prof: dict,
+                p: dict[str, float],
+                vf: float,
+                eps: float,
+                opts=None):
     """Closed form E = alpha*x + beta*(h+ - eps*h-) with the climb-aero
     correction modes 'off' | 'zero' | 'vc' (JS approximate). Also returns the
     per-edge clamped sum and the decomposition (roll+aero+climb+recov == E)."""
@@ -275,12 +263,15 @@ def approximate(prof, p, vf, eps, opts=None):
     aRoll = mg * p["Crr"] / p["keff"]
     aAero = 0.5 * p["rho"] * p["CdA"] * aero_spd * abs(aero_spd) / p["keff"]
     mode = (opts or {}).get("climbAeroMode") or "off"
-    climbThr = opts["climbThr"] if opts and opts.get("climbThr") is not None else 0.02
+    climbThr = opts["climbThr"] if opts and opts.get(
+        "climbThr") is not None else 0.02
     Pc = (opts or {}).get("climbPower") or 0
-    dThr = opts["descThr"] if opts and opts.get("descThr") is not None else -0.015
+    dThr = opts["descThr"] if opts and opts.get(
+        "descThr") is not None else -0.015
     xs, hs = prof["x"], prof["h"]
     X = hplus = hminus = aeroSum = clamped = 0.0
-    EByReg = [0.0, 0.0, 0.0]  # [descent, flat, climb] split of E (sums to E; canonical's thresholds)
+    # [descent, flat, climb] split of E (sums to E; canonical's thresholds)
+    EByReg = [0.0, 0.0, 0.0]
     for i in range(1, len(xs)):
         dx = xs[i] - xs[i - 1]
         dh = hs[i] - hs[i - 1]
@@ -294,8 +285,10 @@ def approximate(prof, p, vf, eps, opts=None):
                 sec = math.sqrt(1 + slope * slope)
                 sin = slope / sec
                 cos = 1 / sec
-                vc = min(vf, p["keff"] * Pc / (p["Crr"] * mg * cos + mg * sin)) if Pc > 0 else 0.0
-                aeroDx = 0.5 * p["rho"] * p["CdA"] * (vc + w) * abs(vc + w) / p["keff"]
+                vc = min(vf, p["keff"] * Pc / (p["Crr"] * mg *
+                         cos + mg * sin)) if Pc > 0 else 0.0
+                aeroDx = 0.5 * p["rho"] * p["CdA"] * \
+                    (vc + w) * abs(vc + w) / p["keff"]
         segAero = aeroDx * dx
         aeroSum += segAero
         alphaSeg = aRoll * dx + segAero
@@ -390,7 +383,8 @@ def approx_time(prof, p, vf, pw):
         else:
             hminus += -dh
         if slope >= pw["climbThr"]:  # climb: v_c capped at v_f
-            v = min(vf, p["keff"] * pw["climb"] / (p["Crr"] * mg * cos + mg * sin)) if pw["climb"] > 0 else 0.05
+            v = min(vf, p["keff"] * pw["climb"] / (p["Crr"] *
+                    mg * cos + mg * sin)) if pw["climb"] > 0 else 0.05
             tClimb += ds / v
             xClimb += dx
             hpC += dh
@@ -423,7 +417,8 @@ def eps_geom(prof, p, vf):
     mg = p["m"] * G
     beta = mg / p["keff"]
     aero_spd = vf + p["wind"]
-    alpha = (p["Crr"] * mg + 0.5 * p["rho"] * p["CdA"] * aero_spd * abs(aero_spd)) / p["keff"]
+    alpha = (p["Crr"] * mg + 0.5 * p["rho"] * p["CdA"]
+             * aero_spd * abs(aero_spd)) / p["keff"]
     ab = alpha / beta
     px, ph = prof["x"], prof["h"]
     x0 = px[0]

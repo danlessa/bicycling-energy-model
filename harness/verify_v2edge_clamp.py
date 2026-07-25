@@ -42,6 +42,11 @@ def v2edge_descent_preclamp(dist, ndh, c):
 
 
 def flat_eq_speed(P, m, crr, cda, rho, keff):
+    # 9.81 is DELIBERATE and must not be swept to this repo's G (São Paulo's
+    # 9.7864): this harness proves a property of the cost bundle *sampasimu
+    # deploys*, and that app computes mg with 9.81 in its own repo.  Mirroring
+    # the deployed constant is the whole point; changing it here would prove the
+    # clamp is dead in a bundle nobody runs.  Same reason as e26_detour's G_JS.
     a = crr * m * 9.81
     b = 0.5 * rho * cda
     lo, hi = 0, 40

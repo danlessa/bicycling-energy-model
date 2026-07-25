@@ -45,7 +45,7 @@ from bem.v8math import _js_asin, _js_atan2, _js_cos, _js_sin, js_num
 DATA = os.path.join(REPO, "data", "activities")
 RESULTS = os.path.join(REPO, "results")
 os.makedirs(RESULTS, exist_ok=True)
-G = 9.81
+G = 9.7864
 
 
 # ---------------------------------------------------------------------------

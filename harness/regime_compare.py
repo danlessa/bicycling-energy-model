@@ -81,7 +81,7 @@ from bem.v8math import _js_sin  # noqa: E402
 
 DATA = os.path.join(REPO, "data", "activities")
 RESULTS = os.path.join(REPO, "results")
-G, NS = 9.81, 240
+G, NS = 9.7864, 240
 VMAX, VSTART = 38 / 3.6, 15 / 3.6
 CLIMB_THR, DESC_THR, ENGINE_DX, TAU_SMOOTH = 0.02, -0.015, 5, 2
 VSTOP = 0.5 / 3.6

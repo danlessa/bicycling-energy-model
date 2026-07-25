@@ -50,7 +50,7 @@ DATA = os.path.join(REPO, "data", "activities")
 RESULTS = os.path.join(REPO, "results")
 os.makedirs(RESULTS, exist_ok=True)
 
-G = 9.81
+G = 9.7864
 VMAX, VSTART = 38 / 3.6, 15 / 3.6
 VMAX_HI = 55 / 3.6                              # descent-cap sensitivity for the fast rider
 CLIMB_THR, DESC_THR, ENGINE_DX, TAU_SMOOTH = 0.02, -0.015, 5, 2

@@ -35,7 +35,7 @@ from bem.jsfmt import js_str, to_fixed
 DATA = os.path.join(REPO, "data", "activities")
 RESULTS = os.path.join(REPO, "results")
 os.makedirs(RESULTS, exist_ok=True)
-G = 9.81
+G = 9.7864
 ASSUMED = {"m": 78, "Crr": 0.008, "CdA": 0.40, "rho": 1.13, "keff": 0.98, "wind": 0}
 
 

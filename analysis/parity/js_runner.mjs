@@ -37,7 +37,13 @@ const CMP_FNS = ['canonical', 'approximate', 'haversine', 'ptsFromFIT', 'finishP
   'ascentHyst', 'buildProfile'];
 
 // buildProfile writes the module globals physProfile/H — replicate them.
-const preamble = 'const G = 9.81, NS = 240; let H = new Float64Array(NS); let physProfile = null;\n';
+// G is INJECTED here rather than read from reference.mjs: that file is the
+// frozen verbatim JS of the retired compare.mjs (its header comment still
+// records the historical 9.81, deliberately left as the frozen record), while
+// the constant the check must use is the repo's current gravity.  Parity asks
+// "does the Python agree with the JS implementation?" — so both sides get the
+// same constant; only the frozen CODE is immutable, not the constant fed to it.
+const preamble = 'const G = 9.7864, NS = 240; let H = new Float64Array(NS); let physProfile = null;\n';
 const body = APP_FNS.map(n => extract(APP, n)).join('\n')
   + '\n' + CMP_FNS.map(n => extract(CMP, n)).join('\n')
   + '\nreturn { flatEqSpeed, resampleProfile, smoothElevation, canonical, approximate,'

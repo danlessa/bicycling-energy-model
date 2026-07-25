@@ -48,7 +48,7 @@ DATA = os.path.join(REPO, "data", "activities")
 RESULTS = os.path.join(REPO, "results")
 os.makedirs(RESULTS, exist_ok=True)
 
-G = 9.81
+G = 9.7864
 VMAX, VSTART = 38 / 3.6, 15 / 3.6
 CLIMB_THR, DESC_THR, ENGINE_DX, TAU_SMOOTH = 0.02, -0.015, 5, 2
 # ASSUMED rider physics (same generic values as the censo run) — EXCEPT the mass,

@@ -35,7 +35,7 @@ from bem import (canonical, approximate, v2_edge, approx_time, flat_eq_speed,
                  analyze_ride, load_pts)
 from bem.ride import d_pct, median, CLIMB_THR, DESC_THR
 
-G = 9.81
+G = 9.7864
 P = dict(m=75, Crr=0.008, CdA=0.4, rho=1.1, keff=0.97, vmax=38/3.6, vstart=15/3.6, wind=0)
 PW = dict(climb=150, flat=90, descent=10, climbThr=CLIMB_THR, descThr=DESC_THR)
 

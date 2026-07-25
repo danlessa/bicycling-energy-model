@@ -308,7 +308,7 @@ def pts_from_gpx(text):
 
 # ===== Independent CdA / mass / C_rr estimation (Entry 15) =====
 
-KEFF, G = 0.98, 9.81
+KEFF, G = 0.98, 9.7864
 
 
 def rho_at(h):

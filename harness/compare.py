@@ -29,7 +29,7 @@ DATA = os.path.join(REPO, "data", "activities")
 RESULTS = os.path.join(REPO, "results")
 os.makedirs(RESULTS, exist_ok=True)
 
-G = 9.81
+G = 9.7864
 VMAX, VSTART = 38 / 3.6, 15 / 3.6            # app defaults (km/h -> m/s)
 CLIMB_THR, DESC_THR, ENGINE_DX = 0.02, -0.015, 5
 TAU_SMOOTH = 2   # elevation deadband threshold (m) — rejects sub-tau jitter in h+

@@ -109,9 +109,12 @@ home of the *derivation* (`notas.md`) and the side-by-side comparison.
   `bem/` — **the single implementation of the engines/parsers** (`engines.py`,
   `fit.py`, `profiles.py`, `regime.py`, `ride.py`), plus `jsfmt.py` (ECMAScript number
   formatting: `to_fixed` rounds half-away-from-zero, unlike Python's half-even) and
-  `v8math.py` (bit-exact V8 `Math.{sin,cos,asin,atan,atan2}` + `Number::ToString` —
-  Apple's libm differs from V8's fdlibm in the last ulp, which reaches the output bytes
-  wherever a raw float is printed; needed by the GPS-bearing paths). `parity/` — the
+  `v8math.py` (V8 `Math.{sin,cos,asin,atan,atan2}` + `Number::ToString`; Apple's libm
+  differs from V8's fdlibm in the last ulp). **V8-exactness is no longer a required
+  invariant** (dropped in the re-baseline): `v8math` is retained and still used where it
+  already was — it is correct, and removing it would be churn — but a last-ulp difference
+  in a printed digit is not a defect any more. The binding check is now the *numerical*
+  parity below (1e-9 relative), not byte-identical output. `parity/` — the
   cross-language check: `reference.mjs` is the **frozen verbatim JS** of the retired
   `compare.mjs` engines, `js_runner.mjs` evaluates it, `run_parity.py` asserts the Python
   agrees (8 514 comparisons ≤ 1e-9; needs node). `journal.qmd` — executable Quarto mirror
@@ -142,6 +145,20 @@ is visible live by moving dx between 5 and 30 m.
 **Design principle — both read the same physical constants** (`m, C_rr, CdA, ρ,
 k_eff, wind`). That is what makes the comparison meaningful: the gap is the
 *model*, not the parameters. Never let the two engines diverge on a constant.
+
+**Gravity is `G = 9.7864`** — São Paulo's local value (IAG-USP absolute gravimetry),
+not 9.80665 or 9.81: every corpus here is ridden in the SP metropolitan region. It is
+**hand-copied into 14 places** — `analysis/bem/engines.py`, `applet/index.html`,
+`analysis/journal.qmd`, `analysis/parity/js_runner.mjs`'s injected preamble, and the
+`G`/`KEFF, G`/`G, NS` line of each harness (`compare`, `censo_compare`,
+`eps_hypothesis`, `eps_sp_test`, `ppaz_compare`, `jaam_compare`, `danlessa_compare`,
+`time_compare`, `regime_compare`, `cda_estimate`, `param_fit`). A harness defines `G`
+locally **and** imports `bem`'s engines, so moving one without the others mixes two
+gravities inside a single computation — move them together or not at all. Three sites
+keep **9.81 deliberately** because they mirror the cost bundle *sampasimu deploys*:
+`verify_v2edge_clamp.py`, `e26_detour.py`'s `G_JS`, and the frozen `reference.mjs`
+header comment. Consequence to remember: until simujaules is re-based too, the applet's
+`v2Edge` readout differs from the deployed app by the gravity ratio (≈0.24%).
 
 ## Invariants — easy to break, hard to notice
 
