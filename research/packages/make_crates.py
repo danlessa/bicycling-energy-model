@@ -101,6 +101,9 @@ ENTRIES = {
     26: (["harness/e26_pairs.py", "harness/e26_portal_profiles.py", "harness/e26_detour.py"],
          ["e26_portal_profiles.csv", "e26_grid.csv", "e26_grid_cal.csv", "e26_detour.csv"],
          True, []),
+    27: (["harness/bootstrap_ci.py", "analysis/parity/run_parity.py"],
+         ["model_comparison.csv", "censo_comparison.csv", "eps_sp.csv",
+          "igc_resolution_test.csv"], False, []),
 }
 
 # entry 22 reads the per-ride CSVs the other harnesses wrote

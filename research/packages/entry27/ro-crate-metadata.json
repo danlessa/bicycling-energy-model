@@ -19,24 +19,17 @@
     {
       "@id": "./",
       "@type": "Dataset",
-      "name": "Entry 22 evidence package — error bars for the headline medians — the champion \"beats\" the sim only on the median, so the article now claims parity",
-      "description": "Evidence package for journal Entry 22 (2026-07-09): aggregates, hashes and provenance only — the prose remains authoritative in the journal. Regenerate all packages: `python3 research/packages/make_crates.py`.",
+      "name": "Entry 27 evidence package — re-baseline — São Paulo's gravity, bisect back in `bem`, and V8-exactness retired",
+      "description": "Evidence package for journal Entry 27 (2026-07-25): aggregates, hashes and provenance only — the prose remains authoritative in the journal. Regenerate all packages: `python3 research/packages/make_crates.py`.",
       "author": {
         "@id": "#danilo"
       },
-      "dateCreated": "2026-07-09",
+      "dateCreated": "2026-07-25",
       "isPartOf": {
         "@id": "https://doi.org/10.5281/zenodo.21282165"
       },
-      "url": "https://github.com/danlessa/bicycling-energy-model/tree/main/research/packages/entry22",
-      "hasPart": [
-        {
-          "@id": "claim.ttl"
-        },
-        {
-          "@id": "bootstrap_ci_report.txt"
-        }
-      ],
+      "url": "https://github.com/danlessa/bicycling-energy-model/tree/main/research/packages/entry27",
+      "hasPart": [],
       "mentions": [
         {
           "@id": "#claim"
@@ -71,35 +64,18 @@
       "encodingFormat": "text/turtle"
     },
     {
-      "@id": "claim.ttl",
-      "@type": [
-        "File",
-        "Dataset"
-      ],
-      "name": "Entry 22 claim slice (claims–questions–evidence graph; schema.org Claim + CiTO typed links)",
-      "encodingFormat": "text/turtle",
-      "about": {
-        "@id": "#claim"
-      }
-    },
-    {
       "@id": "#claim",
       "@type": "Claim",
-      "name": "Entry 22: error bars for the headline medians — the champion \"beats\" the sim only on the median, so the article now claims parity",
-      "text": "Champion vs canonical is statistical parity: bootstrap 95% CIs [2.0, 5.6] vs [3.8, 7.1] overlap; paired, the champion is closer on 25/44 rides (57%, sign test p = 0.45). Parity is still practically decisive — the closed form is the engine cheap enough to route with.",
+      "name": "Entry 27: re-baseline — São Paulo's gravity, bisect back in `bem`, and V8-exactness retired",
+      "text": "A 0.24% reduction in gravity moves the assumed-parameter corpora and leaves the fitted ones alone. Longões: champion 3.6 → 3.5, canonical 5.1 → 5.2, off 19.3 → 19.1 med|Δ%|; censo: canonical 6.5 → 6.6, smooth ε=0.15 5.0 → 4.8, while the poor-man's ε=0.20 headline holds at 3.9. Every rider-corpus result is unchanged to four figures (P. Paz 4.9/+0.6 and the frozen-ε 0.091-vs-0.139 win; JAAM 3.5/+0.4; the author 6.1), as is the ε closed form (37% RMS skill, correlations 0.30/0.60/0.77/0.82, part–whole 0.72/0.99) and the time model's endpoint (T1b 6.6 vs T0 7.6). Direction as predicted: less gravity charges less for climbing, so over-predicting variants improve and the under-predicting canonical worsens. Conservation residual unchanged at 1.77e-8; cross-language parity unchanged at 8514 comparisons ≤ 1e-9.",
       "appearance": [
         {
           "@id": "https://github.com/danlessa/bicycling-energy-model/blob/main/research/notes/MODEL_COMPARISON_JOURNAL.md"
         }
       ],
-      "subjectOf": [
-        {
-          "@id": "claim.ttl"
-        },
-        {
-          "@id": "https://github.com/danlessa/bicycling-energy-model/blob/main/research/notes/claims.ttl"
-        }
-      ]
+      "subjectOf": {
+        "@id": "https://github.com/danlessa/bicycling-energy-model/blob/main/research/notes/claims.ttl"
+      }
     },
     {
       "@id": "#results/model_comparison.csv",
@@ -120,38 +96,29 @@
       "encodingFormat": "text/csv"
     },
     {
-      "@id": "#results/ppaz_comparison.csv",
+      "@id": "#results/eps_sp.csv",
       "@type": "File",
-      "name": "results/ppaz_comparison.csv",
-      "description": "Per-ride CSV — gitignored (rows carry ride names/dates tied to private activities); described hash-only, never distributed. Regenerates via `python3 harness/ppaz_compare.py`.",
-      "sha256": "f501456006f633b93463e71654589860869b28dbba42adea30f2b3be17c9d3c1",
-      "contentSize": "105177",
+      "name": "results/eps_sp.csv",
+      "description": "Per-ride CSV — gitignored (rows carry ride names/dates tied to private activities); described hash-only, never distributed. Regenerates via `python3 harness/eps_sp_test.py`.",
+      "sha256": "4d23a5a47abfe722a0397d640b9b7107961cdf640911831b28905ecd779b4d77",
+      "contentSize": "4441",
       "encodingFormat": "text/csv"
     },
     {
-      "@id": "#results/jaam_comparison.csv",
+      "@id": "#results/igc_resolution_test.csv",
       "@type": "File",
-      "name": "results/jaam_comparison.csv",
-      "description": "Per-ride CSV — gitignored (rows carry ride names/dates tied to private activities); described hash-only, never distributed. Regenerates via `python3 harness/jaam_compare.py`.",
-      "sha256": "7abd3b7fbdabb4c4751d0a47fa59d62af451c031d8b877d1f8c9cabcfb9ba75e",
-      "contentSize": "55153",
-      "encodingFormat": "text/csv"
-    },
-    {
-      "@id": "#results/time_comparison.csv",
-      "@type": "File",
-      "name": "results/time_comparison.csv",
-      "description": "Per-ride CSV — gitignored (rows carry ride names/dates tied to private activities); described hash-only, never distributed. Regenerates via `python3 harness/time_compare.py`.",
-      "sha256": "5d19d5c7783a7db9ebf4a8fb49e049472992f84cd1df28a1d02c7a9c7a4d4969",
-      "contentSize": "143584",
+      "name": "results/igc_resolution_test.csv",
+      "description": "Per-ride CSV — gitignored (rows carry ride names/dates tied to private activities); described hash-only, never distributed. Regenerates via `python3 harness/igc_resolution_test.py`.",
+      "sha256": "a3dda97174a03c96f90d95d62dd250a87ae56785729095c0ced11dcc5e9c251f",
+      "contentSize": "308376",
       "encodingFormat": "text/csv"
     },
     {
       "@id": "#run",
       "@type": "CreateAction",
-      "name": "Entry 22 harness run",
+      "name": "Entry 27 harness run",
       "description": "Re-executable from the repository and the private inputs; see the journal entry for protocol, endpoints and verdicts.",
-      "endTime": "2026-07-09",
+      "endTime": "2026-07-25",
       "actionStatus": {
         "@id": "http://schema.org/CompletedActionStatus"
       },
@@ -161,9 +128,12 @@
       "instrument": [
         {
           "@id": "#harness/bootstrap_ci.py"
+        },
+        {
+          "@id": "#analysis/parity/run_parity.py"
         }
       ],
-      "object": [
+      "result": [
         {
           "@id": "#results/model_comparison.csv"
         },
@@ -171,18 +141,10 @@
           "@id": "#results/censo_comparison.csv"
         },
         {
-          "@id": "#results/ppaz_comparison.csv"
+          "@id": "#results/eps_sp.csv"
         },
         {
-          "@id": "#results/jaam_comparison.csv"
-        },
-        {
-          "@id": "#results/time_comparison.csv"
-        }
-      ],
-      "result": [
-        {
-          "@id": "bootstrap_ci_report.txt"
+          "@id": "#results/igc_resolution_test.csv"
         }
       ]
     },
@@ -200,12 +162,17 @@
       "programmingLanguage": "Python"
     },
     {
-      "@id": "bootstrap_ci_report.txt",
-      "@type": "File",
-      "name": "bootstrap_ci.py report (aggregates only)",
-      "description": "Captured stdout: medians, bootstrap CIs, sign tests and gate status per corpus. Aggregate statistics only — no ride-level data.",
-      "encodingFormat": "text/plain",
-      "sha256": "cc6737e478a2dc3649c772fc08e74283dc15ca97a5ba4c5ea063486cbfce4b76"
+      "@id": "#analysis/parity/run_parity.py",
+      "@type": [
+        "File",
+        "SoftwareApplication",
+        "SoftwareSourceCode"
+      ],
+      "name": "analysis/parity/run_parity.py",
+      "url": "https://github.com/danlessa/bicycling-energy-model/blob/4f68850c44236c6d789971639c679d0a2c6b53c7/analysis/parity/run_parity.py",
+      "sha256": "d48df837ffc1a4fa6616704de7ef050f81636fbf90d08afaf63775eb55656f6f",
+      "version": "4f68850c44236c6d789971639c679d0a2c6b53c7",
+      "programmingLanguage": "Python"
     },
     {
       "@id": "ro-crate-preview.html",

@@ -89,8 +89,8 @@
       "@type": "File",
       "name": "results/igc_resolution_test.csv",
       "description": "Per-ride CSV — gitignored (rows carry ride names/dates tied to private activities); described hash-only, never distributed. Regenerates via `python3 harness/igc_resolution_test.py`.",
-      "sha256": "82523f5eb8f18167d4f9d1f35967bd68f15f0c53986381da60c9a0ffd81161d5",
-      "contentSize": "308351",
+      "sha256": "a3dda97174a03c96f90d95d62dd250a87ae56785729095c0ced11dcc5e9c251f",
+      "contentSize": "308376",
       "encodingFormat": "text/csv"
     },
     {
@@ -129,9 +129,9 @@
         "SoftwareSourceCode"
       ],
       "name": "harness/igc_resolution_test.py",
-      "url": "https://github.com/danlessa/bicycling-energy-model/blob/9ddeee938eb0599ed3d266217fc947b1b48e200f/harness/igc_resolution_test.py",
+      "url": "https://github.com/danlessa/bicycling-energy-model/blob/4f68850c44236c6d789971639c679d0a2c6b53c7/harness/igc_resolution_test.py",
       "sha256": "03c34c87132bd7a7e76e448b22bc9ced18826b1d816a8193bb2c55c3ae177457",
-      "version": "9ddeee938eb0599ed3d266217fc947b1b48e200f",
+      "version": "4f68850c44236c6d789971639c679d0a2c6b53c7",
       "programmingLanguage": "Python"
     },
     {

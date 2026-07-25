@@ -89,8 +89,8 @@
       "@type": "File",
       "name": "results/jaam_comparison.csv",
       "description": "Per-ride CSV — gitignored (rows carry ride names/dates tied to private activities); described hash-only, never distributed. Regenerates via `python3 harness/jaam_compare.py`.",
-      "sha256": "f9ec8a32e9c6796b336e2c1c40a677ec88ff139236e777763fa55334ea8a82f5",
-      "contentSize": "55148",
+      "sha256": "7abd3b7fbdabb4c4751d0a47fa59d62af451c031d8b877d1f8c9cabcfb9ba75e",
+      "contentSize": "55153",
       "encodingFormat": "text/csv"
     },
     {
@@ -129,9 +129,9 @@
         "SoftwareSourceCode"
       ],
       "name": "harness/jaam_compare.py",
-      "url": "https://github.com/danlessa/bicycling-energy-model/blob/9ddeee938eb0599ed3d266217fc947b1b48e200f/harness/jaam_compare.py",
-      "sha256": "4204e3c0fd094dfd6ecf2e29537dd2732fd2ed40b3536de4234ff7d1fa307d38",
-      "version": "9ddeee938eb0599ed3d266217fc947b1b48e200f",
+      "url": "https://github.com/danlessa/bicycling-energy-model/blob/4f68850c44236c6d789971639c679d0a2c6b53c7/harness/jaam_compare.py",
+      "sha256": "712b43962a117cb1538644645caedfe100822ee254f9ee3c21f6fd4f39f2fab8",
+      "version": "4f68850c44236c6d789971639c679d0a2c6b53c7",
       "programmingLanguage": "Python"
     },
     {

@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Entrada 04 — pacote de evidência</title>
+<title>Entrada 27 — pacote de evidência</title>
 <style>
 :root {
   --paper:#f6f9f8; --ink:#1d2b30; --muted:#5b7076; --accent:#16717f;
@@ -59,9 +59,9 @@ ul { margin:.4rem 0; padding-left:1.2rem; }
 <main>
 <header>
   <div class="eyebrow">Pacote de evidência · RO-Crate (Process Run)</div>
-  <h1>Entrada 04 — the `P_flat/P_avg` term and the `v_f` lever</h1>
+  <h1>Entrada 27 — re-baseline — São Paulo&#x27;s gravity, bisect back in `bem`, and V8-exactness retired</h1>
   <div class="badges">
-    <span>2026-06-28</span>
+    <span>2026-07-25</span>
     <span>commit 4f68850c4423</span>
     <span>com execução de harness</span>
   </div>
@@ -70,7 +70,7 @@ ul { margin:.4rem 0; padding-left:1.2rem; }
 <section>
   <h2>A afirmação</h2>
   <blockquote>
-    v_f is the second lever after climb aero: sourcing it from the measured flat speed cuts the residual +8.5% → +2.7%; the sheet&#x27;s 0.60 ratio nulls the bias (−0.5%) but only by over-correcting v_f — the data&#x27;s flat power is ~94% of average power, not 60%.
+    A 0.24% reduction in gravity moves the assumed-parameter corpora and leaves the fitted ones alone. Longões: champion 3.6 → 3.5, canonical 5.1 → 5.2, off 19.3 → 19.1 med|Δ%|; censo: canonical 6.5 → 6.6, smooth ε=0.15 5.0 → 4.8, while the poor-man&#x27;s ε=0.20 headline holds at 3.9. Every rider-corpus result is unchanged to four figures (P. Paz 4.9/+0.6 and the frozen-ε 0.091-vs-0.139 win; JAAM 3.5/+0.4; the author 6.1), as is the ε closed form (37% RMS skill, correlations 0.30/0.60/0.77/0.82, part–whole 0.72/0.99) and the time model&#x27;s endpoint (T1b 6.6 vs T0 7.6). Direction as predicted: less gravity charges less for climbing, so over-predicting variants improve and the under-predicting canonical worsens. Conservation residual unchanged at 1.77e-8; cross-language parity unchanged at 8514 comparisons ≤ 1e-9.
     <footer>Conforme registrado no
     <a href="https://github.com/danlessa/bicycling-energy-model/blob/main/research/notes/MODEL_COMPARISON_JOURNAL.md">diário de comparação de modelos</a> e no grafo de
     afirmações (<a href="https://github.com/danlessa/bicycling-energy-model/blob/main/research/notes/claims.ttl">claims.ttl</a>) — a prosa da entrada
@@ -80,8 +80,8 @@ ul { margin:.4rem 0; padding-left:1.2rem; }
 
 <section>
   <h2>Como foi produzida</h2>
-  <p>Instrumento(s): <code>harness/compare.py</code> (sha256 <code class='hash'>e6b2cdbda2e87e6f…</code>, <a href="https://github.com/danlessa/bicycling-energy-model/blob/4f68850c44236c6d789971639c679d0a2c6b53c7/harness/compare.py">fonte no commit</a>).</p>
-  <p class='muted'>Insumos primários: gravações de pedaladas privadas (FIT com GPS e potência) — fora do repositório e deste pacote; agregados sem coordenadas disponíveis sob pedido.</p>
+  <p>Instrumento(s): <code>harness/bootstrap_ci.py</code> (sha256 <code class='hash'>2431519ac5c621f9…</code>, <a href="https://github.com/danlessa/bicycling-energy-model/blob/4f68850c44236c6d789971639c679d0a2c6b53c7/harness/bootstrap_ci.py">fonte no commit</a>), <code>analysis/parity/run_parity.py</code> (sha256 <code class='hash'>d48df837ffc1a4fa…</code>, <a href="https://github.com/danlessa/bicycling-energy-model/blob/4f68850c44236c6d789971639c679d0a2c6b53c7/analysis/parity/run_parity.py">fonte no commit</a>).</p>
+  
   <p class="muted">Reconstruir os pacotes:
   <code>python3 research/packages/make_crates.py</code>.</p>
 </section>
@@ -94,13 +94,16 @@ ul { margin:.4rem 0; padding-left:1.2rem; }
   <div class="tablewrap"><table>
     <tr><th>arquivo</th><th>tamanho</th><th>sha256</th><th>regenera via</th></tr>
     <tr><td><code>results/model_comparison.csv</code></td><td class='num'>9,619 B</td><td><code class='hash'>3e0a811c1dc68875…</code></td><td>python3 harness/compare.py</td></tr>
+<tr><td><code>results/censo_comparison.csv</code></td><td class='num'>16,284 B</td><td><code class='hash'>fd40d2f7a3b08ce1…</code></td><td>python3 harness/censo_compare.py</td></tr>
+<tr><td><code>results/eps_sp.csv</code></td><td class='num'>4,441 B</td><td><code class='hash'>4d23a5a47abfe722…</code></td><td>python3 harness/eps_sp_test.py</td></tr>
+<tr><td><code>results/igc_resolution_test.csv</code></td><td class='num'>308,376 B</td><td><code class='hash'>a3dda97174a03c96…</code></td><td>python3 harness/igc_resolution_test.py</td></tr>
   </table></div>
 </section>
 
 <section>
   <h2>Contexto</h2>
   <ul>
-    <li>Diário (entrada 4): <a href="https://github.com/danlessa/bicycling-energy-model/blob/main/research/notes/MODEL_COMPARISON_JOURNAL.md">MODEL_COMPARISON_JOURNAL.md</a></li>
+    <li>Diário (entrada 27): <a href="https://github.com/danlessa/bicycling-energy-model/blob/main/research/notes/MODEL_COMPARISON_JOURNAL.md">MODEL_COMPARISON_JOURNAL.md</a></li>
     <li>Grafo de afirmações: <a href="https://github.com/danlessa/bicycling-energy-model/blob/main/research/notes/claims.ttl">claims.ttl</a></li>
     
     <li>Pacote de pesquisa: <a href="https://doi.org/10.5281/zenodo.21282165">https://doi.org/10.5281/zenodo.21282165</a></li>

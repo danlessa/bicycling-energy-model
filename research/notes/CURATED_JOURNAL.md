@@ -434,6 +434,44 @@ regardless of any ride.
 
 ---
 
+## Act VI — Housekeeping that taught something (Entry 27)
+
+### Entry 27 — São Paulo's own gravity
+**Data:** no new data — the entire harness suite re-run under one changed
+constant.
+
+Every number in this journal had been computed with the textbook g = 9.81.
+São Paulo's actual local gravity, measured at IAG-USP, is **9.7864** — 0.24%
+lower. Since every ride here is ridden in São Paulo, that is the physical
+value, so the whole corpus was re-baselined. Two housekeeping wins came
+along: the flat-speed solver went back to the browser app's simple
+bisection (a closed-form replacement had quietly pulled in numpy, breaking
+the rule that the analysis code needs nothing but the standard library —
+and its formula was wrong in two branches), and the demand that Python match
+JavaScript *bit for bit* was dropped in favour of matching it numerically,
+which it does: 8 514 checks agree to one part in a billion.
+
+The interesting part is **what didn't move**. Nine published medians shifted
+by ≤0.2 pp, always in the predicted direction (less gravity → climbing costs
+less → the models that over-predicted improved, the one that under-predicted
+got slightly worse). But every result that transfers to *other riders* was
+unchanged to four figures — because those corpora don't assume the rider's
+mass, they **infer** it, so the gravity change went into the inferred mass
+instead (74.3 → 74.5 kg, 101.7 → 101.9 kg — exactly the predicted ratio).
+One line summarizes the whole exercise: *a corpus that fits its parameters is
+insensitive to the constant; a corpus that assumes them is not.*
+
+Two claims moved in opposite directions, and both are now stated more
+carefully: the "the cheap formula only *ties* the simulation" finding got
+**stronger** (the formula is now closer on 24 of 44 rides instead of 25 —
+even less separable), while the claim that the rural descent-recovery offset
+*ties* the city's own best constant softened to a **near**-tie (0.09 vs
+0.08). The gate script did its job loudly: 14 of its 24 checks failed on the
+first run, each naming the stale number it expected.
+[[package]](../packages/entry27/ro-crate-preview.html)
+
+---
+
 ## Recurring terms, once
 
 - **The champion** — the corrected closed form: aero split off climbs

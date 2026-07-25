@@ -89,8 +89,8 @@
       "@type": "File",
       "name": "results/danlessa_comparison.csv",
       "description": "Per-ride CSV — gitignored (rows carry ride names/dates tied to private activities); described hash-only, never distributed. Regenerates via `python3 harness/danlessa_compare.py`.",
-      "sha256": "84e3ffe23a4a78c970387f8c64f1fe7e83f42c8e5940472a152071a18dcba32d",
-      "contentSize": "155476",
+      "sha256": "03868d6792a42eebf7a82cef26f41d67b465a874cd2eaf2927413aad53c57619",
+      "contentSize": "155474",
       "encodingFormat": "text/csv"
     },
     {
@@ -129,9 +129,9 @@
         "SoftwareSourceCode"
       ],
       "name": "harness/danlessa_compare.py",
-      "url": "https://github.com/danlessa/bicycling-energy-model/blob/9ddeee938eb0599ed3d266217fc947b1b48e200f/harness/danlessa_compare.py",
-      "sha256": "7ca3b825d97b698d5e9480b9e2d7d739f4b1e1973c376a8ec47b0e400dd70415",
-      "version": "9ddeee938eb0599ed3d266217fc947b1b48e200f",
+      "url": "https://github.com/danlessa/bicycling-energy-model/blob/4f68850c44236c6d789971639c679d0a2c6b53c7/harness/danlessa_compare.py",
+      "sha256": "a303b7d77f48f9c7f46e025e1a615bea4c70733daf345fd6f49144f142e96850",
+      "version": "4f68850c44236c6d789971639c679d0a2c6b53c7",
       "programmingLanguage": "Python"
     },
     {

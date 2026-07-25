@@ -169,14 +169,14 @@ def col(rows, c):
 print("== Longões (44 power rides), §8.1 scoreboard ==")
 lg = parse_csv("model_comparison.csv")
 LG = [
-    ("approx cf + 2m smooth", "cfS_vs_emp", 3.6, 2.2),
-    ("canonical", "canon_vs_emp", 5.1, -1.7),
-    ("canonical + 2m smooth", "canonS_vs_emp", 5.6, -3.5),
-    ("approx cf + k_smooth", "ksmooth_vs_emp", 5.8, -0.5),
-    ("approx cf + sheet v_f", "cfsheet_vs_emp", 7.2, -0.5),
-    ("approx cf + measured v_f", "cfmeas_vs_emp", 8.2, 6.7),
-    ("approx cf", "cf_vs_emp", 8.7, 8.6),
-    ("approx off (baseline)", "off_vs_emp", 19.3, 19.3),
+    ("approx cf + 2m smooth", "cfS_vs_emp", 3.5, 2.1),
+    ("canonical", "canon_vs_emp", 5.2, -1.8),
+    ("canonical + 2m smooth", "canonS_vs_emp", 5.7, -3.6),
+    ("approx cf + k_smooth", "ksmooth_vs_emp", 5.9, -0.6),
+    ("approx cf + sheet v_f", "cfsheet_vs_emp", 7.2, -0.6),
+    ("approx cf + measured v_f", "cfmeas_vs_emp", 8.0, 6.6),
+    ("approx cf", "cf_vs_emp", 8.6, 8.4),
+    ("approx off (baseline)", "off_vs_emp", 19.1, 19.1),
 ]
 for label, c, ea, es in LG:
     report(label, col(lg, c), ea, es)
@@ -189,16 +189,16 @@ if len(cz) != 62:
     print(f"GATE-FAIL: expected 62 clean censo rides, got {len(cz)}")
     failed = True
 CZ = [
-    ("canonical", "canon_d", 6.5, -3.4),
-    ("smooth · ε=0.10", "sm_0.10", 4.5, 3.4),
-    ("smooth · ε=0.15", "sm_0.15", 5.0, 1.3),
-    ("smooth · ε=0.20", "sm_0.20", 4.6, -0.8),
+    ("canonical", "canon_d", 6.6, -3.5),
+    ("smooth · ε=0.10", "sm_0.10", 4.4, 3.3),
+    ("smooth · ε=0.15", "sm_0.15", 4.8, 1.1),
+    ("smooth · ε=0.20", "sm_0.20", 4.7, -0.9),
     ("poor-man · ε=0.20", "pm_0.20", 3.9, 1.1),
-    ("poor-man · ε=0.25", "pm_0.25", 4.8, -1.2),
-    ("poor-man · ε=geom", "pm_geom", 6.3, -3.2),
-    ("smooth · ε=geom", "sm_geom", 7.6, -4.9),
-    ("smooth · ε=0.00", "sm_0.00", 7.6, 7.4),
-    ("poor-man · ε=0.00", "pm_0.00", 10.5, 10.5),
+    ("poor-man · ε=0.25", "pm_0.25", 5.0, -1.4),
+    ("poor-man · ε=geom", "pm_geom", 6.4, -3.4),
+    ("smooth · ε=geom", "sm_geom", 7.7, -5.1),
+    ("smooth · ε=0.00", "sm_0.00", 7.4, 7.2),
+    ("poor-man · ε=0.00", "pm_0.00", 10.4, 10.4),
 ]
 for label, c, ea, es in CZ:
     report(label, col(cz, c), ea, es)

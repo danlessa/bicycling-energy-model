@@ -94,8 +94,8 @@
       "@type": "File",
       "name": "results/eps_hypothesis.csv",
       "description": "Per-ride CSV — gitignored (rows carry ride names/dates tied to private activities); described hash-only, never distributed. Regenerates via `python3 harness/eps_hypothesis.py`.",
-      "sha256": "3c2ef1081a4880a221ec63a24b4eacde60d1149b5016a2bc13f18f7f52b93e6c",
-      "contentSize": "6285",
+      "sha256": "e10b86a4d357d308d592defb24e62a88dd12fa03d3b5afba5d867d21567ad266",
+      "contentSize": "6271",
       "encodingFormat": "text/csv"
     },
     {
@@ -134,9 +134,9 @@
         "SoftwareSourceCode"
       ],
       "name": "harness/eps_hypothesis.py",
-      "url": "https://github.com/danlessa/bicycling-energy-model/blob/9ddeee938eb0599ed3d266217fc947b1b48e200f/harness/eps_hypothesis.py",
-      "sha256": "a60eb8f4e1516e82966e24493df7f8cb0d34fbbd9bddc9ad300df06a0baf0005",
-      "version": "9ddeee938eb0599ed3d266217fc947b1b48e200f",
+      "url": "https://github.com/danlessa/bicycling-energy-model/blob/4f68850c44236c6d789971639c679d0a2c6b53c7/harness/eps_hypothesis.py",
+      "sha256": "76c2e656640ec6067de8ccd02f6eee1a75fc115c97d1dc071adb71a73f6544a1",
+      "version": "4f68850c44236c6d789971639c679d0a2c6b53c7",
       "programmingLanguage": "Python"
     },
     {

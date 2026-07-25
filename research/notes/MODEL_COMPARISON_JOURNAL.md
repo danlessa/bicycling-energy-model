@@ -19,17 +19,19 @@ Running scoreboard — median |Δ%| vs empirical `∫P·dt` over 44 power rides 
 
 | model / variant | median \|Δ%\| | median Δ% | entry |
 |---|--:|--:|:--:|
-| **approximate `cf` + 2 m elev smooth** (deadband) | **3.6** | +2.2 | 5 |
-| canonical (forward sim) | 5.1 | −1.7 | 2 |
-| canonical + 2 m elev smooth | 5.6 | −3.5 | 5 |
-| approximate `cf` + scalar `k_smooth` (no smoothing) | 5.8 | −0.5 | 7 |
-| approximate `cf` + sheet `v_f` (`P_flat/P_avg`) | 7.2 | −0.5 | 4 |
-| approximate `cf` + measured `v_f` | 8.2 | +6.7 | 4 |
-| approximate + climb-fraction (`cf`) | 8.7 | +8.6 | 3 |
-| approximate `off` + 2 m elev smooth | 10.2 | +9.9 | 5 |
-| approximate `off` (baseline) | 19.3 | +19.3 | 2 |
+| **approximate `cf` + 2 m elev smooth** (deadband) | **3.5** | +2.1 | 5 |
+| canonical (forward sim) | 5.2 | −1.8 | 2 |
+| canonical + 2 m elev smooth | 5.7 | −3.6 | 5 |
+| approximate `cf` + scalar `k_smooth` (no smoothing) | 5.9 | −0.6 | 7 |
+| approximate `cf` + sheet `v_f` (`P_flat/P_avg`) | 7.2 | −0.6 | 4 |
+| approximate `cf` + measured `v_f` | 8.0 | +6.6 | 4 |
+| approximate + climb-fraction (`cf`) | 8.6 | +8.4 | 3 |
+| approximate `off` + 2 m elev smooth | 10.2 | +9.8 | 5 |
+| approximate `off` (baseline) | 19.1 | +19.1 | 2 |
 
-*(Entry 11, 2026-07: a general review turned up several small code bugs — a gated flat-speed
+*(Entry 27, 2026-07-25: the scoreboard above is **re-baselined to São Paulo's gravity**
+(G = 9.7864, IAG-USP) — every row moved by ≤0.2 pp; the pre-re-baseline values are in
+Entry 27's delta table. Entry 11, 2026-07: a general review turned up several small code bugs — a gated flat-speed
 computation, compressed-timestamp FIT recovery, a signed-drag fix — that shifted these numbers by
 ≤0.3 pp, except "measured `v_f`" which moved more (7.5→8.2) because the flat-speed gate itself
 changed. See Entry 11.)*
@@ -90,9 +92,168 @@ changed. See Entry 11.)*
   [`ascent-error-literature.md`](ascent-error-literature.md)) — this commit
 - **Entry 25** (the simujaules grid-connectivity note imported verbatim; canonical original in
   `../simujaules/docs/grid-connectivity-sensitivity-2026-07-11.md`) — this commit
+- **Entry 27** (re-baseline: G = 9.7864 across all 14 rider-physics sites, `flat_eq_speed` back
+  to the applet's bisection (numpy dropped, `analysis/` stdlib-only again), V8-exactness retired;
+  full-suite rerun + gate/journal/article reconciliation) — this commit
 - **Entry 26** (pre-registration only: the direction ladder on the Entry-19 corpus's real
   endpoints, and portals (bridges/tunnels) in the track-as-whole and discretized scenarios —
   harnesses to follow) — this commit
+
+---
+
+## 2026-07-25 — Entry 27: re-baseline — São Paulo's gravity, bisect back in `bem`, and V8-exactness retired
+
+*Prompt (Danilo): "G=9.7864 is a standard value for são paulo, according to lab measurements at
+IAG-USP" → "note: we can drop the requirement of being v8-exact. We can also revert to bisect if
+there's benefit to it." → "re-baseline approved". This entry is the bookkeeping of a
+constants-only change: **no model, harness logic or corpus changed**, so every number that moves
+here moves for exactly one reason (gravity), and the entry's job is to show which ones did.*
+
+**The change, in three parts.**
+
+1. **`G = 9.7864` replaces 9.81** — São Paulo's local gravity from IAG-USP absolute gravimetry.
+   Every corpus in this repo is ridden in the SP metropolitan region, so the local value is the
+   physical one. It is hand-copied into **14 sites**: `bem/engines.py`, `applet/index.html`,
+   `analysis/journal.qmd`, the parity preamble in `js_runner.mjs`, and the `G` / `KEFF, G` /
+   `G, NS` line of each of the eleven harnesses. **This was also a latent correctness fix**: a
+   harness defines `G` locally *and* imports `bem`'s engines, so the half-applied working-tree
+   state (bem at 9.7864, harnesses at 9.81) had been running **two different gravities inside a
+   single computation**. Three sites keep 9.81 **deliberately** and now say so in-line —
+   `verify_v2edge_clamp.py`, `e26_detour.py`'s `G_JS`, and the frozen `reference.mjs` header —
+   because they mirror the bundle *sampasimu deploys*, and that repo is not re-based.
+2. **`flat_eq_speed` reverts from a Cardano closed form to the applet's monotone-safe bisection**,
+   mirrored step for step (same bracket, same 60 halvings, tailwind fallback branch), and
+   `solve_cubic` is deleted. Three wins: **numpy is gone, so `analysis/` is stdlib-only again**
+   (verified by importing `bem` under the system python3, which has no numpy); the
+   applet↔`bem` two-copy rule holds again; and a wrong code path disappears — the committed
+   Cardano returned `-q/2 + √delta` instead of the cube-root sum and never shifted back from the
+   depressed cubic. 60 halvings on [0, 40] already resolve v to ~3e-17, so the closed form bought
+   nothing measurable.
+3. **V8-exactness is no longer a required invariant.** `v8math` stays (it is correct; removing it
+   would be churn with no benefit) but a last-ulp difference in a printed digit is no longer a
+   defect. The binding cross-language check is now the *numerical* parity — which **passes
+   unchanged: 8 514 comparisons, ≤1e-9 relative, against the frozen verbatim JS**, with both
+   sides at the new G. That parity result is also the strongest evidence the bisect revert was
+   right: the frozen JS bisects, so Cardano would have shown up as a divergence.
+
+**Direction of the change, predicted before running.** `β = mg/k_eff` falls by 0.24%, and `α`
+falls only through its rolling part, so every model charges slightly less for climbing. Variants
+that **over**-predict should improve; the **under**-predicting canonical should worsen. That is
+exactly what happened, and nothing moved by more than 0.2 pp.
+
+### What moved (and what did not)
+
+**Longões (44 rides), med |Δ%| / med Δ%:**
+
+| model | before | after |
+|---|--:|--:|
+| **champion** (cf + 2 m deadband) | 3.6 / +2.2 | **3.5 / +2.1** |
+| canonical | 5.1 / −1.7 | **5.2 / −1.8** |
+| canonical + 2 m | 5.6 / −3.5 | **5.7 / −3.6** |
+| cf + scalar `k_smooth` | 5.8 / −0.5 | **5.9 / −0.6** |
+| cf + sheet `v_f` | 7.2 / −0.5 | 7.2 / **−0.6** |
+| cf + measured `v_f` | 8.2 / +6.7 | **8.0 / +6.6** |
+| cf | 8.7 / +8.6 | **8.6 / +8.4** |
+| off + 2 m | 10.2 / +9.9 | 10.2 / **+9.8** |
+| off (baseline) | 19.3 / +19.3 | **19.1 / +19.1** |
+
+Conservation identity unchanged at **1.77e-8** worst per-ride residual (bar: 1e-6).
+
+**Censo (62 clean urban rides):** canonical 6.5 → **6.6**; smooth ε=0.10 4.5 → **4.4**; ε=0.15
+5.0 → **4.8**; ε=0.20 4.6 → **4.7**; ε=geom 7.6 → **7.7**; ε=0.00 7.6 → **7.4**; poor-man's
+ε=0.20 **3.9 (unchanged — the censo headline holds)**; ε=0.25 4.8 → **5.0**; ε=geom 6.3 → **6.4**;
+ε=0.00 10.5 → **10.4**.
+
+**The rider corpora did not move at all** — P. Paz poor-man's ε_geom **4.9 / +0.6**, canonical
+**6.8 / +5.0**, smooth ε=0.20 **10.1**, and the frozen-ε result **RMS 0.091 vs the in-sample
+flat 0.139** (the ~35% win) are identical to four significant figures; JAAM smooth ε=0.20
+**3.5 / +0.4**, ε=geom **5.5**, canonical **5.4 / −5.0** likewise; the author's full export keeps
+canonical **6.1** (bias +0.1 → **+0.0**) and frozen-ε **0.090**.
+
+**Why that split is the interesting part.** Where mass is **inverted from the data**, the gravity
+change lands in the *parameter* and leaves accuracy untouched: implied mass rises by exactly the
+predicted 1/G ratio — P. Paz **74.3 → 74.5 kg**, JAAM **101.7 → 101.9**, the author **74.5 →
+74.7** (and Entry 15's climb masses likewise). Where mass is **assumed** (the longões' sheet
+parameters, the censo's generic 78 kg), there is no free parameter to absorb it, so the shift
+shows up in med |Δ%| instead. A one-line summary of the whole re-baseline: *a fitted corpus is
+gravity-insensitive; an assumed corpus is not.*
+
+**The ε closed form is untouched.** Correlations 0.30 / 0.60 / 0.77 / 0.82 (all / energy-weighted
+/ s̄≥3% / s̄≥3.5%), the part–whole diagnostics 0.72 and 0.99, and the headline **37% RMS reduction**
+(RMS 0.08 vs a flat baseline's 0.13 at s̄ ≥ 3%) are all bit-for-bit the published values, because
+`ε_coast = min(1, (α/β)/s)` depends on gravity only through the aero term's `mg` denominator.
+
+**Two claims move, in opposite directions.**
+
+- **Entry 22's "parity, not beats" gets STRONGER.** Paired, the champion is now closer than the
+  canonical sim on **24 of 44 rides (55%), sign test p = 0.65** (was 25/44, 57%, p = 0.45) — even
+  less separable, so the article's parity wording is now conservative rather than borderline. The
+  other four paired tests are identical (censo 33/62 p = 0.70; P. Paz 265/441 and 331/436;
+  JAAM 140/215, all p < 10⁻⁴).
+- **§8.5's São Paulo transfer weakens from a tie to a near-tie.** The frozen rural offset
+  `ε_coast − 0.13` now scores **RMS 0.09** against the in-sample flat ε = 0.20's **0.08** (both
+  were 0.08). The refutation it supports is unaffected — the mechanistic braking correction still
+  sits at 0.19, worse than a constant, and every R² stays ≤ 0.14 — but the sentence "it *ties* the
+  flat constant selected in-sample on this very set" must now read "*nearly* ties (0.09 vs 0.08)".
+
+**Time model: headline intact, secondary rows shift.** The pre-declared endpoint is unchanged —
+T1b **6.6%** vs the naive T0 **7.6%** on the 441 P. Paz rides (signed +3.8 → **+3.7**) — as are
+the descent-bridge numbers (correlation 0.59 / 0.08 / 0.14; median measured 30.1 vs predicted
+38.0 km/h; `k₋_meas` 5.85 rural). Secondary rows move by ≤0.1 pp: longões T1a/T1b 5.5 → **5.6**,
+T2 4.3 → **4.4**, T3 3.6 → **3.7**; censo TS 14.5 → **14.6**, T1a/T1b 14.2 → **14.3**,
+T3 13.5 → **13.6**, TF 7.4 → **7.3**; P. Paz T2 7.4 → **7.3**, T3 8.6 → **8.5**.
+
+**Gates.** `bootstrap_ci.py` did its job loudly: **14 of 24 gates failed** on the first post-change
+run, each naming its old expectation, and 10 passed untouched (every value that moved by less than
+the ±0.11 rounding tolerance). The expectations are now re-baselined from the fresh scoreboards and
+**all 24 pass**. Bootstrap CIs shifted in the last digit where their medians did.
+
+**The DEM chain (Entries 19–21).** `igc_resolution_test` re-ran in full: its endpoints move
+exactly like the other measured-energy scoreboards and its **conclusion is untouched** — censo
+v2Edge@igc5 22.1 → **21.9** vs igc30 12.3 → **12.1** (paired signed gap 9.44 → **9.41 pp**),
+pooled riders 9.6 → **9.5** vs 7.1 (gap 3.64 → **3.63 pp**), P. Paz 9.0 vs 8.1 → **8.0**
+(gap 2.0 → **1.97**), JAAM 2.9 vs 3.4 (gap **1.41**, unchanged), the author 14.8 → **14.6** vs
+9.8 → **9.7** (gap 5.4 → **5.40**). Both pre-registered thresholds stay triggered, every
+significance verdict holds (censo igc5 better on 2/58, p < 1e-4; JAAM still the corpus where igc5
+wins on |Δ%|, 100/181, p = 0.16), and the implied drop-weighted ε is unchanged at 0.415@5 m vs
+0.457@30 m. One sanity gate needed a rerun rather than a re-baseline: igc cross-checks its baro
+anchor against `regime_comparison.csv`, so running it *before* `regime_compare` had been
+regenerated compared new-G against old-G (worst |Δ| 3.94 kJ) — an ordering artifact, not a
+regression; every other gate passed, including `walkStats ≡ r1dV2Edge` at max |Δ| = 0.
+
+**Entries 20–21 are re-running on a rebuilt cache, and their numbers are expected to hold.** Both
+depend on `goal_smooth_rasters`' five σ-smoothed 135 M-cell rasters, which the wiped scratchpad
+lost, so they are being regenerated in dependency order (`goal_smooth_rasters` →
+`goal_calibration` → `scale_trio`). The expectation, stated here *before* the numbers land so it
+can be scored rather than rationalised: **both should absorb the gravity change almost entirely**,
+because Entry 20 *fits* per-rider (CdA, Crr, kSmooth) — the same absorption mechanism the implied
+masses just demonstrated — and Entry 21 fits its trio against a *ratio* of two walks at different
+resolutions, where a common factor in β cancels. If either moves materially, that is a finding and
+this entry gets a follow-up.
+
+
+**What is NOT re-baselined, deliberately.**
+
+- **Entry 26 keeps its numbers.** It was published hours before this change, and its Q1/Q2B
+  figures come from *simujaules'* JS engine, which still runs 9.81 — re-running the Python side
+  alone would make them less comparable, not more. Its Q2A profile numbers would shift ≈0.1 pp on
+  the same logic as the censo scoreboard. Following the Entry 11 precedent, earlier entries keep
+  the numbers they were written with; this entry is the pointer to the current values.
+- **Entries 2–6 keep their historical numbers** (the same convention Entry 11 established).
+- **`sampasimu` is not re-based.** Until it is, the applet's `v2Edge` readout differs from the
+  deployed app by the gravity ratio (≈0.24%) — recorded in `CLAUDE.md`, and a cross-repo decision
+  rather than something to fix from here.
+
+**Net.** A 0.24% change in one constant moves nine published medians by ≤0.2 pp, moves none of the
+rider-transfer results at all, strengthens the parity claim, softens one transfer claim from "ties"
+to "nearly ties", and leaves every qualitative conclusion in the journal and the article standing.
+The re-baseline's real value is the two side effects: `analysis/` is stdlib-only again, and the
+14-way gravity duplication is now documented as the sync hazard it is.
+
+Tooling: the full suite, in order — `compare`, `censo_compare`, `eps_hypothesis`, `eps_sp_test`,
+`ppaz_compare`, `jaam_compare`, `danlessa_compare`, `time_compare`, `param_fit`, `cda_estimate`,
+`regime_compare`, `igc_resolution_test`, `scale_trio`, `goal_calibration`, then
+`analysis/parity/run_parity.py` and `bootstrap_ci.py` as the gates.
 
 ---
 

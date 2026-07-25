@@ -672,6 +672,46 @@
   prov:wasGeneratedBy :run26a ;
   cito:citesAsEvidence :e26_detour.csv .
 
+# ── Entry 27 — re-baseline to São Paulo gravity ──────────────────────────────
+
+:q27 a schema:Question ;
+  schema:text "What moves when the model's gravity is re-baselined from the textbook 9.81 to São Paulo's measured local value (9.7864, IAG-USP)?" ;
+  dcterms:source :journal .
+
+:run27 a prov:Activity ;
+  prov:used :compare.py , :censo_compare.py , :eps_hypothesis.py , :eps_sp_test.py ,
+            :ppaz_compare.py , :jaam_compare.py , :danlessa_compare.py , :time_compare.py ,
+            :param_fit.py , :cda_estimate.py , :regime_compare.py , :igc_resolution_test.py ,
+            :bootstrap_ci.py ;
+  rdfs:comment "Constants-only change: G swept to 9.7864 across all 14 rider-physics sites, flat_eq_speed reverted from a Cardano closed form to the applet's bisection (numpy dropped — analysis/ is stdlib-only again), V8-exactness retired as an invariant. No model, harness logic or corpus changed, so every moved number moves for exactly one reason." .
+
+:assert27 a schema:Claim ;
+  schema:about :q27 ;
+  dcterms:description "nine medians move by ≤0.2 pp in the predicted direction; every rider-transfer result is unchanged" ;
+  schema:text "A 0.24% reduction in gravity moves the assumed-parameter corpora and leaves the fitted ones alone. Longões: champion 3.6 → 3.5, canonical 5.1 → 5.2, off 19.3 → 19.1 med|Δ%|; censo: canonical 6.5 → 6.6, smooth ε=0.15 5.0 → 4.8, while the poor-man's ε=0.20 headline holds at 3.9. Every rider-corpus result is unchanged to four figures (P. Paz 4.9/+0.6 and the frozen-ε 0.091-vs-0.139 win; JAAM 3.5/+0.4; the author 6.1), as is the ε closed form (37% RMS skill, correlations 0.30/0.60/0.77/0.82, part–whole 0.72/0.99) and the time model's endpoint (T1b 6.6 vs T0 7.6). Direction as predicted: less gravity charges less for climbing, so over-predicting variants improve and the under-predicting canonical worsens. Conservation residual unchanged at 1.77e-8; cross-language parity unchanged at 8514 comparisons ≤ 1e-9." ;
+  prov:wasGeneratedBy :run27 ;
+  cito:citesAsEvidence :model_comparison.csv , :censo_comparison.csv .
+
+:assert27_ev1 a schema:Claim ;
+  cito:supports :assert27 ;
+  cito:citesAsEvidence :ppaz_comparison.csv ;
+  schema:text "The mechanism behind the split: where mass is INVERTED from the data it absorbs the constant, so accuracy is gravity-insensitive — implied masses rise by exactly the predicted 1/G ratio (P. Paz 74.3 → 74.5 kg, JAAM 101.7 → 101.9, the author 74.5 → 74.7). Where mass is ASSUMED (the longões' sheet parameters, the censo's generic 78 kg) there is no free parameter, so the shift lands in med|Δ%| instead. A fitted corpus is insensitive to the constant; an assumed corpus is not." .
+
+:assert27_ev2 a schema:Claim ;
+  cito:supports :assert22 ;
+  cito:citesAsEvidence :model_comparison.csv ;
+  schema:text "The re-baseline STRENGTHENS Entry 22's parity finding: paired, the champion is now closer than the canonical simulation on 24 of 44 rides (55%, sign test p = 0.65), down from 25/44 (57%, p = 0.45) — even less separable, so the article's 'parity, not beats' wording is now conservative rather than borderline. The other four paired tests are identical." .
+
+:assert27_ev3 a schema:Claim ;
+  cito:disputes :assert10 ;
+  cito:citesAsEvidence :eps_sp.csv ;
+  schema:text "One claim weakens: the frozen rural offset ε_coast − 0.13 now scores RMS 0.09 against the in-sample flat ε = 0.20's 0.08 (both were 0.08), so 'it ties the flat constant selected in-sample on this very set' becomes 'nearly ties'. Entry 10's negative result is untouched — every braking predictor still has R² ≤ 0.14 and the mechanistic correction is still worse than a constant at 0.19." .
+
+:assert27_ev4 a schema:Claim ;
+  cito:supports :assert19 ;
+  cito:citesAsEvidence :igc_resolution_test.csv ;
+  schema:text "Entry 19 survives re-baselining: censo v2Edge@igc5 22.1 → 21.9 vs igc30 12.3 → 12.1 (paired signed gap 9.44 → 9.41 pp), pooled riders 9.6 → 9.5 vs 7.1 (gap 3.64 → 3.63 pp); both pre-registered decision thresholds stay triggered and every significance verdict holds. One sanity gate needed a rerun rather than a re-baseline — igc cross-checks its baro anchor against regime_comparison.csv, so running it before regime_compare was regenerated compared new-G against old-G (an ordering artifact, worst |Δ| 3.94 kJ)." .
+
 :assert26f a schema:Claim ;
   dcterms:type "methodological" ;
   dcterms:description "process lessons and disclosed deviations" ;

@@ -1,30 +1,30 @@
 == Longões (44 power rides), §8.1 scoreboard ==
-approx cf + 2m smooth              n= 44  med|Δ%|=  3.56 [2.0, 5.6]  medΔ%=   2.21 [0.6, 4.5] GATE-OK
-canonical                          n= 44  med|Δ%|=  5.07 [3.8, 7.1]  medΔ%=  -1.66 [-3.8, 0.4] GATE-OK
-canonical + 2m smooth              n= 44  med|Δ%|=  5.63 [4.1, 8.0]  medΔ%=  -3.54 [-5.0, -1.2] GATE-OK
-approx cf + k_smooth               n= 44  med|Δ%|=  5.80 [3.5, 8.2]  medΔ%=  -0.51 [-2.6, 2.5] GATE-OK
-approx cf + sheet v_f              n= 44  med|Δ%|=  7.21 [4.3, 9.1]  medΔ%=  -0.51 [-4.2, 1.9] GATE-OK
-approx cf + measured v_f           n= 44  med|Δ%|=  8.21 [4.6, 12.5]  medΔ%=   6.72 [3.4, 12.2] GATE-OK
-approx cf                          n= 44  med|Δ%|=  8.73 [7.3, 11.2]  medΔ%=   8.59 [6.9, 11.2] GATE-OK
-approx off (baseline)              n= 44  med|Δ%|= 19.31 [17.5, 21.6]  medΔ%=  19.31 [17.5, 21.8] GATE-OK
-PAIRED champion (cfS) vs canonical: A closer on 25/44 (57%), sign test p=0.4514
+approx cf + 2m smooth              n= 44  med|Δ%|=  3.54 [2.0, 5.6]  medΔ%=   2.11 [0.5, 4.3] GATE-OK
+canonical                          n= 44  med|Δ%|=  5.15 [3.8, 7.3]  medΔ%=  -1.79 [-3.9, 0.3] GATE-OK
+canonical + 2m smooth              n= 44  med|Δ%|=  5.72 [4.2, 8.1]  medΔ%=  -3.63 [-5.0, -1.3] GATE-OK
+approx cf + k_smooth               n= 44  med|Δ%|=  5.87 [3.6, 8.3]  medΔ%=  -0.63 [-2.7, 2.4] GATE-OK
+approx cf + sheet v_f              n= 44  med|Δ%|=  7.17 [4.4, 9.1]  medΔ%=  -0.60 [-4.3, 1.7] GATE-OK
+approx cf + measured v_f           n= 44  med|Δ%|=  8.03 [4.5, 12.4]  medΔ%=   6.55 [3.2, 12.0] GATE-OK
+approx cf                          n= 44  med|Δ%|=  8.59 [7.2, 11.0]  medΔ%=   8.43 [6.8, 11.0] GATE-OK
+approx off (baseline)              n= 44  med|Δ%|= 19.14 [17.3, 21.5]  medΔ%=  19.14 [17.3, 21.6] GATE-OK
+PAIRED champion (cfS) vs canonical: A closer on 24/44 (55%), sign test p=0.6516
 
 == Censo (clean urban rides), §8.4 sweep ==
-canonical                          n= 62  med|Δ%|=  6.50 [4.5, 8.5]  medΔ%=  -3.38 [-6.3, -1.7] GATE-OK
-smooth · ε=0.10                    n= 62  med|Δ%|=  4.46 [3.5, 6.4]  medΔ%=   3.43 [0.8, 4.9] GATE-OK
-smooth · ε=0.15                    n= 62  med|Δ%|=  4.98 [3.6, 5.6]  medΔ%=   1.31 [-1.3, 3.0] GATE-OK
-smooth · ε=0.20                    n= 62  med|Δ%|=  4.58 [3.4, 6.1]  medΔ%=  -0.77 [-3.2, 1.2] GATE-OK
-poor-man · ε=0.20                  n= 62  med|Δ%|=  3.87 [3.1, 6.0]  medΔ%=   1.14 [-1.5, 3.7] GATE-OK
-poor-man · ε=0.25                  n= 62  med|Δ%|=  4.82 [4.0, 6.3]  medΔ%=  -1.21 [-3.5, 1.4] GATE-OK
-poor-man · ε=geom                  n= 62  med|Δ%|=  6.28 [4.8, 8.4]  medΔ%=  -3.24 [-4.7, -0.1] GATE-OK
-smooth · ε=geom                    n= 62  med|Δ%|=  7.58 [5.8, 9.2]  medΔ%=  -4.92 [-7.5, -2.0] GATE-OK
-smooth · ε=0.00                    n= 62  med|Δ%|=  7.55 [5.6, 9.5]  medΔ%=   7.39 [5.0, 9.4] GATE-OK
-poor-man · ε=0.00                  n= 62  med|Δ%|= 10.54 [8.5, 13.6]  medΔ%=  10.54 [8.3, 13.9] GATE-OK
+canonical                          n= 62  med|Δ%|=  6.63 [4.7, 8.7]  medΔ%=  -3.52 [-6.4, -1.8] GATE-OK
+smooth · ε=0.10                    n= 62  med|Δ%|=  4.41 [3.6, 6.2]  medΔ%=   3.26 [0.7, 4.7] GATE-OK
+smooth · ε=0.15                    n= 62  med|Δ%|=  4.82 [3.5, 5.7]  medΔ%=   1.14 [-1.5, 2.9] GATE-OK
+smooth · ε=0.20                    n= 62  med|Δ%|=  4.72 [3.3, 6.2]  medΔ%=  -0.90 [-3.3, 1.1] GATE-OK
+poor-man · ε=0.20                  n= 62  med|Δ%|=  3.88 [3.2, 6.1]  medΔ%=   0.99 [-1.6, 3.5] GATE-OK
+poor-man · ε=0.25                  n= 62  med|Δ%|=  4.96 [4.0, 6.2]  medΔ%=  -1.36 [-3.6, 1.2] GATE-OK
+poor-man · ε=geom                  n= 62  med|Δ%|=  6.45 [4.8, 8.6]  medΔ%=  -3.41 [-4.9, -0.3] GATE-OK
+smooth · ε=geom                    n= 62  med|Δ%|=  7.71 [6.0, 9.3]  medΔ%=  -5.06 [-7.6, -2.2] GATE-OK
+smooth · ε=0.00                    n= 62  med|Δ%|=  7.39 [5.6, 9.4]  medΔ%=   7.23 [4.9, 9.2] GATE-OK
+poor-man · ε=0.00                  n= 62  med|Δ%|= 10.35 [8.3, 13.4]  medΔ%=  10.35 [8.2, 13.7] GATE-OK
 PAIRED poor-man ε0.20 vs canonical: A closer on 33/62 (53%), sign test p=0.7035
 
 == P. Paz (441 rides), §8.6 ==
 poor-man · ε=geom                  n=441  med|Δ%|=  4.89 [4.4, 5.8]  medΔ%=   0.59 [-0.1, 1.3] GATE-OK
-canonical                          n=441  med|Δ%|=  6.75 [6.2, 7.8]  medΔ%=   4.96 [3.8, 5.9] GATE-OK
+canonical                          n=441  med|Δ%|=  6.76 [6.2, 7.8]  medΔ%=   4.96 [3.8, 5.9] GATE-OK
 PAIRED pm_geom vs canonical: A closer on 265/441 (60%), sign test p=0.0000
 PAIRED pm_geom vs sm_0.20: A closer on 331/436 (76%), sign test p=0.0000
 
@@ -34,7 +34,7 @@ smooth · ε=geom                    n=219  med|Δ%|=  5.49 [4.4, 6.4]  medΔ%= 
 PAIRED sm_0.20 vs sm_geom: A closer on 140/215 (65%), sign test p=0.0000
 
 == Time model, P. Paz (§8.8 primary endpoint) ==
-T1b full (frozen)                  n=441  med|Δ%|=  6.62 [5.9, 7.2]  medΔ%=   3.79 [2.8, 4.7] GATE-OK
-T0 naive x/v_f                     n=441  med|Δ%|=  7.64 [7.0, 8.5]  medΔ%=  -0.46 [-2.0, 0.9] GATE-OK
+T1b full (frozen)                  n=441  med|Δ%|=  6.58 [5.9, 7.3]  medΔ%=   3.74 [2.7, 4.7] GATE-OK
+T0 naive x/v_f                     n=441  med|Δ%|=  7.65 [7.0, 8.6]  medΔ%=  -0.49 [-2.0, 0.8] GATE-OK
 
 all gates pass
