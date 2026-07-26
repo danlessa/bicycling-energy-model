@@ -23,6 +23,20 @@ import math
 # inside a single computation (see the journal's re-baseline entry).
 G = 9.7864
 
+# The coasting deficit ε₀ (journal Entry 8; named in Entry 27): the share of a
+# descent that pure coasting *would* refund but the rider does not collect —
+# residual descent pedalling and pre-corner braking. Calibrated on 30 m descent
+# cells; recurs at 0.12–0.133 across all three riders tested. Mirrored by hand
+# in the applet and in sampasimu's energy-worker.js (the deliberate JS copies).
+EPS0 = 0.13
+
+# Entry 21's behavioural trio: (k_smooth, ε₀, climbThr) re-fitted purely as a
+# 5 m → 30 m resolution transfer, for walking RAW ~5 m profiles with v2_edge.
+# Bridges the resolution gap per-ride on the rider corpora, NOT on flat-urban
+# censo — a function of (Δx, terrain regime), not Δx alone. The applet's
+# "trio Δx=5 m" preset mirrors these values by hand.
+TRIO_DX5 = {"kSmooth": 0.9375, "epsOffset": 0.0632, "climbThr": 0.025}
+
 _INF = float("inf")
 
 
@@ -414,7 +428,7 @@ def approx_time(prof, p, vf, pw):
 def eps_geom(prof, p, vf):
     """Geometry-only closed-form eps (JS epsGeom; journal Entry 8): coasting
     limit eps(s) = min(1, (a/b)/s), drop-weighted over 30 m descent cells,
-    minus the calibrated 0.13 offset. Uses the MODEL v_f — needs no power."""
+    minus the coasting deficit EPS0. Uses the MODEL v_f — needs no power."""
     mg = p["m"] * G
     beta = mg / p["keff"]
     aero_spd = vf + p["wind"]
@@ -448,7 +462,7 @@ def eps_geom(prof, p, vf):
             epsW += drop * min(1.0, ab / (drop / DX))
     if Hd < 1:
         return float("nan")
-    return max(0.0, min(1.0, epsW / Hd - 0.13))
+    return max(0.0, min(1.0, epsW / Hd - EPS0))
 
 
 def approx_components(prof, p, vf, climb_thr=0.02):

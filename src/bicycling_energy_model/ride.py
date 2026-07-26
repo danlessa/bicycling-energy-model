@@ -12,7 +12,7 @@ import math
 import os
 import pickle
 
-from .engines import (G, approximate, canonical, deadband, flat_eq_speed,
+from .engines import (EPS0, G, approximate, canonical, deadband, flat_eq_speed,
                       resample_profile, v2_edge)
 from .fit import empirical_kj, overall_mean_power, pts_from_fit
 from .profiles import build_profile, pts_from_gpx
@@ -116,7 +116,7 @@ def analyze_ride(pts, params, eps=0.20, v2_opts=None):
     a_cf_s = approximate(prof_s, p, vf, eps, opt("zero"))
     c_s = canonical(prof_s, pw, p)
     v2 = v2_edge(prof, p, vf, v2_opts or
-                 {"kSmooth": 1.0, "epsOffset": 0.13, "climbThr": CLIMB_THR})
+                 {"kSmooth": 1.0, "epsOffset": EPS0, "climbThr": CLIMB_THR})
     emp = empirical_kj(pts)
     beta = p["m"] * G / p["keff"]
     b_hm = beta * a_cf_s["hminus"]

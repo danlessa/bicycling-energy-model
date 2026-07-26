@@ -387,7 +387,7 @@
   cito:disputes :assert12 ;
   cito:supports :assert16 ;
   cito:citesAsEvidence :ppaz_comparison.csv ;
-  schema:text "With fitted physics P. Paz's frozen-ε RMS advantage collapses 0.091-vs-0.139 → 0.083-vs-0.086 (tie), and the canonical bias flips +5.0 → −6.9%." .
+  schema:text "With fitted physics P. Paz's frozen-ε RMS advantage collapses 0.091-vs-0.139 → 0.082-vs-0.086 (tie), and the canonical bias flips +5.0 → −6.9%." .
 
 # ── Entry 17 — regime-decomposed closed form ─────────────────────────────────
 

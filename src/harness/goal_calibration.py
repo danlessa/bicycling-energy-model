@@ -102,8 +102,10 @@ from bicycling_energy_model.jsfmt import js_str, to_exponential, to_fixed  # noq
 
 DATA = os.path.join(REPO, "data", "inputs", "activities")
 RESULTS = os.path.join(REPO, "data", "results")
-SCRATCH = ('/private/tmp/claude-501/-Users-danlessa-repos-pedalhidro-simujaules/'
-           '6a419542-bc75-4ec1-aced-8e8de9a58ae3/scratchpad')
+# DEM/profile caches — regenerable (slowly: gdal sampling of 922 rides + the smoothed
+# rasters), so they live under the gitignored data/results/cache/ rather than a tmp dir.
+SCRATCH = os.path.join(RESULTS, 'cache', 'dem')
+os.makedirs(SCRATCH, exist_ok=True)
 DEM5 = '/Users/danlessa/repos/pedalhidro/simujaules/dem/sampa_geral.tif'
 SIGMAS = [0, 10, 15, 20, 30, 45]
 

@@ -26,7 +26,7 @@ from bicycling_energy_model import (canonical, approximate, v2_edge, approx_time
                                     analyze_ride, load_pts)
 from bicycling_energy_model.ride import d_pct, median, CLIMB_THR, DESC_THR
 
-from bicycling_energy_model.engines import G
+from bicycling_energy_model.engines import EPS0, G, TRIO_DX5
 P = dict(m=75, Crr=0.008, CdA=0.4, rho=1.1, keff=0.97, vmax=38/3.6, vstart=15/3.6, wind=0)
 PW = dict(climb=150, flat=90, descent=10, climbThr=CLIMB_THR, descThr=DESC_THR)
 
@@ -180,7 +180,7 @@ for m in (55, 75, 100):
                 for grade in (0.005, 0.01, 0.02, 0.04, 0.08, 0.15):
                     n = 41
                     pr = {"x": [i*5.0 for i in range(n)], "h": [grade*5*(n-1-i) for i in range(n)]}
-                    r = v2_edge(pr, p2, v, dict(kSmooth=1.0, epsOffset=0.13, climbThr=0.02))
+                    r = v2_edge(pr, p2, v, dict(kSmooth=1.0, epsOffset=EPS0, climbThr=CLIMB_THR))
                     if r["minPreClamp"] < min_pre: min_pre = r["minPreClamp"]
 print(f"min pre-clamp descent edge across the sweep: {min_pre:+.4f} J  (> 0 ⇒ clamp never fires)")
 assert min_pre > 0
@@ -195,7 +195,7 @@ rough = synth("rolling")
 rough = {"x": rough["x"], "h": [h + 0.9*math.sin(i*7.7) for i, h in enumerate(rough["h"])]}
 for dx in (5, 30):
     pr = resample_profile(rough, dx)
-    r = v2_edge(pr, P, vf, dict(kSmooth=1.0, epsOffset=0.13, climbThr=0.02))
+    r = v2_edge(pr, P, vf, dict(kSmooth=1.0, epsOffset=EPS0, climbThr=CLIMB_THR))
     print(f"dx={dx:2d} m:  v2Edge {r['E']/1e3:6.1f} kJ   implied drop-weighted ε {r['epsImplied']:.3f}   h₋ {r['hminus']:.0f} m")
 print("finer sampling ⇒ lower implied ε ⇒ more energy — Entry 19's over-charge mechanism")
 ```
@@ -206,14 +206,14 @@ print("finer sampling ⇒ lower implied ε ⇒ more energy — Entry 19's over-c
 
 # Entry 21 — the behavioural trio is a function of (Δx, terrain)
 
-Re-fitted purely as a 5 m→30 m resolution transfer: k_s 0.9375, ε₀ 0.0632, climbThr 2.5 % bridges the rider corpora per-ride but not flat-urban censo. The trio's effect, live:
+Re-fitted purely as a 5 m→30 m resolution transfer: k_s 0.9375, ε₀ 0.0632, climbThr 2.5 % (`TRIO_DX5` in the package — the cell below imports it rather than restating it) bridges the rider corpora per-ride but not flat-urban censo. The trio's effect, live:
 
 ```{python}
 pr5 = resample_profile(rough, 5)
-base = v2_edge(pr5, P, vf, dict(kSmooth=1.0,   epsOffset=0.13,  climbThr=0.02))
-trio = v2_edge(pr5, P, vf, dict(kSmooth=0.9375, epsOffset=0.0632, climbThr=0.025))
+base = v2_edge(pr5, P, vf, dict(kSmooth=1.0, epsOffset=EPS0, climbThr=CLIMB_THR))
+trio = v2_edge(pr5, P, vf, TRIO_DX5)   # Entry 21's (k_s, eps0, climbThr), from the package
 pr30 = resample_profile(rough, 30)
-tgt  = v2_edge(pr30, P, vf, dict(kSmooth=1.0,  epsOffset=0.13,  climbThr=0.02))
+tgt  = v2_edge(pr30, P, vf, dict(kSmooth=1.0, epsOffset=EPS0, climbThr=CLIMB_THR))
 print(f"v2@5m default {base['E']/1e3:6.1f} kJ   v2@5m+trio {trio['E']/1e3:6.1f} kJ   v2@30m target {tgt['E']/1e3:6.1f} kJ")
 ```
 

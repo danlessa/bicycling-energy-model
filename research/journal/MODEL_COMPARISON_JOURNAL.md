@@ -441,6 +441,20 @@ familiar ratio (80.7 → **80.9**, JAAM 103.1 → **103.4**, author/longões 79.
 author/full 71.2 → **71.4** on 101 activities). The recovered CdA/C_rr stay in range; every
 Entry-15 conclusion stands. (Entry 15's own table keeps its as-written values, per convention.)
 
+**The Entry-16 fitted-physics rerun is now regenerated too** (it was the one env-override
+pass the re-baseline had not re-run; the audits caught the gap). At the re-baselined fitted
+constants (`PPAZ_M=80.9 PPAZ_CDA=0.260 PPAZ_CRR=0.0053` — only the mass moved, by the G-ratio):
+canonical is **7.5% / −6.9** exactly as published, the measured ε_bal on real descents is 0.14 as
+published, and the frozen-estimator tie sharpens one count: RMS **0.083 → 0.082** against the
+unchanged best-flat 0.086. Verdict untouched — still a tie. One process note worth keeping: the
+article briefly carried 0.082 this morning, an audit flagged it as an unverifiable drift from the
+historical 0.083, and it was "safely" reverted — the regeneration now shows 0.082 had been right.
+The lesson cuts the other way from most of today's: when a number can be *regenerated* for the
+price of one harness run, regenerate it; reverting to the historical value is only the safe move
+when the check is expensive. (This rerun was the first real user of the new no-clobber sweep
+CSVs — it wrote `ppaz_comparison.PPAZ_M80p9_PPAZ_CDA0p260_PPAZ_CRR0p0053.csv`, leaving the
+canonical CSV untouched — and of the parse cache, which is why it took ~2 minutes, not ~10.)
+
 **Terminology, adopted here.** The `−0.13` has been "the offset" for nineteen entries, which made
 every sentence about it a description rather than a reference. It now has a name: **the coasting
 deficit**, ε₀ — the share of the descent that pure coasting *would* refund but the rider does not

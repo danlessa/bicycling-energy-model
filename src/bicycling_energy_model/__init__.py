@@ -12,7 +12,9 @@ Stdlib-only by design: no numpy, no dependencies — reviewable line by line.
 """
 
 from .engines import (
+    EPS0,
     G,
+    TRIO_DX5,
     approx_components,
     flat_eq_speed,
     resample_profile,
@@ -40,5 +42,5 @@ __all__ = [
     "extract_regime_powers", "eps_from_balance", "measured_flat_speed",
     "analyze_ride", "load_pts",
     "approx_components", "climb_balance", "push_stats", "is_finite", "jsdiv",
-    "env_suffix",
+    "env_suffix", "EPS0", "TRIO_DX5",
 ]

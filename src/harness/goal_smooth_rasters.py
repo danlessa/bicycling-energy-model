@@ -37,7 +37,11 @@ import rasterio
 from scipy.ndimage import correlate1d
 
 SRC = '/Users/danlessa/repos/pedalhidro/simujaules/dem/sampa_geral.tif'
-SCRATCH = '/private/tmp/claude-501/-Users-danlessa-repos-pedalhidro-simujaules/6a419542-bc75-4ec1-aced-8e8de9a58ae3/scratchpad'
+# smoothed-raster outputs — kept with the DEM caches under data/results/cache/dem
+_HERE = os.path.dirname(os.path.abspath(__file__))
+SCRATCH = os.path.join(os.path.dirname(os.path.dirname(_HERE)),
+                       'data', 'results', 'cache', 'dem')
+os.makedirs(SCRATCH, exist_ok=True)
 SIGMAS_M = [10, 15, 20, 30, 45]
 M_PER_DEG = math.pi / 180.0 * 6371000.0   # 111194.92664455873 — matches the harness haversine sphere
 VALID_FLOOR = 0.5                          # h > 0.5 m = surveyed (band min is 0.0 = un-surveyed)
