@@ -305,6 +305,26 @@ published values, and the pre-registered expectation is confirmed *cleanly*:**
   ppaz 3.69/+0.97 (published 3.69/+0.96), danlessa 4.92/+0.83 (4.94/+0.81, margin
   0.06 → 0.08 pp), σ=0-calibrated 3.67/2.26/4.95 (3.66/2.25/4.95). The one genuine mover
   is **JAAM: 2.74/+0.31 → 2.79/+0.12**. Every ablation keeps its role.
+
+  *Why JAAM moves when the others don't (mechanism, from evidence already in the two runs).*
+  For a mass-inverted corpus `m̂·g` is exactly invariant, so in principle nothing should
+  change; the only real perturbation between the published and clean runs is the **0.1 kg
+  rounding of the frozen masses** (exact-invariant values 74.479 / 101.945 / 74.680 vs the
+  frozen 74.5 / 101.9 / 74.7 — errors +0.028% / **−0.044%** / +0.027%). Two fixed-parameter
+  controls bound that direct effect at ~0.01–0.02 pp: the uncalibrated ablation (jaam
+  2.65 → 2.66) and danlessa's own calibrated row, whose re-fit landed on the **identical**
+  cell (0.348 / 0.0077 / 0.768 in both runs) and moved only 0.02 pp. JAAM's re-fit instead
+  **hopped one step along the CdA↔Crr ridge** — published (0.378, 0.0097, 0.976) → clean
+  (0.363, 0.0101, 0.968) — and the 0.19 pp bias move is the validation-half difference
+  between those two near-tied cells, not physics. JAAM is the hop-prone rider because his
+  corpus has the weakest aero/rolling identifiability: fast, gentle (median s̄ 1.5%), narrow
+  speed range, so only α_roll + α_aero's *sum* is pinned — within the clean run alone, the
+  σ=0 and σ=10 fits sit at wildly different cells (CdA 0.552 vs 0.363!) with train medians
+  2.92 vs 2.91. This is Entry 20's "fitted values are effective, not physical" caveat made
+  quantitative: the second digit of a validation bias is a property of which ridge point the
+  train half picks, not of the rider. (Distinct from the retracted lumpy-grid claim below:
+  that one attributed the *stale-mass artifacts* to grid discreteness without a control;
+  this one has the seed, two controls, and both parameter cells in evidence.)
 - **Entry 21**: the fit returns **exactly** — the full trio **0.9375 / 0.0632 / 0.025** and
   k_s-only 0.8844, both the published values; censo is still NOT bridged, gap **4.45 pp**
   (published 4.44 — censo again the genuine mover); the E1 per-rider deltas (med|Δ%| / bias)
