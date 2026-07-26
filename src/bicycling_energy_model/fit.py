@@ -7,18 +7,23 @@ compressed-timestamp headers, developer fields, and FIT invalid-value
 markers. Points use None where the JS uses `undefined`.
 """
 
+from __future__ import annotations
+
 import math
 import struct
+from typing import Callable
+
+from .types import Points
 
 from .profiles import haversine
 
 _SEMI = 180 / 2147483648
 
 
-def _reader(buf, little):
+def _reader(buf: bytes, little: bool) -> Callable[[int, int], float | None]:
     e = "<" if little else ">"
 
-    def read(p, bt):
+    def read(p: int, bt: int) -> float | None:
         b = bt & 0x1F
         try:
             if b == 0x01:
@@ -50,7 +55,7 @@ def _reader(buf, little):
     return read
 
 
-def parse_fit(buf, meta=None):
+def parse_fit(buf: bytes, meta: dict | None = None) -> list[dict]:
     """Parse a FIT byte buffer into a list of `record` dicts.
 
     Honors per-definition endianness, compressed-timestamp headers, developer
@@ -174,7 +179,7 @@ def parse_fit(buf, meta=None):
     return records
 
 
-def finish_pts(pts):
+def finish_pts(pts: Points) -> None:
     """dt weight (clamp pauses) + speed fallback (compare.mjs finishPts)."""
     for i in range(len(pts)):
         raw = (pts[i]["t"] - pts[i - 1]["t"]
@@ -188,7 +193,7 @@ def finish_pts(pts):
                 pts[i]["v"] = (pts[i]["x"] - pts[i - 1]["x"]) / dtv
 
 
-def pts_from_fit(buf, meta=None):
+def pts_from_fit(buf: bytes, meta: dict | None = None) -> Points:
     """FIT buffer -> point list {x, alt, power, cad, t, v, dt}.
 
     Distance is interpolated by record index between dist anchors so devices
@@ -242,7 +247,7 @@ def pts_from_fit(buf, meta=None):
     return pts
 
 
-def empirical_kj(pts):
+def empirical_kj(pts: Points) -> float:
     """Measured pedalling energy sum(power*dt), J -> kJ (compare.mjs empiricalKJ)."""
     e = 0.0
     for q in pts:
@@ -251,7 +256,7 @@ def empirical_kj(pts):
     return e / 1000
 
 
-def overall_mean_power(pts):
+def overall_mean_power(pts: Points) -> float:
     """Time-weighted mean power over samples that carry power (compare.mjs)."""
     sw = swp = 0.0
     for q in pts:

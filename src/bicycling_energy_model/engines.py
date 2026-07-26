@@ -7,12 +7,19 @@ identical to the JS — the retired cross-language parity harness verified the
 port to ~1e-9 relative (git history keeps it).
 
 Profiles are plain dicts {"x": [m...], "h": [m...]} (ground distance,
-elevation). Parameters `p` is a dict: m, Crr, CdA, rho, keff, vmax, vstart,
-wind (SI; speeds m/s). Regime powers `pw`: climb, flat, descent (W),
-climbThr, descThr (grade fractions).
+elevation — homogeneous array containers, deliberately left as dicts).
+Parameters are DATACLASSES (field names kept identical to the JS keys):
+`SimParams` (m, Crr, CdA, rho, keff, wind, vmax, vstart — SI; speeds m/s),
+`RegimePowers` (climb, flat, descent in W; climbThr, descThr as grade
+fractions), `V2Options` and `ApproxOptions`. Every public function also
+accepts a plain mapping with the same keys and coerces it at the boundary
+(`.of()`), so the harnesses' verbatim-port dicts keep working unchanged.
 """
 
+from __future__ import annotations
+
 import math
+from typing import Sequence
 
 # São Paulo's local gravity, from IAG-USP absolute-gravimetry measurements
 # (9.7864 m/s²), not the 9.80665 standard or the 9.81 textbook value: every
@@ -23,25 +30,17 @@ import math
 # inside a single computation (see the journal's re-baseline entry).
 G = 9.7864
 
-# The coasting deficit ε₀ (journal Entry 8; named in Entry 27): the share of a
-# descent that pure coasting *would* refund but the rider does not collect —
-# residual descent pedalling and pre-corner braking. Calibrated on 30 m descent
-# cells; recurs at 0.12–0.133 across all three riders tested. Mirrored by hand
-# in the applet and in sampasimu's energy-worker.js (the deliberate JS copies).
-EPS0 = 0.13
-
-# Entry 21's behavioural trio: (k_smooth, ε₀, climbThr) re-fitted purely as a
-# 5 m → 30 m resolution transfer, for walking RAW ~5 m profiles with v2_edge.
-# Bridges the resolution gap per-ride on the rider corpora, NOT on flat-urban
-# censo — a function of (Δx, terrain regime), not Δx alone. The applet's
-# "trio Δx=5 m" preset mirrors these values by hand.
-TRIO_DX5 = {"kSmooth": 0.9375, "epsOffset": 0.0632, "climbThr": 0.025}
+# EPS0 (the coasting deficit), the parameter dataclasses and TRIO_DX5 live in
+# .types — imported here so `from bicycling_energy_model.engines import EPS0,
+# TRIO_DX5` keeps working (they are part of this module's public face).
+from .types import (EPS0, TRIO_DX5, ApproxOptions, Profile,  # noqa: E402,F401
+                    RegimePowers, SimParams, V2Options)
 
 _INF = float("inf")
 
 
 def flat_eq_speed(P: float,
-                  p: dict[str, float]) -> float:
+                  p: SimParams) -> float:
     """Flat-equilibrium GROUND speed at pedal power P (JS flatEqSpeed).
 
     Solves `(Crr*mg + 0.5*rho*CdA*rel*|rel|) * v = keff*P` for v, with the
@@ -55,15 +54,16 @@ def flat_eq_speed(P: float,
     depressed-cubic branches are a correctness liability for no measurable
     gain — 60 halvings on [0, 40] already resolve v to ~3e-17.)
     """
-    a = p["Crr"] * p["m"] * G
-    b = 0.5 * p["rho"] * p["CdA"]
-    w = p.get("wind", 0.0) or 0.0
+    p = SimParams.of(p)
+    a = p.Crr * p.m * G
+    b = 0.5 * p.rho * p.CdA
+    w = p.wind or 0.0
 
     def wheel(v: float) -> float:
         rel = v + w
         return (a + b * rel * abs(rel)) * v
 
-    target = p["keff"] * P
+    target = p.keff * P
     lo, hi = max(0.0, -w), 40.0
     if wheel(lo) > target:
         hi = lo
@@ -77,8 +77,8 @@ def flat_eq_speed(P: float,
     return (lo + hi) / 2
 
 
-def resample_profile(src: dict,
-                     dx: float) -> dict[str, list[float]]:
+def resample_profile(src: Profile,
+                     dx: float) -> Profile:
     """Resample an arbitrary {x,h} profile onto a uniform dx grid."""
     sx, sh = src["x"], src["h"]
     total = sx[len(sx) - 1]
@@ -99,7 +99,7 @@ def resample_profile(src: dict,
     return {"x": x, "h": h}
 
 
-def deadband(h: list,
+def deadband(h: Sequence[float],
              tau: float) -> list[float]:
     """Deadband (backlash) filter on an elevation ARRAY (compare.mjs deadband)."""
     out = [0.0] * len(h)
@@ -114,8 +114,8 @@ def deadband(h: list,
     return out
 
 
-def smooth_elevation(src: dict,
-                     tau: float):
+def smooth_elevation(src: Profile,
+                     tau: float) -> Profile:
     """Deadband filter on a PROFILE, tau<=0 returns it unchanged (JS smoothElevation)."""
     if not tau > 0:
         return src
@@ -144,19 +144,21 @@ def ascent_hyst(h: list[float],
     return gain
 
 
-def canonical(prof: dict[str, list[float]],
-              pw: dict[str, float],
-              p: dict[str, float]) -> dict:
+def canonical(prof: Profile,
+              pw: RegimePowers,
+              p: SimParams) -> dict:
     """Forward-dynamics simulation (JS canonical): distance-marching with
     adaptive sub-steps and the SEMI-IMPLICIT propulsion update (safeguarded
     Newton on g(u) = u - A/sqrt(u) - B) — conserves energy exactly; leg
     energy can never fall below the work done. No KE floor: P=0 against
     resistance STALLS the bike."""
-    m, Crr, CdA, rho, keff, vmax = p["m"], p["Crr"], p["CdA"], p["rho"], p["keff"], p["vmax"]
+    p = SimParams.of(p)
+    pw = RegimePowers.of(pw)
+    m, Crr, CdA, rho, keff, vmax = p.m, p.Crr, p.CdA, p.rho, p.keff, p.vmax
     xs, hs = prof["x"], prof["h"]
     n = len(xs)
     DT_MAX, DS_MIN = 0.25, 0.2
-    KEinit = 0.5 * m * p["vstart"] * p["vstart"]
+    KEinit = 0.5 * m * p.vstart * p.vstart
     KE = KEinit
     legE = t = Wrr = Waero = Wgrav = Wbrake = 0.0
     # per-regime legE bookkeeping [descent, flat, climb] (no dynamics effect)
@@ -168,7 +170,7 @@ def canonical(prof: dict[str, list[float]],
     minV = speed[0]
     keCap = 0.5 * m * vmax * vmax
     stalled = False
-    wind = p["wind"]
+    wind = p.wind
     for i in range(1, n):
         dx = xs[i] - xs[i - 1]
         dh = hs[i] - hs[i - 1]
@@ -178,12 +180,12 @@ def canonical(prof: dict[str, list[float]],
         sin = slope / sec
         Frr = Crr * m * G * cos
         Fgrav = m * G * sin
-        if slope >= pw["climbThr"]:
-            reg, P = 1, pw["climb"]
-        elif slope <= pw["descThr"]:
-            reg, P = -1, pw["descent"]
+        if slope >= pw.climbThr:
+            reg, P = 1, pw.climb
+        elif slope <= pw.descThr:
+            reg, P = -1, pw.descent
         else:
-            reg, P = 0, pw["flat"]
+            reg, P = 0, pw.flat
         regime[i] = reg
         remaining = dx * sec
         braked = 0
@@ -262,26 +264,26 @@ def canonical(prof: dict[str, list[float]],
     }
 
 
-def approximate(prof: dict,
-                p: dict[str, float],
+def approximate(prof: Profile,
+                p: SimParams,
                 vf: float,
                 eps: float,
-                opts=None):
+                opts: ApproxOptions | None = None) -> dict:
     """Closed form E = alpha*x + beta*(h+ - eps*h-) with the climb-aero
     correction modes 'off' | 'zero' | 'vc' (JS approximate). Also returns the
     per-edge clamped sum and the decomposition (roll+aero+climb+recov == E)."""
-    beta = p["m"] * G / p["keff"]
-    mg = p["m"] * G
-    w = p["wind"]
+    p = SimParams.of(p)
+    o = ApproxOptions.of(opts)
+    beta = p.m * G / p.keff
+    mg = p.m * G
+    w = p.wind
     aero_spd = vf + w
-    aRoll = mg * p["Crr"] / p["keff"]
-    aAero = 0.5 * p["rho"] * p["CdA"] * aero_spd * abs(aero_spd) / p["keff"]
-    mode = (opts or {}).get("climbAeroMode") or "off"
-    climbThr = opts["climbThr"] if opts and opts.get(
-        "climbThr") is not None else 0.02
-    Pc = (opts or {}).get("climbPower") or 0
-    dThr = opts["descThr"] if opts and opts.get(
-        "descThr") is not None else -0.015
+    aRoll = mg * p.Crr / p.keff
+    aAero = 0.5 * p.rho * p.CdA * aero_spd * abs(aero_spd) / p.keff
+    mode = o.climbAeroMode or "off"
+    climbThr = o.climbThr if o.climbThr is not None else 0.02
+    Pc = o.climbPower or 0
+    dThr = o.descThr if o.descThr is not None else -0.015
     xs, hs = prof["x"], prof["h"]
     X = hplus = hminus = aeroSum = clamped = 0.0
     # [descent, flat, climb] split of E (sums to E; canonical's thresholds)
@@ -299,10 +301,10 @@ def approximate(prof: dict,
                 sec = math.sqrt(1 + slope * slope)
                 sin = slope / sec
                 cos = 1 / sec
-                vc = min(vf, p["keff"] * Pc / (p["Crr"] * mg *
+                vc = min(vf, p.keff * Pc / (p.Crr * mg *
                          cos + mg * sin)) if Pc > 0 else 0.0
-                aeroDx = 0.5 * p["rho"] * p["CdA"] * \
-                    (vc + w) * abs(vc + w) / p["keff"]
+                aeroDx = 0.5 * p.rho * p.CdA * \
+                    (vc + w) * abs(vc + w) / p.keff
         segAero = aeroDx * dx
         aeroSum += segAero
         alphaSeg = aRoll * dx + segAero
@@ -328,19 +330,22 @@ def approximate(prof: dict,
     }
 
 
-def v2_edge(prof, p, vf, opts):
+def v2_edge(prof: Profile, p: SimParams, vf: float,
+            opts: V2Options | None = None) -> dict:
     """The closed form as DEPLOYED in Simujaules (JS v2Edge; journal Entries
     18-21): per-edge grade-local eps(s) = clamp01(min(1, (a/b)/s) - eps0),
     flat aero gated OFF climbs, k_s scaling beta only, dead max(0,.) kept
     verbatim with the pre-clamp minimum reported. opts: kSmooth, epsOffset,
     climbThr."""
-    mg = p["m"] * G
-    w = p["wind"]
-    beta = mg * opts["kSmooth"] / p["keff"]
-    aRoll = mg * p["Crr"] / p["keff"]
+    p = SimParams.of(p)
+    o = V2Options.of(opts)
+    mg = p.m * G
+    w = p.wind
+    beta = mg * o.kSmooth / p.keff
+    aRoll = mg * p.Crr / p.keff
     aero_spd = vf + w
-    aAero = 0.5 * p["rho"] * p["CdA"] * aero_spd * abs(aero_spd) / p["keff"]
-    abRatio = (aRoll + aAero) * p["keff"] / mg  # alpha/beta un-smoothed
+    aAero = 0.5 * p.rho * p.CdA * aero_spd * abs(aero_spd) / p.keff
+    abRatio = (aRoll + aAero) * p.keff / mg  # alpha/beta un-smoothed
     xs, hs = prof["x"], prof["h"]
     E = 0.0
     minPreClamp = _INF
@@ -351,14 +356,14 @@ def v2_edge(prof, p, vf, opts):
         if not dx > 0:
             continue
         if dh >= 0:
-            aero = aAero * dx if dh < opts["climbThr"] * dx else 0.0
+            aero = aAero * dx if dh < o.climbThr * dx else 0.0
             e = aRoll * dx + aero + beta * dh
         else:
             ndh = -dh
             eps = abRatio * dx / ndh
             if eps > 1:
                 eps = 1.0
-            eps -= opts["epsOffset"]
+            eps -= o.epsOffset
             if eps < 0:
                 eps = 0.0
             e = aRoll * dx + aAero * dx - eps * beta * ndh
@@ -375,13 +380,16 @@ def v2_edge(prof, p, vf, opts):
     }
 
 
-def approx_time(prof, p, vf, pw):
+def approx_time(prof: Profile, p: SimParams, vf: float,
+                pw: RegimePowers) -> dict:
     """Approximate TIME model t = sum ds/v(s) and the effective k+/k-
     multipliers (JS approxTime; research/notes/original_notes.md 'effective
     flat distance')."""
-    mg = p["m"] * G
-    w = p["wind"]
-    vmax = p["vmax"]
+    p = SimParams.of(p)
+    pw = RegimePowers.of(pw)
+    mg = p.m * G
+    w = p.wind
+    vmax = p.vmax
     xs, hs = prof["x"], prof["h"]
     t = X = hplus = hminus = tClimb = xClimb = hpC = tDesc = xDesc = hmD = 0.0
     for i in range(1, len(xs)):
@@ -397,18 +405,18 @@ def approx_time(prof, p, vf, pw):
             hplus += dh
         else:
             hminus += -dh
-        if slope >= pw["climbThr"]:  # climb: v_c capped at v_f
-            v = min(vf, p["keff"] * pw["climb"] / (p["Crr"] *
-                    mg * cos + mg * sin)) if pw["climb"] > 0 else 0.05
+        if slope >= pw.climbThr:  # climb: v_c capped at v_f
+            v = min(vf, p.keff * pw.climb / (p.Crr *
+                    mg * cos + mg * sin)) if pw.climb > 0 else 0.05
             tClimb += ds / v
             xClimb += dx
             hpC += dh
-        elif slope <= pw["descThr"]:  # descent: equilibrium, capped at v_max
+        elif slope <= pw.descThr:  # descent: equilibrium, capped at v_max
             lo, hi = 0.05, 45.0
             for _ in range(28):
                 vv = 0.5 * (lo + hi)
-                f = (0.5 * p["rho"] * p["CdA"] * (vv + w) * abs(vv + w)
-                     + p["Crr"] * mg * cos + mg * sin - p["keff"] * pw["descent"] / vv)
+                f = (0.5 * p.rho * p.CdA * (vv + w) * abs(vv + w)
+                     + p.Crr * mg * cos + mg * sin - p.keff * pw.descent / vv)
                 if f < 0:
                     lo = vv
                 else:
@@ -425,15 +433,16 @@ def approx_time(prof, p, vf, pw):
     return {"t": t, "X": X, "hplus": hplus, "hminus": hminus, "kPlus": kPlus, "kMinus": kMinus}
 
 
-def eps_geom(prof, p, vf):
+def eps_geom(prof: Profile, p: SimParams, vf: float) -> float:
     """Geometry-only closed-form eps (JS epsGeom; journal Entry 8): coasting
     limit eps(s) = min(1, (a/b)/s), drop-weighted over 30 m descent cells,
     minus the coasting deficit EPS0. Uses the MODEL v_f — needs no power."""
-    mg = p["m"] * G
-    beta = mg / p["keff"]
-    aero_spd = vf + p["wind"]
-    alpha = (p["Crr"] * mg + 0.5 * p["rho"] * p["CdA"]
-             * aero_spd * abs(aero_spd)) / p["keff"]
+    p = SimParams.of(p)
+    mg = p.m * G
+    beta = mg / p.keff
+    aero_spd = vf + p.wind
+    alpha = (p.Crr * mg + 0.5 * p.rho * p.CdA
+             * aero_spd * abs(aero_spd)) / p.keff
     ab = alpha / beta
     px, ph = prof["x"], prof["h"]
     x0 = px[0]
@@ -444,7 +453,7 @@ def eps_geom(prof, p, vf):
         return float("nan")
     j = 0
 
-    def h_at(d):
+    def h_at(d: float) -> float:
         nonlocal j
         while j < len(px) - 2 and px[j + 1] < d:
             j += 1
@@ -465,16 +474,18 @@ def eps_geom(prof, p, vf):
     return max(0.0, min(1.0, epsW / Hd - EPS0))
 
 
-def approx_components(prof, p, vf, climb_thr=0.02):
+def approx_components(prof: Profile, p: SimParams, vf: float,
+                      climb_thr: float = 0.02) -> dict:
     """approximate with cf (climbAeroMode='zero'): returns the closed form's
     components so ε can vary analytically. (Shared by the *_compare harnesses;
     the historical signature carried an unused `pw` — dropped.)"""
-    beta = p["m"] * G / p["keff"]
-    mg = p["m"] * G
-    w = p["wind"]
+    p = SimParams.of(p)
+    beta = p.m * G / p.keff
+    mg = p.m * G
+    w = p.wind
     aero_spd = vf + w
-    a_roll = mg * p["Crr"] / p["keff"]
-    a_aero = 0.5 * p["rho"] * p["CdA"] * aero_spd * abs(aero_spd) / p["keff"]
+    a_roll = mg * p.Crr / p.keff
+    a_aero = 0.5 * p.rho * p.CdA * aero_spd * abs(aero_spd) / p.keff
     xs, hs = prof["x"], prof["h"]
     X = hplus = hminus = aero_sum = 0.0
     for i in range(1, len(xs)):

@@ -4,11 +4,16 @@ Ports of the app's haversine/buildProfile (physics part — the canvas
 downsampling is UI-only and not ported) and compare.mjs's ptsFromGPX.
 """
 
+from __future__ import annotations
+
 import math
+from typing import Mapping, Sequence
+
+from .types import Points
 import re
 
 
-def haversine(a, b):
+def haversine(a: Mapping[str, float], b: Mapping[str, float]) -> float:
     R = 6371000
     to_r = math.pi / 180
     d_lat = (b["lat"] - a["lat"]) * to_r
@@ -18,7 +23,8 @@ def haversine(a, b):
     return 2 * R * math.asin(min(1.0, math.sqrt(s)))
 
 
-def build_profile(dist_arr, ele_arr):
+def build_profile(dist_arr: Sequence[float],
+                  ele_arr: Sequence[float | None]) -> dict:
     """Cumulative distance + raw elevation (NaN/None allowed) -> NATIVE-
     resolution physics profile {x, h} plus info (JS buildProfile, minus the
     canvas H[240] downsampling). Near-duplicate points (delta < 0.5 m) are
@@ -45,7 +51,7 @@ def build_profile(dist_arr, ele_arr):
     if n < 2 or not total > 0:
         raise ValueError("distância nula")
 
-    def finite(e):
+    def finite(e: object) -> bool:
         return e is not None and isinstance(e, (int, float)) and math.isfinite(e)
 
     first = next((i for i, e in enumerate(E) if finite(e)), -1)
@@ -75,7 +81,7 @@ _TIME = re.compile(r'<time>\s*([^<]+)')
 _POWER = re.compile(r'<(?:\w+:)?power>\s*([\d.]+)')
 
 
-def pts_from_gpx(text):
+def pts_from_gpx(text: str) -> Points:
     """GPX text -> point list (compare.mjs ptsFromGPX: regex, attr order-
     agnostic). Cumulative x by haversine; alt may be NaN (filled later by
     build_profile). Times parsed as epoch seconds when ISO-8601."""

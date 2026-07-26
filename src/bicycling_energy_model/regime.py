@@ -3,14 +3,17 @@ ports of the app's extractRegimePowers/epsFromFIT and compare.mjs's
 measuredFlatSpeed/epsFromBalance.
 """
 
+from __future__ import annotations
+
 import math
 
 from .engines import G
+from .types import Points, SimParams
 
 _VSTOP = 0.5 / 3.6  # samples below 0.5 km/h are stopped — gated out
 
 
-def extract_regime_powers(pts, climb_thr, desc_thr):
+def extract_regime_powers(pts: Points, climb_thr: float, desc_thr: float) -> dict[str, dict]:
     """TIME-WEIGHTED power statistics per regime (JS extractRegimePowers).
 
     Each sample is binned by its grade over a 30 m distance WINDOW (0.2 m
@@ -40,7 +43,7 @@ def extract_regime_powers(pts, climb_thr, desc_thr):
         r = 2 if grade >= climb_thr else 0 if grade <= desc_thr else 1
         bins[r].append((pts[i]["power"], pts[i].get("dt") or 1))
 
-    def stat(b):
+    def stat(b: list) -> dict:
         if not b:
             return {"mean": None, "meanNZ": None, "median": None, "time": 0, "n": 0}
         sw = swp = sw_nz = swp_nz = 0.0
@@ -65,7 +68,7 @@ def extract_regime_powers(pts, climb_thr, desc_thr):
     return {"descent": stat(bins[0]), "flat": stat(bins[1]), "climb": stat(bins[2])}
 
 
-def _cell_alt(pts, x0, DX, nc):
+def _cell_alt(pts: Points, x0: float, DX: float, nc: int) -> list[float]:
     """30 m cell-boundary altitudes by linear interpolation (shared helper)."""
     j = 0
     px = pts
@@ -80,7 +83,7 @@ def _cell_alt(pts, x0, DX, nc):
     return out
 
 
-def measured_flat_speed(pts):
+def measured_flat_speed(pts: Points) -> float | None:
     """MEASURED flat ground speed (m/s): time-weighted mean MOVING speed on
     near-flat 30 m cells, |grade| < 1% (compare.mjs measuredFlatSpeed)."""
     DX = 30
@@ -109,15 +112,16 @@ def measured_flat_speed(pts):
     return SV / SW if SW > 0 else None
 
 
-def eps_from_balance(pts, p):
+def eps_from_balance(pts: Points, p: SimParams) -> float:
     """Descent-energy-balance eps (compare.mjs epsFromBalance; the app's
     epsFromFIT): eps = (alpha*X- − E_legs,-)/(beta*H-) over 30 m cells, alpha
     at the MEASURED flat speed (deliberately NOT flatEqSpeed — a parameter
     mismatch would inflate alpha and lie about eps). NaN when H- < 1 m."""
     if not pts or len(pts) < 2:
         return float("nan")
-    mg = p["m"] * G
-    beta = mg / p["keff"]
+    p = SimParams.of(p)
+    mg = p.m * G
+    beta = mg / p.keff
     x0 = pts[0]["x"]
     total_m = pts[-1]["x"] - x0
     DX = 30
@@ -145,8 +149,8 @@ def eps_from_balance(pts, p):
             sv += cellVs[k]
             sw += cellVt[k]
     vf = sv / sw if sw > 0 else 5.0
-    aero_spd = vf + p["wind"]
-    alpha = (p["Crr"] * mg + 0.5 * p["rho"] * p["CdA"] * aero_spd * abs(aero_spd)) / p["keff"]
+    aero_spd = vf + p.wind
+    alpha = (p.Crr * mg + 0.5 * p.rho * p.CdA * aero_spd * abs(aero_spd)) / p.keff
     Xd = Hd = Ed = 0.0
     for k in range(nc):
         dh = cell_alt[k + 1] - cell_alt[k]
@@ -157,7 +161,7 @@ def eps_from_balance(pts, p):
     return float("nan") if Hd < 1 else (alpha * Xd - Ed) / (beta * Hd)
 
 
-def push_stats(pts):
+def push_stats(pts: Points) -> dict[str, float]:
     """Walking/pushing detector. The clean test is CADENCE (Danilo): pedalling
     ⇔ cadence > 0, so "moving but cadence 0" is not pedalling (coasting or on
     foot); pair it with a walking pace (< 4 km/h — you CAN granny-gear below
@@ -186,13 +190,15 @@ def push_stats(pts):
             "cadCov": cad_known / moving if moving else 0}
 
 
-def climb_balance(pts, p, CLIMB_PCT=0.03, MINLEN=100):
+def climb_balance(pts: Points, p: SimParams,
+                  CLIMB_PCT: float = 0.03, MINLEN: float = 100) -> dict:
     """Sustained-climb energy balance (Danilo's method for fitting k_h cleanly):
     on sections climbing >= CLIMB_PCT over >= MINLEN m, compare the MEASURED
     sum P·dt to the EXPECTED gravity + rolling + aero. (Journal Entry 7; also
     the implied-mass inversion machinery of Entries 12/14/16.)"""
-    mg = p["m"] * G
-    w = p["wind"]
+    p = SimParams.of(p)
+    mg = p.m * G
+    w = p.wind
     out = {"emeas": 0.0, "egrav": 0.0, "eroll": 0.0, "eaero": 0.0,
            "dh": 0.0, "L": 0.0, "n": 0, "totalAsc": 0.0}
     n = len(pts)
@@ -231,9 +237,9 @@ def climb_balance(pts, p, CLIMB_PCT=0.03, MINLEN=100):
         slope = dh / L
         cos = 1 / math.sqrt(1 + slope * slope)
         out["emeas"] += emeas / 1000
-        out["egrav"] += mg * dh / p["keff"] / 1000
-        out["eroll"] += p["Crr"] * mg * cos * L / p["keff"] / 1000
-        out["eaero"] += 0.5 * p["rho"] * p["CdA"] * (v + w) * abs(v + w) * L / p["keff"] / 1000
+        out["egrav"] += mg * dh / p.keff / 1000
+        out["eroll"] += p.Crr * mg * cos * L / p.keff / 1000
+        out["eaero"] += 0.5 * p.rho * p.CdA * (v + w) * abs(v + w) * L / p.keff / 1000
         out["dh"] += dh
         out["L"] += L
         out["n"] += 1

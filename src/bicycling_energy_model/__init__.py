@@ -11,10 +11,10 @@ relative) was retired after proving it; git history keeps it.
 Stdlib-only by design: no numpy, no dependencies — reviewable line by line.
 """
 
+from .types import (EPS0, TRIO_DX5, ApproxOptions, Point, Points, Profile,
+                    RegimePowers, SimParams, V2Options)
 from .engines import (
-    EPS0,
     G,
-    TRIO_DX5,
     approx_components,
     flat_eq_speed,
     resample_profile,
@@ -43,4 +43,6 @@ __all__ = [
     "analyze_ride", "load_pts",
     "approx_components", "climb_balance", "push_stats", "is_finite", "jsdiv",
     "env_suffix", "EPS0", "TRIO_DX5",
+    "SimParams", "RegimePowers", "V2Options", "ApproxOptions",
+    "Profile", "Point", "Points",
 ]

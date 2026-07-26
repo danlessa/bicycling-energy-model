@@ -21,14 +21,17 @@ Two kinds of cells:
 import json, math, os, sys
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath("__file__")), "..", "..", "src"))
 sys.path.insert(0, os.path.join("..", "..", "src")); sys.path.insert(0, "src")
+from dataclasses import replace
+
 from bicycling_energy_model import (canonical, approximate, v2_edge, approx_time, flat_eq_speed,
                                     eps_geom, deadband, ascent_hyst, resample_profile, smooth_elevation,
-                                    analyze_ride, load_pts)
+                                    analyze_ride, load_pts,
+                                    SimParams, RegimePowers, ApproxOptions, V2Options)
 from bicycling_energy_model.ride import d_pct, median, CLIMB_THR, DESC_THR
 
 from bicycling_energy_model.engines import EPS0, G, TRIO_DX5
-P = dict(m=75, Crr=0.008, CdA=0.4, rho=1.1, keff=0.97, vmax=38/3.6, vstart=15/3.6, wind=0)
-PW = dict(climb=150, flat=90, descent=10, climbThr=CLIMB_THR, descThr=DESC_THR)
+P = SimParams(m=75, Crr=0.008, CdA=0.4, rho=1.1, keff=0.97, vmax=38/3.6, vstart=15/3.6, wind=0)
+PW = RegimePowers(climb=150, flat=90, descent=10, climbThr=CLIMB_THR, descThr=DESC_THR)
 
 ACT = os.path.join(os.path.dirname(os.path.abspath("__file__")), "..", "..", "data", "inputs", "activities")
 if not os.path.isdir(ACT):
@@ -52,14 +55,14 @@ Per ride: **empirical** `∫P·dt` (ground truth), **canonical** `canonical().le
 
 ```{python}
 prof = synth("rolling")
-vf = flat_eq_speed(PW["flat"], P)
+vf = flat_eq_speed(PW.flat, P)
 c = canonical(prof, PW, P)
 a = approximate(prof, P, vf, 0.20, dict(climbAeroMode="off", climbThr=CLIMB_THR))
 print(f"canonical {c['legE']/1e3:7.1f} kJ   approximate {a['E']/1e3:7.1f} kJ   "
       f"(auto v_f = {vf*3.6:.1f} km/h)")
 # conservation identity — the invariant the harness asserts on every ride
-resid = abs(P['keff']*c['legE'] - (c['dKE']+c['Wrr']+c['Waero']+c['Wgrav']+c['Wbrake']))
-print(f"conservation residual {resid/(P['keff']*c['legE']):.2e}  (must be ≤ 1e-6)")
+resid = abs(P.keff*c['legE'] - (c['dKE']+c['Wrr']+c['Waero']+c['Wgrav']+c['Wbrake']))
+print(f"conservation residual {resid/(P.keff*c['legE']):.2e}  (must be ≤ 1e-6)")
 ```
 
 # Entry 2 — baseline: canonical 5.2 %, approximate `off` 19.1 %
@@ -96,12 +99,12 @@ Real climbing speed ≪ v_f, so the aero term over-charges climbs; the `cf` vari
 flatp = synth("flat")
 cflat = canonical(flatp, PW, P)
 for mode in ("off", "zero", "vc"):
-    af = approximate(flatp, P, vf, 0.20, dict(climbAeroMode=mode, climbThr=CLIMB_THR, climbPower=PW["climb"]))
+    af = approximate(flatp, P, vf, 0.20, ApproxOptions(climbAeroMode=mode, climbThr=CLIMB_THR, climbPower=PW.climb))
     print(f"flat: mode={mode:4s}  approx {af['E']/1e3:6.1f} kJ  vs canonical {cflat['legE']/1e3:6.1f} kJ")
 climb = synth("climb")
 cc = canonical(climb, PW, P)
 for mode in ("off", "zero", "vc"):
-    ac = approximate(climb, P, vf, 0.20, dict(climbAeroMode=mode, climbThr=CLIMB_THR, climbPower=PW["climb"]))
+    ac = approximate(climb, P, vf, 0.20, ApproxOptions(climbAeroMode=mode, climbThr=CLIMB_THR, climbPower=PW.climb))
     print(f"5% climb: mode={mode:4s}  Δ vs canonical {d_pct(ac['E'], cc['legE']):+6.1f}%")
 ```
 
@@ -154,7 +157,7 @@ Signed-drag fix, compressed-timestamp FIT recovery, gated flat-speed — all eng
 ```{python}
 at = approx_time(synth("rolling"), P, vf, PW)
 print(f"rolling: t = {at['t']/60:.1f} min   k₊ = {at['kPlus']:.1f}   k₋ = {at['kMinus']:.2f}")
-print(f"clean-k₊ check: v_f·β/P_climb = {vf * (P['m']*G/P['keff']) / PW['climb']:.1f}")
+print(f"clean-k₊ check: v_f·β/P_climb = {vf * (P.m*G/P.keff) / PW.climb:.1f}")
 ```
 
 # Entries 15–16 — fitted rider physics are *effective* values
@@ -175,12 +178,12 @@ for m in (55, 75, 100):
     for crr in (0.004, 0.008, 0.014):
         for cda in (0.25, 0.40, 0.55):
             for pflat in (60, 90, 150):
-                p2 = dict(P, m=m, Crr=crr, CdA=cda)
+                p2 = replace(P, m=m, Crr=crr, CdA=cda)
                 v = flat_eq_speed(pflat, p2)
                 for grade in (0.005, 0.01, 0.02, 0.04, 0.08, 0.15):
                     n = 41
                     pr = {"x": [i*5.0 for i in range(n)], "h": [grade*5*(n-1-i) for i in range(n)]}
-                    r = v2_edge(pr, p2, v, dict(kSmooth=1.0, epsOffset=EPS0, climbThr=CLIMB_THR))
+                    r = v2_edge(pr, p2, v, V2Options(kSmooth=1.0, epsOffset=EPS0, climbThr=CLIMB_THR))
                     if r["minPreClamp"] < min_pre: min_pre = r["minPreClamp"]
 print(f"min pre-clamp descent edge across the sweep: {min_pre:+.4f} J  (> 0 ⇒ clamp never fires)")
 assert min_pre > 0
@@ -195,7 +198,7 @@ rough = synth("rolling")
 rough = {"x": rough["x"], "h": [h + 0.9*math.sin(i*7.7) for i, h in enumerate(rough["h"])]}
 for dx in (5, 30):
     pr = resample_profile(rough, dx)
-    r = v2_edge(pr, P, vf, dict(kSmooth=1.0, epsOffset=EPS0, climbThr=CLIMB_THR))
+    r = v2_edge(pr, P, vf, V2Options(kSmooth=1.0, epsOffset=EPS0, climbThr=CLIMB_THR))
     print(f"dx={dx:2d} m:  v2Edge {r['E']/1e3:6.1f} kJ   implied drop-weighted ε {r['epsImplied']:.3f}   h₋ {r['hminus']:.0f} m")
 print("finer sampling ⇒ lower implied ε ⇒ more energy — Entry 19's over-charge mechanism")
 ```
@@ -210,10 +213,10 @@ Re-fitted purely as a 5 m→30 m resolution transfer: k_s 0.9375, ε₀ 0.0632, 
 
 ```{python}
 pr5 = resample_profile(rough, 5)
-base = v2_edge(pr5, P, vf, dict(kSmooth=1.0, epsOffset=EPS0, climbThr=CLIMB_THR))
+base = v2_edge(pr5, P, vf, V2Options(kSmooth=1.0, epsOffset=EPS0, climbThr=CLIMB_THR))
 trio = v2_edge(pr5, P, vf, TRIO_DX5)   # Entry 21's (k_s, eps0, climbThr), from the package
 pr30 = resample_profile(rough, 30)
-tgt  = v2_edge(pr30, P, vf, dict(kSmooth=1.0, epsOffset=EPS0, climbThr=CLIMB_THR))
+tgt  = v2_edge(pr30, P, vf, V2Options(kSmooth=1.0, epsOffset=EPS0, climbThr=CLIMB_THR))
 print(f"v2@5m default {base['E']/1e3:6.1f} kJ   v2@5m+trio {trio['E']/1e3:6.1f} kJ   v2@30m target {tgt['E']/1e3:6.1f} kJ")
 ```
 

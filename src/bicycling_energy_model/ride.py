@@ -6,14 +6,21 @@ deadband tau = 2 m for the smoothed variants, auto v_f = flatEqSpeed(P_flat),
 vmax 38 km/h, vstart 15 km/h.
 """
 
+from __future__ import annotations
+
 import gzip
 import hashlib
 import math
 import os
 import pickle
+from dataclasses import asdict
+from typing import Iterable, Mapping
 
-from .engines import (EPS0, G, approximate, canonical, deadband, flat_eq_speed,
+from .engines import (approximate, canonical, deadband, flat_eq_speed,
                       resample_profile, v2_edge)
+from .types import (EPS0, ApproxOptions, Points, RegimePowers, SimParams,
+                    V2Options)
+from .engines import G
 from .fit import empirical_kj, overall_mean_power, pts_from_fit
 from .profiles import build_profile, pts_from_gpx
 from .regime import eps_from_balance, extract_regime_powers
@@ -30,7 +37,7 @@ _CACHE_SCHEMA = 1
 _CACHE_DIR = None
 
 
-def _cache_dir():
+def _cache_dir() -> str:
     global _CACHE_DIR
     if _CACHE_DIR is None:
         # this file: src/bicycling_energy_model/ride.py -> repo root is two
@@ -42,7 +49,7 @@ def _cache_dir():
     return _CACHE_DIR
 
 
-def load_pts(path, meta=None):
+def load_pts(path: str | os.PathLike, meta: dict | None = None) -> Points:
     """Track file (.fit, .fit.gz, .gpx or .gpx.gz) -> point list, cached on
     disk keyed by (path, size, mtime, schema) so repeat runs — and the
     `<RIDER>_M`/`_CDA`/`_CRR` sensitivity sweeps, which re-read every ride in
@@ -82,7 +89,8 @@ def load_pts(path, meta=None):
     return pts
 
 
-def analyze_ride(pts, params, eps=0.20, v2_opts=None):
+def analyze_ride(pts: Points, params: Mapping[str, float], eps: float = 0.20,
+                 v2_opts: V2Options | None = None) -> dict:
     """One ride through the whole workflow. `params`: m, crr, cda, rho, keff,
     wind_kmh (sheet units, as model_inputs.json). Returns the three energies
     (kJ) plus the smoothed variants, the fitted/balance eps, and geometry —
@@ -93,32 +101,32 @@ def analyze_ride(pts, params, eps=0.20, v2_opts=None):
     prof = resample_profile(phys, ENGINE_DX)
     rp = extract_regime_powers(pts, CLIMB_THR, DESC_THR)
     flat = rp["flat"]["mean"] if rp["flat"]["mean"] is not None else overall_mean_power(pts)
-    pw = {
-        "climb": rp["climb"]["mean"] if rp["climb"]["mean"] is not None else 0,
-        "flat": flat,
-        "descent": rp["descent"]["mean"] if rp["descent"]["mean"] is not None else 0,
-        "climbThr": CLIMB_THR, "descThr": DESC_THR,
-    }
-    p = {"m": params["m"], "Crr": params["crr"], "CdA": params["cda"],
-         "rho": params["rho"], "keff": params["keff"],
-         "vmax": VMAX, "vstart": VSTART, "wind": (params.get("wind_kmh") or 0) / 3.6}
-    vf = flat_eq_speed(pw["flat"], p)
-    opt = lambda mode: {"climbAeroMode": mode, "climbThr": CLIMB_THR,
-                        "descThr": DESC_THR, "climbPower": pw["climb"]}
+    pw = RegimePowers(
+        climb=rp["climb"]["mean"] if rp["climb"]["mean"] is not None else 0,
+        flat=flat,
+        descent=rp["descent"]["mean"] if rp["descent"]["mean"] is not None else 0,
+        climbThr=CLIMB_THR, descThr=DESC_THR,
+    )
+    p = SimParams(m=params["m"], Crr=params["crr"], CdA=params["cda"],
+                  rho=params["rho"], keff=params["keff"],
+                  vmax=VMAX, vstart=VSTART, wind=(params.get("wind_kmh") or 0) / 3.6)
+    vf = flat_eq_speed(pw.flat, p)
+    opt = lambda mode: ApproxOptions(climbAeroMode=mode, climbThr=CLIMB_THR,
+                                     descThr=DESC_THR, climbPower=pw.climb)
     a_off = approximate(prof, p, vf, eps, opt("off"))
     a_cf = approximate(prof, p, vf, eps, opt("zero"))
     c = canonical(prof, pw, p)
-    resid = abs(p["keff"] * c["legE"]
+    resid = abs(p.keff * c["legE"]
                 - (c["dKE"] + c["Wrr"] + c["Waero"] + c["Wgrav"] + c["Wbrake"]))
-    resid /= max(1.0, p["keff"] * c["legE"])
+    resid /= max(1.0, p.keff * c["legE"])
     assert resid <= 1e-6, f"conservation violated: rel resid {resid:.2e}"
     prof_s = {"x": prof["x"], "h": deadband(prof["h"], TAU_SMOOTH)}
     a_cf_s = approximate(prof_s, p, vf, eps, opt("zero"))
     c_s = canonical(prof_s, pw, p)
     v2 = v2_edge(prof, p, vf, v2_opts or
-                 {"kSmooth": 1.0, "epsOffset": EPS0, "climbThr": CLIMB_THR})
+                 V2Options(kSmooth=1.0, epsOffset=EPS0, climbThr=CLIMB_THR))
     emp = empirical_kj(pts)
-    beta = p["m"] * G / p["keff"]
+    beta = p.m * G / p.keff
     b_hm = beta * a_cf_s["hminus"]
     eps_fit = ((a_cf_s["roll"] + a_cf_s["aero"] + a_cf_s["climb"] - emp * 1000) / b_hm
                if b_hm > 1e-6 else float("nan"))
@@ -132,17 +140,17 @@ def analyze_ride(pts, params, eps=0.20, v2_opts=None):
         "x_km": prof["x"][-1] / 1000,
         "hplus_raw": a_off["hplus"], "hplus_smooth": a_cf_s["hplus"],
         "hminus_raw": a_off["hminus"],
-        "vf_ms": vf, "pw": pw, "cons_resid": resid,
+        "vf_ms": vf, "pw": asdict(pw), "cons_resid": resid,
         "time_s": c["t"], "stalled": c["stalled"],
     }
 
 
-def d_pct(model_kj, emp_kj):
+def d_pct(model_kj: float, emp_kj: float) -> float:
     """Signed percent deviation vs the empirical energy."""
     return (model_kj - emp_kj) / emp_kj * 100 if emp_kj else float("nan")
 
 
-def median(values):
+def median(values: Iterable[float]) -> float:
     v = sorted(x for x in values if isinstance(x, (int, float)) and math.isfinite(x))
     if not v:
         return float("nan")

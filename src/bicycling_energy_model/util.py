@@ -1,10 +1,12 @@
 """Small shared helpers the harnesses used to carry as per-file copies."""
 
+from __future__ import annotations
+
 import math
 import os
 
 
-def is_finite(x):
+def is_finite(x: object) -> bool:
     """None-tolerant finiteness check (the JS `Number.isFinite` idiom the
     harnesses inherited: None/NaN/±inf are all 'not a usable number').
     Excludes bools — `isinstance(True, int)` is True in Python, and the JS
@@ -13,7 +15,7 @@ def is_finite(x):
             and not isinstance(x, bool) and math.isfinite(x))
 
 
-def jsdiv(a, b):
+def jsdiv(a: float, b: float) -> float:
     """a / b with ECMAScript division semantics: x/0 -> ±Infinity, 0/0 -> NaN
     (Python raises ZeroDivisionError instead).
 
@@ -31,7 +33,7 @@ def jsdiv(a, b):
     return float("-inf") if neg else float("inf")
 
 
-def env_suffix(*names):
+def env_suffix(*names: str) -> str:
     """Build a filename suffix from whichever of `names` are set in the
     environment, e.g. env_suffix('PPAZ_M', 'PPAZ_CDA') with PPAZ_M=78 set
     returns '.PPAZ_M78'; '' if none are set. A `<RIDER>_M`/`_CDA`/`_CRR`

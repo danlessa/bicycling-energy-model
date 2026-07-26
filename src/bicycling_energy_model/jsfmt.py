@@ -18,11 +18,13 @@ under, and silently switching rounding rules could flip a printed digit:
   (1.77e-8, not 1.77e-08).
 """
 
+from __future__ import annotations
+
 import math
 from decimal import ROUND_HALF_UP, Decimal
 
 
-def to_fixed(x, d=0):
+def to_fixed(x: float, d: int = 0) -> str:
     if x != x:
         return "NaN"
     if math.isinf(x):
@@ -35,7 +37,7 @@ def to_fixed(x, d=0):
     return f"{q:f}"
 
 
-def js_str(x):
+def js_str(x: float) -> str:
     """ECMA-262 Number::toString(10) on top of repr()'s shortest digits."""
     if isinstance(x, int):
         return str(x)
@@ -64,7 +66,7 @@ def js_str(x):
     return sign + body
 
 
-def to_exponential(x, d):
+def to_exponential(x: float, d: int) -> str:
     if x != x:
         return "NaN"
     if math.isinf(x):
