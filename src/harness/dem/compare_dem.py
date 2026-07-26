@@ -11,6 +11,8 @@ maps a source-derived h+/h- back to the recorded (road) value.
 Usage: python3 compare_dem.py <coords_dir> <tiles_dir> [igc.tif]
   tiles_dir/{fabdem,cop30,srtm}/<TILE>.{tif,tif,hgt}
 """
+
+from __future__ import annotations
 import sys, os, csv, math, subprocess, statistics
 
 COORDS, TILES = sys.argv[1], sys.argv[2]
@@ -19,15 +21,16 @@ IGC_BBOX = (-47.457, -24.126, -45.609, -23.058)   # WGS84 lon_min, lat_min, lon_
 DEMS = {"fabdem": ("fabdem", "tif"), "srtm": ("srtm", "hgt"), "cop30": ("cop30", "tif")}
 K_H_BARO = 0.74   # model (energy-effective) k_h on the baro, calibrated in journal Entry 5
 
-def tile(lat, lon):
+def tile(lat: float, lon: float) -> str:
     la, lo = math.floor(lat), math.floor(lon)
     return ("S" if la < 0 else "N") + f"{abs(la):02d}" + ("W" if lo < 0 else "E") + f"{abs(lo):03d}"
 
-def have_tile(dem, t):
+def have_tile(dem: str, t: str) -> bool:
     sub, ext = DEMS[dem]
     return os.path.exists(os.path.join(TILES, sub, f"{t}.{ext}"))
 
-def query(raster, lonlat, interp):
+def query(raster: str, lonlat: list[tuple[float, float]],
+          interp: bool | str) -> list[float | None]:
     """Batch-sample a raster at [(lon,lat),...] (WGS84) -> [elev or None]."""
     inp = "".join(f"{lon} {lat}\n" for lon, lat in lonlat)
     r = subprocess.run(["gdallocationinfo", "-valonly", "-wgs84", "-r", interp, raster],
@@ -44,11 +47,12 @@ def query(raster, lonlat, interp):
     while len(out) < len(lonlat): out.append(None)
     return out[:len(lonlat)]
 
-def sample(dem, t, lonlat, interp="near"):
+def sample(dem: str, t: str, lonlat: list[tuple[float, float]],
+           interp: bool | str = "near") -> list[float | None]:
     sub, ext = DEMS[dem]
     return query(os.path.join(TILES, sub, f"{t}.{ext}"), lonlat, interp)
 
-def ascent(h, tau):
+def ascent(h: list[float | None], tau: float) -> float:
     vals = [x for x in h if x is not None]
     if len(vals) < 2: return 0.0
     if tau <= 0:
@@ -60,14 +64,14 @@ def ascent(h, tau):
         elif d <= -tau: ref = x
     return gain
 
-def descent(h, tau):
+def descent(h: list[float | None], tau: float) -> float:
     return ascent([-x for x in h if x is not None], tau)
 
-def stats(diffs):
+def stats(diffs: list[float]) -> tuple[float, float]:
     bias = statistics.mean(diffs)
     return bias, math.sqrt(statistics.mean((x - bias) ** 2 for x in diffs))
 
-def main():
+def main() -> None:
     ids = sorted(f[:-4] for f in os.listdir(COORDS) if f.endswith(".csv") and not f.startswith("_"))
     rides = []
     for rid in ids:

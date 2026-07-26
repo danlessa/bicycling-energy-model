@@ -57,6 +57,8 @@ Deviation from the house stdlib-only rule: numpy (matching is O(points × spans)
 /Users/danlessa/conda/bin/python).  Import-safe: the driver lives in main().
 """
 
+from __future__ import annotations
+
 import gzip
 import hashlib
 import json
@@ -120,16 +122,16 @@ class GateError(Exception):
     """A pre-registered sanity gate failed — abort the run."""
 
 
-def note(c, k):
+def note(c: str, k: str) -> None:
     excl.setdefault(c, {})[k] = excl.get(c, {}).get(k, 0) + 1
 
 
-def tally(k):
+def tally(k: str) -> None:
     drop[k] = drop.get(k, 0) + 1
 
 
 # ===== raster prep (DEM30 only — FABDEM is not part of Q2A) =====
-def ensure_dem30():
+def ensure_dem30() -> None:
     os.makedirs(IGC.SCRATCH, exist_ok=True)
     if not os.path.exists(DEM30):
         print("creating 30 m warp…", file=sys.stderr)
@@ -142,7 +144,7 @@ def ensure_dem30():
 _last_req = [0.0]
 
 
-def _overpass(query):
+def _overpass(query: str) -> dict:
     for attempt in range(6):
         if attempt:
             time.sleep([5, 15, 30, 60, 120][attempt - 1])
@@ -171,7 +173,7 @@ def _overpass(query):
     raise RuntimeError("Overpass failed after retries — aborting (spans would be missing)")
 
 
-def _parse_tile(js):
+def _parse_tile(js: dict) -> dict:
     ids = []
     for el in js.get("elements", []):
         if el.get("type") != "way" or len(el.get("geometry") or []) < 2:
@@ -195,7 +197,7 @@ def _parse_tile(js):
     return ids
 
 
-def tile_ways(ti, tj):
+def tile_ways(ti: int, tj: int) -> dict:
     s, w = ti * TILE_DEG, tj * TILE_DEG
     n, e = s + TILE_DEG, w + TILE_DEG
     key = f"{s:.4f},{w:.4f},{n:.4f},{e:.4f}"
@@ -226,7 +228,8 @@ def tile_ways(ti, tj):
     return TILES[key]
 
 
-def ways_for_bbox(lat_min, lat_max, lon_min, lon_max):
+def ways_for_bbox(lat_min: float, lat_max: float, lon_min: float,
+                  lon_max: float) -> list[dict]:
     ids = set()
     ti0 = math.floor((lat_min - TILE_MARGIN) / TILE_DEG)
     ti1 = math.floor((lat_max + TILE_MARGIN) / TILE_DEG)
@@ -246,7 +249,7 @@ def ways_for_bbox(lat_min, lat_max, lon_min, lon_max):
 
 
 # ===== geometry: matching on the 5 m grid =====
-def track_headings(px, py):
+def track_headings(px: list[float], py: list[float]) -> list[float]:
     """Local heading (deg, mod 180) from the centered neighbour difference."""
     n = len(px)
     ip = np.minimum(np.arange(n) + 1, n - 1)
@@ -259,7 +262,8 @@ def track_headings(px, py):
     return hd
 
 
-def match_way_mask(px, py, hd, wx, wy):
+def match_way_mask(px: list[float], py: list[float], hd: list[float],
+                   wx: list[float], wy: list[float]) -> list[bool] | None:
     """Boolean per-grid-point: within 25 m of the span polyline AND heading within 30°."""
     n = len(px)
     pad = MATCH_DIST_M + 5.0
@@ -294,7 +298,7 @@ def match_way_mask(px, py, hd, wx, wy):
     return mask
 
 
-def runs_from_mask(mask, max_gap):
+def runs_from_mask(mask: list[bool], max_gap: int) -> list[tuple[int, int]]:
     """Maximal runs of consecutive True, bridging gaps ≤ max_gap points."""
     idxs = np.nonzero(mask)[0]
     runs = []
@@ -306,7 +310,8 @@ def runs_from_mask(mask, max_gap):
     return runs
 
 
-def project_point(px, py, xs, i0, i1, qx, qy):
+def project_point(px: list[float], py: list[float], xs: list[float], i0: int,
+                  i1: int, qx: float, qy: float) -> tuple[float, float]:
     """Min-distance projection of (qx,qy) onto track segments [i0, i1); returns
     (distance m, along-track x)."""
     ax, ay = px[i0:i1], py[i0:i1]
@@ -321,7 +326,8 @@ def project_point(px, py, xs, i0, i1, qx, qy):
     return math.sqrt(float(d2[j])), float(xa + t[j] * (xb - xa))
 
 
-def match_crossings(d5, lons, lats, ways):
+def match_crossings(d5: dict, lons: list[float], lats: list[float],
+                    ways: list[dict]) -> list[dict]:
     """All accepted (span, run) crossings on the 5 m grid.  Returns a list of dicts with
     the along-track interval and the LO/HI abutment lon/lat (heights sampled later)."""
     lat0, lon0 = lats[0], lons[0]
@@ -389,7 +395,7 @@ def match_crossings(d5, lons, lats, ways):
 
 
 # ===== the deck correction =====
-def apply_deck(prof, intervals):
+def apply_deck(prof: dict, intervals: list[dict]) -> dict:
     """Return the portal-corrected profile: same x array (gate 2), heights replaced by the
     straight deck inside each interval.  intervals: (xlo, xhi, hlo, hhi), pre-sorted or not.
     Runs for EVERY ride (empty list ⇒ verbatim copy) so the no-op gate exercises the same
@@ -420,7 +426,7 @@ def apply_deck(prof, intervals):
     return out
 
 
-def hplus_of(prof):
+def hplus_of(prof: dict) -> float:
     xs, hs = prof["x"], prof["h"]
     s = 0.0
     for i in range(1, len(xs)):
@@ -429,7 +435,7 @@ def hplus_of(prof):
     return s
 
 
-def merged_len(intervals):
+def merged_len(intervals: list[dict]) -> float:
     ivs = sorted((iv[0], iv[1]) for iv in intervals)
     total = 0.0
     cur = None
@@ -447,7 +453,8 @@ def merged_len(intervals):
 
 # ===== per-ride processing (funnel VERBATIM from igc_resolution_test.process_ride,
 # minus FABDEM / igc5at30 / baro-anchor bookkeeping) =====
-def energies(prof5, prof30, p, pw, vf, eps_rule):
+def energies(prof5: dict, prof30: dict, p: dict, pw: dict, vf: float,
+             eps_rule: str) -> tuple[float, float, float]:
     """The Entry-19 code paths: v2Edge raw @ native step on both profiles; R0 champion on
     igc5 (censo → ε=0.20; riders → frozen ε_geom(−0.13) of the profile fed in)."""
     v2_5 = r1d_v2_edge(prof5, p, pw, CLIMB_THR)
@@ -461,7 +468,8 @@ def energies(prof5, prof30, p, pw, vf, eps_rule):
     return v2_5, r0_5, v2_30
 
 
-def process_ride(file, p0, label, corpus, eps_rule):
+def process_ride(file: str, p0: dict, label: str, corpus: str,
+                 eps_rule: str) -> None:
     with open(os.path.join(DATA, file), "rb") as fh:
         buf0 = fh.read()
     buf = gzip.decompress(buf0) if file.endswith(".gz") else buf0
@@ -589,7 +597,7 @@ CORP = [["censo", "censo (urban group rides, assumed rider)"],
         ["danlessa", "author full (open, frozen physics)"]]
 
 
-def by_group(g):
+def by_group(g: str) -> list[dict]:
     if g == "pooled":
         return [r for r in rows if r["corpus"] != "censo"]
     if g == "all":
@@ -597,14 +605,14 @@ def by_group(g):
     return [r for r in rows if r["corpus"] == g]
 
 
-def p90(vals):
+def p90(vals: list[float]) -> float:
     if not vals:
         return float("nan")
     v = sorted(vals)
     return v[math.floor(0.9 * (len(v) - 1))]
 
 
-def _pair_stats(st, kr, kp):
+def _pair_stats(st: list[dict], kr: str, kp: str) -> dict | None:
     """med|Δ%| and med signed Δ% for raw vs port + their deltas, on rides where both finite."""
     pr = [(r[kr], r[kp]) for r in st if is_finite(r[kr]) and is_finite(r[kp])]
     if not pr:
@@ -618,7 +626,7 @@ def _pair_stats(st, kr, kp):
             "p90_r": p90([abs(a) for a, _ in pr]), "p90_p": p90([abs(b) for _, b in pr])}
 
 
-def _line(tag, s):
+def _line(tag: str, s: dict | None) -> str:
     if not s:
         return f"  {tag.ljust(10)} (no rides)"
     return (f"  {tag.ljust(10)} med|Δ%| {f(s['ma_r'], 2)} → {f(s['ma_p'], 2)} "
@@ -627,7 +635,7 @@ def _line(tag, s):
             f"   (n={s['n']})")
 
 
-def main():
+def main() -> None:
     smoke = os.environ.get("E26_SMOKE") == "1"
     limit = 15 if smoke else None
     os.makedirs(RESULTS, exist_ok=True)
@@ -766,7 +774,7 @@ def main():
     print("\n================ SANITY GATES ================")
     ok = True
 
-    def say(name, passed, extra=""):
+    def say(name: str, passed: bool, extra: str = "") -> None:
         nonlocal ok
         print(f"  [{'PASS' if passed else 'FAIL'}] {name}{('  ' + extra) if extra else ''}")
         if not passed:

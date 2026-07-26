@@ -10,6 +10,8 @@ Usage: python3 src/harness/dem/extract_coords.py [OUTDIR] [STEP]
        STEP   defaults to 50 (metres between kept points)
 """
 
+from __future__ import annotations
+
 import json
 import math
 import os
@@ -30,7 +32,7 @@ STEP = float(sys.argv[2]) if len(sys.argv) > 2 else 50   # keep a point every ~S
 # --- parseFIT: the reduced variant this tool carries (record msg 20 only) ---
 # NOT bicycling_energy_model's parse_fit: that one reads power/speed/time/cadence too and raises a
 # different message. This copy is deliberately the verbatim retired-JS logic.
-def parse_fit(buf):
+def parse_fit(buf: bytes) -> list[dict] | None:
     n = len(buf)
     if n < 14:
         raise ValueError("FIT muito curto")
@@ -43,7 +45,7 @@ def parse_fit(buf):
     defs = {}
     records = []
 
-    def read(p, bt, little):
+    def read(p: int, bt: int, little: bool) -> float | None:
         e = "<" if little else ">"
         t = bt & 0x1F
         if t == 0x01:
@@ -128,7 +130,7 @@ def parse_fit(buf):
     return records
 
 
-def haversine(a, b):
+def haversine(a: dict, b: dict) -> float:
     R, t = 6371000, math.pi / 180
     s1 = math.sin((b["lat"] - a["lat"]) * t / 2)
     s2 = math.sin((b["lon"] - a["lon"]) * t / 2)
@@ -136,13 +138,13 @@ def haversine(a, b):
     return 2 * R * math.asin(math.sqrt(s))
 
 
-def tile_name(lat, lon):   # 1° tile SW-corner id, e.g. S24W047
+def tile_name(lat: float, lon: float) -> str:   # 1° tile SW-corner id, e.g. S24W047
     la, lo = math.floor(lat), math.floor(lon)
     return (("S" if la < 0 else "N") + str(abs(la)).rjust(2, "0")
             + ("W" if lo < 0 else "E") + str(abs(lo)).rjust(3, "0"))
 
 
-def main():
+def main() -> None:
     os.makedirs(OUTDIR, exist_ok=True)
     inputs = json.load(open(os.path.join(ACT, "model_inputs.json")))
     tiles = set()

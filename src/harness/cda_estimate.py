@@ -27,6 +27,8 @@ affect the output and are not reproduced here.
 Output: console report + data/results/cda_estimate.csv.
 """
 
+from __future__ import annotations
+
 import json
 import math
 import os
@@ -46,11 +48,11 @@ RESULTS = os.path.join(REPO, "data", "results")
 os.makedirs(RESULTS, exist_ok=True)
 
 
-def read_pts(file):
+def read_pts(file: str) -> list[dict]:
     return load_pts(os.path.join(DATA, file))
 
 
-def grade30(pts):
+def grade30(pts: list[dict]) -> None:
     W = 30
     for i in range(len(pts)):
         j = i
@@ -63,7 +65,7 @@ def grade30(pts):
             pts[i]["grade"] = pts[i - 1]["grade"] if i > 0 else 0
 
 
-def collect_climbs(files):
+def collect_climbs(files: list[str]) -> dict:
     """Contiguous 30 m-window grade ≥ 1% runs with total Δh ≥ 50 m; clip the first
     10 m of vertical (entry inertia), then measure A/B/C/E over the remainder."""
     A, B, C, E, meta = [], [], [], [], []
@@ -139,7 +141,7 @@ def collect_climbs(files):
             "nRides": n_rides, "nErr": n_err}
 
 
-def list_riders():
+def list_riders() -> list[dict]:
     R = []
     try:
         with open(os.path.join(DATA, "strava_ppaz_manifest.json"), encoding="utf8") as fh:
@@ -173,7 +175,7 @@ _ESC = {'"': '\\"', "\\": "\\\\", "\b": "\\b", "\f": "\\f",
         "\n": "\\n", "\r": "\\r", "\t": "\\t"}
 
 
-def jquote(s):
+def jquote(s: str) -> str:
     """JSON.stringify string quoting (the CSV's rider cell)."""
     out = ['"']
     for ch in s:

@@ -24,6 +24,8 @@ Reads data/inputs/activities/censohidrografico/manifest.json (+ gitignored track
 writes data/results/censo_comparison.csv. Run: python3 src/harness/censo_compare.py
 """
 
+from __future__ import annotations
+
 import json
 import math
 import os
@@ -55,7 +57,7 @@ EPS_SWEEP = [("geom", None), ("0.00", 0.00), ("0.05", 0.05), ("0.10", 0.10),
 phys_profile = None   # the .mjs's `physProfile` global — set at the build_profile call site
 
 
-def has_power(pts):
+def has_power(pts: list[dict]) -> bool:
     return any(q.get("power") is not None for q in pts)
 
 
@@ -118,13 +120,13 @@ for e in man:
         pass   # skip unparseable
 
 
-def f(x, d=1):
+def f(x: float | None, d: int = 1) -> str:
     if x is None or (isinstance(x, float) and x != x):
         return "—"
     return to_fixed(x, d)
 
 
-def med(xs):
+def med(xs: list[float]) -> float:
     s = sorted(x for x in xs if is_finite(x))
     if not s:
         return float("nan")
@@ -132,7 +134,7 @@ def med(xs):
     return (s[math.floor(k)] + s[math.ceil(k)]) / 2
 
 
-def jmin(xs):   # Math.min(...xs): NaN-propagating
+def jmin(xs: list[float]) -> float:   # Math.min(...xs): NaN-propagating
     m = float("inf")
     for x in xs:
         if x != x:
@@ -142,7 +144,7 @@ def jmin(xs):   # Math.min(...xs): NaN-propagating
     return m
 
 
-def jmax(xs):   # Math.max(...xs): NaN-propagating
+def jmax(xs: list[float]) -> float:   # Math.max(...xs): NaN-propagating
     m = float("-inf")
     for x in xs:
         if x != x:
@@ -156,7 +158,7 @@ clean = [r for r in rows if r["dataOK"]]                # headline = physically-
 flagged = [r for r in rows if not r["dataOK"]]          # emp < climbing PE ⇒ dropouts in the power data
 
 
-def stat(key):
+def stat(key: str) -> dict:
     v = [x for x in (abs(r[key]) for r in clean) if is_finite(x)]
     s = [x for x in (r[key] for r in clean) if is_finite(x)]
     total = 0.0
@@ -179,7 +181,7 @@ print("\nΔ% vs empirical (− = under, + = over):")
 print("model".ljust(34) + "n".rjust(4) + "med|Δ%|".rjust(9) + "medΔ%".rjust(8) + "meanΔ%".rjust(8))
 
 
-def print_row(lab, key):
+def print_row(lab: str, key: str) -> None:
     s = stat(key)
     print(lab.ljust(34) + str(s["n"]).rjust(4) + f(s["medAbs"]).rjust(9)
           + f(s["medSigned"]).rjust(8) + f(s["mean"]).rjust(8))
@@ -214,7 +216,7 @@ cols = (["ride", "source", "dist_km", "hplus", "emp", "peFloor", "dataOK", "push
         + [c for t, _ in EPS_SWEEP for c in (f"sm_{t}", f"pm_{t}")])
 
 
-def cell(v):
+def cell(v: object) -> str:
     if v is None:
         return ""
     if isinstance(v, bool):

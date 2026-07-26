@@ -14,6 +14,8 @@ never written into the repo (the whole censohidrografico/ dir is gitignored).
 
 Idempotent: skips a ride whose file already exists. Reuses fetch.py's curl/sniff_ext.
 """
+
+from __future__ import annotations
 import os, sys, json, time, concurrent.futures as cf
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import fetch  # curl(), sniff_ext()
@@ -26,7 +28,7 @@ MAN = os.path.join(DEST, "manifest.json")
 WORKERS = 6
 STRAVA_DELAY = 0.0   # seconds; raise (and drop WORKERS to 1) if Strava returns HTML
 
-def main():
+def main() -> None:
     global WORKERS, STRAVA_DELAY
     jar = sys.argv[1] if len(sys.argv) > 1 else None
     if len(sys.argv) > 2: WORKERS = int(sys.argv[2])
@@ -36,7 +38,7 @@ def main():
     os.makedirs(os.path.join(DEST, "rwgps"), exist_ok=True)
     os.makedirs(os.path.join(DEST, "strava"), exist_ok=True)
 
-    def run(e):
+    def run(e: dict) -> tuple[dict, str | None, str | None]:
         if e["source"] == "rwgps":
             if not (key and tok):
                 return (e, None, "no RWGPS creds")

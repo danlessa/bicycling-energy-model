@@ -17,6 +17,8 @@ the cadence field and captures the sport enum (message 12 field 0 / session 18
 field 5) via the `meta` dict.
 """
 
+from __future__ import annotations
+
 import gzip
 import math
 import os
@@ -46,7 +48,7 @@ _ESC = {'"': '\\"', "\\": "\\\\", "\b": "\\b", "\f": "\\f",
         "\n": "\\n", "\r": "\\r", "\t": "\\t"}
 
 
-def jquote(s):
+def jquote(s: str) -> str:
     out = ['"']
     for ch in s:
         if ch in _ESC:
@@ -59,7 +61,7 @@ def jquote(s):
     return "".join(out)
 
 
-def jstringify(v, ind=""):
+def jstringify(v: object, ind: str = "") -> str:
     if v is None:
         return "null"
     if isinstance(v, bool):

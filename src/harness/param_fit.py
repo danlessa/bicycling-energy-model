@@ -25,6 +25,8 @@ flatEqSpeed, resampleProfile) copied from its sibling harnesses and never called
 it is ported: it cannot reach the output.
 """
 
+from __future__ import annotations
+
 import gzip
 import json
 import math
@@ -53,21 +55,21 @@ TO_R = math.pi / 180
 # JS semantics helpers
 # ---------------------------------------------------------------------------
 
-def jmin(a, b):
+def jmin(a: float, b: float) -> float:
     """Math.min(a, b) — NaN-propagating (Python's min is not)."""
     if a != a or b != b:
         return float("nan")
     return a if a < b else b
 
 
-def jmax(a, b):
+def jmax(a: float, b: float) -> float:
     """Math.max(a, b) — NaN-propagating."""
     if a != a or b != b:
         return float("nan")
     return a if a > b else b
 
 
-def jnum(s):
+def jnum(s: str) -> float:
     """JS unary plus on a string (+x → Number(x); NaN on garbage)."""
     t = s.strip()
     if t == "":
@@ -84,7 +86,7 @@ _ESC = {'"': '\\"', "\\": "\\\\", "\b": "\\b", "\f": "\\f",
         "\n": "\\n", "\r": "\\r", "\t": "\\t"}
 
 
-def jquote(s):
+def jquote(s: str) -> str:
     """JSON.stringify(string) — the CSV's rider column."""
     out = ['"']
     for ch in s:
@@ -98,7 +100,7 @@ def jquote(s):
     return "".join(out)
 
 
-def js_hypot(a, b):
+def js_hypot(a: float, b: float) -> float:
     """V8's Math.hypot (builtins-math.cc): normalise by the max, then Kahan-
     compensate the sum of squares. C99 hypot() gives a different last bit."""
     av = [abs(a), abs(b)]
@@ -123,7 +125,7 @@ def js_hypot(a, b):
 # pipeline pieces kept local: pts_with_geo needs haversine on raw lat/lon
 # ---------------------------------------------------------------------------
 
-def haversine(a, b):
+def haversine(a: dict, b: dict) -> float:
     R = 6371000
     to_r = math.pi / 180
     d_lat = (b["lat"] - a["lat"]) * to_r
@@ -134,11 +136,11 @@ def haversine(a, b):
     return 2 * R * math.asin(jmin(1, math.sqrt(s)))
 
 
-def rho_at(h):
+def rho_at(h: float) -> float:
     return 1.225 * math.pow(1 - 2.25577e-5 * jmax(0, jmin(h, 11000)), 5.25588)
 
 
-def median(xs):
+def median(xs: list[float]) -> float:
     s = sorted(x for x in xs if is_finite(x))
     if not s:
         return float("nan")
@@ -146,7 +148,7 @@ def median(xs):
     return (s[math.floor(k)] + s[math.ceil(k)]) / 2
 
 
-def q(xs, p):
+def q(xs: list[float], p: float) -> float:
     s = sorted(x for x in xs if is_finite(x))
     if not s:
         return float("nan")
@@ -163,7 +165,7 @@ _TIME = re.compile(r'<time>\s*([^<]+)')
 _POWER = re.compile(r'<(?:\w+:)?power>\s*([\d.]+)')
 
 
-def _date_parse(s):
+def _date_parse(s: str) -> float:
     """Date.parse(s) / 1000 (NaN when unparseable, as JS)."""
     try:
         return datetime.fromisoformat(s.strip().replace("Z", "+00:00")).timestamp()
@@ -171,7 +173,7 @@ def _date_parse(s):
         return float("nan")
 
 
-def parse_gpx_records(text):
+def parse_gpx_records(text: str) -> list[dict]:
     """minimal GPX record reader — lat/lon/ele/time/power (no speed, no cadence)."""
     out = []
     for m in _TRKPT.finditer(text):
@@ -189,7 +191,7 @@ def parse_gpx_records(text):
     return out
 
 
-def raw_records(file):
+def raw_records(file: str) -> list[dict]:
     with open(os.path.join(DATA, file), "rb") as fh:
         buf = fh.read()
     if file.endswith(".gz") and not file.endswith(".gpx.gz"):
@@ -201,7 +203,7 @@ def raw_records(file):
 
 # ---- enriched points with bearing, distance, grade, acceleration (needs GPS) ----
 
-def pts_with_geo(recs):
+def pts_with_geo(recs: list[dict]) -> list[dict] | None:
     g = [r for r in recs
          if r.get("lat") is not None and r.get("lon") is not None
          and r.get("alt") is not None and r.get("time") is not None]
@@ -252,7 +254,7 @@ def pts_with_geo(recs):
 
 # ---- k-param no-intercept linear least squares (normal equations + Gauss) ----
 
-def ols_k(feats, ys):
+def ols_k(feats: list[list[float]], ys: list[float]) -> dict | None:
     k = len(feats[0])
     n = len(ys)
     M = [[0.0] * (k + 1) for _ in range(k)]
@@ -301,7 +303,7 @@ def ols_k(feats, ys):
 # A clean 4-parameter no-intercept regression; one refinement pass folds the w²
 # term back in as a known correction to T.
 
-def fit_activity(pts, m):
+def fit_activity(pts: list[dict], m: float) -> dict | None:
     rho = rho_at(median([p["alt"] for p in pts]))
     S = []
     for p in pts:
@@ -372,7 +374,7 @@ def fit_activity(pts, m):
 
 # ---- rider mass from braking-free climbs (CdA-insensitive; nominal CdA = 0.35) ----
 
-def rider_mass(files):
+def rider_mass(files: list[str]) -> dict:
     A, B, C, E = [], [], [], []
     for f in files:
         try:
@@ -441,14 +443,14 @@ def rider_mass(files):
     return {"m": jsdiv(y1 * s22 - y2 * s12, det), "nSeg": len(E)}
 
 
-def list_riders():
+def list_riders() -> list[dict]:
     R = []
 
-    def load(mf, filt):
+    def load(mf: str, filt: "Callable[[dict], bool]") -> list[dict]:
         with open(os.path.join(DATA, mf), encoding="utf-8") as fh:
             return [a for a in json.load(fh) if filt(a)]
 
-    def ride(a):
+    def ride(a: dict) -> bool:
         return a["sport"] == "ride" and a["powCov"] > 0.5 and a["km"] >= 20
 
     try:
@@ -541,7 +543,7 @@ if os.environ.get("SYNTH"):
 # ride's own fitted CdA/C_rr/mass), refit, and take the median recovered/injected ratio α.
 # Regression dilution (speed↔direction correlate on real roads) makes α ≈ 0.7; we de-bias
 # real winds by 1/α.
-def wind_attenuation(files, m, n_cal=25):
+def wind_attenuation(files: list[str], m: float, n_cal: int = 25) -> dict:
     We0, Wn0 = 4, 0
     ratios = []
     for f in files:
@@ -609,7 +611,7 @@ for r in list_riders():
     winds = [a["W"] / alpha for a in good]              # de-biased wind magnitude
     rng = r["range"]
 
-    def in_r(v, lohi):
+    def in_r(v: float, lohi: tuple[float, float]) -> str:
         return "✓" if (v >= lohi[0] and v <= lohi[1]) else "✗"
 
     print(f"── {r['name']} ──  {len(acts)} activities fit ({len(good)} clean: "

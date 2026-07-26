@@ -20,6 +20,8 @@ FIT decoding is bicycling_energy_model's shared parse_fit; the sport enum (msg 1
 session msg 18 field 5) arrives via its meta dict.
 """
 
+from __future__ import annotations
+
 import gzip
 import json
 import math
@@ -42,7 +44,7 @@ SPORT = {0: "generic", 1: "run", 2: "ride", 5: "swim", 11: "walk", 17: "hike"}
 FIT_EPOCH = 631065600   # 1989-12-31 UTC, seconds
 
 
-def median(xs):
+def median(xs: list[float]) -> float | None:
     s = sorted(x for x in xs if is_finite(x))
     k = (len(s) - 1) / 2
     return (s[math.floor(k)] + s[math.ceil(k)]) / 2 if s else None
@@ -50,7 +52,7 @@ def median(xs):
 
 # ---- JSON.stringify(out, null, 1) — byte-identical manifest bytes ----
 
-def stringify(v, depth=0):
+def stringify(v: object, depth: int = 0) -> str:
     ind = " " * depth
     if isinstance(v, list):
         if not v:
@@ -154,7 +156,7 @@ rides = [a for a in bySport.get("ride", []) if a["powCov"] > 0.5]
 if rides:
     dates = sorted(d for d in (r["date"] for r in rides) if d)
 
-    def q(arr, p):
+    def q(arr: list[float], p: float) -> float:
         s = sorted(x for x in arr if is_finite(x))
         return s[math.floor(p * (len(s) - 1))] if s else float("nan")
 

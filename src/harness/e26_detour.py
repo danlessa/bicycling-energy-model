@@ -36,6 +36,8 @@ stdout: aggregates only, no coordinates and no ride names.
   /Users/danlessa/conda/bin/python src/harness/e26_detour.py
 """
 
+from __future__ import annotations
+
 import csv
 import gzip
 import json
@@ -61,7 +63,7 @@ CLIMB_THR = 0.02
 EPS_OFFSET = 0.13
 
 
-def flat_eq_speed_js(P, b):
+def flat_eq_speed_js(P: float, b: dict) -> float:
     """Bisection mirror of grid-e26.mjs flatEqSpeed (60 halvings, [0, 40])."""
     a = b["crr"] * b["m"] * G_JS
     c = 0.5 * b["rho"] * b["cda"]
@@ -75,7 +77,7 @@ def flat_eq_speed_js(P, b):
     return (lo + hi) / 2
 
 
-def derive_cost(b):
+def derive_cost(b: dict) -> dict[str, float]:
     vf = flat_eq_speed_js(b["pflat"], b)
     mg = b["m"] * G_JS
     aero = 0.5 * b["rho"] * b["cda"] * vf * vf
@@ -86,7 +88,7 @@ def derive_cost(b):
             "vf": vf}
 
 
-def walk_v2edge(prof, c):
+def walk_v2edge(prof: dict, c: dict) -> float:
     """kJ for a profile under the deployed per-edge cost (v2Edge, verbatim)."""
     xs, hs = prof["x"], prof["h"]
     tot = 0.0
@@ -111,7 +113,7 @@ def walk_v2edge(prof, c):
     return tot
 
 
-def igc5_profile(path):
+def igc5_profile(path: str) -> tuple[dict | None, float]:
     """The Entry-19 igc5 profile for one ride (5 m steps, bilinear, gap-filled).
 
     Mirrors process_ride's reader exactly: the rider corpora are Strava exports
@@ -137,7 +139,7 @@ def igc5_profile(path):
     return s5["prof"], total
 
 
-def main():
+def main() -> None:
     if not os.path.exists(GRID_CSV):
         sys.exit(f"missing {GRID_CSV} — run the grid harness first")
     igc.ensure_rasters()
@@ -199,7 +201,7 @@ def main():
         for r in rows:
             w.writerow(r)
 
-    def block(name, sub):
+    def block(name: str, sub: list) -> None:
         if not sub:
             return
         r8 = sorted(x["ratio8"] for x in sub)

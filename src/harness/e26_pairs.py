@@ -36,6 +36,8 @@ repo locally only). stdout is aggregates only, NO coordinates and no ride names.
   /Users/danlessa/conda/bin/python src/harness/e26_pairs.py
 """
 
+from __future__ import annotations
+
 import gzip
 import hashlib
 import json
@@ -66,7 +68,7 @@ CORPORA = ["censo", "ppaz", "jaam", "danlessa"]
 _ROW_RE = re.compile(r'^"((?:[^"\\]|\\.)*)","((?:[^"\\]|\\.)*)",')
 
 
-def included_rides():
+def included_rides() -> list[tuple[str, str]]:
     """(corpus, ride-label) list, in igc_resolution_test.csv row order."""
     rides = []
     with open(CSV, encoding="utf-8") as fh:
@@ -81,7 +83,7 @@ def included_rides():
     return rides
 
 
-def label_to_file():
+def label_to_file() -> dict[tuple[str, str], str]:
     """(corpus, label) -> FIT path relative to DATA, from the same manifests
     the Entry-19 drivers read (censo keys on `name`, riders on `id`)."""
     fmap = {}
@@ -100,7 +102,7 @@ def label_to_file():
     return fmap
 
 
-def endpoints_of(path):
+def endpoints_of(path: str) -> tuple[dict, dict] | None:
     with open(path, "rb") as fh:
         buf = fh.read()
     if path.endswith(".gz"):
@@ -113,12 +115,12 @@ def endpoints_of(path):
             {"lat": b["lat"], "lon": b["lon"]})
 
 
-def pair_hash(a, b):
+def pair_hash(a: dict, b: dict) -> str:
     key = ",".join(f"{v:.5f}" for v in (a["lat"], a["lon"], b["lat"], b["lon"]))
     return hashlib.sha256(key.encode("utf-8")).hexdigest()[:8]
 
 
-def main():
+def main() -> None:
     rides = included_rides()
     fmap = label_to_file()
 

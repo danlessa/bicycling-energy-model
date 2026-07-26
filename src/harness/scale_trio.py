@@ -152,27 +152,27 @@ IGC.sample_ms = {"r5": 0, "r30": 0}
 FROZEN = {"CdA": 0.40, "Crr": 0.008}   # journal frozen physics (≡ ASSUMED CdA/Crr)
 
 
-def now_ms():
+def now_ms() -> float:
     return time.time() * 1000
 
 
-def p_of(corpus, CdA, Crr):
+def p_of(corpus: str, CdA: float, Crr: float) -> dict:
     if corpus == 'censo':
         return {**ASSUMED, "CdA": CdA, "Crr": Crr, "vmax": VMAX, "vstart": VSTART}
     return {**PHYS[corpus], "CdA": CdA, "Crr": Crr, "vmax": VMAX, "vstart": VSTART}
 
 
-def p_frozen(corpus):
+def p_frozen(corpus: str) -> dict:
     return p_of(corpus, FROZEN["CdA"], FROZEN["Crr"])
 
 
-def f(x, d=2):
+def f(x: float | None, d: int = 2) -> str:
     if x is None or not is_finite(x):
         return '—'
     return to_fixed(x, d)
 
 
-def linspace(lo, hi, k):
+def linspace(lo: float, hi: float, k: int) -> list[float]:
     return [lo] if k == 1 else [lo + (hi - lo) * i / (k - 1) for i in range(k)]
 
 
@@ -181,7 +181,8 @@ def linspace(lo, hi, k):
 WS_MAX_MISMATCH = 0
 
 
-def walk_stats_k(prof, p, pw_flat, climb_thr, k_smooth, eps_offset):
+def walk_stats_k(prof: dict, p: dict, pw_flat: float, climb_thr: float,
+                 k_smooth: float, eps_offset: float) -> dict:
     global WS_MAX_MISMATCH
     mg = p["m"] * G
     beta = mg * k_smooth / p["keff"]
@@ -239,7 +240,7 @@ rides = []
 
 
 # ===== SUPPLEMENTARY CACHE: rider igc30 + censo igc5/igc30 =====
-def build_rider_supp(corpus, ride):
+def build_rider_supp(corpus: str, ride: dict) -> dict:
     mr = g_by_key.get(corpus + '|' + ride)
     if not mr:
         raise ValueError(f"no goal-cache entry for {corpus}/{ride}")
@@ -272,7 +273,7 @@ def build_rider_supp(corpus, ride):
 
 # Entry 19's censo pipeline, filters verbatim (ASSUMED rider, urban corpus: no zwift skip,
 # phys-floor on, bbox + geo-span + igc5/igc30 coverage cuts). Returns None on any exclusion.
-def process_censo(entry):
+def process_censo(entry: dict) -> dict | None:
     p = {**ASSUMED, "vmax": VMAX, "vstart": VSTART}
     if entry["file"].endswith('.gpx') or entry["file"].endswith('.gpx.gz'):
         return None
@@ -321,7 +322,7 @@ def process_censo(entry):
             "h5": s5["prof"]["h"], "h30": s30["prof"]["h"]}
 
 
-def build_supp_cache():
+def build_supp_cache() -> dict:
     t0 = now_ms()
     recs = []
     done = 0
@@ -382,7 +383,7 @@ def build_supp_cache():
     return meta
 
 
-def load_or_build_supp():
+def load_or_build_supp() -> dict:
     membership = (';'.join(c + '|' + r["ride"] for c in CORPORA for r in csv_rides[c])
                   + '#' + ';'.join(sorted(r["ride"] for r in csv_rides["censo"])))
     if os.path.exists(SUPP_META) and os.path.exists(SUPP_BIN):
@@ -395,20 +396,20 @@ def load_or_build_supp():
     return build_supp_cache()
 
 
-def by_corpus(c):
+def by_corpus(c: str) -> list[dict]:
     return [r for r in rides if r["corpus"] == c]
 
 
-def train_of(c):
+def train_of(c: str) -> list[dict]:
     return [r for r in by_corpus(c) if r["split"] == 'train']
 
 
-def val_of(c):
+def val_of(c: str) -> list[dict]:
     return [r for r in by_corpus(c) if r["split"] == 'val']
 
 
 # supp-cache determinism: rebuild every 40th supp ride fresh (FIT parse + gdal) and compare
-def supp_determinism_check():
+def supp_determinism_check() -> dict[str, int]:
     with open(os.path.join(DATA, 'censohidrografico', 'manifest.json'), encoding="utf-8") as fh:
         man = json.load(fh)
     checked = 0
@@ -446,7 +447,7 @@ def supp_determinism_check():
 
 
 # ===== STAGE-1 machinery: exact decomposition of v2EdgeK at frozen physics =====
-def decompose(prof, p, pw_flat):
+def decompose(prof: dict, p: dict, pw_flat: float) -> dict:
     mg = p["m"] * G
     mgk = mg / p["keff"]
     w = p["wind"]
@@ -501,7 +502,7 @@ def decompose(prof, p, pw_flat):
             "eArr": eArr, "sufW": sufW, "sufEW": sufEW}
 
 
-def lower_bound(a, x):
+def lower_bound(a: list[float], x: float) -> int:
     lo, hi = 0, len(a)
     while lo < hi:
         m = (lo + hi) >> 1
@@ -512,7 +513,7 @@ def lower_bound(a, x):
     return lo
 
 
-def upper_bound(a, x):
+def upper_bound(a: list[float], x: float) -> int:
     lo, hi = 0, len(a)
     while lo < hi:
         m = (lo + hi) >> 1
@@ -523,7 +524,7 @@ def upper_bound(a, x):
     return lo
 
 
-def dec_eval(dec, kS, eps0, thr):
+def dec_eval(dec: dict, kS: float, eps0: float, thr: float) -> float:
     ia = lower_bound(dec["gArr"], thr)     # ascent edges with grade < thr get aero
     id_ = upper_bound(dec["eArr"], eps0)   # descent edges with epsr > eps0 give credit
     credit = dec["sufEW"][id_] - eps0 * dec["sufW"][id_]
@@ -532,7 +533,7 @@ def dec_eval(dec, kS, eps0, thr):
 
 # deterministic coarse-to-fine grid fit (3 levels; ±1-step refinement clipped to bounds;
 # strict-< improvement in fixed kS→eps0→thr order)
-def fit_stage1(free_dims, objective):
+def fit_stage1(free_dims: list[str], objective: "Callable[..., float]") -> dict:
     rng = {}
     for d in free_dims:
         rng[d] = [SPACE[d][0], SPACE[d][1]]
@@ -557,7 +558,7 @@ def fit_stage1(free_dims, objective):
 
 # E2: per-rider (CdA, Crr) fit at igc5+trio (goal_calibration's fitRider minus kSmooth; the
 # trio owns kS/eps0/thr; verbatim v2EdgeK inside — K_MIN_PRECLAMP-tracked on every combo)
-def fit_phys(train_set, trio):
+def fit_phys(train_set: list[dict], trio: dict) -> dict:
     rng = {"CdA": list(PHYS_BOUNDS["CdA"]), "Crr": list(PHYS_BOUNDS["Crr"])}
     best = None
     for _lvl in range(3):
@@ -574,7 +575,7 @@ def fit_phys(train_set, trio):
                 if best is None or s < best["score"]:
                     best = {"CdA": cda, "Crr": crr, **o, "score": s}
 
-        def step(k, _rng=rng):
+        def step(k: str, _rng: dict = rng) -> float:
             return (_rng[k][1] - _rng[k][0]) / (PHYS_NPTS[k] - 1)
 
         rng = {k: [max(PHYS_BOUNDS[k][0], best[k] - step(k)),
@@ -582,12 +583,12 @@ def fit_phys(train_set, trio):
     return best
 
 
-def summarize_deltas(d):
+def summarize_deltas(d: list[float]) -> dict:
     return {"n": len(d), "medAbs": med_of([abs(x) for x in d]), "medSigned": med_of(d),
             "p10": pctl(d, 0.10), "p90": pctl(d, 0.90)}
 
 
-def ratio_stats(ratios):
+def ratio_stats(ratios: list[float]) -> dict:
     return {"n": len(ratios), "med": med_of(ratios),
             "iqr": pctl(ratios, 0.75) - pctl(ratios, 0.25),
             "p10": pctl(ratios, 0.10), "p90": pctl(ratios, 0.90)}
@@ -595,7 +596,7 @@ def ratio_stats(ratios):
 
 # ===== CSV cell writer (JS: typeof 'string' → JSON.stringify; finite → +Number(v).toFixed(6);
 # anything else → '') =====
-def cell6(v):
+def cell6(v: object) -> str:
     if isinstance(v, str):
         return jquote(v)
     if is_finite(v):
@@ -604,7 +605,7 @@ def cell6(v):
 
 
 # ===== the full analysis (deterministic; run TWICE, byte-compared) =====
-def run_analysis(g_bin_sha, s_bin_sha):
+def run_analysis(g_bin_sha: str, s_bin_sha: str) -> dict:
     global WS_MAX_MISMATCH
     GC.K_MIN_PRECLAMP = float("inf")
     WS_MAX_MISMATCH = 0
@@ -633,14 +634,14 @@ def run_analysis(g_bin_sha, s_bin_sha):
         for r in st:
             r["dec"] = decompose(r["prof5"], p_frozen(r["corpus"]), r["pFlat"])
 
-    def objective(kS, eps0, thr):
+    def objective(kS: float, eps0: float, thr: float) -> float:
         s = 0.0
         for st in train_by_c:
             s += med_of([abs(jsdiv(dec_eval(r["dec"], kS, eps0, thr), r["v2_30_def"]) - 1)
                          for r in st])
         return s / len(train_by_c)
 
-    def per_corpus_obj(kS, eps0, thr):
+    def per_corpus_obj(kS: float, eps0: float, thr: float) -> list[float]:
         return [med_of([abs(jsdiv(dec_eval(r["dec"], kS, eps0, thr), r["v2_30_def"]) - 1)
                         for r in st]) for st in train_by_c]
 
@@ -728,7 +729,7 @@ def run_analysis(g_bin_sha, s_bin_sha):
                    and abs(sT["medSigned"] - s30["medSigned"]) <= 1.5)
         e1[c] = {"s5": s5, "s30": s30, "sT": sT, "bridged": bridged}
 
-        def cell(s):
+        def cell(s: dict) -> str:
             return f"{f(s['medAbs'])} / {f(s['medSigned'])} / {f(s['p10'])} / {f(s['p90'])}"
 
         L.append('  ' + ('censo (o-o-s)' if c == 'censo' else c).ljust(16)
@@ -763,7 +764,7 @@ def run_analysis(g_bin_sha, s_bin_sha):
             r["v2_e2"] = v2_edge_k(r["prof5"], p_of(c, b["CdA"], b["Crr"]), r["pFlat"],
                                    TRIO["thr"], TRIO["kS"], TRIO["eps0"])
 
-        def in_r(v, lohi):
+        def in_r(v: float, lohi: list[float]) -> bool:
             return v >= lohi[0] and v <= lohi[1]
 
         e20 = E20_SIGMA0_FITS[c]
@@ -855,7 +856,7 @@ def run_analysis(g_bin_sha, s_bin_sha):
             "wsMax": WS_MAX_MISMATCH, "objDefault": obj_default}
 
 
-def main():
+def main() -> None:
     global g_by_key, g_f64, s_f64, supp_meta, supp_by_key
     os.makedirs(RESULTS, exist_ok=True)
 
@@ -864,10 +865,10 @@ def main():
         ref_csv = parse_csv(fh.read())
     ref_hdr = ref_csv[0]
 
-    def ref_idx(k):
+    def ref_idx(k: str) -> int:
         return ref_hdr.index(k) if k in ref_hdr else -1
 
-    def at(cells, i):
+    def at(cells: list, i: int) -> str | None:
         return cells[i] if 0 <= i < len(cells) else None
 
     for i in range(1, len(ref_csv)):
@@ -952,7 +953,7 @@ def main():
     # ===== gates + runs =====
     gates = []
 
-    def gate(name, passed, extra=''):
+    def gate(name: str, passed: bool, extra: str = '') -> None:
         gates.append({"name": name, "pass": passed, "extra": extra})
 
     gate('corpus counts = 277/181/406/58',

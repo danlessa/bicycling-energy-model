@@ -25,6 +25,8 @@ Reads data/inputs/activities/model_inputs.json + eps_features.json (+ the gitign
 tracks); writes data/results/eps_hypothesis.csv. Run: python3 src/harness/eps_hypothesis.py
 """
 
+from __future__ import annotations
+
 import json
 import math
 import os
@@ -57,7 +59,7 @@ os.makedirs(RESULTS, exist_ok=True)
 # ptsFromGPX; this harness needs the raw geo list for curviness).
 # ---------------------------------------------------------------------------
 
-def haversine(a, b):
+def haversine(a: dict, b: dict) -> float:
     R = 6371000
     t = math.pi / 180
     s1 = math.sin((b["lat"] - a["lat"]) * t / 2)
@@ -66,7 +68,7 @@ def haversine(a, b):
     return 2 * R * math.asin(min(1, math.sqrt(s)))
 
 
-def pts_from_fit_recs(recs):
+def pts_from_fit_recs(recs: list[dict]) -> list[dict]:
     """pts (energy) from parsed FIT records — interleaved dist/alt handling,
     as compare.mjs (the .mjs ptsFromFIT takes records, unlike
     bicycling_energy_model's)."""
@@ -122,7 +124,7 @@ _TIME = re.compile(r'<time>\s*([^<]+)')
 _POWER = re.compile(r'<(?:\w+:)?power>\s*([\d.]+)')
 
 
-def _date_parse(s):
+def _date_parse(s: str) -> float:
     """Date.parse(s)/1000 for the ISO-8601 stamps GPX carries (NaN when
     unparseable, as JS)."""
     try:
@@ -131,7 +133,7 @@ def _date_parse(s):
         return float("nan")
 
 
-def parse_gpx(text):
+def parse_gpx(text: str) -> list[dict]:
     out = []
     for m in _TRKPT.finditer(text):
         la = _LAT.search(m.group(1))
@@ -150,7 +152,7 @@ def parse_gpx(text):
     return out
 
 
-def pts_from_geo(geo):
+def pts_from_geo(geo: list[dict]) -> list[dict]:
     cum = 0.0
     pts = [{"x": 0, "alt": geo[0]["alt"], "power": geo[0].get("power"),
             "t": geo[0].get("t")}]
@@ -165,11 +167,11 @@ def pts_from_geo(geo):
 # ---- curviness κ: total |heading change| per km on a ~RES-m resampled GPS track ----
 # Resample to constant spacing first so GPS jitter / dense slow points don't inflate it.
 
-def _is_finite(x):
+def _is_finite(x: object) -> bool:
     return isinstance(x, (int, float)) and not isinstance(x, bool) and math.isfinite(x)
 
 
-def curviness(geo, RES=50):
+def curviness(geo: list[dict], RES: float = 50) -> float | None:
     ll = [r for r in geo
           if r.get("lat") is not None and r.get("lon") is not None
           and _is_finite(r["lat"]) and _is_finite(r["lon"])]
@@ -218,7 +220,7 @@ def curviness(geo, RES=50):
 
 # ---- ε analysis: balance (truth) + coasting prediction, sharing 30 m cells, α, v_f ----
 
-def eps_analysis(pts, p):
+def eps_analysis(pts: list[dict], p: dict) -> dict | None:
     if not pts or len(pts) < 2:
         return None
     mg = p["m"] * G
@@ -231,7 +233,7 @@ def eps_analysis(pts, p):
         return None
     j = 0
 
-    def alt_at(dd):
+    def alt_at(dd: float) -> float:
         nonlocal j
         while j < len(pts) - 2 and pts[j + 1]["x"] < dd:
             j += 1
@@ -291,7 +293,7 @@ def eps_analysis(pts, p):
 
 # ---- tiny OLS (normal equations + Gaussian elimination) ----
 
-def _div(a, b):
+def _div(a: float, b: float) -> float:
     """JS division semantics for the 0-denominator edge (NaN / ±Infinity)."""
     if b == 0:
         if a != a or a == 0:
@@ -301,7 +303,7 @@ def _div(a, b):
     return a / b
 
 
-def ols(y, X):
+def ols(y: list[float], X: list[list[float]]) -> dict:
     """X: rows of features (incl. intercept col if wanted); returns b, r2, pred."""
     n = len(y)
     k = len(X[0])
@@ -350,7 +352,7 @@ def ols(y, X):
     return {"b": b, "r2": 1 - _div(ssr, sst), "rms": math.sqrt(_div(ssr, n)), "pred": pred}
 
 
-def corr(a, b):
+def corr(a: list[float], b: list[float]) -> float:
     n = len(a)
     ma = 0.0
     for v in a:
@@ -370,7 +372,7 @@ def corr(a, b):
     return _div(sab, math.sqrt(saa * sbb))
 
 
-def med(xs):
+def med(xs: list[float]) -> float:
     s = sorted(xs)
     if not s:
         return float("nan")
@@ -414,7 +416,7 @@ for e in inputs:
 good = [r for r in rows if _is_finite(r["epsBal"])]
 
 
-def f2(x, d=2):
+def f2(x: float | None, d: int = 2) -> str:
     if x is None or not _is_finite(x):
         return "—"
     return to_fixed(x, d)
@@ -447,7 +449,7 @@ for lab, key in [("ε_coast (per-cell clamp)", "epsCoast"), ("ε_lump (totals on
 # the real-descent subset — the flat rides that break the clamp carry ~no energy.
 
 
-def w_corr(a, b, w):
+def w_corr(a: list[float], b: list[float], w: list[float]) -> float:
     W = 0.0
     for v in w:
         W += v
@@ -498,11 +500,11 @@ print("\n" + "=" * 67)
 print("ESTIMATOR SKILL — RMS(ε_bal − pred), skill = 1 − RMS/RMS_flat (flat = subset median ε_bal)")
 
 
-def clamp01(v):
+def clamp01(v: float) -> float:
     return max(0, min(1, v))
 
 
-def rms(xs):
+def rms(xs: list[float]) -> float:
     s = 0.0
     for v in xs:
         s += v * v

@@ -6,6 +6,8 @@ approximate()/canonical() engines on each track.
 
 Columns pulled (sheet row-2 headers): M Weight, N CdA, AE efCrr (blended road/
 offroad Crr), L Headwind, AA g_d_eff (eps), AT Rho, AR Eff (keff)."""
+
+from __future__ import annotations
 import json, os, sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import fetch  # reuse read_cells / extract_links / classify
@@ -18,11 +20,11 @@ PARAM_COLS = {  # json key -> sheet column
     "wmes": "S",          # <W>_mes: rider's measured avg power = Work / Moving Time (W)
 }
 
-def fnum(v):
+def fnum(v: object) -> float | None:
     try: return float(v)
     except (TypeError, ValueError): return None
 
-def main():
+def main() -> None:
     cells = fetch.read_cells()
     man = {e["id"]: e for e in json.load(open(os.path.join(OUT, "manifest.json"))) if e.get("id")}
     rows = []

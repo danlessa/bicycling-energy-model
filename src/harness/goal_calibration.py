@@ -73,6 +73,8 @@ JS name → Python name (this file's own top-level definitions, in file order):
   grabBlock/E/engineSrc → dropped (imports replace the runtime source grab)
 """
 
+from __future__ import annotations
+
 import gzip
 import hashlib
 import json
@@ -110,7 +112,7 @@ DEM5 = '/Users/danlessa/repos/pedalhidro/simujaules/dem/sampa_geral.tif'
 SIGMAS = [0, 10, 15, 20, 30, 45]
 
 
-def raster_for(sig):
+def raster_for(sig: int) -> str:
     return DEM5 if sig == 0 else os.path.join(SCRATCH, f'sampa_geral_sm{sig}m.tif')
 
 
@@ -128,7 +130,7 @@ IGC.sample_ms = {"s0": 0, "s10": 0, "s15": 0, "s20": 0, "s30": 0, "s45": 0}
 
 
 # ===== JS primitives =====
-def js_json(v):
+def js_json(v: object) -> str:
     """JSON.stringify (no spacing, insertion order, NaN/Infinity → null)."""
     if v is None:
         return "null"
@@ -149,7 +151,7 @@ def js_json(v):
     raise TypeError(f"js_json: {type(v)}")
 
 
-def js_plus(s):
+def js_plus(s: str | None) -> float:
     """JS unary + on a CSV cell: '' → 0, garbage → NaN."""
     if s is None:
         return float("nan")
@@ -162,14 +164,14 @@ def js_plus(s):
         return float("nan")
 
 
-def jmax(a, b):
+def jmax(a: float, b: float) -> float:
     """Math.max(a, b) — propagates NaN (Python's max() does not)."""
     if a != a or b != b:
         return float("nan")
     return a if a > b else b
 
 
-def now_ms():
+def now_ms() -> float:
     return time.time() * 1000
 
 
@@ -185,7 +187,8 @@ V2K_HPLUS = 0
 V2K_HMINUS = 0
 
 
-def v2_edge_k(prof, p, pw_flat, climb_thr, k_smooth, eps_offset):
+def v2_edge_k(prof: dict, p: dict, pw_flat: float, climb_thr: float,
+              k_smooth: float, eps_offset: float) -> float:
     global K_MIN_PRECLAMP, V2K_HPLUS, V2K_HMINUS
     mg = p["m"] * G
     beta = mg * k_smooth / p["keff"]
@@ -229,7 +232,7 @@ def v2_edge_k(prof, p, pw_flat, climb_thr, k_smooth, eps_offset):
 
 
 # ===== Entry-19 CSV: ride membership + gate-1 reference values =====
-def parse_csv(text):
+def parse_csv(text: str) -> list[dict[str, str]]:
     rows = []
     row = []
     field = ''
@@ -274,7 +277,7 @@ CACHE_META = os.path.join(SCRATCH,
                           'goal_profiles_smoke.meta.json' if SMOKE else 'goal_profiles.meta.json')
 
 
-def build_ride_profiles(corpus, row, file):
+def build_ride_profiles(corpus: str, row: dict, file: str) -> dict:
     with open(os.path.join(DATA, file), "rb") as fh:
         buf0 = fh.read()
     buf = gzip.decompress(buf0) if file.endswith('.gz') else buf0
@@ -308,7 +311,7 @@ def build_ride_profiles(corpus, row, file):
             "pFlat": pw["flat"], "n": len(d5), "valid": valid, "hs": hs}
 
 
-def build_cache():
+def build_cache() -> dict:
     t0 = now_ms()
     meta_rides = []
     chunks = []
@@ -350,7 +353,7 @@ def build_cache():
     return meta
 
 
-def load_or_build_cache():
+def load_or_build_cache() -> dict:
     if os.path.exists(CACHE_META) and os.path.exists(CACHE_BIN):
         with open(CACHE_META, encoding="utf-8") as fh:
             meta = json.load(fh)
@@ -367,7 +370,7 @@ def load_or_build_cache():
 rides = []
 
 
-def cache_determinism_check():
+def cache_determinism_check() -> dict[str, int]:
     """rebuild every 40th ride fresh (FIT parse + gdal) and byte-compare"""
     checked = 0
     bad = 0
@@ -391,49 +394,51 @@ def cache_determinism_check():
 
 
 # ===== PHASE C: calibration + validation =====
-def sha256hex(s):
+def sha256hex(s: str) -> str:
     return hashlib.sha256(s.encode("utf-8")).hexdigest()
 
 
-def is_train(ride):
+def is_train(ride: str) -> bool:
     return int(sha256hex('entry20:' + ride), 16) % 2 == 0
 
 
-def by_corpus(c):
+def by_corpus(c: str) -> list[dict]:
     return [r for r in rides if r["corpus"] == c]
 
 
-def train_of(c):
+def train_of(c: str) -> list[dict]:
     return [r for r in by_corpus(c) if r["split"] == 'train']
 
 
-def val_of(c):
+def val_of(c: str) -> list[dict]:
     return [r for r in by_corpus(c) if r["split"] == 'val']
 
 
 FROZEN = {"CdA": 0.40, "Crr": 0.008, "kSmooth": 1.0}
 
 
-def p_of(corpus, CdA, Crr):
+def p_of(corpus: str, CdA: float, Crr: float) -> dict:
     return {**PHYS[corpus], "CdA": CdA, "Crr": Crr, "vmax": VMAX, "vstart": VSTART}
 
 
-def deltas_of(st, sig_idx, CdA, Crr, k_smooth, eps_off):
+def deltas_of(st: list[dict], sig_idx: int, CdA: float, Crr: float,
+              k_smooth: float, eps_off: float) -> list[float]:
     return [d_pct(v2_edge_k(r["profs"][sig_idx], p_of(r["corpus"], CdA, Crr), r["pFlat"],
                             CLIMB_THR, k_smooth, eps_off), r["emp"]) for r in st]
 
 
-def eval_set(st, sig_idx, CdA, Crr, k_smooth, eps_off):
+def eval_set(st: list[dict], sig_idx: int, CdA: float, Crr: float,
+             k_smooth: float, eps_off: float) -> dict:
     d = deltas_of(st, sig_idx, CdA, Crr, k_smooth, eps_off)
     return {"medAbs": med_of([abs(x) for x in d]), "medSigned": med_of(d)}
 
 
-def score_of(o):
+def score_of(o: dict) -> float:
     return o["medAbs"] + (1000 + 100 * (abs(o["medSigned"]) - 1)
                           if abs(o["medSigned"]) > 1 else 0)
 
 
-def pctl(xs, q):
+def pctl(xs: list[float], q: float) -> float:
     s = sorted(x for x in xs if is_finite(x))
     if not len(s):
         return float("nan")
@@ -450,11 +455,12 @@ BOUNDS = {"CdA": [0.2, 0.6], "Crr": [0.003, 0.015], "kSmooth": [0.5, 1.0]}
 NPTS = {"CdA": 7, "Crr": 7, "kSmooth": 6}
 
 
-def linspace(lo, hi, k):
+def linspace(lo: float, hi: float, k: int) -> list[float]:
     return [lo + (hi - lo) * i / (k - 1) for i in range(k)]
 
 
-def fit_rider(train_set, sig_idx, eps_off, levels=3):
+def fit_rider(train_set: list[dict], sig_idx: int, eps_off: float,
+              levels: int = 3) -> dict:
     rng = {"CdA": list(BOUNDS["CdA"]), "Crr": list(BOUNDS["Crr"]),
            "kSmooth": list(BOUNDS["kSmooth"])}
     best = None
@@ -471,7 +477,7 @@ def fit_rider(train_set, sig_idx, eps_off, levels=3):
                     if not best or s < best["score"]:
                         best = {"CdA": cda, "Crr": crr, "kSmooth": ks, **o, "score": s}
 
-        def step(k, _rng=rng):
+        def step(k: str, _rng: dict = rng) -> float:
             return (_rng[k][1] - _rng[k][0]) / (NPTS[k] - 1)
 
         rng = {k: [max(BOUNDS[k][0], best[k] - step(k)), min(BOUNDS[k][1], best[k] + step(k))]
@@ -479,29 +485,29 @@ def fit_rider(train_set, sig_idx, eps_off, levels=3):
     return best
 
 
-def f(x, d=2):
+def f(x: float | None, d: int = 2) -> str:
     if x is None or not is_finite(x):
         return '—'
     return to_fixed(x, d)
 
 
-def summarize(st, sig_idx, prm, eps_off):
+def summarize(st: list[dict], sig_idx: int, prm: dict, eps_off: float) -> dict:
     d = deltas_of(st, sig_idx, prm["CdA"], prm["Crr"], prm["kSmooth"], eps_off)
     return {"n": len(d), "medAbs": med_of([abs(x) for x in d]), "medSigned": med_of(d),
             "p10": pctl(d, 0.10), "p90": pctl(d, 0.90)}
 
 
-def pass_fail(s):
+def pass_fail(s: dict) -> str:
     return 'PASS' if (s["medAbs"] < 5 and abs(s["medSigned"]) < 2) else 'FAIL'
 
 
-def sum_line(tag, s):
+def sum_line(tag: str, s: dict) -> str:
     return (f"{tag.ljust(46)} n={str(s['n']).rjust(3)}  med|Δ%|={f(s['medAbs']).rjust(6)}  "
             f"medΔ%={f(s['medSigned']).rjust(7)}  p10={f(s['p10']).rjust(7)}  "
             f"p90={f(s['p90']).rjust(7)}  {pass_fail(s)}")
 
 
-def run_phase_c(bin_sha, meta_sha):
+def run_phase_c(bin_sha: str, meta_sha: str) -> dict:
     global K_MIN_PRECLAMP
     K_MIN_PRECLAMP = float("inf")
     L = []
@@ -636,7 +642,7 @@ def run_phase_c(bin_sha, meta_sha):
 
 # ===== CSV cell writer (JS: typeof 'string' → JSON.stringify; finite → +Number(v).toFixed(4);
 # anything else → '') =====
-def cell4(v):
+def cell4(v: object) -> str:
     if isinstance(v, str):
         return jquote(v)
     if is_finite(v):
@@ -644,7 +650,7 @@ def cell4(v):
     return ""
 
 
-def main():
+def main() -> None:
     global rides
     os.makedirs(RESULTS, exist_ok=True)
 
@@ -653,7 +659,7 @@ def main():
         ref_csv = parse_csv(fh.read())
     ref_hdr = ref_csv[0]
 
-    def ref_idx(k):
+    def ref_idx(k: str) -> int:
         return ref_hdr.index(k) if k in ref_hdr else -1
 
     for i in range(1, len(ref_csv)):
@@ -694,7 +700,7 @@ def main():
     # ===== SANITY GATES =====
     gates = []
 
-    def gate(name, passed, extra=''):
+    def gate(name: str, passed: bool, extra: str = '') -> None:
         gates.append({"name": name, "pass": passed, "extra": extra})
 
     # (2) corpus counts

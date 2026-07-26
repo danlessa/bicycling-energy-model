@@ -21,6 +21,8 @@ Usage:
   python3 fetch.py audit                  # (re)compute power summary into manifest
   python3 fetch.py all <cookiejar>        # rwgps + strava + audit
 """
+
+from __future__ import annotations
 import zipfile, re, json, os, sys, struct, subprocess, tempfile, concurrent.futures
 import xml.etree.ElementTree as ET
 
@@ -33,7 +35,7 @@ NS  = "{http://schemas.openxmlformats.org/spreadsheetml/2006/main}"
 RNS = "{http://schemas.openxmlformats.org/officeDocument/2006/relationships}"
 
 # ----------------------------------------------------------------- xlsx links
-def extract_links():
+def extract_links() -> list[dict]:
     zf = zipfile.ZipFile(XLSX)
     shared = ["".join(t.text or "" for t in si.iter(NS + "t"))
               for si in ET.fromstring(zf.read("xl/sharedStrings.xml"))]
@@ -54,7 +56,7 @@ def extract_links():
                       "label": cells.get(ref, ""), "url": relmap.get(h.get(RNS + "id"), "")})
     return sorted(links, key=lambda r: r["row"])
 
-def classify(url):
+def classify(url: str) -> tuple[str, str | None]:
     for pat, kind in ((r"ridewithgps\.com/trips/(\d+)", "rwgps_trip"),
                       (r"ridewithgps\.com/routes/(\d+)", "rwgps_route"),
                       (r"strava\.com/activities/(\d+)", "strava")):
@@ -63,7 +65,7 @@ def classify(url):
             return kind, m.group(1)
     return "unknown", None
 
-def build_manifest():
+def build_manifest() -> list[dict]:
     man = []
     for L in extract_links():
         kind, aid = classify(L["url"])
@@ -99,7 +101,7 @@ CSV_COLUMNS = [
     ("Group size",                                            "Y"),   # Group?
 ]
 
-def read_cells(sheet=SHEET):
+def read_cells(sheet: str = SHEET) -> dict:
     zf = zipfile.ZipFile(XLSX)
     shared = ["".join(t.text or "" for t in si.iter(NS + "t"))
               for si in ET.fromstring(zf.read("xl/sharedStrings.xml"))]
@@ -113,7 +115,7 @@ def read_cells(sheet=SHEET):
         cells[ref] = val or ""
     return cells
 
-def _fmt(v):
+def _fmt(v: object) -> str:
     """Trim float noise from cached cell values; pass strings through."""
     if v in (None, ""):
         return ""
@@ -125,7 +127,7 @@ def _fmt(v):
         return str(int(f))
     return f"{round(f, 5):g}"
 
-def cmd_csv(man):
+def cmd_csv(man: list[dict]) -> None:
     import csv
     cells = read_cells()
     by_id = {e["id"]: e for e in man if e.get("id")}
@@ -148,16 +150,16 @@ def cmd_csv(man):
             n += 1
     print(f"wrote {dest}  ({n} activities x {len(CSV_COLUMNS)} columns)")
 
-def load_manifest():
+def load_manifest() -> list[dict]:
     p = os.path.join(OUT, "manifest.json")
     return json.load(open(p)) if os.path.exists(p) else build_manifest()
 
-def save_manifest(man):
+def save_manifest(man: list[dict]) -> None:
     json.dump(man, open(os.path.join(OUT, "manifest.json"), "w"),
               ensure_ascii=False, indent=2)
 
 # --------------------------------------------------------------- downloading
-def curl(url, dest, cookiejar=None):
+def curl(url: str, dest: str, cookiejar: str | None = None) -> tuple[str, int]:
     cmd = ["curl", "-sL", "-A", "Mozilla/5.0", "-o", dest, "-w", "%{http_code}"]
     if cookiejar:
         cmd += ["-b", cookiejar]
@@ -165,10 +167,10 @@ def curl(url, dest, cookiejar=None):
     r = subprocess.run(cmd, capture_output=True, text=True, timeout=300)
     return (r.stdout or "").strip(), r.returncode
 
-def cmd_rwgps(man):
+def cmd_rwgps(man: list[dict]) -> None:
     os.makedirs(os.path.join(OUT, "rwgps"), exist_ok=True)
     jobs = [e for e in man if e["source"] in ("rwgps_trip", "rwgps_route")]
-    def run(e):
+    def run(e: dict) -> str:
         base = "trips" if e["source"] == "rwgps_trip" else "routes"
         dest = os.path.join(OUT, "rwgps", f"{e['source']}_{e['id']}.json")
         code, rc = curl(f"https://ridewithgps.com/{base}/{e['id']}.json", dest)
@@ -183,7 +185,7 @@ def cmd_rwgps(man):
         for line in ex.map(run, jobs):
             print(line)
 
-def cmd_rwgps_fit(man):
+def cmd_rwgps_fit(man: list[dict]) -> None:
     """Authenticated: download RideWithGPS trips/routes as ORIGINAL .fit (preserves
     power, HR, temp, speed). Also reaches private trips. Replaces the .json file as
     the canonical track. Reads RWGPS_API_KEY / RWGPS_AUTH_TOKEN from the environment
@@ -193,7 +195,7 @@ def cmd_rwgps_fit(man):
         sys.exit("set RWGPS_API_KEY and RWGPS_AUTH_TOKEN (e.g. `source ../../.env`)")
     os.makedirs(os.path.join(OUT, "rwgps"), exist_ok=True)
     jobs = [e for e in man if e["source"] in ("rwgps_trip", "rwgps_route")]
-    def run(e):
+    def run(e: dict) -> str:
         base = "trips" if e["source"] == "rwgps_trip" else "routes"
         dest = os.path.join(OUT, "rwgps", f"{e['source']}_{e['id']}.fit")
         r = subprocess.run(
@@ -217,7 +219,7 @@ def cmd_rwgps_fit(man):
         for line in ex.map(run, jobs):
             print(line)
 
-def sniff_ext(path):
+def sniff_ext(path: str) -> str:
     head = open(path, "rb").read(512)
     if len(head) >= 12 and head[8:12] == b".FIT":
         return "fit"
@@ -230,10 +232,10 @@ def sniff_ext(path):
         return "html"
     return "bin"
 
-def cmd_strava(man, cookiejar):
+def cmd_strava(man: list[dict], cookiejar: str) -> None:
     os.makedirs(os.path.join(OUT, "strava"), exist_ok=True)
     jobs = [e for e in man if e["source"] == "strava"]
-    def run(e):
+    def run(e: dict) -> str:
         tmp = tempfile.mktemp(dir=OUT)
         code, rc = curl(f"https://www.strava.com/activities/{e['id']}/export_original",
                         tmp, cookiejar=cookiejar)
@@ -253,7 +255,7 @@ def cmd_strava(man, cookiejar):
             print(line)
 
 # --------------------------------------------------------------- power audit
-def fit_powers(path):
+def fit_powers(path: str) -> list[float]:
     """Return list of valid record-message (global 20) power values (field 7)."""
     b = open(path, "rb").read()
     pos = b[0]
@@ -291,18 +293,18 @@ def fit_powers(path):
             pos += d["len"]
     return out
 
-def gpx_powers(path):
+def gpx_powers(path: str) -> list[float]:
     txt = open(path, encoding="utf-8", errors="ignore").read()
     return [float(x) for x in re.findall(r"<(?:\w+:)?power>\s*([\d.]+)", txt)]
 
-def summarize(p):
+def summarize(p: list[float]) -> dict:
     p = [x for x in p if x and x > 0]
     if not p:
         return {"has_power": False, "power_points": 0}
     return {"has_power": True, "power_points": len(p),
             "avg_power_w": round(sum(p) / len(p), 1), "max_power_w": max(p)}
 
-def cmd_audit(man):
+def cmd_audit(man: list[dict]) -> None:
     npow = 0
     print(f"{'LABEL':28} {'SOURCE':12} {'PWR':6} DETAIL")
     print("-" * 78)
@@ -330,7 +332,7 @@ def cmd_audit(man):
     print(f"{npow}/{len(man)} activities have measured power")
 
 # ----------------------------------------------------------------------- main
-def main():
+def main() -> None:
     cmd = sys.argv[1] if len(sys.argv) > 1 else "all"
     man = load_manifest()
     if cmd in ("rwgps", "all"):

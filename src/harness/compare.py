@@ -10,6 +10,8 @@ Reads data/inputs/activities/model_inputs.json (+ the gitignored tracks); writes
 data/results/model_comparison.csv. Run: python3 src/harness/compare.py
 """
 
+from __future__ import annotations
+
 import json
 import math
 import os
@@ -37,7 +39,8 @@ TAU_SMOOTH = 2   # elevation deadband threshold (m) — rejects sub-tau jitter i
 
 # ---- compare-specific helpers (ported verbatim from compare.mjs) ----
 
-def empirical_by_regime(pts, climb_thr, desc_thr):
+def empirical_by_regime(pts: list[dict], climb_thr: float,
+                        desc_thr: float) -> dict[str, float]:
     """Empirical ∫P·dt split by the LOCAL grade over a 30 m window — same
     thresholds as canonical/extractRegimePowers. Sums to the total empirical."""
     W = 30
@@ -68,7 +71,7 @@ def empirical_by_regime(pts, climb_thr, desc_thr):
     return by_reg
 
 
-def climb_fraction(prof, thr):
+def climb_fraction(prof: dict, thr: float) -> float:
     """Fraction of horizontal distance ridden on climbs (slope >= thr)."""
     xs, hs = prof["x"], prof["h"]
     X = Xc = 0.0
@@ -219,13 +222,13 @@ for e in inputs:
 
 # ---- console report (byte-identical to the JS output) ----
 
-def f(x, d=0):
+def f(x: float | None, d: int = 0) -> str:
     if x is None or (isinstance(x, float) and x != x):
         return "—"
     return to_fixed(x, d)
 
 
-def med(xs):
+def med(xs: list[float]) -> float:
     s = sorted(xs)
     if not s:
         return float("nan")
@@ -248,7 +251,7 @@ for r in rows:
 good = [r for r in rows if not r.get("error")]
 
 
-def stats(key):
+def stats(key: str) -> dict:
     v = [abs(r[key]) for r in good if is_finite(r[key])]
     signed = [r[key] for r in good if is_finite(r[key])]
     total = 0.0
@@ -392,7 +395,7 @@ cols = ["ride", "source", "dist_km", "climb_frac", "empirical", "canonical", "ap
         "error"]
 
 
-def cell(v):
+def cell(v: object) -> str:
     if v is None:
         return ""
     if isinstance(v, (int, float)) and not isinstance(v, bool):

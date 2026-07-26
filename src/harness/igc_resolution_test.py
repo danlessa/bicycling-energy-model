@@ -48,6 +48,8 @@ JS name → Python name (this file's own top-level definitions, in file order):
   processRide → process_ride   f → f            cell (CSV) → cell4
 """
 
+from __future__ import annotations
+
 import gzip
 import json
 import math
@@ -93,7 +95,7 @@ BBOX = {"lonMin": -46.9481671, "lonMax": -46.2347227,
 _NUM_RE = re.compile(r'^[+-]?(?:Infinity|(?:\d+\.?\d*|\.\d+)(?:[eE][+-]?\d+)?)')
 
 
-def js_parse_float(s):
+def js_parse_float(s: str | None) -> float:
     """Number.parseFloat: longest numeric prefix of the trimmed string, NaN when none."""
     if s is None:
         return float("nan")
@@ -103,7 +105,7 @@ def js_parse_float(s):
     return float(m.group(0).replace("Infinity", "inf"))
 
 
-def js_plus(s):
+def js_plus(s: str | None) -> float:
     """JS unary + on a CSV cell: '' → 0, garbage/undefined → NaN."""
     if s is None:
         return float("nan")
@@ -116,13 +118,13 @@ def js_plus(s):
         return float("nan")
 
 
-def _at(cells, i):
+def _at(cells: list, i: int) -> str | None:
     """JS array index: out of range → undefined (None here)."""
     return cells[i] if 0 <= i < len(cells) else None
 
 
 # ===== raster prep (idempotent) =====
-def ensure_rasters():
+def ensure_rasters() -> None:
     os.makedirs(SCRATCH, exist_ok=True)
     if not os.path.exists(DEM30):
         print('creating 30 m warp…', file=sys.stderr)
@@ -139,7 +141,7 @@ def ensure_rasters():
 # ===== NEW: geo track (lat/lon vs the SAME cumulative x as pts_from_fit) =====
 # Mirrors pts_from_fit's distance mapping exactly (device-distance interpolation when present,
 # haversine chain otherwise) so profile arc-length d maps to track position d + pts[0].x.
-def geo_track_from_fit(buffer):
+def geo_track_from_fit(buffer: bytes) -> list[dict]:
     recs = parse_fit(buffer)
     out = []
     if any("dist" in r for r in recs):
@@ -177,7 +179,7 @@ def geo_track_from_fit(buffer):
 
 
 # same grid convention as resample_profile (n = max(2, round(total/dx)+1), last point exact)
-def grid_positions(total, dx):
+def grid_positions(total: float, dx: float) -> list[float]:
     n = max(2, math.floor(total / dx + 0.5) + 1)   # JS Math.round is half-UP
     d = [0.0] * n
     for i in range(n):
@@ -185,7 +187,7 @@ def grid_positions(total, dx):
     return d
 
 
-def lon_lat_at(geo, xs):   # linear interp along track x; clamped at the ends
+def lon_lat_at(geo: list[dict], xs: list[float]) -> dict[str, list[float]]:   # linear interp along track x; clamped at the ends
     n = len(xs)
     lons = [0.0] * n
     lats = [0.0] * n
@@ -205,7 +207,8 @@ def lon_lat_at(geo, xs):   # linear interp along track x; clamped at the ends
 sample_ms = {"igc5": 0, "igc30": 0, "fabdem": 0, "igc5at30": 0}
 
 
-def sample_raster(raster, lons, lats, timer_key):
+def sample_raster(raster: str, lons: list[float], lats: list[float],
+                  timer_key: str) -> list[float]:
     t0 = time.time() * 1000
     parts = []
     for i in range(len(lons)):
@@ -233,7 +236,7 @@ def sample_raster(raster, lons, lats, timer_key):
 
 # validity + gap fill (≤1% invalid allowed): sampa_geral has un-surveyed cells stored as 0
 # (band min is 0.000 in a ~440–1212 m area) → invalid if ≤ 0.5 m; FABDEM nodata −9999.
-def build_dem_profile(xs, vals, floor):
+def build_dem_profile(xs: list[float], vals: list[float], floor: float) -> dict:
     n = len(xs)
     n_bad = 0
     h = [0.0] * n
@@ -261,7 +264,7 @@ def build_dem_profile(xs, vals, floor):
 
 # v2Edge walk decomposition (diagnostics; E is asserted ≡ r1d_v2_edge to 1e-9 per profile):
 # Σh₊, Σh₋ over the walked edges + drop-weighted implied ε = Σ ε_i·h₋ᵢ / Σh₋ᵢ (descent edges).
-def walk_stats(prof, p, pw, climb_thr):
+def walk_stats(prof: dict, p: dict, pw: dict, climb_thr: float) -> dict:
     mg = p["m"] * G
     beta = mg / p["keff"]
     w = p["wind"]
@@ -305,11 +308,12 @@ excl = {}   # per-corpus exclusion tallies
 MAX_WALK_MISMATCH = 0
 
 
-def note(c, k):
+def note(c: str, k: str) -> None:
     excl.setdefault(c, {})[k] = excl.get(c, {}).get(k, 0) + 1
 
 
-def process_ride(file, p0, label, corpus, eps_rule):
+def process_ride(file: str, p0: dict, label: str, corpus: str,
+                 eps_rule: str) -> None:
     global MAX_WALK_MISMATCH
     with open(os.path.join(DATA, file), "rb") as fh:
         buf0 = fh.read()
@@ -433,7 +437,7 @@ def process_ride(file, p0, label, corpus, eps_rule):
 
 
 # ===== reporting helpers =====
-def f(x, d=1):
+def f(x: float | None, d: int = 1) -> str:
     if x is None or not is_finite(x):
         return "—"
     return to_fixed(x, d)
@@ -445,7 +449,7 @@ CORP = [['censo', 'censo (urban group rides, assumed rider)'],
         ['danlessa', 'author full (open, frozen physics)']]
 
 
-def by_corpus(c):
+def by_corpus(c: str) -> list[dict]:
     if c == 'pooled':
         return [r for r in rows if r["corpus"] != 'censo']
     return [r for r in rows if r["corpus"] == c]
@@ -453,7 +457,7 @@ def by_corpus(c):
 
 # ===== CSV cell writer (JS: typeof 'string' → JSON.stringify; finite → +Number(v).toFixed(4);
 # anything else → '') =====
-def cell4(v):
+def cell4(v: object) -> str:
     if isinstance(v, str):
         return jquote(v)
     if is_finite(v):
@@ -467,7 +471,7 @@ COLS = (['corpus', 'ride', 'emp', 'km', 'vf_kmh', 'geoCov', 'valid_igc5', 'valid
                                         f"hplus_{s}", f"hminus_{s}", f"epsw_{s}", f"eps_{s}")])
 
 
-def main():
+def main() -> None:
     os.makedirs(RESULTS, exist_ok=True)
     ensure_rasters()
 
@@ -582,10 +586,10 @@ def main():
         if not st:
             continue
 
-        def g(k, st=st):
+        def g(k: str, st: list[dict] = st) -> str:
             return f(med_of([r[k] for r in st if is_finite(r[k])]), 0)
 
-        def ge(k, st=st):
+        def ge(k: str, st: list[dict] = st) -> str:
             return f(med_of([r[k] for r in st if is_finite(r[k])]), 3)
 
         print(f"  {c.ljust(9)} h₊: baro {g('hplus_baro')} · igc5 {g('hplus_igc5')} · "
@@ -599,7 +603,7 @@ def main():
     print('\n================ SANITY GATES ================')
     ok = [True]
 
-    def say(name, passed, extra=''):
+    def say(name: str, passed: bool, extra: str = '') -> None:
         print(f"  [{'PASS' if passed else 'FAIL'}] {name}{('  ' + extra) if extra else ''}")
         if not passed:
             ok[0] = False
@@ -612,7 +616,7 @@ def main():
             csv = fh.read().split('\n')
         hdr = csv[0].split(',')
 
-        def idx(k):
+        def idx(k: str) -> int:
             return hdr.index(k) if k in hdr else -1
 
         ref = {}

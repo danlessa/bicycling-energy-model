@@ -1,4 +1,6 @@
 #!/usr/bin/env python
+from __future__ import annotations
+
 # ENTRY 20 — Phase A: mask-normalized Gaussian pre-smoothing of the deployed IGC-SP 5 m raster.
 #
 # Run with the conda base python (numpy 2.3.5 / scipy 1.16.3 / rasterio 1.4.3):
@@ -46,15 +48,16 @@ SIGMAS_M = [10, 15, 20, 30, 45]
 M_PER_DEG = math.pi / 180.0 * 6371000.0   # 111194.92664455873 — matches the harness haversine sphere
 VALID_FLOOR = 0.5                          # h > 0.5 m = surveyed (band min is 0.0 = un-surveyed)
 
-def out_path(sig):
+def out_path(sig: int) -> str:
     return os.path.join(SCRATCH, f'sampa_geral_sm{sig}m.tif')
 
-def kernel(sigma_px):
+def kernel(sigma_px: float) -> "np.ndarray":
     r = math.ceil(3.0 * sigma_px)
     k = np.arange(-r, r + 1, dtype=np.float64)
     return np.exp(-(k * k) / (2.0 * sigma_px * sigma_px))
 
-def masked_pass(vals, m, w, axis):
+def masked_pass(vals: "np.ndarray", m: "np.ndarray", w: "np.ndarray",
+                axis: int) -> "np.ndarray":
     # corr1d(vals*m)/corr1d(m) at valid cells; invalid cells -> 0. Zero-padded boundary.
     num = correlate1d(vals * m, w, axis=axis, mode='constant', cval=0.0)
     den = correlate1d(m, w, axis=axis, mode='constant', cval=0.0)
@@ -62,7 +65,7 @@ def masked_pass(vals, m, w, axis):
     np.divide(num, den, out=out, where=(m > 0))
     return out
 
-def main():
+def main() -> None:
     os.makedirs(SCRATCH, exist_ok=True)
     with rasterio.open(SRC) as ds:
         prof = ds.profile.copy()

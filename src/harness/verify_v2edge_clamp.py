@@ -19,6 +19,8 @@ descent credit than the champion R0, never less (equality on constant grade).
 Run: python3 src/harness/verify_v2edge_clamp.py   (exits non-zero on any violation)
 """
 
+from __future__ import annotations
+
 import json
 import math
 import os
@@ -31,7 +33,7 @@ OFF = 0.13
 
 
 # Verbatim structure of sampasimu energy-worker.js v2Edge, returning the PRE-clamp value.
-def v2edge_descent_preclamp(dist, ndh, c):
+def v2edge_descent_preclamp(dist: float, ndh: float, c: dict) -> float:
     eps = c["abRatio"] * dist / ndh
     if eps > 1:
         eps = 1
@@ -41,7 +43,8 @@ def v2edge_descent_preclamp(dist, ndh, c):
     return c["aRoll"] * dist + c["aAero"] * dist - eps * c["beta"] * ndh
 
 
-def flat_eq_speed(P, m, crr, cda, rho, keff):
+def flat_eq_speed(P: float, m: float, crr: float, cda: float,
+                  rho: float, keff: float) -> float:
     # 9.81 is DELIBERATE and must not be swept to this repo's G (São Paulo's
     # 9.7864): this harness proves a property of the cost bundle *sampasimu
     # deploys*, and that app computes mg with 9.81 in its own repo.  Mirroring
@@ -59,7 +62,8 @@ def flat_eq_speed(P, m, crr, cda, rho, keff):
     return (lo + hi) / 2
 
 
-def bundle(m, crr, cda, rho, keff, p_flat, k_smooth):
+def bundle(m: float, crr: float, cda: float, rho: float, keff: float,
+           p_flat: float, k_smooth: float) -> dict[str, float]:
     vf = flat_eq_speed(p_flat, m, crr, cda, rho, keff)
     mg = m * 9.81
     aero_coef = 0.5 * rho * cda * vf * vf
@@ -75,7 +79,7 @@ def bundle(m, crr, cda, rho, keff, p_flat, k_smooth):
 fail = 0
 
 
-def check(ok, msg):
+def check(ok: bool, msg: str) -> None:
     global fail
     print(f"{'ok  ' if ok else 'FAIL'} {msg}")
     if not ok:
@@ -118,7 +122,7 @@ check(abs(pre - OFF * c["beta"] * ndh) < 1e-12,
 
 
 # ---- Claim 2: Jensen. Per-edge credit >= aggregate credit on random descent profiles.
-def credits(edges, ab):                                    # edges: [{d, drop}]
+def credits(edges: list[dict], ab: float) -> tuple[float, float]:      # edges: [{d, drop}]
     per = H = xw = 0.0
     for e in edges:
         d, drop = e["d"], e["drop"]
@@ -137,7 +141,7 @@ worst = 0.0
 seed = 42.0
 
 
-def rnd():
+def rnd() -> float:
     global seed
     seed = (seed * 1103515245.0 + 12345.0) % 2147483648.0
     return seed / 2147483648.0

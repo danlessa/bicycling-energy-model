@@ -9,6 +9,8 @@ Strava .gpx (trkpt + Garmin TrackPointExtension).
 
 Usage: python3 verify.py            # console table + longoes_verify.csv
 """
+
+from __future__ import annotations
 import json, os, re, struct, math, csv, statistics
 import xml.etree.ElementTree as ET
 
@@ -31,7 +33,7 @@ BT = {0:('B',1,0xFF),1:('b',1,0x7F),2:('B',1,0xFF),3:('h',2,0x7FFF),4:('H',2,0xF
 REC = {253:('t',1,0), 2:('e',5,500), 3:('hr',1,0), 5:('d',100,0), 6:('v',1000,0),
        7:('p',1,0), 13:('temp',1,0), 73:('v',1000,0), 78:('e',5,500)}
 
-def read_fit(path):
+def read_fit(path: str) -> list[dict]:
     b = open(path, "rb").read()
     pos = b[0]
     end = min(b[0] + struct.unpack_from("<I", b, 4)[0], len(b))
@@ -78,7 +80,7 @@ def read_fit(path):
             pos += d["len"]
     return pts
 
-def _fit_row(b, base_off, d, last_ts):
+def _fit_row(b: bytes, base_off: int, d: dict, last_ts: float | None) -> dict:
     row = {}
     pre = "<" if d["arch"] == 0 else ">"
     for (num, size, btype, off) in d["fields"]:
@@ -107,7 +109,7 @@ def _fit_row(b, base_off, d, last_ts):
     return row
 
 # ----------------------------------------------------------------- GPX reader
-def read_gpx(path):
+def read_gpx(path: str) -> list[dict]:
     txt = open(path, encoding="utf-8", errors="ignore").read()
     txt = re.sub(r'\sxmlns(:\w+)?="[^"]*"', "", txt)          # drop xmlns declarations
     txt = re.sub(r'(?<=[\s</])[A-Za-z_][\w.\-]*:', "", txt)   # drop all prefixes (tags + attrs)
@@ -135,7 +137,7 @@ def read_gpx(path):
         pts.append(row)
     return pts
 
-def haversine(a, b):
+def haversine(a: dict, b: dict) -> float:
     R = 6371000.0
     p1, p2 = math.radians(a[0]), math.radians(b[0])
     dp = math.radians(b[0]-a[0]); dl = math.radians(b[1]-a[1])
@@ -143,7 +145,7 @@ def haversine(a, b):
     return 2*R*math.asin(math.sqrt(x))
 
 # ------------------------------------------------------------- RWGPS reader
-def read_rwgps(path):
+def read_rwgps(path: str) -> tuple[list[dict], dict]:
     d = json.load(open(path))
     pts = []
     for q in d.get("track_points") or []:
@@ -154,7 +156,7 @@ def read_rwgps(path):
     return pts, d
 
 # ----------------------------------------------------------------- metrics
-def metrics(pts):
+def metrics(pts: list[dict]) -> dict:
     ts  = [p.get("t") for p in pts]
     dist= [p.get("d") for p in pts]
     ele = [p.get("e") for p in pts]
@@ -214,7 +216,7 @@ def metrics(pts):
         m["p80_temp"] = round(percentile(tv, 80), 1)
     return m
 
-def percentile(xs, q):
+def percentile(xs: list[float], q: float) -> float:
     xs = sorted(xs); k = (len(xs)-1)*q/100
     lo = int(math.floor(k)); hi = int(math.ceil(k))
     if lo == hi: return xs[lo]
@@ -234,11 +236,11 @@ CHECKS = [
     ("80% Percentile over Temperature","p80_temp",    15, 3),
 ]
 
-def fnum(s):
+def fnum(s: object) -> float | None:
     try: return float(s)
     except (TypeError, ValueError): return None
 
-def main():
+def main() -> None:
     rows = list(csv.DictReader(open(os.path.join(OUT, "longoes.csv"))))
     man = {e["id"]: e for e in json.load(open(os.path.join(OUT,"manifest.json"))) if e.get("id")}
     detail = []

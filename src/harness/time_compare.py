@@ -30,6 +30,8 @@ Design (fixed after an adversarial methods review — see the plan / Entry 13):
 Output: console report + time_comparison.csv (gitignored via data/results/*).
 """
 
+from __future__ import annotations
+
 import json
 import math
 import os
@@ -65,7 +67,7 @@ phys_profile = None   # the .mjs's `physProfile` global (set at the build_profil
 FIT_MANUF = None      # the .mjs's `FIT_MANUF` global (set by read_pts via the parse meta dict)
 
 
-def eprint(msg):
+def eprint(msg: str) -> None:
     """console.error: keep the stdout/stderr interleaving of the combined stream."""
     sys.stdout.flush()
     print(msg, file=sys.stderr)
@@ -75,13 +77,13 @@ def eprint(msg):
 # flatEqSpeed / resampleProfile / canonical / buildProfile / ptsFromFIT /
 # approxComponents come from bicycling_energy_model (body-identical).
 
-def has_power(pts):
+def has_power(pts: list[dict]) -> bool:
     return any(q.get("power") is not None for q in pts)
 
 
 # Descent 30 m cells: ε_bal AND the geometric ε_coast/s̄ in one pass (adapted from
 # compare.mjs's epsFromBalance; the ε_coast accumulation mirrors eps_hypothesis.mjs).
-def eps_cells_pz(pts, p):
+def eps_cells_pz(pts: list[dict], p: dict) -> dict | None:
     if not pts or len(pts) < 2:
         return None
     mg = p["m"] * G
@@ -95,7 +97,7 @@ def eps_cells_pz(pts, p):
         return None
     j = 0
 
-    def alt_at(d):
+    def alt_at(d: float) -> float:
         nonlocal j
         while j < len(pts) - 2 and pts[j + 1]["x"] < d:
             j += 1
@@ -151,7 +153,8 @@ def eps_cells_pz(pts, p):
 # accumulates, per regime (descent/flat/climb): moving time Σdt, horizontal Σdx, vertical Σdh
 # (all over the SAME gated points that feed P̄, so t₊+t_flat+t₋ ≡ Σdt over gated points, and
 # k₊_meas/k₋_meas use exactly the P̄ point set). Returns times (s), dists (m), verticals (m).
-def extract_regime_stats(pts, climb_thr, desc_thr):
+def extract_regime_stats(pts: list[dict], climb_thr: float,
+                         desc_thr: float) -> dict | None:
     W = 30
     t = [0.0, 0.0, 0.0]
     x = [0.0, 0.0, 0.0]
@@ -183,7 +186,7 @@ def extract_regime_stats(pts, climb_thr, desc_thr):
         dh[r] += dhLoc
         pw[r].append((pts[i]["power"], pts[i].get("dt") or 1))
 
-    def mean(b):
+    def mean(b: list) -> float | None:
         if not b:
             return None
         sw = swp = 0.0
@@ -202,7 +205,7 @@ def extract_regime_stats(pts, climb_thr, desc_thr):
 
 # Descent equilibrium speed at power Pdesc on mean descent grade s̄ (>0): the same P+gravity
 # aero-equilibrium bisection approxTime uses, extracted for the bridge fallback. Capped vmax.
-def descent_eq_speed(Pdesc, sbar, p, vmax):
+def descent_eq_speed(Pdesc: float, sbar: float, p: dict, vmax: float) -> float:
     mg = p["m"] * G
     w = p["wind"]
     slope = -sbar
@@ -222,7 +225,7 @@ def descent_eq_speed(Pdesc, sbar, p, vmax):
 
 
 # 30 m-cell profile h± (alternative to regime-binned, for the sensitivity run) — cells like epsGeom.
-def cell_hpm(prof):
+def cell_hpm(prof: dict) -> dict[str, float]:
     x0 = prof["x"][0]
     total = prof["x"][-1] - x0
     DX = 30
@@ -231,7 +234,7 @@ def cell_hpm(prof):
         return {"hplus": 0, "hminus": 0}
     j = 0
 
-    def h_at(d):
+    def h_at(d: float) -> float:
         nonlocal j
         while j < len(prof["x"]) - 2 and prof["x"][j + 1] < d:
             j += 1
@@ -250,19 +253,19 @@ def cell_hpm(prof):
     return {"hplus": hp, "hminus": hm}
 
 
-def clamp01(v):
+def clamp01(v: float) -> float:
     if v != v:
         return v
     return max(0, min(1, v))
 
 
-def med_of(xs):
+def med_of(xs: list[float]) -> float | None:
     s = sorted(x for x in xs if is_finite(x))
     k = (len(s) - 1) / 2
     return (s[math.floor(k)] + s[math.ceil(k)]) / 2 if s else float("nan")
 
 
-def corr_of(xs, ys):
+def corr_of(xs: list[float], ys: list[float]) -> float:
     n = len(xs)
     if n < 3:
         return float("nan")
@@ -276,7 +279,7 @@ def corr_of(xs, ys):
     return jsdiv(sxy, math.sqrt(sxx * syy))
 
 
-def read_pts(file):
+def read_pts(file: str) -> list[dict]:
     global FIT_MANUF
     meta = {}
     pts = load_pts(os.path.join(DATA, file), meta)
@@ -286,7 +289,7 @@ def read_pts(file):
 
 
 # ---- build the per-ride measured record (corpus-agnostic) ----
-def measure_ride(pts, p, label, corpus):
+def measure_ride(pts: list[dict], p: dict, label: str, corpus: str) -> dict | None:
     global phys_profile
     info = build_profile([q["x"] for q in pts], [q["alt"] for q in pts])
     phys_profile = {"x": info["x"], "h": info["h"]}
@@ -362,13 +365,13 @@ def measure_ride(pts, p, label, corpus):
 # physics-derived climb multiplier: t₊≈β·h₊/P̄_climb (pure lift), minus the horizontal
 # baseline 1/s̄₊ already in x. NOTE the pure-lift form under-charges by the roll+aero share
 # (≈ the Entry-7 energy over-charge k_h≈1.26) — a known, disclosed bias, not fitted out here.
-def k_plus_exact(r, vf):
+def k_plus_exact(r: dict, vf: float) -> float:
     if is_finite(r["sbarC"]) and r["sbarC"] > 0:
         return jsdiv(vf * r["beta"], r["Pclimb"]) - 1 / r["sbarC"]
     return jsdiv(vf * r["beta"], r["Pclimb"]) if r["Pclimb"] > 0 else 0
 
 
-def predict(r, mode, fit):
+def predict(r: dict, mode: str, fit: dict) -> dict:
     vf = r["vfPow"] if mode == "pow" else r["vfMeas"]
     hC, hD = r["hC"], r["hD"]
     kP = k_plus_exact(r, vf)
@@ -394,7 +397,7 @@ def predict(r, mode, fit):
 rows = []
 
 
-def push_ride(pts, p, label, corpus):
+def push_ride(pts: list[dict], p: dict, label: str, corpus: str) -> None:
     try:
         if not has_power(pts):
             return
@@ -464,7 +467,7 @@ nP = 0
 zw = 0
 
 
-def _num(v):
+def _num(v: object) -> float | None:
     return v if isinstance(v, (int, float)) and not isinstance(v, bool) else float("nan")
 
 
@@ -498,7 +501,7 @@ P = [r for r in clean if r["corpus"] == "ppaz"]
 
 # ---- fit on longões (T_mov_bin target), then FREEZE ----
 # scalar k₋ (T1b), holding k₊ = the physics-derived kPlusExact
-def fit_k_minus(train, mode):
+def fit_k_minus(train: list[dict], mode: str) -> dict:
     best = 0.0
     bestErr = float("inf")
     k = 0.0
@@ -518,7 +521,7 @@ def fit_k_minus(train, mode):
 
 # FAIR-CEILING pair (k₊,k₋) both FITTED (power-conditioned v_f held per-ride) — the honest
 # benchmark for the physics-derived k₊: same v_f model, best-fit hill coefficients.
-def fit_pair(train):
+def fit_pair(train: list[dict]) -> dict:
     bkP = 0.0
     bkM = 0.0
     bestErr = float("inf")
@@ -538,7 +541,7 @@ def fit_pair(train):
     return {"kP": bkP, "kM": bkM, "err": bestErr}
 
 
-def fit_ols(train):   # naive linear ceiling t = a·X + b·hC + c·hD (absolute seconds, no v_f)
+def fit_ols(train: list[dict]) -> list[float]:   # naive linear ceiling t = a·X + b·hC + c·hD (absolute seconds, no v_f)
     A = [[0.0, 0.0, 0.0], [0.0, 0.0, 0.0], [0.0, 0.0, 0.0]]
     bvec = [0.0, 0.0, 0.0]
     for r in train:
@@ -549,7 +552,7 @@ def fit_ols(train):   # naive linear ceiling t = a·X + b·hC + c·hD (absolute 
                 A[i][j] += g[i] * g[j]
             bvec[i] += g[i] * y
 
-    def det(m):
+    def det(m: list[list[float]]) -> float:
         return (m[0][0] * (m[1][1] * m[2][2] - m[1][2] * m[2][1])
                 - m[0][1] * (m[1][0] * m[2][2] - m[1][2] * m[2][0])
                 + m[0][2] * (m[1][0] * m[2][1] - m[1][1] * m[2][0]))
@@ -558,7 +561,7 @@ def fit_ols(train):   # naive linear ceiling t = a·X + b·hC + c·hD (absolute 
     if abs(D) < 1e-9:
         return [0, 0, 0]
 
-    def col(m, c, v):
+    def col(m: list[list[float]], c: int, v: list[float]) -> list[list[float]]:
         return [[v[i] if j == c else x for j, x in enumerate(row)] for i, row in enumerate(m)]
 
     return [det(col(A, 0, bvec)) / D, det(col(A, 1, bvec)) / D, det(col(A, 2, bvec)) / D]
@@ -575,19 +578,20 @@ if fitPow["kMinus"] <= 0.05 or fitPow["kMinus"] >= 19.95:
            "(speed-anchored fit disambiguates).")
 
 
-def erf(x):
+def erf(x: float) -> float:
     t = 1 / (1 + 0.3275911 * abs(x))
     y = 1 - (((((1.061405429 * t - 1.453152027) * t) + 1.421413741) * t - 0.284496736) * t
              + 0.254829592) * t * math.exp(-x * x)
     return y if x >= 0 else -y
 
 
-def p_from_z(z):
+def p_from_z(z: float) -> float:
     return 2 * (1 - 0.5 * (1 + erf(abs(z) / SQRT2))) if is_finite(z) else float("nan")
 
 
 # paired sign test + Wilcoxon signed-rank (normal approx) on per-ride |Δ%|, predA vs predB
-def paired_test(set_, mode, fit, keyA, keyB):
+def paired_test(set_: list[dict], mode: str, fit: dict, keyA: str,
+                keyB: str) -> dict:
     d = []   # |Δ%|_A − |Δ%|_B  (negative ⇒ A better)
     wins = losses = 0
     for r in set_:
@@ -630,13 +634,13 @@ def paired_test(set_, mode, fit, keyA, keyB):
 PREDS = ["T0", "TS", "T1a", "T1b", "T1c", "T2", "T3", "TF", "OLS"]
 
 
-def f(x, d=1):
+def f(x: float | None, d: int = 1) -> str:
     if x is None or (isinstance(x, float) and x != x):
         return "—"
     return to_fixed(x, d)
 
 
-def scoreboard(set_, mode, fit):
+def scoreboard(set_: list[dict], mode: str, fit: dict) -> dict:
     out = {}
     for key in PREDS:
         ds = []
@@ -656,7 +660,7 @@ LAB = {"T0": "T0  x/v_f (naive)", "TS": "TS  Scarf k₊=8", "T1a": "T1a ascent-o
        "OLS": "OLS naive-linear (no v_f)"}
 
 
-def print_score(title, set_, mode, fit):
+def print_score(title: str, set_: list[dict], mode: str, fit: dict) -> None:
     sb = scoreboard(set_, mode, fit)
     print(f"\n{title}  (n={len(set_)}, v_f={'power-conditioned' if mode == 'pow' else 'speed-anchored'})")
     print("predictor".ljust(34) + "n".rjust(4) + "med|Δ%|".rjust(9) + "medΔ%".rjust(8))
@@ -754,7 +758,7 @@ for r in clean:
     r["_T0"] = pr["T0"]
 
 
-def csv_cell(v):
+def csv_cell(v: object) -> str:
     if isinstance(v, str):
         return json.dumps(v, ensure_ascii=False)
     if isinstance(v, bool):

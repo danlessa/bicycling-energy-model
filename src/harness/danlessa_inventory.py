@@ -14,6 +14,8 @@ out-of-bounds reads raise (as the JS DataView does) so corrupt files count as
 errors exactly as in Node. Run: python3 src/harness/danlessa_inventory.py
 """
 
+from __future__ import annotations
+
 import gzip
 import json
 import math
@@ -35,7 +37,7 @@ SPORT = {0: "generic", 1: "run", 2: "ride", 5: "swim", 11: "walk", 17: "hike"}
 FIT_EPOCH = 631065600   # 1989-12-31 UTC, seconds
 
 
-def median(xs):
+def median(xs: list[float]) -> float | None:
     s = sorted(x for x in xs if is_finite(x))
     if not s:
         return None
@@ -114,7 +116,7 @@ for fn in files:
 
 # JSON.stringify(out, null, 1) byte-for-byte: 1-space indent, JS number
 # rendering (integer-valued doubles print without '.0'), no trailing newline.
-def _jval(v):
+def _jval(v: object) -> str:
     if v is None:
         return "null"
     if isinstance(v, str):
@@ -147,7 +149,7 @@ rides = [a for a in by_sport.get("ride", []) if a["powCov"] > 0.5]
 if rides:
     dates = sorted(r["date"] for r in rides if r["date"])
 
-    def q(arr, p):
+    def q(arr: list[float], p: float) -> float:
         s = sorted(x for x in arr if is_finite(x))
         return s[math.floor(p * (len(s) - 1))] if s else float("nan")
 

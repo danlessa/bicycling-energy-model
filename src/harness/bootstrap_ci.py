@@ -20,6 +20,10 @@ two-sided sign test on |Δ%|.
 Usage: python3 src/harness/bootstrap_ci.py
 """
 
+from __future__ import annotations
+
+from typing import Callable
+
 import math
 import os
 import sys
@@ -37,7 +41,7 @@ failed = False
 NAN = float("nan")
 
 
-def parse_float(s):
+def parse_float(s: str | None) -> float:
     """JS parseFloat: leading numeric prefix or NaN."""
     try:
         return float(s)
@@ -46,12 +50,12 @@ def parse_float(s):
 
 
 # --- CSV parser (quoted fields, no embedded newlines; strips quotes) ---
-def parse_csv(p):
+def parse_csv(p: str) -> list[dict[str, str]]:
     with open(os.path.join(RESULTS, p), encoding="utf-8") as fh:
         text = fh.read().strip()
     lines = text.split("\n")
 
-    def split(line):
+    def split(line: str) -> list[str]:
         out, cur, q = [], "", False
         for ch in line:
             if ch == '"':
@@ -69,10 +73,10 @@ def parse_csv(p):
 
 
 # --- deterministic RNG (mulberry32, with JS 32-bit integer semantics) ---
-def rng(seed):
+def rng(seed: int) -> Callable[[], float]:
     a = seed & 0xFFFFFFFF
 
-    def rand():
+    def rand() -> float:
         nonlocal a
         a = (a + 0x6D2B79F5) & 0xFFFFFFFF
         t = ((a ^ (a >> 15)) * (1 | a)) & 0xFFFFFFFF
@@ -82,7 +86,7 @@ def rng(seed):
     return rand
 
 
-def median(xs):
+def median(xs: list[float]) -> float:
     s = sorted(xs)
     n = len(s)
     return s[(n - 1) // 2] if n % 2 else (s[n // 2 - 1] + s[n // 2]) / 2
@@ -91,7 +95,7 @@ def median(xs):
 B = 10000
 
 
-def boot_ci(values, seed):
+def boot_ci(values: list[float], seed: int) -> tuple[float, float]:
     rand = rng(seed)
     n = len(values)
     stats = []
@@ -101,7 +105,8 @@ def boot_ci(values, seed):
     return stats[math.floor(0.025 * B)], stats[math.ceil(0.975 * B) - 1]
 
 
-def report(label, deltas, expect_abs=None, expect_signed=None):
+def report(label: str, deltas: list[float], expect_abs: float | None = None,
+           expect_signed: float | None = None) -> None:
     global failed
     abs_v = [abs(x) for x in deltas]
     m_abs, m_sgn = median(abs_v), median(deltas)
@@ -120,7 +125,7 @@ def report(label, deltas, expect_abs=None, expect_signed=None):
 
 
 # exact two-sided binomial sign test on paired |Δ%|
-def log_c(n, k):
+def log_c(n: int, k: int) -> float:
     s = 0.0
     for i in range(1, k + 1):
         s += math.log(n - k + i) - math.log(i)
@@ -130,7 +135,7 @@ def log_c(n, k):
 LN2 = 0.6931471805599453  # Math.LN2
 
 
-def sign_p(w, l):
+def sign_p(w: int, l: int) -> float:
     n = w + l
     p = 0.0
     for k in range(n + 1):
@@ -140,7 +145,7 @@ def sign_p(w, l):
     return min(1, p)
 
 
-def paired(label, rows, col_a, col_b):
+def paired(label: str, rows: list[dict], col_a: str, col_b: str) -> None:
     w = l = 0
     for r in rows:
         a, b = abs(parse_float(r.get(col_a))), abs(parse_float(r.get(col_b)))
@@ -154,11 +159,11 @@ def paired(label, rows, col_a, col_b):
           f"sign test p={to_fixed(sign_p(w, l), 4)}")
 
 
-def num(r, c):
+def num(r: dict, c: str) -> float:
     return parse_float(r.get(c))
 
 
-def col(rows, c):
+def col(rows: list[dict], c: str) -> list[float]:
     return [x for x in (num(r, c) for r in rows) if is_finite(x)]
 
 
@@ -221,7 +226,7 @@ print("\n== Time model, P. Paz (§8.8 primary endpoint) ==")
 tm = [r for r in parse_csv("time_comparison.csv") if r.get("corpus") == "ppaz"]
 
 
-def t_delta(r, c):
+def t_delta(r: dict, c: str) -> float:
     return 100 * (num(r, c) - num(r, "tMovBin")) / num(r, "tMovBin")
 
 

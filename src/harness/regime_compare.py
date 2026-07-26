@@ -63,6 +63,10 @@ JS name → Python name (the .mjs's top-level definitions, in file order):
   erf → erf   pFromZ → p_from_z   pairedAbs → paired_abs        f → f
 """
 
+from __future__ import annotations
+
+from typing import Callable
+
 import json
 import math
 import os
@@ -92,17 +96,17 @@ VSTOP = 0.5 / 3.6
 ASSUMED = {"m": 78, "CdA": 0.40, "Crr": 0.008, "rho": 1.13, "keff": 0.98, "wind": 0}
 
 
-def jgt(v, t):
+def jgt(v: float | None, t: float) -> bool:
     """JS `v > t` with v possibly undefined (a missing manifest field): always false."""
     return v is not None and v > t
 
 
-def jge(v, t):
+def jge(v: float | None, t: float) -> bool:
     """JS `v >= t` with v possibly undefined: always false."""
     return v is not None and v >= t
 
 
-def jnum(s):
+def jnum(s: str) -> float:
     """JS unary plus on an env string (+process.env.X → Number(x))."""
     t = s.strip()
     if t == "":
@@ -144,7 +148,7 @@ FIT_MANUF = None      # file_id manufacturer, set by parse_fit per file
 # below that keep the phys_profile / FIT_MANUF module globals the sibling harnesses
 # (igc_resolution_test, goal_calibration, scale_trio) read as module attributes.
 
-def build_profile(dist_arr, ele_arr):
+def build_profile(dist_arr: list[float], ele_arr: list[float | None]) -> dict:
     """bem.build_profile plus the phys_profile module-global side effect the
     sibling harnesses rely on (they call this then read regime_compare.phys_profile)."""
     global phys_profile
@@ -155,7 +159,7 @@ def build_profile(dist_arr, ele_arr):
 
 # ---- FIT parsing — bem, via wrappers that keep the FIT_MANUF module global ----
 
-def parse_fit(buf):
+def parse_fit(buf: bytes) -> list[dict]:
     """bem.parse_fit plus the FIT_MANUF module-global side effect (the sibling
     harnesses read regime_compare.FIT_MANUF after parsing a file)."""
     global FIT_MANUF
@@ -165,7 +169,7 @@ def parse_fit(buf):
     return recs
 
 
-def pts_from_fit(buf):
+def pts_from_fit(buf: bytes) -> list[dict]:
     """bem.pts_from_fit plus the FIT_MANUF module-global side effect."""
     global FIT_MANUF
     meta = {}
@@ -174,11 +178,11 @@ def pts_from_fit(buf):
     return pts
 
 
-def has_power(pts):
+def has_power(pts: list[dict]) -> bool:
     return any(q.get("power") is not None for q in pts)
 
 
-def eps_cells_pz(pts, p):
+def eps_cells_pz(pts: list[dict], p: dict) -> dict | None:
     """Descent 30 m cells: ε_bal AND the geometric ε_coast/s̄ in one pass."""
     if not pts or len(pts) < 2:
         return None
@@ -193,7 +197,7 @@ def eps_cells_pz(pts, p):
         return None
     j = 0
 
-    def alt_at(d):
+    def alt_at(d: float) -> float:
         nonlocal j
         while j < len(pts) - 2 and pts[j + 1]["x"] < d:
             j += 1
@@ -242,7 +246,8 @@ def eps_cells_pz(pts, p):
 
 
 # ===== NEW INSTRUMENT: per-regime moving time / distance / vertical =====
-def extract_regime_stats(pts, climb_thr, desc_thr):
+def extract_regime_stats(pts: list[dict], climb_thr: float,
+                         desc_thr: float) -> dict | None:
     """Same 30 m forward grade window + power-gate + VSTOP gate as extract_regime_powers,
     but also accumulates, per regime (descent/flat/climb): moving time Σdt, horizontal Σdx,
     vertical Σdh. Returns times (s), dists (m), verticals (m)."""
@@ -277,7 +282,7 @@ def extract_regime_stats(pts, climb_thr, desc_thr):
         dh[r] += dhLoc
         pw[r].append({"p": pts[i]["power"], "w": pts[i].get("dt") or 1})
 
-    def mean(b):
+    def mean(b: list) -> float | None:
         if not b:
             return None
         sw = swp = 0.0
@@ -294,7 +299,7 @@ def extract_regime_stats(pts, climb_thr, desc_thr):
     }
 
 
-def descent_eq_speed(Pdesc, sbar, p, vmax):
+def descent_eq_speed(Pdesc: float, sbar: float, p: dict, vmax: float) -> float:
     """Descent equilibrium speed at power Pdesc on mean descent grade s̄ (>0): the same
     P+gravity aero-equilibrium bisection approxTime uses. Capped vmax."""
     mg = p["m"] * G
@@ -315,7 +320,7 @@ def descent_eq_speed(Pdesc, sbar, p, vmax):
     return min(vmax, max(0.5, 0.5 * (lo + hi)))
 
 
-def cell_hpm(prof):
+def cell_hpm(prof: dict) -> dict[str, float]:
     """30 m-cell profile h± (alternative to regime-binned) — cells like eps_geom."""
     x0 = prof["x"][0]
     total = prof["x"][len(prof["x"]) - 1] - x0
@@ -325,7 +330,7 @@ def cell_hpm(prof):
         return {"hplus": 0, "hminus": 0}
     j = 0
 
-    def h_at(d):
+    def h_at(d: float) -> float:
         nonlocal j
         while j < len(prof["x"]) - 2 and prof["x"][j + 1] < d:
             j += 1
@@ -344,11 +349,11 @@ def cell_hpm(prof):
     return {"hplus": hp, "hminus": hm}
 
 
-def clamp01(v):
+def clamp01(v: float) -> float:
     return max(0, min(1, v))
 
 
-def med_of(xs):
+def med_of(xs: list[float]) -> float:
     s = sorted(x for x in xs if is_finite(x))
     if not s:
         return float("nan")
@@ -356,18 +361,18 @@ def med_of(xs):
     return (s[math.floor(k)] + s[math.ceil(k)]) / 2
 
 
-def iqr(xs):
+def iqr(xs: list[float]) -> list[float]:
     s = sorted(x for x in xs if is_finite(x))
     if not s:
         return [float("nan"), float("nan")]
 
-    def q(p):
+    def q(p: float) -> float:
         return s[math.floor(p * (len(s) - 1))]
 
     return [q(0.25), q(0.75)]
 
 
-def corr_of(xs, ys):
+def corr_of(xs: list[float], ys: list[float]) -> float:
     n = len(xs)
     if n < 3:
         return float("nan")
@@ -387,7 +392,7 @@ def corr_of(xs, ys):
     return jsdiv(sxy, math.sqrt(sxx * syy))
 
 
-def read_pts(file):
+def read_pts(file: str) -> list[dict]:
     global FIT_MANUF
     meta = {}
     pts = load_pts(os.path.join(DATA, file), meta)
@@ -397,7 +402,8 @@ def read_pts(file):
 
 
 # ===== NEW: regime-decomposed closed form =====
-def regime_components(prof, p, pw, thr, eps, descent_mode):
+def regime_components(prof: dict, p: dict, pw: dict, thr: dict, eps: float,
+                      descent_mode: str) -> dict:
     """Walk the (deadband-smoothed) 5 m profile edge by edge; classify each edge by local
     slope vs (thr.climbThr, thr.descThr); accumulate the base closed form per regime.
     `descent_mode` picks the firewalled descent treatment. Flat edges use RAW signed β·dh
@@ -447,7 +453,8 @@ def regime_components(prof, p, pw, thr, eps, descent_mode):
             "xF": xF, "xC": xC, "xD": xD, "hpC": hpC, "hmD": hmD, "vFlat": vFlat}
 
 
-def regime_totals(prof, p, pw, thr, eps, descent_mode):
+def regime_totals(prof: dict, p: dict, pw: dict, thr: dict, eps: float,
+                  descent_mode: str) -> dict:
     """Regime closed form on TOTALS — the apples-to-apples form (the champion R0 evaluates
     on totals). Classify edges once to accumulate per-regime aggregates, then evaluate each
     regime's closed form ONCE: climb aero at a single v_c(s̄₊); descent clamp/equilibrium on
@@ -514,7 +521,7 @@ def regime_totals(prof, p, pw, thr, eps, descent_mode):
 R1D_MIN_PRECLAMP = float("inf")
 
 
-def r1d_v2_edge(prof, p, pw, climb_thr):
+def r1d_v2_edge(prof: dict, p: dict, pw: dict, climb_thr: float) -> float:
     global R1D_MIN_PRECLAMP
     mg = p["m"] * G
     beta = mg / p["keff"]
@@ -550,7 +557,8 @@ def r1d_v2_edge(prof, p, pw, climb_thr):
     return E / 1000
 
 
-def r0_champion(prof, profS, p, pw, eps):
+def r0_champion(prof: dict, profS: dict, p: dict, pw: dict,
+                eps: float) -> dict:
     """R0 champion — smooth (cf + 2 m deadband) AND poor-man's scalar, VERBATIM formulae
     from ppaz_compare.mjs pass B (aSm/aRaw/km/eSm/ePm)."""
     vf = flat_eq_speed(pw["flat"], p)
@@ -565,7 +573,7 @@ def r0_champion(prof, profS, p, pw, eps):
     return {"eSm": eSm, "ePm": ePm, "vf": vf}
 
 
-def point_regime_data(pts):
+def point_regime_data(pts: list[dict]) -> list[dict]:
     """Per-point 30 m-window grade (VERBATIM logic from extract_regime_powers) computed ONCE,
     so the threshold sweep re-bins cheaply."""
     W = 30
@@ -592,12 +600,12 @@ def point_regime_data(pts):
     return out
 
 
-def bin_grades(pd, ct, dt):
+def bin_grades(pd: list[dict], ct: float, dt: float) -> dict:
     bins = ([], [], [])
     for s in pd:
         bins[2 if s["grade"] >= ct else (0 if s["grade"] <= dt else 1)].append(s)
 
-    def stat(b):
+    def stat(b: list) -> float | None:
         if not b:
             return None
         sw = swp = 0.0
@@ -609,13 +617,13 @@ def bin_grades(pd, ct, dt):
     return {"descent": stat(bins[0]), "flat": stat(bins[1]), "climb": stat(bins[2])}
 
 
-def pw_from(rp, pts):
+def pw_from(rp: dict, pts: list[dict]) -> dict:
     flat = rp["flat"] if rp["flat"] is not None else overall_mean_power(pts)
     return {"climb": rp["climb"] if rp["climb"] is not None else flat, "flat": flat,
             "descent": rp["descent"] if rp["descent"] is not None else 0}
 
 
-def d_pct(model, emp):
+def d_pct(model: float, emp: float) -> float:
     return (model - emp) / emp * 100 if emp > 0 else float("nan")
 
 
@@ -624,11 +632,12 @@ rows = []
 sweep = {"longoes": {}, "censo": {}, "ppaz": {}, "jaam": {}, "danlessa": {}}
 
 
-def sweep_key(ct, dt):
+def sweep_key(ct: float, dt: float) -> str:
     return f"{to_fixed(ct * 100, 1)}/{to_fixed(dt * 100, 1)}"
 
 
-def process_ride(pts, p0, label, corpus, eps_rule):
+def process_ride(pts: list[dict], p0: dict, label: str, corpus: str,
+                 eps_rule: str) -> None:
     if not has_power(pts):
         return
     build_profile([q["x"] for q in pts], [q["alt"] for q in pts])
@@ -712,24 +721,24 @@ def process_ride(pts, p0, label, corpus, eps_rule):
 
 
 # ===== reporting helpers (module level in the .mjs too) =====
-def f(x, d=1):
+def f(x: float | None, d: int = 1) -> str:
     if x is None or not is_finite(x):
         return "—"
     return to_fixed(x, d)
 
 
-def erf(x):
+def erf(x: float) -> float:
     t = 1 / (1 + 0.3275911 * abs(x))
     y = 1 - (((((1.061405429 * t - 1.453152027) * t) + 1.421413741) * t - 0.284496736) * t
              + 0.254829592) * t * math.exp(-x * x)
     return y if x >= 0 else -y
 
 
-def p_from_z(z):
+def p_from_z(z: float) -> float:
     return 2 * (1 - 0.5 * (1 + erf(abs(z) / math.sqrt(2)))) if is_finite(z) else float("nan")
 
 
-def paired_abs(st, kA, kB):
+def paired_abs(st: list[dict], kA: str, kB: str) -> dict:
     """paired sign + Wilcoxon (normal approx) on per-ride |Δ%|, A vs B."""
     d = []
     wins = losses = 0
@@ -773,7 +782,7 @@ _ESC = {'"': '\\"', "\\": "\\\\", "\b": "\\b", "\f": "\\f",
         "\n": "\\n", "\r": "\\r", "\t": "\\t"}
 
 
-def jquote(s):
+def jquote(s: str) -> str:
     out = ['"']
     for ch in s:
         if ch in _ESC:
@@ -786,7 +795,7 @@ def jquote(s):
     return "".join(out)
 
 
-def cell(v):
+def cell(v: object) -> str:
     if isinstance(v, str):
         return jquote(v)
     if is_finite(v):
@@ -803,10 +812,10 @@ COLS = ['corpus', 'ride', 'emp', 'km', 'vf_kmh', 'ab', 'eps', 'r0sm', 'r0pm', 'c
 
 
 # ===== sanity gates (SANITY=1 → synthetic checks then exit, before touching the corpora) =====
-def run_sanity():
+def run_sanity() -> None:
     global R1D_MIN_PRECLAMP
 
-    def approx(a, b, tol=1e-6):
+    def approx(a: float, b: float, tol: float = 1e-6) -> bool:
         a = 0 if a is None else a
         b = 0 if b is None else b   # JS numeric coercion of null in Math.abs(a - b)
         return abs(a - b) <= tol * (1 + abs(b))
@@ -814,7 +823,7 @@ def run_sanity():
     pFlat = {"m": 78, "CdA": 0.40, "Crr": 0.008, "rho": 1.13, "keff": 0.98, "wind": 0,
              "vmax": VMAX, "vstart": VSTART}
 
-    def mkProf(n, dx, slopeFn):
+    def mkProf(n: int, dx: float, slopeFn: "Callable[[int], float]") -> dict:
         x = [0.0] * n
         h = [0.0] * n
         for i in range(n):
@@ -824,7 +833,7 @@ def run_sanity():
 
     ok = [True]
 
-    def say(name, passed, extra=""):
+    def say(name: str, passed: bool, extra: str = "") -> None:
         print(f"  [{'PASS' if passed else 'FAIL'}] {name}{('  ' + extra) if extra else ''}")
         if not passed:
             ok[0] = False
@@ -933,7 +942,7 @@ def run_sanity():
     sys.exit(0 if ok[0] else 1)
 
 
-def main():
+def main() -> None:
     os.makedirs(RESULTS, exist_ok=True)
 
     if os.environ.get("SANITY"):
@@ -1026,7 +1035,7 @@ def main():
               f"CdA {js_str(phys['CdA'])} · Crr {js_str(phys['Crr'])}")
 
     # ===== reporting =====
-    def by_corpus(c):
+    def by_corpus(c: str) -> list[dict]:
         return [r for r in rows if r["corpus"] == c]
 
     CORP = [("longoes", "longões (open, per-ride physics)"), ("censo", "censo (urban, assumed)"),
@@ -1095,7 +1104,7 @@ def main():
         if not st:
             continue
 
-        def g(k, st=st):
+        def g(k: str, st: list[dict] = st) -> str:
             return f(med_of([x for x in (abs(r[k]) for r in st) if is_finite(x)]))
 
         print(f"    {c.ljust(10)} {g('d_r1d')} · {g('d_r1d5r')} · {g('d_r1d30')} · {g('d_r1d30r')}")
@@ -1155,7 +1164,7 @@ def main():
         if not st:
             continue
 
-        def g(k, mk, st=st):
+        def g(k: str, mk: float | None, st: list[dict] = st) -> float:
             return med_of([x for x in (abs(r[k]) for r in st if r[mk] > 1) if is_finite(x)])
 
         print(f"{c.ljust(10)}{f(g('d_rc', 'eMclimb')).rjust(11)}"

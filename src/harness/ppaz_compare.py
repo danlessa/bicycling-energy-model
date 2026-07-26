@@ -34,6 +34,8 @@ jsdiv. Only epsCellsPz remains harness-local below, ported faithfully.
 Output: console report + ppaz_comparison.csv (gitignored via data/results/*).
 """
 
+from __future__ import annotations
+
 import json
 import math
 import os
@@ -63,7 +65,7 @@ CLIMB_THR, DESC_THR, ENGINE_DX, TAU_SMOOTH = 0.02, -0.015, 5, 2
 ASSUMED = {"m": 78, "CdA": 0.40, "Crr": 0.008, "rho": 1.13, "keff": 0.98, "wind": 0}
 
 
-def jnum(s):
+def jnum(s: str) -> float:
     """JS unary plus on an env string (+process.env.X → Number(x))."""
     t = s.strip()
     if t == "":
@@ -94,11 +96,11 @@ phys_profile = None   # the .mjs's `physProfile` global — set at the build_pro
 
 # ---- .mjs-local harness functions, ported faithfully ----
 
-def has_power(pts):
+def has_power(pts: list[dict]) -> bool:
     return any(q.get("power") is not None for q in pts)
 
 
-def eps_cells_pz(pts, p):
+def eps_cells_pz(pts: list[dict], p: dict) -> dict | None:
     """Descent 30 m cells: ε_bal AND the geometric ε_coast/s̄ in one pass
     (adapted from compare.mjs's epsFromBalance; the ε_coast accumulation
     mirrors eps_hypothesis.mjs)."""
@@ -115,7 +117,7 @@ def eps_cells_pz(pts, p):
         return None
     j = 0
 
-    def alt_at(d):
+    def alt_at(d: float) -> float:
         nonlocal j
         while j < len(pts) - 2 and pts[j + 1]["x"] < d:
             j += 1
@@ -171,7 +173,7 @@ CAND = [a for a in man
 print(f"P. PAZ SECOND-RIDER VERIFICATION — {len(CAND)} candidate rides (ride, power>50%, ≥20 km, alt≥99%)")
 
 
-def read_pts(file, meta=None):
+def read_pts(file: str, meta: dict | None = None) -> list[dict]:
     return load_pts(os.path.join(DATA, file), meta)
 
 
@@ -205,7 +207,7 @@ for a in CAND:
         unparse += 1
 
 
-def med_of(xs):
+def med_of(xs: list[float]) -> float:
     s = sorted(x for x in xs if is_finite(x))
     if not s:
         return float("nan")
@@ -213,7 +215,7 @@ def med_of(xs):
     return (s[math.floor(k)] + s[math.ceil(k)]) / 2
 
 
-def q(xs, p):
+def q(xs: list[float], p: float) -> float:
     s = sorted(x for x in xs if is_finite(x))
     return s[math.floor(p * (len(s) - 1))] if s else float("nan")
 
@@ -287,7 +289,7 @@ for a in usable:
         print(f"  …pass B {done}/{len(usable)}")
 
 
-def f(x, d=1):
+def f(x: float | None, d: int = 1) -> str:
     if x is None or (isinstance(x, float) and x != x):
         return "—"
     return to_fixed(x, d)
@@ -297,7 +299,7 @@ clean = [r for r in rows if r["dataOK"]]
 flagged = [r for r in rows if not r["dataOK"]]
 
 
-def stat(key):
+def stat(key: str) -> dict:
     v = [x for x in (abs(r[key]) for r in clean) if is_finite(x)]
     s = [x for x in (r[key] for r in clean) if is_finite(x)]
     total = 0.0
@@ -307,7 +309,7 @@ def stat(key):
             "mean": total / len(s) if s else float("nan")}
 
 
-def print_row(lab, key):
+def print_row(lab: str, key: str) -> None:
     s = stat(key)
     print(lab.ljust(34) + str(s["n"]).rjust(4) + f(s["medAbs"]).rjust(9)
           + f(s["medSigned"]).rjust(8) + f(s["mean"]).rjust(8))
@@ -332,18 +334,18 @@ for tag, _ in EPS_SWEEP:
 eOK = [r for r in clean if is_finite(r["epsBal"]) and is_finite(r["epsCoast"])]
 
 
-def clamp01(x):
+def clamp01(x: float) -> float:
     return max(0, min(1, x))
 
 
-def rms(xs):
+def rms(xs: list[float]) -> float:
     s = 0.0
     for x in xs:
         s += x * x
     return math.sqrt(jsdiv(s, len(xs)))
 
 
-def corr_of(xs, ys):
+def corr_of(xs: list[float], ys: list[float]) -> float:
     n = len(xs)
     sx = 0.0
     for x in xs:
@@ -391,7 +393,7 @@ _ESC = {'"': '\\"', "\\": "\\\\", "\b": "\\b", "\f": "\\f",
         "\n": "\\n", "\r": "\\r", "\t": "\\t"}
 
 
-def jquote(s):
+def jquote(s: str) -> str:
     """JSON.stringify string quoting (as the .mjs CSV writer uses)."""
     out = ['"']
     for ch in s:
@@ -405,7 +407,7 @@ def jquote(s):
     return "".join(out)
 
 
-def cell(v):
+def cell(v: object) -> str:
     # typeof 'string' → JSON.stringify; finite number → +Number(v).toFixed(3)
     # (a NUMBER again — integer-valued prints bare); rest → Array.join semantics
     # (true/false, NaN, null → '').

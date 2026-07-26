@@ -20,6 +20,8 @@ The FIT parser comes from src/bicycling_energy_model (its JS-parity check is
 retired; git history keeps analysis/parity/). Run: python3 src/harness/eps_sp_test.py
 """
 
+from __future__ import annotations
+
 import json
 import math
 import os
@@ -40,7 +42,7 @@ ASSUMED = {"m": 78, "Crr": 0.008, "CdA": 0.40, "rho": 1.13, "keff": 0.98, "wind"
 
 
 # shared 30 m-cell analysis: ε_true, ε_coast (α at measured flat speed) + the floor inputs.
-def eps_cells(pts, p):
+def eps_cells(pts: list[dict], p: dict) -> dict | None:
     mg = p["m"] * G
     beta = mg / p["keff"]
     x0 = pts[0]["x"]
@@ -51,7 +53,7 @@ def eps_cells(pts, p):
         return None
     j = 0
 
-    def alt_at(d):
+    def alt_at(d: float) -> float:
         nonlocal j
         while j < len(pts) - 2 and pts[j + 1]["x"] < d:
             j += 1
@@ -113,12 +115,12 @@ def eps_cells(pts, p):
 
 
 # stop-go predictors from the raw speed trace, given which cells descend.
-def brake_stats(pts, cells):
+def brake_stats(pts: list[dict], cells: dict) -> dict[str, float]:
     cell_alt, x0, DX, nc, Hd = (cells["cellAlt"], cells["x0"], cells["DX"],
                                 cells["nc"], cells["Hd"])
     VSTOP = 1 / 3.6
 
-    def descending(i):
+    def descending(i: int) -> bool:
         k = math.floor((pts[i]["x"] - x0) / DX)
         return k >= 0 and k < nc and cell_alt[k + 1] < cell_alt[k]
 
@@ -175,7 +177,7 @@ for e in man:
 
 
 # ---- stats helpers ----
-def med(xs):
+def med(xs: list[float]) -> float:
     s = sorted(x for x in xs if is_finite(x))
     if not s:
         return float("nan")
@@ -183,14 +185,14 @@ def med(xs):
     return (s[math.floor(k)] + s[math.ceil(k)]) / 2
 
 
-def mean(xs):
+def mean(xs: list[float]) -> float:
     t = 0.0
     for x in xs:
         t += x
     return jsdiv(t, len(xs))
 
 
-def corr(a, b):
+def corr(a: list[float], b: list[float]) -> float:
     n = len(a)
     ma, mb = mean(a), mean(b)
     sab = saa = sbb = 0.0
@@ -201,7 +203,7 @@ def corr(a, b):
     return jsdiv(sab, math.sqrt(saa * sbb))
 
 
-def ols(y, x):
+def ols(y: list[float], x: list[list[float]]) -> dict:
     n = len(y)
     mx, my = mean(x), mean(y)
     sxy = sxx = syy = 0.0
@@ -217,11 +219,11 @@ def ols(y, x):
     return {"a": a, "b": b, "r2": 1 - jsdiv(ssr, syy), "rms": math.sqrt(jsdiv(ssr, n))}
 
 
-def rms_res(pred):
+def rms_res(pred: list[float]) -> float:
     return math.sqrt(mean([(rows[i]["epsTrue"] - pred[i]) ** 2 for i in range(len(rows))]))
 
 
-def f(x, d=2):
+def f(x: float | None, d: int = 2) -> str:
     if x is None or not is_finite(x):
         return "—"
     return to_fixed(x, d)
