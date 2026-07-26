@@ -56,5 +56,6 @@ __pycache__/
 research/journal/journal.html
 research/journal/journal_files/
 research/journal/*.quarto_ipynb*
+research/journal/.jupyter_cache/
 research/article/article-draft*.html
 research/article/article-draft*_files/

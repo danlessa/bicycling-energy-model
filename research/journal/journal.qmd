@@ -6,6 +6,11 @@ format:
   html:
     toc: true
     code-fold: false
+execute:
+  cache: true   # jupyter-cache: prose edits re-render instantly; cells re-run only
+                # when CODE changes. NB the cache keys on code, not on the underlying
+                # CSVs/tracks — before shipping numbers, refresh with
+                # `quarto render research/journal/journal.qmd --cache-refresh`.
 jupyter: python3
 ---
 
