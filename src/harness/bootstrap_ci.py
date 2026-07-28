@@ -106,17 +106,33 @@ def boot_ci(values: list[float], seed: int) -> tuple[float, float]:
 
 
 def report(label: str, deltas: list[float], expect_abs: float | None = None,
-           expect_signed: float | None = None) -> None:
+           expect_signed: float | None = None,
+           expect_ci: tuple[float, float] | None = None,
+           expect_ci_signed: tuple[float, float] | None = None) -> None:
+    """Print (and optionally gate) the median and its bootstrap CI.
+
+    expect_ci / expect_ci_signed assert the PUBLISHED 95% bands (paper.md /
+    article) on |Δ%| and signed Δ% respectively. The bootstrap is seeded, so
+    the bounds are deterministic given the data; 0.06 tolerance only absorbs
+    the 1-decimal rounding the published values carry.
+    """
     global failed
     abs_v = [abs(x) for x in deltas]
     m_abs, m_sgn = median(abs_v), median(deltas)
     a_lo, a_hi = boot_ci(abs_v, 42)
     s_lo, s_hi = boot_ci(deltas, 43)
     gate = ""
-    if expect_abs is not None:
-        ok = abs(m_abs - expect_abs) <= 0.11 and (
+    if expect_abs is not None or expect_ci is not None or expect_ci_signed is not None:
+        ok = (expect_abs is None or abs(m_abs - expect_abs) <= 0.11) and (
             expect_signed is None or abs(m_sgn - expect_signed) <= 0.11)
-        gate = " GATE-OK" if ok else f" GATE-FAIL(exp {expect_abs}/{'null' if expect_signed is None else expect_signed})"
+        if expect_ci is not None:
+            ok = ok and abs(a_lo - expect_ci[0]) <= 0.06 and abs(a_hi - expect_ci[1]) <= 0.06
+        if expect_ci_signed is not None:
+            ok = ok and abs(s_lo - expect_ci_signed[0]) <= 0.06 and abs(s_hi - expect_ci_signed[1]) <= 0.06
+        gate = " GATE-OK" if ok else (
+            f" GATE-FAIL(exp {expect_abs}/{'null' if expect_signed is None else expect_signed}"
+            f"{'' if expect_ci is None else ' ci' + str(expect_ci)}"
+            f"{'' if expect_ci_signed is None else ' ciS' + str(expect_ci_signed)})")
         if not ok:
             failed = True
     print(f"{label.ljust(34)} n={str(len(deltas)).rjust(3)}  "
@@ -171,17 +187,17 @@ def col(rows: list[dict], c: str) -> list[float]:
 print("== Longões (44 power rides), §8.1 scoreboard ==")
 lg = parse_csv("model_comparison.csv")
 LG = [
-    ("approx cf + 2m smooth", "cfS_vs_emp", 3.5, 2.1),
-    ("canonical", "canon_vs_emp", 5.2, -1.8),
-    ("canonical + 2m smooth", "canonS_vs_emp", 5.7, -3.6),
-    ("approx cf + k_smooth", "ksmooth_vs_emp", 5.9, -0.6),
-    ("approx cf + sheet v_f", "cfsheet_vs_emp", 7.2, -0.6),
-    ("approx cf + measured v_f", "cfmeas_vs_emp", 8.0, 6.6),
-    ("approx cf", "cf_vs_emp", 8.6, 8.4),
-    ("approx off (baseline)", "off_vs_emp", 19.1, 19.1),
+    ("approx cf + 2m smooth", "cfS_vs_emp", 3.5, 2.1, (2.0, 5.6)),
+    ("canonical", "canon_vs_emp", 5.2, -1.8, (3.8, 7.3)),
+    ("canonical + 2m smooth", "canonS_vs_emp", 5.7, -3.6, None),
+    ("approx cf + k_smooth", "ksmooth_vs_emp", 5.9, -0.6, (3.6, 8.3)),
+    ("approx cf + sheet v_f", "cfsheet_vs_emp", 7.2, -0.6, None),
+    ("approx cf + measured v_f", "cfmeas_vs_emp", 8.0, 6.6, None),
+    ("approx cf", "cf_vs_emp", 8.6, 8.4, (7.2, 11.0)),
+    ("approx off (baseline)", "off_vs_emp", 19.1, 19.1, (17.3, 21.5)),
 ]
-for label, c, ea, es in LG:
-    report(label, col(lg, c), ea, es)
+for label, c, ea, es, eci in LG:
+    report(label, col(lg, c), ea, es, expect_ci=eci)
 paired("PAIRED champion (cfS) vs canonical", lg, "cfS_vs_emp", "canon_vs_emp")
 
 # ---------- 2. Censo sweep (62 clean rides), §8.4 ----------
@@ -191,34 +207,46 @@ if len(cz) != 62:
     print(f"GATE-FAIL: expected 62 clean censo rides, got {len(cz)}")
     failed = True
 CZ = [
-    ("canonical", "canon_d", 6.6, -3.5),
-    ("smooth · ε=0.10", "sm_0.10", 4.4, 3.3),
-    ("smooth · ε=0.15", "sm_0.15", 4.8, 1.1),
-    ("smooth · ε=0.20", "sm_0.20", 4.7, -0.9),
-    ("poor-man · ε=0.20", "pm_0.20", 3.9, 1.1),
-    ("poor-man · ε=0.25", "pm_0.25", 5.0, -1.4),
-    ("poor-man · ε=geom", "pm_geom", 6.4, -3.4),
-    ("smooth · ε=geom", "sm_geom", 7.7, -5.1),
-    ("smooth · ε=0.00", "sm_0.00", 7.4, 7.2),
-    ("poor-man · ε=0.00", "pm_0.00", 10.4, 10.4),
+    ("canonical", "canon_d", 6.6, -3.5, (4.7, 8.7), None),
+    ("smooth · ε=0.10", "sm_0.10", 4.4, 3.3, None, None),
+    ("smooth · ε=0.15", "sm_0.15", 4.8, 1.1, None, None),
+    ("smooth · ε=0.20", "sm_0.20", 4.7, -0.9, (3.3, 6.2), None),
+    ("poor-man · ε=0.20", "pm_0.20", 3.9, 1.1, (3.2, 6.1), None),
+    ("poor-man · ε=0.25", "pm_0.25", 5.0, -1.4, None, None),
+    ("poor-man · ε=geom", "pm_geom", 6.4, -3.4, (4.8, 8.6), None),
+    ("smooth · ε=geom", "sm_geom", 7.7, -5.1, (6.0, 9.3), None),
+    ("smooth · ε=0.00", "sm_0.00", 7.4, 7.2, None, (4.9, 9.2)),
+    ("poor-man · ε=0.00", "pm_0.00", 10.4, 10.4, None, (8.2, 13.7)),
 ]
-for label, c, ea, es in CZ:
-    report(label, col(cz, c), ea, es)
+for label, c, ea, es, eci, ecis in CZ:
+    report(label, col(cz, c), ea, es, expect_ci=eci, expect_ci_signed=ecis)
 paired("PAIRED poor-man ε0.20 vs canonical", cz, "pm_0.20", "canon_d")
 
 # ---------- 3. P. Paz (441) and JAAM (219), §8.6 ----------
 print("\n== P. Paz (441 rides), §8.6 ==")
 pp = parse_csv("ppaz_comparison.csv")
-report("poor-man · ε=geom", col(pp, "pm_geom"), 4.9, 0.6)
-report("canonical", col(pp, "canon_d"), 6.8, 5.0)
+report("poor-man · ε=geom", col(pp, "pm_geom"), 4.9, 0.6, expect_ci=(4.4, 5.8))
+report("smooth · ε=geom", col(pp, "sm_geom"), 5.8, 4.3, expect_ci=(5.3, 6.4))
+report("smooth · ε=0.20", col(pp, "sm_0.20"), 10.1, 10.0, expect_ci=(9.3, 10.7))
+report("canonical", col(pp, "canon_d"), 6.8, 5.0, expect_ci=(6.2, 7.8))
 paired("PAIRED pm_geom vs canonical", pp, "pm_geom", "canon_d")
 paired("PAIRED pm_geom vs sm_0.20", pp, "pm_geom", "sm_0.20")
 
 print("\n== JAAM (219 rides), §8.6 ==")
 jm = parse_csv("jaam_comparison.csv")
-report("smooth · ε=0.20", col(jm, "sm_0.20"), 3.5, None)
-report("smooth · ε=geom", col(jm, "sm_geom"), 5.5, None)
+report("smooth · ε=0.20", col(jm, "sm_0.20"), 3.5, 0.4, expect_ci=(3.1, 4.2))
+report("smooth · ε=geom", col(jm, "sm_geom"), 5.5, -4.7, expect_ci=(4.4, 6.4))
+report("canonical", col(jm, "canon_d"), 5.4, -5.0, expect_ci=(4.9, 6.1))
 paired("PAIRED sm_0.20 vs sm_geom", jm, "sm_0.20", "sm_geom")
+
+# ---------- 3b. Author-full D5 (621 rides), paper §3.4 ----------
+print("\n== Author-full (621 rides), paper §3.4 ==")
+dl = [r for r in parse_csv("danlessa_comparison.csv") if r.get("dataOK", "true") == "true"]
+if len(dl) != 621:
+    print(f"GATE-FAIL: expected 621 clean author-full rides, got {len(dl)}")
+    failed = True
+report("smooth · ε=geom", col(dl, "sm_geom"), 6.2, -0.3, expect_ci=(5.6, 6.9))
+report("canonical", col(dl, "canon_d"), 6.1, None, expect_ci=(5.5, 6.7))
 
 # ---------- 4. Time model, P. Paz (§8.8 primary endpoint) ----------
 # Target = tMovBin, exactly as time_compare's scoreboard() scores it.
@@ -230,8 +258,8 @@ def t_delta(r: dict, c: str) -> float:
     return 100 * (num(r, c) - num(r, "tMovBin")) / num(r, "tMovBin")
 
 
-report("T1b full (frozen)", [x for x in (t_delta(r, "T1b_pred") for r in tm) if is_finite(x)], 6.6, 3.8)
-report("T0 naive x/v_f", [x for x in (t_delta(r, "T0_pred") for r in tm) if is_finite(x)], 7.6, None)
+report("T1b full (frozen)", [x for x in (t_delta(r, "T1b_pred") for r in tm) if is_finite(x)], 6.6, 3.8, expect_ci=(5.9, 7.2))
+report("T0 naive x/v_f", [x for x in (t_delta(r, "T0_pred") for r in tm) if is_finite(x)], 7.6, None, expect_ci=(7.0, 8.5))
 
 if failed:
     print("\nONE OR MORE GATES FAILED", file=sys.stderr)
