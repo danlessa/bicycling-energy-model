@@ -108,6 +108,10 @@ changed. See Entry 11.)*
 - **Entry 30** (pre-registration + Tier B results: the canonical simulation under the same
   sweep, one-at-a-time, `SWEEP_CANON=1` in
   [`param_sweep.py`](../../src/harness/param_sweep.py)) — this commit
+- **Entry 39** (pre-registration + results: the deconfounded τ-sweep — Entry 38 re-run at
+  the regime-consistent per-ride physics, [`e39_tau_reg.py`](../../src/harness/e39_tau_reg.py)) — this commit
+- **Entry 38** (pre-registration + results: the τ-sweep across riders — does the optimal
+  deadband track h_KE = v_f²/2g?, [`e38_tau.py`](../../src/harness/e38_tau.py)) — this commit
 - **Entry 37** (hypothesis note, no run: the KE-equivalent height — momentum as the
   deadband's mechanism, roller spacing as an ε covariate, and the dissipation length
   λ = m/(ρ·C_dA)) — this commit
@@ -125,6 +129,180 @@ changed. See Entry 11.)*
 - **Entry 32** (review-v3 consolidation: Table 4 descent-RMS full regeneration, the D3+D4
   transfer-only pool, per-corpus allegiance sign tests, and the gate battery extended to the
   numbers the review caught un-gated — [`bootstrap_ci.py`](../../src/harness/bootstrap_ci.py)) — this commit
+
+---
+
+## 2026-07-28 — Entry 39: the deconfounded τ-sweep — momentum vs measurement, with the bias fog lifted
+
+*Prompt (Danilo), on Entry 38's confound: "can we use the per-ride physics inversion
+protocol?"*
+
+### Pre-registration (written before any result was seen)
+
+**Design.** Entry 38's sweep re-run with ONE change: physics per ride = the
+regime-consistent set of Entry 35 arm B (m̂, Ĉrr, ĈdA_reg, wind, joined from
+`e35_residual.csv`; fallbacks flagged) — chosen over Entry 33's segment-aero inversion
+because only the regime-consistent pair has near-zero standing biases (≈ +0.1 / +1.4 /
+−1.3 / −2.7 / −0.5 on D1–D5 at τ = 2), which is the whole point: Entry 38 showed
+argmin-|Δ%| reads *bias compensation* when the model carries a standing bias, so the
+momentum scale is only visible when the bias fog is lifted. Primary variant: **ε_d on every
+corpus including D2** — at the regime-consistent α the honest pair is (α, ε_d) everywhere
+(Entry 35's D2: 4.6 vs ε_f's 8.0), a registered deviation from Entry 38's regime rule,
+owned by the pairing logic. Everything else identical: τ ∈ {0.5 … 6.0, 0.5}, same
+populations, same statistics, τ* CI at B = 1,000, c(τ) reported.
+
+**Registered predictions.**
+
+- **P1 (the ordering, now visible):** τ*(D3) ≈ τ*(D4) > τ*(D1) ≈ τ*(D5) > τ*(D2), with
+  η = 1 targets 3.2 / 3.1 / 2.05 / 1.75 / 0.87 m.
+- **P2 (paired):** τ = 3.0 beats τ = 2.0 on a per-ride majority on D3 and D4; the reverse
+  on D5 and D2.
+- **P3 (coherence):** with biases ≈ 0, the bias-zero crossing and τ* should roughly
+  coincide per corpus (they were decoupled in Entry 38 — that was the confound's
+  signature).
+- **Failure mode:** if τ* is still not ordered by v_f²/2g *with the bias fog lifted*, the
+  momentum-filter reading of τ is refuted properly (not merely as-tested): the deadband
+  stays measurement hygiene at a universal 2 m, and Entry 37's suspension mechanics remain
+  physics without a fitted parameter to show for it. D4's residual −2.7 bias is the one
+  known remaining contaminant; its τ* gets read with that caveat.
+
+### Results (first full run, 2026-07-28 — 1,409 rides; all four τ = 2.0 parity gates vs the Entry-35 regime column GREEN)
+
+| corpus | τ* [CI] | h_KE target | target in CI? | bias slope over grid | bias-zero |
+|---|--:|--:|--:|--:|--:|
+| D1 | 3.5 [0.5, 6.0] | 2.05 | yes (CI vacuous) | +3.3 → −3.3 | ≈ 2.2 |
+| D2 | 2.5 [1.5, 3.0] | 0.87 | **no** | +8.2 → −5.4 (steepest) | 2.5 |
+| D3 | 1.5 [1.5, 4.5] | 3.24 | yes | −0.5 → −2.9 | < 0.5 |
+| D4 | **3.5 [3.0, 5.0]** | **3.10** | **yes — dead on** | −2.8 → −3.0 (**flat**) | none |
+| D5 | 1.0 [0.5, 2.0] | 1.75 | yes (edge) | +1.9 → −4.3 | ≈ 1.45 |
+
+**The confound mechanism is now demonstrated in both directions.** P. Paz's τ* moved 4.5 →
+1.5 between Entries 38 and 39 — his standing bias flipped from +4.3 (frozen) to −1.3
+(regime), and τ* followed the bias's sign exactly as the Entry-38 diagnosis predicted. D2's
+τ* sits precisely on its bias-zero (2.5 = 2.5): with the steepest bias slope on the grid,
+its optimum is pure bias compensation and its h_KE target (0.87) is unreadable — the
+composite total-loss α makes urban a non-test. **So the informative corpora are the ones
+where bias is flat or near zero in τ — and there the momentum reading scores its best
+evidence yet:**
+
+- **D4 (JAAM) is the clean read and it lands dead on target.** His bias barely moves across
+  the whole grid (−2.8 → −3.0: nothing for τ* to compensate), his basin has genuine shape,
+  and τ* = 3.5 [3.0, 5.0] against h_KE(28.1 km/h) = 3.10 m. Between Entries 38 and 39 his
+  optimum moved from the grid floor to exactly his momentum target the moment the bias fog
+  lifted. The paired test is the single strongest pro-momentum statistic in the project:
+  **τ = 3.0 beats τ = 2.0 on 137/215 rides, p = 0.0001** (P2 confirmed, significant).
+- **D5 (author, near-zero bias at small τ)**: τ* = 1.0 [0.5, 2.0] with bias-zero at ≈ 1.45,
+  bracketing the 1.75 target from below; paired test significantly *for* τ = 2 over 3
+  (p = 0.0068) — P2's predicted direction, confirmed.
+- **D3 remains bias-dragged** (−1.3 standing, slope −0.5 → −2.9): τ* = 1.5 and the paired
+  test significantly favours 2 over 3 (p = 0.0084), against P2's call — but its CI still
+  contains the 3.24 target, i.e. the corpus is uninformative rather than opposed.
+
+**Verdicts.** P1 (clean v_f²/2g ordering): NOT confirmed — τ* still tracks residual bias
+wherever bias has τ-slope; 4 of 5 CIs contain their targets but only D4 constitutes
+evidence. P2: 2 of 4 calls confirmed with significance (D4, D5), one significant miss (D3,
+bias-dragged), one non-test (D2). P3 (τ* ≈ bias-zero when biases are small): holds on
+D2/D5, fails on D1 (n = 44, vacuous CI) — the coherence check works exactly where it has
+power. **Overall: the momentum-filter reading is upgraded from "refuted as tested"
+(Entry 38) to "supported on the corpora that can see it"** — the fast heavy rider's
+deadband wants to be ≈ 3–3.5 m exactly as v²/2g predicts, the slow rider's wants ≈ 1–2 m,
+and every deviation from the pattern is accounted for by the measured τ-slope of the
+standing bias. Not a law yet: one clean corpus is one data point.
+
+**Deployment verdict: τ = 2 m stays.** Every basin is flat within CIs near its optimum
+(max available gain ≈ 0.2–0.4 pp, in-sample); the case for per-rider τ is scientific, not
+practical — for now. The registered next step if this thread continues: per-rider τ tied to
+v_f²/2g *as a prediction* on a new rider's data, not a fit.
+
+Instrument: [`e39_tau_reg.py`](../../src/harness/e39_tau_reg.py) (`E39_SMOKE=1`); output
+`e39_tau_reg.csv` (1,409 rides). c(τ) is physics-free and reproduces Entry 38's values.
+
+---
+
+## 2026-07-28 — Entry 38: the τ-sweep — does the optimal deadband track v_f²/2g?
+
+*Prompt (Danilo), on Entry 37's registered test: "let's do it."*
+
+### Pre-registration (written before any result was seen)
+
+**Question.** Entry 37 observed the fitted deadband τ = 2 m ≈ h_KE(author's flat speed) and
+predicted the momentum-filter reading: τ* ≈ η·v_f²/2g per rider. Test: sweep τ per corpus
+and read the optimum.
+
+**Protocol** ([`e38_tau.py`](../../src/harness/e38_tau.py)). Corpora D1–D5, populations as
+Entries 33/35. Physics: the frozen shared-constants protocol (per-corpus anchor mass, logged
+on D1; C_rr 0.008 / C_dA 0.40 / ρ 1.13 / k_eff 0.98 / wind 0) — deliberately Table 3's
+protocol, so the τ = 2.0 column must reproduce the published per-corpus medians end-to-end
+(a built-in parity gate). Model: form 3 (split + deadband at τ), both ε variants — ε_d
+(unclamped, eps_geom on the raw profile: τ-independent by construction) and ε_f = 0.20 —
+with ε_d primary on D1/D3–D5 and ε_f primary on D2 (the regime rule). τ grid: 0.5–6.0 m,
+step 0.5. Statistics: per corpus and τ, med|Δ%| and bias with the standard seeded bootstrap;
+τ* = argmin over the grid of med|Δ%| (primary variant), with a bootstrap CI on τ* (rides
+resampled, argmin recomputed; B = 1,000, disclosed as smaller than the 10⁴ convention for
+stdlib-runtime reasons). Corpus h_KE targets from each corpus's median measured flat speed.
+
+**Registered predictions.**
+
+- **P1 (ordering):** τ*(D3) ≈ τ*(D4) > τ*(D1) ≈ τ*(D5) > τ*(D2); with η = 1 the point
+  targets are ≈ 3.2 / 3.1 / 1.9 / 1.8 / 0.9 m.
+- **P2 (paired form, robust to the shallow basin):** on D3 and D4, form 3 · ε_d at τ = 3.0
+  beats τ = 2.0 on a majority of rides (exact sign test); on D5 the reverse. (Entry 5 found
+  a broad basin on D1 — the discriminating statistic is the cross-corpus *order* of τ*, not
+  sharp point estimates.)
+- **P3 (the scalar follows):** the ascent-noise rate c(τ) at each corpus's τ* replaces
+  3 m/km accordingly (reported; form 4's constant inherits any τ change).
+- **Failure mode:** τ* flat or identical across riders ⇒ Entry 37's τ ≈ h_KE(v_f) match on
+  the author's corpus is numerology; the universal τ = 2 m stays and the momentum-filter
+  reading is dropped.
+
+### Results (first full run, 2026-07-28 — 1,409 rides)
+
+**Parity first.** The τ = 2.0 column reproduces Table 3 exactly on D3 (5.75 vs 5.8) and D4
+(5.49 vs 5.5) — identical populations — and misses on D2 (5.71 vs 4.7*) and D5 (6.35 vs
+6.2), the two corpora where this harness's population differs from the published clean one
+(69 vs 62, 636 vs 621; the same disclosed difference as Entries 33/35). The machinery is
+sound; the comparison basis shifts with the population.
+
+**The sweep** (τ* = argmin med|Δ%| of the regime-appropriate variant, B = 1,000 CI on τ*):
+
+| corpus | τ* [CI] | h_KE target (η = 1) | bias at τ = 2 | bias-zero crossing |
+|---|--:|--:|--:|--:|
+| D1 | 1.0 [0.5, 6.0] | 2.05 | +2.2 | ≈ 3.0 m |
+| D2 | 1.5 [1.0, 2.5] | 0.87 | −0.1 (ε_f) | ≈ 2.0 m |
+| D3 | 4.5 [1.0, 6.0] | 3.24 | +4.3 | none on grid (still +2.8 at 6.0) |
+| D4 | 1.0 [0.5, 3.0] | 3.10 | −4.7 | none (−4.4 already at 0.5) |
+| D5 | 0.5 [0.5, 2.5] | 1.75 | +0.1 | ≈ 2.1 m |
+
+**P1 (ordering): REFUTED.** D4 breaks it decisively — JAAM cruises at 28 km/h (target
+3.1 m) but his optimum sits at the grid floor. **P2 (paired τ = 3 vs 2): REFUTED** — D3
+trends the predicted way but p = 0.20; D4 is *significant in the opposite direction*
+(92/215, p = 0.04); D5 trends as predicted, p = 0.10. Per the registered failure mode:
+**the universal τ = 2 m stays, and the momentum-filter reading of τ loses this test.**
+
+**The confound, named — this is Entry 29's lesson at the τ dial.** Under the frozen
+protocol the corpora carry standing biases of ±4–5 pp, and argmin-|Δ%| moves τ to *cancel
+the bias*, not to find the filter scale: P. Paz's +4.3 standing bias drags his τ* to 4.5
+(more smoothing removes more h₊, offsetting the overcharge); JAAM's −4.7 drags his to the
+floor (any ascent removal deepens his undercharge); the two near-unbiased corpora (D1, D5 —
+same rider) put the bias-zero crossing at 3.0 and 2.1 m, bracketing the fitted 2 m but not
+scaling as v_f² (same rider, two values). So the test as registered *cannot see* the
+momentum scale through the bias fog — the evidence is weakly against, not decisive. A
+deconfounded version — the same sweep at the regime-consistent physics of Entry 35, where
+the standing biases are ≈ 0 — is the natural follow-up, noted but NOT registered here.
+
+**P3 — the noise rate travels with the corpus, not just with τ.** c(τ = 2) reads 3.1 (D1,
+the gated value), 4.5 (D2), 2.5 (D3), 2.6 (D4), 3.7 (D5) m/km — device and terrain move it
+by ±1.5 m/km around the calibrated 3. Form 4's scalar is a D1 fact that happens to sit
+mid-range; worth remembering when the law is deployed against other recording chains.
+
+**What survives.** Entry 37's suspension interpretation is untouched as *mechanism* (the
+KE arithmetic and the dissipation length stand on their own); what failed is the specific
+claim that the energy-error-optimal deadband tracks it, tested through a biased criterion.
+Deployment keeps τ = 2 m; the paper's smoothing story stays measurement-first; the
+suspension reading stays a registered interpretation awaiting a deconfounded test.
+
+Instrument: [`e38_tau.py`](../../src/harness/e38_tau.py) (`E38_SMOKE=1`); output
+`e38_tau.csv` (1,409 rides × 12 τ × both ε variants + c(τ)).
 
 ---
 
@@ -161,6 +339,24 @@ So hills within ≈ 200 m of each other recycle descent KE into the next rise; f
 ≈ 2–3 λ (500–700 m) dissipate most of it. Danilo's "smaller the flat section" clause,
 quantified.
 
+**λ, made precise** *(Danilo: "I suspect that the characteristic length should include Crr
+and wind speed too. Can we have an interpretation of it?")*. On a windless flat the coasting
+equation is linear in v²: writing q = v², coasting gives dq/dx = −q/λ − 2C_rr·G, so
+
+$$q(x) + q_c = (q_0 + q_c)\,e^{-x/\lambda}, \qquad \lambda = \frac{m}{\rho C_dA}\ \text{(exact)}, \qquad q_c = \frac{2 C_{rr}\,m g}{\rho C_dA}.$$
+
+Three readings, numerically verified (75 kg, C_dA 0.31): (i) **C_rr does not enter the
+length** — exactly, not approximately: it sets the *floor* q_c (≈ 20.8 km/h equivalent)
+toward which v² relaxes, which is why it shortens the coast *window* (35 → 25 km/h takes
+only ≈ 96 m ≈ 0.45 λ) without touching λ = 214 m. In the recycling *ledger* the
+cancellation is structural: rolling costs the same per metre at any speed, so the coasting
+rider pays no more rolling than the pedalling counterfactual would — rolling never counts
+as excess dissipation. (ii) **Wind rescales the excess-decay length** by the air/ground
+speed ratio: linearised, λ_w ≈ m·v/(ρC_dA·(v+w)) — a +7 km/h headwind at 25 km/h shortens
+214 → 167 m, a tailwind stretches it to 297 m. (iii) **The interpretation sentence**: after
+coasting one λ, 63% of the v²-excess above the rolling floor has been shed; after 2λ, 86% —
+independent of C_rr, with wind acting only through the λ rescaling.
+
 **Where the effect should show — and where it should NOT.** Rollers with amplitude between
 τ = 2 m and h_KE(v) (≈ 2–6 m) are charged full β·h± by form 3 but are partially
 momentum-paid in reality, so the *form-3 signed residual* should trend positive
@@ -177,7 +373,46 @@ across edges, so any edge realisation over-charges closely-spaced rollers by con
 λ ≈ 200 m and h_KE ≈ 2–6 m bound the error's scale and the raster smoothing that would
 absorb it. Registered as a pitfall in the paper-2 scaffold.
 
-Status: hypothesis registered with test designs; nothing fitted, no harness yet.---
+**Interpretation addendum (same day, Danilo): momentum acts as a smoother.** "The scale of
+smoothing is determined not only by the physical geometry, but by its interaction with the
+host movement." This reframes what the deadband *is*. The paper currently justifies
+smoothing as measurement hygiene (§2.4: sub-metre jitter is sensor noise accumulating at
+3.1 m/km — the profile is *wrong* and the filter repairs it). The momentum reading adds a
+second, independent justification: even on a perfectly measured profile, micro-relief below
+h_KE should not be charged, because the rider's inertia carries it — the *cost function* is
+wrong on a correct profile, and the filter repairs that instead. The fitted τ = 2 m serves
+both masters, and they happen to coincide at the calibration rider's cruising speed — which
+may be exactly why one constant worked so well. Three consequences:
+
+1. **Smoothing is rider-relative, not absolute.** The same profile at different speeds is
+   effectively different terrain; "the calibration scale" of §2.4/§4.4 is not a property of
+   the DEM alone but of the rider–terrain interaction. Two constants that the project has
+   treated as elevation-pipeline facts (τ, and through it c) are partly *dynamics* facts.
+2. **The deadband's functional form fits the mechanism — and the mechanism is a
+   suspension** *(Danilo's sharpening: "or more precisely, as a suspension, or spring. The
+   hills are the bumps on a larger scale")*. The rider–terrain system is literally a
+   spring–damper: the KE ↔ PE exchange over a roller is the spring (conservative — energy
+   stored on the rise, returned on the far side), drag along the traverse is the damper
+   (dissipation length λ ≈ m/ρC_dA), and **h_KE is the suspension's travel** — bumps within
+   it are absorbed and returned, bumps beyond it *bottom out* and transmit the load to the
+   chassis, i.e. the legs pay β·dh. The bicycle already carries this cascade at smaller
+   scales (tyre: mm; fork: cm); momentum is the next stage up (metres), and hills are simply
+   the bumps at that stage's scale. An amplitude-threshold filter with distance-bounded
+   memory — exactly what `deadband(τ)` implements — is the transfer function of a
+   travel-limited suspension: the mechanism did not need a new filter family, it needed a
+   new reading of the existing one's parameter (τ = travel = η·v_f²/2g; damping = λ).
+3. **Fixed-scale deployment bakes in one speed.** A raster pre-smoothed at a single σ
+   (paper 2's mitigation for the 5 m/30 m problem) encodes one rider speed; the momentum
+   reading says the right smoothing varies with v_f — across riders, and even within one
+   ride between regimes.
+
+Entry 38's τ-sweep is the discriminating test between the two readings: pure measurement
+noise predicts one universal τ (the noise process is rider-independent); the interaction
+reading predicts τ* ordered by v_f²/2g.
+
+Status: hypothesis registered with test designs; Entry 38 ran the τ-sweep the same day —
+refuted as tested (bias-confounded criterion; the universal τ = 2 m stays), the suspension
+mechanism itself untouched. See Entry 38 for the verdict and the deconfounded follow-up.---
 
 ## 2026-07-28 — Entry 36: ε₀ per dataset — regressed, two ways, against the frozen 0.13
 

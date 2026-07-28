@@ -72,6 +72,8 @@ PRODUCER = {
     "scurve_deficit.csv": "python3 src/harness/scurve_deficit.py",
     "e35_residual.csv": "python3 src/harness/e35_residual.py",
     "e36_eps0.csv": "python3 src/harness/e36_eps0.py",
+    "e38_tau.csv": "python3 src/harness/e38_tau.py",
+    "e39_tau_reg.csv": "python3 src/harness/e39_tau_reg.py",
 }
 
 # entry → (instrument harness scripts, result CSVs, uses private tracks,
@@ -125,6 +127,8 @@ ENTRIES = {
     35: (["src/harness/e35_residual.py"], ["e35_residual.csv"], True, []),
     36: (["src/harness/e36_eps0.py"], ["e36_eps0.csv"], True, []),
     37: ([], [], False, ["research/notes/original_notes.md"]),
+    38: (["src/harness/e38_tau.py"], ["e38_tau.csv"], True, []),
+    39: (["src/harness/e39_tau_reg.py"], ["e39_tau_reg.csv"], True, []),
 }
 
 # entry 22 reads the per-ride CSVs the other harnesses wrote

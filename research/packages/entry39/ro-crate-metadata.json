@@ -19,16 +19,16 @@
     {
       "@id": "./",
       "@type": "Dataset",
-      "name": "Entry 06 evidence package — external DEMs (FABDEM/SRTM/COP30) and k_h for DEM-derived h₊/h₋",
-      "description": "Evidence package for journal Entry 6 (2026-06-28): aggregates, hashes and provenance only — the prose remains authoritative in the journal. Regenerate all packages: `python3 research/packages/make_crates.py`.",
+      "name": "Entry 39 evidence package — the deconfounded τ-sweep — momentum vs measurement, with the bias fog lifted",
+      "description": "Evidence package for journal Entry 39 (2026-07-28): aggregates, hashes and provenance only — the prose remains authoritative in the journal. Regenerate all packages: `python3 research/packages/make_crates.py`.",
       "author": {
         "@id": "#danilo"
       },
-      "dateCreated": "2026-06-28",
+      "dateCreated": "2026-07-28",
       "isPartOf": {
         "@id": "https://doi.org/10.5281/zenodo.21282165"
       },
-      "url": "https://github.com/danlessa/bicycling-energy-model/tree/main/research/packages/entry06",
+      "url": "https://github.com/danlessa/bicycling-energy-model/tree/main/research/packages/entry39",
       "hasPart": [],
       "mentions": [
         {
@@ -43,12 +43,7 @@
       },
       "conformsTo": {
         "@id": "https://w3id.org/ro/wfrun/process/0.5"
-      },
-      "citation": [
-        {
-          "@id": "https://github.com/danlessa/bicycling-energy-model/blob/main/research/notes/dem-elevation-comparison.md"
-        }
-      ]
+      }
     },
     {
       "@id": "#danilo",
@@ -71,8 +66,8 @@
     {
       "@id": "#claim",
       "@type": "Claim",
-      "name": "Entry 6: external DEMs (FABDEM/SRTM/COP30) and k_h for DEM-derived h₊/h₋",
-      "text": "No single source is ground truth for ascent — they bracket it: the recorded baro under-reads (−11% raw / −21% smoothed vs the IGC 5 m DTM), the DSMs over-read (COP30 +18%, SRTM +34%), FABDEM lands +6%; nearest-neighbour sampling adds ~30 pp of staircase (use bilinear); the geometric k_DEM correction is the solid result, while the energy k_h (~0.8–0.9 estimated) stayed an open TODO.",
+      "name": "Entry 39: the deconfounded τ-sweep — momentum vs measurement, with the bias fog lifted",
+      "text": "the deconfounded τ-sweep — momentum vs measurement, with the bias fog lifted",
       "appearance": [
         {
           "@id": "https://github.com/danlessa/bicycling-energy-model/blob/main/research/journal/MODEL_COMPARISON_JOURNAL.md"
@@ -90,11 +85,20 @@
       "conditionsOfAccess": "Available on request from the author, coordinates stripped."
     },
     {
+      "@id": "#data/results/e39_tau_reg.csv",
+      "@type": "File",
+      "name": "data/results/e39_tau_reg.csv",
+      "description": "Per-ride CSV — gitignored (rows carry ride names/dates tied to private activities); described hash-only, never distributed. Regenerates via `python3 src/harness/e39_tau_reg.py`.",
+      "sha256": "87892fc8bddda7930ccffc52c59639fcc978cc2bef73ad168e5bd71ffcfa9bf3",
+      "contentSize": "444700",
+      "encodingFormat": "text/csv"
+    },
+    {
       "@id": "#run",
       "@type": "CreateAction",
-      "name": "Entry 6 harness run",
+      "name": "Entry 39 harness run",
       "description": "Re-executable from the repository and the private inputs; see the journal entry for protocol, endpoints and verdicts.",
-      "endTime": "2026-06-28",
+      "endTime": "2026-07-28",
       "actionStatus": {
         "@id": "http://schema.org/CompletedActionStatus"
       },
@@ -103,33 +107,32 @@
       },
       "instrument": [
         {
-          "@id": "#src/harness/build_model_inputs.py"
+          "@id": "#src/harness/e39_tau_reg.py"
         }
       ],
       "object": [
         {
           "@id": "#ride-recordings"
         }
+      ],
+      "result": [
+        {
+          "@id": "#data/results/e39_tau_reg.csv"
+        }
       ]
     },
     {
-      "@id": "#src/harness/build_model_inputs.py",
+      "@id": "#src/harness/e39_tau_reg.py",
       "@type": [
         "File",
         "SoftwareApplication",
         "SoftwareSourceCode"
       ],
-      "name": "src/harness/build_model_inputs.py",
-      "url": "https://github.com/danlessa/bicycling-energy-model/blob/3516f7e25e107084885a5b9791c53c26dcac5727/src/harness/build_model_inputs.py",
-      "sha256": "cbadebba773dca5794fc9e8ca251ca911361d941d24a4017d4b050a747918e26",
+      "name": "src/harness/e39_tau_reg.py",
+      "url": "https://github.com/danlessa/bicycling-energy-model/blob/3516f7e25e107084885a5b9791c53c26dcac5727/src/harness/e39_tau_reg.py",
+      "sha256": "9425fb3f36e2f4a585b2527866d0fa40f2e95517df8445f5f4dd115b815b149d",
       "version": "3516f7e25e107084885a5b9791c53c26dcac5727",
       "programmingLanguage": "Python"
-    },
-    {
-      "@id": "https://github.com/danlessa/bicycling-energy-model/blob/main/research/notes/dem-elevation-comparison.md",
-      "@type": "CreativeWork",
-      "name": "research/notes/dem-elevation-comparison.md",
-      "encodingFormat": "text/markdown"
     },
     {
       "@id": "ro-crate-preview.html",

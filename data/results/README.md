@@ -20,6 +20,8 @@ resolve their inputs and this directory relative to their own location).
 | `scurve_deficit.csv` | `python3 src/harness/scurve_deficit.py` (`SCURVE_SMOKE=1`) | 34 |
 | `e35_residual.csv` | `python3 src/harness/e35_residual.py` (`E35_SMOKE=1`) | 35 |
 | `e36_eps0.csv` | `python3 src/harness/e36_eps0.py` (`E36_SMOKE=1`) | 36 |
+| `e38_tau.csv` | `python3 src/harness/e38_tau.py` (`E38_SMOKE=1`) | 38 |
+| `e39_tau_reg.csv` | `python3 src/harness/e39_tau_reg.py` (`E39_SMOKE=1`) | 39 |
 | `cda_estimate.csv`, `param_fit.csv` | `python3 src/harness/cda_estimate.py` / `param_fit.mjs` | 15 |
 | `danlessa_comparison.csv` | `python3 src/harness/danlessa_compare.py` | 16 |
 | `regime_comparison.csv` | `python3 src/harness/regime_compare.py` | 17–18 |

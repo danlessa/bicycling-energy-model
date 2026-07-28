@@ -129,9 +129,9 @@
         "SoftwareSourceCode"
       ],
       "name": "src/harness/jaam_compare.py",
-      "url": "https://github.com/danlessa/bicycling-energy-model/blob/d918dd762b3fbbf979039cd4fd31f52c69501969/src/harness/jaam_compare.py",
+      "url": "https://github.com/danlessa/bicycling-energy-model/blob/3516f7e25e107084885a5b9791c53c26dcac5727/src/harness/jaam_compare.py",
       "sha256": "17ddc897d7cabb57125afb252ea6548f8ee90c1964890d3d604c50ddad893133",
-      "version": "d918dd762b3fbbf979039cd4fd31f52c69501969",
+      "version": "3516f7e25e107084885a5b9791c53c26dcac5727",
       "programmingLanguage": "Python"
     },
     {
