@@ -160,7 +160,7 @@ where $x_-$ is the route's descending distance (the descent-side sibling of $x_+
 
 ### 2.3 Data, ground truth, and evaluation protocol
 
-**Datasets.** Five corpora — 1,343 unique rides, 1,387 ride-evaluations (D1 is a subset of D5) — all ridden in and around São Paulo, all with per-second power meters ([Table 1](#tab1)).
+**Datasets.** Five corpora — 1,343 unique rides, 1,387 ride-evaluations (D1 is a subset of D5) — all ridden in and around São Paulo, all with per-second power meters ([Table 1](#tab1); [Figure 4](#fig4) draws every analysed route on one map).
 
 <a id="tab1"></a>
 
@@ -188,6 +188,10 @@ The design in one line: **fit → contest → change the regime → change the r
 
 ![**Figure 3.** The study design: both behavioural constants and the form choice are calibrated on D1 and frozen; the frozen model is then carried to the same rides (primary comparison), a different riding regime (D2), two different riders (D3–D4), and the calibration rider's full history at scale (D5). Throughout, each ride's own measured power and the shared constants feed both the closed form and the simulation, scored as $\Delta\%$ against the measured $\int P\,dt$.](figs/fig11-methodology.svg)
 
+<a id="fig4"></a>
+
+![**Figure 4.** Every analysed ride on one map: the censo's urban knot (green), JAAM's Vale do Paraíba corridor (blue), P. Paz's western open roads (vermilion), and the author's brevets radiating to the coast and mountains (grey). No basemap — the visible geography is the rides themselves. For privacy, the first and last 1.5 km of every ride are not drawn; legend counts are the rides drawn (all parsed rides surviving that trim), a slight superset of the clean corpora of [Table 1](#tab1).](figs/fig12-routes-map.png)
+
 Ground truth is the raw $\int P\,dt$ per ride, coasting zeros included. Inclusion filters, applied identically everywhere:
 
 - sport = cycling; virtual rides excluded via the FIT manufacturer field;
@@ -207,7 +211,7 @@ The independent riders' exports were shared with consent and are never published
 
 ### 3.1 Two corrections take the closed form to parity with simulation
 
-On the 44-ride calibration corpus, the original form 1 errs by 19.1% median [17.3, 21.5] and over-predicts nearly every ride (+19.1% median signed). The split alone (form 2) halves the error to 8.6% [7.2, 11.0] (better than form 1 on 43 of 44 rides; the median ride spends 21% of its distance climbing); smoothing the elevation with the 2 m deadband (form 3, the proposed law) removes the ascent-noise half ([Table 2](#tab2), [Figure 4](#fig4)).
+On the 44-ride calibration corpus, the original form 1 errs by 19.1% median [17.3, 21.5] and over-predicts nearly every ride (+19.1% median signed). The split alone (form 2) halves the error to 8.6% [7.2, 11.0] (better than form 1 on 43 of 44 rides; the median ride spends 21% of its distance climbing); smoothing the elevation with the 2 m deadband (form 3, the proposed law) removes the ascent-noise half ([Table 2](#tab2), [Figure 5](#fig5)).
 
 <a id="tab2"></a>
 
@@ -221,9 +225,9 @@ On the 44-ride calibration corpus, the original form 1 errs by 19.1% median [17.
 | form 2, split only | 8.6 | [7.2, 11.0] | +8.4 |
 | form 1, original | 19.1 | [17.3, 21.5] | +19.1 |
 
-<a id="fig4"></a>
+<a id="fig5"></a>
 
-![**Figure 4.** Error attribution on the calibration corpus: the original form's +19% over-prediction decomposes into the climb-aero over-charge and ascent noise; correcting both reaches parity with the simulation.](figs/fig1-attribution.svg)
+![**Figure 5.** Error attribution on the calibration corpus: the original form's +19% over-prediction decomposes into the climb-aero over-charge and ascent noise; correcting both reaches parity with the simulation.](figs/fig1-attribution.svg)
 
 The corrected closed form beats the simulation's median, but the CIs overlap and the paired test does not separate them (closer on 24 of 44 rides; sign test $p = 0.65$, and $n = 44$ limits the power of that test). The defensible claim is **parity on the corpus the corrections were derived on** — which is still the practically decisive outcome, since the closed form is the one cheap enough to evaluate per edge in a router, and [§3.3](#3.3) tests it off this corpus. Form 4, which needs nothing but $x$, $h_+$, $h_-$, also ties the simulation (5.9 [3.6, 8.3] vs 5.2 [3.8, 7.3]).
 
@@ -233,13 +237,13 @@ Two checks support the attribution. First, on *sustained* climbs (2,535 sections
 
 ### 3.2 The coasting deficit: descent recovery has a geometry and a habit
 
-Descent recovery is unambiguously real: setting $\varepsilon = 0$ over-predicts every corpus (on the urban rides alone, by +7.2% [+4.9, +9.2] median with form 3 and +10.4% [+8.2, +13.7] with form 4). On the calibration corpus, the measured $\varepsilon_{\mathrm{bal}}$ tracks the geometric $\varepsilon_{\mathrm{coast}}$ exactly where descents carry energy: the correlation rises from 0.30 (all rides) to 0.60 (descent-energy-weighted) to 0.77 on real descents (mean descent grade ≥ 3%; 0.82 at ≥ 3.5%) ([Figure 5](#fig5)).
+Descent recovery is unambiguously real: setting $\varepsilon = 0$ over-predicts every corpus (on the urban rides alone, by +7.2% [+4.9, +9.2] median with form 3 and +10.4% [+8.2, +13.7] with form 4). On the calibration corpus, the measured $\varepsilon_{\mathrm{bal}}$ tracks the geometric $\varepsilon_{\mathrm{coast}}$ exactly where descents carry energy: the correlation rises from 0.30 (all rides) to 0.60 (descent-energy-weighted) to 0.77 on real descents (mean descent grade ≥ 3%; 0.82 at ≥ 3.5%) ([Figure 6](#fig6)).
 
 These correlations are partly part–whole (the two quantities share their dominant term $\alpha/\beta$), so the statistic we lead with is error reduction: on real descents, the calibrated line $\varepsilon_{\mathrm{coast}} - 0.13$ reaches RMS 0.08 against a best-flat-constant baseline of RMS 0.13 — a 37% reduction, computed on unrounded values, in-sample. A worked example, from one ride near the median residual: $\alpha/\beta = 0.0204$ (from the same six constants and the ride's measured flat speed) and mean descent grade 3.4%, so $\varepsilon_{\mathrm{coast}} = 0.0204/0.034 = 0.60$; subtracting the deficit, $0.60 - 0.13 = 0.47$; the measured balance is 0.47.
 
-<a id="fig5"></a>
+<a id="fig6"></a>
 
-![**Figure 5.** Geometry-only $\varepsilon_{\mathrm{coast}}$ vs the power-measured $\varepsilon_{\mathrm{bal}}$, one point per ride (area ∝ descent energy). On real descents the calibrated line $\varepsilon = \varepsilon_{\mathrm{coast}} - 0.13$ tracks the measurements; the shaded band is the 95% bootstrap CI of the median offset on that subset, [0.10, 0.17]. Gentle rides scatter but carry ≈ 0 descent energy. (The two axes share their dominant term $\alpha/\beta$, so visual agreement partly reflects shared inputs — the error-reduction statistic in the text is the load-bearing one.)](figs/fig4-eps-scatter.svg)
+![**Figure 6.** Geometry-only $\varepsilon_{\mathrm{coast}}$ vs the power-measured $\varepsilon_{\mathrm{bal}}$, one point per ride (area ∝ descent energy). On real descents the calibrated line $\varepsilon = \varepsilon_{\mathrm{coast}} - 0.13$ tracks the measurements; the shaded band is the 95% bootstrap CI of the median offset on that subset, [0.10, 0.17]. Gentle rides scatter but carry ≈ 0 descent energy. (The two axes share their dominant term $\alpha/\beta$, so visual agreement partly reflects shared inputs — the error-reduction statistic in the text is the load-bearing one.)](figs/fig4-eps-scatter.svg)
 
 The residual between ideal and measured is a near-constant −0.13, and its *character* matters. The route-geometry covariates we tested all fail to explain it: curviness and unpaved fraction fit with the wrong sign (twisty, rough rides are the mountainous ones that recover *more*), and on the urban corpus no braking-density predictor survives ($R^2 \leq 0.14$; a mechanistic braking-energy subtraction over-corrects). On a descent, gravity — not the legs — repays what a red light took, so stop-go density does not move $\varepsilon$. The pattern is consistent with a rider-behaviour interpretation: the deficit encodes *how the rider descends* — residual pedalling into the descent, braking before corners. If so, it should transfer across routes but vary with descent style across riders — a testable prediction ([§3.3](#3.3)).
 
