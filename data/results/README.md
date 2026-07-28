@@ -22,6 +22,7 @@ resolve their inputs and this directory relative to their own location).
 | `e36_eps0.csv` | `python3 src/harness/e36_eps0.py` (`E36_SMOKE=1`) | 36 |
 | `e38_tau.csv` | `python3 src/harness/e38_tau.py` (`E38_SMOKE=1`) | 38 |
 | `e39_tau_reg.csv` | `python3 src/harness/e39_tau_reg.py` (`E39_SMOKE=1`) | 39 |
+| `e40_roller.csv` | `python3 src/harness/e40_roller.py` (`E40_SMOKE=1`) | 40 |
 | `cda_estimate.csv`, `param_fit.csv` | `python3 src/harness/cda_estimate.py` / `param_fit.mjs` | 15 |
 | `danlessa_comparison.csv` | `python3 src/harness/danlessa_compare.py` | 16 |
 | `regime_comparison.csv` | `python3 src/harness/regime_compare.py` | 17–18 |

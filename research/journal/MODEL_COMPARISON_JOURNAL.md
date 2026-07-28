@@ -108,6 +108,9 @@ changed. See Entry 11.)*
 - **Entry 30** (pre-registration + Tier B results: the canonical simulation under the same
   sweep, one-at-a-time, `SWEEP_CANON=1` in
   [`param_sweep.py`](../../src/harness/param_sweep.py)) — this commit
+- **Entry 40** (pre-registration + results: the roller-recycling covariate — recyclable
+  energy share vs the form-3 residual; slope = transfer efficiency η̂,
+  [`e40_roller.py`](../../src/harness/e40_roller.py)) — this commit
 - **Entry 39** (pre-registration + results: the deconfounded τ-sweep — Entry 38 re-run at
   the regime-consistent per-ride physics, [`e39_tau_reg.py`](../../src/harness/e39_tau_reg.py)) — this commit
 - **Entry 38** (pre-registration + results: the τ-sweep across riders — does the optimal
@@ -129,6 +132,100 @@ changed. See Entry 11.)*
 - **Entry 32** (review-v3 consolidation: Table 4 descent-RMS full regeneration, the D3+D4
   transfer-only pool, per-corpus allegiance sign tests, and the gate battery extended to the
   numbers the review caught un-gated — [`bootstrap_ci.py`](../../src/harness/bootstrap_ci.py)) — this commit
+
+---
+
+## 2026-07-28 — Entry 40: roller recycling — the covariate test
+
+*Prompt (Danilo): "Let's test that" — Entry 37's registered roller-drop-share covariate
+against the form-3 residual.*
+
+### Pre-registration (written before any result was seen)
+
+**The claim under test.** Rollers that survive the deadband but sit within the momentum
+budget — amplitude between τ = 2 m and h_KE = v²/2g — and are closely spaced (within the
+dissipation length λ) are partially paid by momentum. Form 3 charges them in full, so rides
+rich in such terrain should be *over-predicted* (positive signed Δ%), and the effect should
+be invisible to ε_bal (the recycling lands on the next rise's ledger line, not the
+descent's).
+
+**The covariate** ([`e40_roller.py`](../../src/harness/e40_roller.py)). Per ride, on the
+τ = 2 m deadbanded profile (form 3's own terrain), decompose into monotone runs
+(rise / flat / drop). For each drop of amplitude A_d followed — after a flat gap g — by a
+rise of amplitude A_r, the recyclable drop is
+
+$$\mathrm{rec}_i = \min(A_d,\ A_r,\ h_{KE})\cdot e^{-g_i/\lambda}$$
+
+with h_KE = v_meas²/2G (the ride's measured flat speed) and λ = m/(ρ·ĈdA_reg) (the ride's
+regime-consistent physics; both joined from `e35_residual.csv`) — the Entry-37 dissipation
+law as the spacing weight, no free parameter. The regressor is the **recyclable energy
+share**, RES = 100·β·Σ recᵢ / E_meas — the percentage of the ride's energy sitting in
+momentum-payable form. With that normalisation the OLS slope of Δ% on RES estimates the
+transfer efficiency η directly.
+
+**Residuals**: form 3 · ε_d at the regime-consistent physics (`f3_d_reg`, Entry 35 — the
+near-zero-bias protocol, same deconfounding logic as Entry 39), frozen-protocol residuals
+as reference. P3's ledger check uses Entry 36's measured gap (δ = ε_coast − ε_bal, regime
+physics, real-descent subset).
+
+**Registered predictions.**
+
+- **P1 (sign and size):** within-corpus OLS slope of Δ% on RES is positive on D3–D5, with
+  η̂ ∈ (0.2, 1.0] (bootstrap CI; rides resampled).
+- **P2 (rank):** Spearman ρ(RES, Δ%) > 0 on D1 and D3–D5. D2 is expected weak (urban
+  profiles carry little recyclable drop; also its composite α).
+- **P3 (the ledger line):** ρ(RES, δ) shows no comparable positive relation on the
+  real-descent subset — recycling must be invisible to the descent balance, per the
+  Entry-37 bookkeeping argument. A strong positive ρ here would *falsify the mechanism's
+  claimed ledger line* even if P1 holds.
+- **Failure mode:** no positive RES–Δ% relation anywhere ⇒ momentum recycling is
+  sub-resolution at ride grain; the suspension reading stays interpretive; no correction
+  term is added.
+
+### Results (first full run, 2026-07-28 — 1,409 rides)
+
+| corpus | RES median (% of E) | rollers/ride | ρ(RES, Δ%) | regression coeff. η̂ [CI] | ρ(RES, δ) — P3 |
+|---|--:|--:|--:|--:|--:|
+| D1 | 0.48 | 52 | **+0.444** | 10.6 [3.8, 17.1] | −0.06 (n = 22) ✓ null |
+| D2 | 0.44 | 19 | +0.125 | 21.1 [0.3, 114.9] | +0.04 (n = 27) ✓ null |
+| D3 | 0.23 | 19 | **+0.204** | 1.5 [0.2, 2.9] | **+0.198 (n = 157)** ✗ |
+| D4 | 0.03 | 9 | **+0.429** | 9.3 [4.9, 16.1] | −0.30 (n = 20) |
+| D5 | 0.46 | 16 | **+0.394** | 17.6 [13.3, 25.5] | **+0.240 (n = 226)** ✗ |
+
+**P2 (direction): CONFIRMED, universally.** ρ(RES, Δ%) is positive on all five corpora —
+at these sample sizes, overwhelmingly so on D1/D3/D4/D5. Roller-rich rides ARE
+systematically over-predicted by form 3. The terrain signal is real.
+
+**P1 (mechanism scale): REFUTED.** The physical ceiling for direct recycling is η = 1 (a
+Joule cannot be over-charged more than once), and the registered window was (0.2, 1.0].
+Observed regression coefficients (the cross-ride OLS coefficient of Δ% on RES — a
+statistic, not a terrain grade): 1.5–21, an order of magnitude above the ceiling everywhere except D3
+(whose CI [0.2, 2.9] merely grazes the window). Whatever drives the over-prediction of
+roller terrain carries 10–20× more energy than the momentum-payable amount RES measures.
+
+**P3 (the ledger falsifier): FIRES on the two big corpora.** RES correlates positively
+with the measured deficit δ on D3 (+0.198, n = 157) and D5 (+0.240, n = 226) — if RES were
+measuring recycling, δ had to stay blind to it. It doesn't. Together with P1's unphysical
+slopes, the attribution is settled: **RES is a proxy for roller-terrain character, not a
+measurement of momentum recycling.** (The δ link itself is coherent with Entry 34: roller
+descents are gentle, gentle grades have high pedalling occupancy, high occupancy = high δ.)
+
+**Verdict and synthesis.** The registered failure mode lands in its sharpened form:
+momentum recycling is *sub-resolution at ride grain* — RES medians of 0.03–0.5% of E mean
+that even at η = 1 the mechanism could move ride medians by half a point at most, and the
+robust roller-terrain over-prediction the test surfaced (P2) must therefore be driven by
+something an order of magnitude larger. The prime suspect ties the day's threads together:
+**the τ = 2 m deadband under-filters roller terrain** — oscillations above τ that survive
+into h̃± carry noise and momentum-payable relief the law charges in full, which is the same
+under-filtering that Entry 39's clean corpus (D4: τ* = 3.5) diagnosed from the other side.
+No correction term is added; the roller over-prediction is recorded as a real, unattributed
+route-geometry effect, with the speed/terrain-dependent deadband as the registered joint
+suspect for both entries. The suspension interpretation (Entry 37) survives as mechanics —
+its ride-level energetic footprint is simply too small to matter, which is itself now a
+measured fact.
+
+Instrument: [`e40_roller.py`](../../src/harness/e40_roller.py) (`E40_SMOKE=1`); output
+`e40_roller.csv` (1,409 rides).
 
 ---
 

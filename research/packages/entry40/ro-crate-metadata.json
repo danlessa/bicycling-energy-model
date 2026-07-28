@@ -19,8 +19,8 @@
     {
       "@id": "./",
       "@type": "Dataset",
-      "name": "Entry 35 evidence package — the honest-physics residual — where do the missing 4–5 points live?",
-      "description": "Evidence package for journal Entry 35 (2026-07-28): aggregates, hashes and provenance only — the prose remains authoritative in the journal. Regenerate all packages: `python3 research/packages/make_crates.py`.",
+      "name": "Entry 40 evidence package — roller recycling — the covariate test",
+      "description": "Evidence package for journal Entry 40 (2026-07-28): aggregates, hashes and provenance only — the prose remains authoritative in the journal. Regenerate all packages: `python3 research/packages/make_crates.py`.",
       "author": {
         "@id": "#danilo"
       },
@@ -28,7 +28,7 @@
       "isPartOf": {
         "@id": "https://doi.org/10.5281/zenodo.21282165"
       },
-      "url": "https://github.com/danlessa/bicycling-energy-model/tree/main/research/packages/entry35",
+      "url": "https://github.com/danlessa/bicycling-energy-model/tree/main/research/packages/entry40",
       "hasPart": [],
       "mentions": [
         {
@@ -66,8 +66,8 @@
     {
       "@id": "#claim",
       "@type": "Claim",
-      "name": "Entry 35: the honest-physics residual — where do the missing 4–5 points live?",
-      "text": "the honest-physics residual — where do the missing 4–5 points live?",
+      "name": "Entry 40: roller recycling — the covariate test",
+      "text": "roller recycling — the covariate test",
       "appearance": [
         {
           "@id": "https://github.com/danlessa/bicycling-energy-model/blob/main/research/journal/MODEL_COMPARISON_JOURNAL.md"
@@ -85,18 +85,18 @@
       "conditionsOfAccess": "Available on request from the author, coordinates stripped."
     },
     {
-      "@id": "#data/results/e35_residual.csv",
+      "@id": "#data/results/e40_roller.csv",
       "@type": "File",
-      "name": "data/results/e35_residual.csv",
-      "description": "Per-ride CSV — gitignored (rows carry ride names/dates tied to private activities); described hash-only, never distributed. Regenerates via `python3 src/harness/e35_residual.py`.",
-      "sha256": "94efc491f1c4815f6c296e3c87a8e0e7f106781ebac754334e29504ff660e6cb",
-      "contentSize": "407004",
+      "name": "data/results/e40_roller.csv",
+      "description": "Per-ride CSV — gitignored (rows carry ride names/dates tied to private activities); described hash-only, never distributed. Regenerates via `python3 src/harness/e40_roller.py`.",
+      "sha256": "95d8f7224875b4828a7cbc7024a77fb2e6f02ecd771d9990ca12b99fdc1c42e5",
+      "contentSize": "159312",
       "encodingFormat": "text/csv"
     },
     {
       "@id": "#run",
       "@type": "CreateAction",
-      "name": "Entry 35 harness run",
+      "name": "Entry 40 harness run",
       "description": "Re-executable from the repository and the private inputs; see the journal entry for protocol, endpoints and verdicts.",
       "endTime": "2026-07-28",
       "actionStatus": {
@@ -107,7 +107,7 @@
       },
       "instrument": [
         {
-          "@id": "#src/harness/e35_residual.py"
+          "@id": "#src/harness/e40_roller.py"
         }
       ],
       "object": [
@@ -117,20 +117,20 @@
       ],
       "result": [
         {
-          "@id": "#data/results/e35_residual.csv"
+          "@id": "#data/results/e40_roller.csv"
         }
       ]
     },
     {
-      "@id": "#src/harness/e35_residual.py",
+      "@id": "#src/harness/e40_roller.py",
       "@type": [
         "File",
         "SoftwareApplication",
         "SoftwareSourceCode"
       ],
-      "name": "src/harness/e35_residual.py",
-      "url": "https://github.com/danlessa/bicycling-energy-model/blob/d2cfbe81d246a77a1c355f56615931c334049816/src/harness/e35_residual.py",
-      "sha256": "15488475f4efadb602428094c53a6530aafdda274e11348b3b5d0d0e7fb717b2",
+      "name": "src/harness/e40_roller.py",
+      "url": "https://github.com/danlessa/bicycling-energy-model/blob/d2cfbe81d246a77a1c355f56615931c334049816/src/harness/e40_roller.py",
+      "sha256": "09d2913c49a02c55d6efaf584e0016b7438ab3f6c783d738a9815b64dcd66718",
       "version": "d2cfbe81d246a77a1c355f56615931c334049816",
       "programmingLanguage": "Python"
     },
