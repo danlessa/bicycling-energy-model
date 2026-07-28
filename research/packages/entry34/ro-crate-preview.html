@@ -58,12 +58,12 @@ ul { margin:.4rem 0; padding-left:1.2rem; }
 <body>
 <main>
 <header>
-  <div class="eyebrow">Pacote de evidência · RO-Crate</div>
+  <div class="eyebrow">Pacote de evidência · RO-Crate (Process Run)</div>
   <h1>Entrada 34 — the S-curve deficit — ε₀ as a grade-conditional pedalling probability</h1>
   <div class="badges">
     <span>2026-07-28</span>
-    <span>commit bede649e485f</span>
-    <span>somente afirmação</span>
+    <span>commit 212db81f2d08</span>
+    <span>com execução de harness</span>
   </div>
 </header>
 
@@ -76,6 +76,25 @@ ul { margin:.4rem 0; padding-left:1.2rem; }
     afirmações (<a href="https://github.com/danlessa/bicycling-energy-model/blob/main/research/notes/claims.ttl">claims.ttl</a>) — a prosa da entrada
     permanece a fonte autoritativa.</footer>
   </blockquote>
+</section>
+
+<section>
+  <h2>Como foi produzida</h2>
+  <p>Instrumento(s): <code>src/harness/scurve_deficit.py</code> (sha256 <code class='hash'>938e7e0ff3251158…</code>, <a href="https://github.com/danlessa/bicycling-energy-model/blob/212db81f2d0822a1814721dbb5bd5f405958c8b9/src/harness/scurve_deficit.py">fonte no commit</a>).</p>
+  <p class='muted'>Insumos primários: gravações de pedaladas privadas (FIT com GPS e potência) — fora do repositório e deste pacote; agregados sem coordenadas disponíveis sob pedido.</p>
+  <p class="muted">Reconstruir os pacotes:
+  <code>python3 research/packages/make_crates.py</code>.</p>
+</section>
+
+<section>
+  <h2>Arquivos de resultado (apenas hash — dados privados)</h2>
+  <p class="muted">CSVs por pedalada ficam fora do repositório (nomes e datas de
+  atividades privadas). Os hashes permitem a um verificador com acesso
+  consentido confirmar que recebeu os mesmos arquivos.</p>
+  <div class="tablewrap"><table>
+    <tr><th>arquivo</th><th>tamanho</th><th>sha256</th><th>regenera via</th></tr>
+    <tr><td><code>data/results/scurve_deficit.csv</code></td><td class='num'>91,299 B</td><td><code class='hash'>8c192c5cb7b5b8db…</code></td><td>python3 src/harness/scurve_deficit.py</td></tr>
+  </table></div>
 </section>
 
 <section>

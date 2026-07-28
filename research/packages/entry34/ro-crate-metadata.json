@@ -33,10 +33,16 @@
       "mentions": [
         {
           "@id": "#claim"
+        },
+        {
+          "@id": "#run"
         }
       ],
       "subjectOf": {
         "@id": "https://github.com/danlessa/bicycling-energy-model/blob/main/research/journal/MODEL_COMPARISON_JOURNAL.md"
+      },
+      "conformsTo": {
+        "@id": "https://w3id.org/ro/wfrun/process/0.5"
       },
       "citation": [
         {
@@ -75,6 +81,63 @@
       "subjectOf": {
         "@id": "https://github.com/danlessa/bicycling-energy-model/blob/main/research/notes/claims.ttl"
       }
+    },
+    {
+      "@id": "#ride-recordings",
+      "@type": "Dataset",
+      "name": "Raw ride recordings (NOT distributed)",
+      "description": "FIT tracks (GPS + power) and source spreadsheets — excluded from version control and from this crate: location and private-activity data. Coordinate-stripped aggregates available on request.",
+      "conditionsOfAccess": "Available on request from the author, coordinates stripped."
+    },
+    {
+      "@id": "#data/results/scurve_deficit.csv",
+      "@type": "File",
+      "name": "data/results/scurve_deficit.csv",
+      "description": "Per-ride CSV — gitignored (rows carry ride names/dates tied to private activities); described hash-only, never distributed. Regenerates via `python3 src/harness/scurve_deficit.py`.",
+      "sha256": "8c192c5cb7b5b8db606d80b04ce42d4806d35828682d00caef36bfd8d88c37b7",
+      "contentSize": "91299",
+      "encodingFormat": "text/csv"
+    },
+    {
+      "@id": "#run",
+      "@type": "CreateAction",
+      "name": "Entry 34 harness run",
+      "description": "Re-executable from the repository and the private inputs; see the journal entry for protocol, endpoints and verdicts.",
+      "endTime": "2026-07-28",
+      "actionStatus": {
+        "@id": "http://schema.org/CompletedActionStatus"
+      },
+      "agent": {
+        "@id": "#danilo"
+      },
+      "instrument": [
+        {
+          "@id": "#src/harness/scurve_deficit.py"
+        }
+      ],
+      "object": [
+        {
+          "@id": "#ride-recordings"
+        }
+      ],
+      "result": [
+        {
+          "@id": "#data/results/scurve_deficit.csv"
+        }
+      ]
+    },
+    {
+      "@id": "#src/harness/scurve_deficit.py",
+      "@type": [
+        "File",
+        "SoftwareApplication",
+        "SoftwareSourceCode"
+      ],
+      "name": "src/harness/scurve_deficit.py",
+      "url": "https://github.com/danlessa/bicycling-energy-model/blob/212db81f2d0822a1814721dbb5bd5f405958c8b9/src/harness/scurve_deficit.py",
+      "sha256": "938e7e0ff3251158770d0a4f43f214c6ceff14ab5bef9f5c1b2b1ffa8990cef5",
+      "version": "212db81f2d0822a1814721dbb5bd5f405958c8b9",
+      "programmingLanguage": "Python"
     },
     {
       "@id": "https://github.com/danlessa/bicycling-energy-model/blob/main/research/notes/original_notes.md",

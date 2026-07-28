@@ -69,6 +69,7 @@ PRODUCER = {
     "param_sweep_canon.csv": "SWEEP_CANON=1 python3 src/harness/param_sweep.py",
     "longoes_frozen.csv": "python3 src/harness/longoes_frozen.py",
     "perride_invert.csv": "python3 src/harness/perride_invert.py",
+    "scurve_deficit.csv": "python3 src/harness/scurve_deficit.py",
 }
 
 # entry → (instrument harness scripts, result CSVs, uses private tracks,
@@ -117,7 +118,8 @@ ENTRIES = {
          ["ppaz_comparison.csv", "jaam_comparison.csv", "danlessa_comparison.csv",
           "longoes_frozen.csv", "time_comparison.csv"], False, []),
     33: (["src/harness/perride_invert.py"], ["perride_invert.csv"], True, []),
-    34: ([], [], False, ["research/notes/original_notes.md"]),
+    34: (["src/harness/scurve_deficit.py"], ["scurve_deficit.csv"], True,
+         ["research/notes/original_notes.md"]),
 }
 
 # entry 22 reads the per-ride CSVs the other harnesses wrote

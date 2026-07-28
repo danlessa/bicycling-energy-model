@@ -130,7 +130,13 @@ ride. The realisation is deployed in an open-source energy-field router
   - per-edge noise (no profile-level cancellation; expected inflation as a
     function of edge length — connect to c);
   - asymmetry and turn costs (out of scope for the physics, but state what
-    the router must not assume).
+    the router must not assume);
+  - the grade-resolved deficit (paper-1 journal Entry 34): pedalling occupancy
+    fades monotonically with cell grade for all riders while intensity is
+    rider-level — a per-EDGE ε₀(s) = ε₀·g(s) is therefore physically licensed
+    at exactly this paper's grain, where paper 1's ride-level test could not
+    profit from it. Candidate refinement of the edge ε(s) beyond the constant
+    deficit; needs the paper-1 held-out discipline at edge grain.
 
 ## 4. Discussion (planned)
 

@@ -251,8 +251,60 @@ rules out a universal one-curve replacement for ε₀ at ride level.
 5. Event context and route covariates (brevet vs training; unpaved fraction) enter only
    AFTER the grade-only fit, as residual predictors — same discipline as Entry 8's ε ladder.
 
-Owner in the paper: §4.4's coasting-deficit thread (a sentence lands there now; the fit is
-future work). Status: hypothesis registered, fit NOT run.
+Owner in the paper: §4.4's coasting-deficit thread. Status at registration: fit NOT run.
+
+### Results (registered design executed same day — `scurve_deficit.py`)
+
+**Step 1b — the factors, measured at cell grain (1,287 rides, 30 m descent cells, bins
+[1.5, 2, 3, 4, 5, 6, 8, 12, 20)%).** The pedalling-occupancy S-curve is REAL and universal in
+direction — p_ped(s) falls monotonically for **all three riders**, including P. Paz, whose
+*ride-level* deficit rose with s̄ (the ride-level peek was confounded by route mix, exactly
+why the registration demanded cell grain):
+
+| rider | p_ped 1.5–2% | 3–4% | 5–6% | 8–12% | 12–20% | P̄_ped range (W) |
+|---|--:|--:|--:|--:|--:|--:|
+| P. Paz | 0.62 | 0.36 | 0.20 | 0.07 | 0.05 | 86–123 |
+| JAAM | 0.66 | 0.38 | 0.20 | 0.12 | 0.11 | 133–178 |
+| author | 0.41 | 0.21 | 0.10 | 0.05 | 0.03 | 89–121 |
+
+Intensity P̄_ped(s) is roughly **flat in grade** and strongly **rider-conditional** (author
+≈ 90 W, P. Paz ≈ 110, JAAM ≈ 170 — tracking their overall power levels): Danilo's magnitude
+conjecture confirmed — the deficit's size carrier is the rider's descent power habit, its
+grade shape is occupancy. And the measured per-bin δ falls FASTER than the dilution null
+(P. Paz at 8–12%: measured 0.017 vs dilution-only 0.059) — the fade is behaviour, not just
+arithmetic. One anomaly: the ≥ 20% bin ticks back up on every rider (author: δ 0.085 — likely
+walking/pushing power on unridable pitches; `push_stats` is the tool to test that, future
+work).
+
+**Steps 2–4 — the ride-level estimator test: 0/3, the constant stays.** Chronological
+halves, held-out RMS of ε_bal − prediction:
+
+| rider | train/test n | frozen 0.13 | const-fit | dilution | logistic | logistic vs frozen |
+|---|--:|--:|--:|--:|--:|--:|
+| P. Paz | 78/78 | **0.076** | 0.102 | 0.101 | 0.102 | −33% [−57, −14] |
+| JAAM | 10/10 | **0.045** | 0.082 | 0.058 | 0.072 | −62% [−123, −4] |
+| author | 112/112 | 0.090 | 0.090 | 0.092 | 0.090 | −0.0% [−5.1, +4.5] |
+
+**REGISTERED VERDICT: not confirmed** — the S-curve does not improve the ride-level
+estimator; per the registration's failure mode the constant ε₀ stays, and the S-curve is
+refuted *as a ride-level estimator upgrade* at this data's grade range.
+
+**Why both results are right — the reconciliation.** Three mechanisms, all visible in the
+tables. (i) *Ride-level s̄ cannot carry the cell-level curve*: a ride's descents mix grades,
+so δ(s̄) is a blurred mixture — the author's fitted logistic (ε₀' = 0.476, s₅₀ = 1%, w = 3%)
+evaluates to ≈ 0.13 at typical s̄: given full freedom, **the fit reconstructs the frozen
+constant**. (ii) *Temporal drift beats refitting*: P. Paz's train-half mean deficit is 0.063,
+his test half sits near 0.13 — every train-fitted model (including the fitted constant)
+transfers WORSE than the frozen 0.13, which happens to sit where his later rides do. The
+frozen constant's out-of-sample robustness is itself a finding. (iii) JAAM's n = 10/10 is
+too thin to fit three parameters honestly. The refined statement for the paper: **the
+S-curve is the confirmed mechanism (occupancy fades monotonically with grade; intensity is
+the rider-level carrier), and the constant ε₀ is its correct ride-level summary** — a
+grade-resolved estimator would need per-segment evaluation (the router's per-edge grain,
+paper 2 territory), not a ride-level s̄.
+
+Instrument: [`scurve_deficit.py`](../../src/harness/scurve_deficit.py) (deterministic,
+seeded bootstrap CIs; `SCURVE_SMOKE=1`); output `scurve_deficit.csv` (1,287 rides).
 
 ---
 
