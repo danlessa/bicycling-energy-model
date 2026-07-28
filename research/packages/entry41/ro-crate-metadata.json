@@ -19,16 +19,16 @@
     {
       "@id": "./",
       "@type": "Dataset",
-      "name": "Entry 13 evidence package — the time model, finally tested — ascent half holds, descent bridge does not",
-      "description": "Evidence package for journal Entry 13 (2026-07-02): aggregates, hashes and provenance only — the prose remains authoritative in the journal. Regenerate all packages: `python3 research/packages/make_crates.py`.",
+      "name": "Entry 41 evidence package — the elevation-source substitution — paper 1's law on planner DEM profiles",
+      "description": "Evidence package for journal Entry 41 (2026-07-28): aggregates, hashes and provenance only — the prose remains authoritative in the journal. Regenerate all packages: `python3 research/packages/make_crates.py`.",
       "author": {
         "@id": "#danilo"
       },
-      "dateCreated": "2026-07-02",
+      "dateCreated": "2026-07-28",
       "isPartOf": {
         "@id": "https://doi.org/10.5281/zenodo.21282165"
       },
-      "url": "https://github.com/danlessa/bicycling-energy-model/tree/main/research/packages/entry13",
+      "url": "https://github.com/danlessa/bicycling-energy-model/tree/main/research/packages/entry41",
       "hasPart": [],
       "mentions": [
         {
@@ -43,7 +43,12 @@
       },
       "conformsTo": {
         "@id": "https://w3id.org/ro/wfrun/process/0.5"
-      }
+      },
+      "citation": [
+        {
+          "@id": "https://github.com/danlessa/bicycling-energy-model/blob/main/research/article/paper2-dem-deployment.md"
+        }
+      ]
     },
     {
       "@id": "#danilo",
@@ -66,8 +71,8 @@
     {
       "@id": "#claim",
       "@type": "Claim",
-      "name": "Entry 13: the time model, finally tested — ascent half holds, descent bridge does not",
-      "text": "The ascent half is empirically supported and transfers out-of-sample: the pre-declared endpoint T1b reaches 6.6% median vs the naive baseline's 7.6% on 441 P. Paz rides (sign test p = 0.011), concentrated on the hilliest tercile, and the physics k₊ beats a FITTED ceiling frozen on the new rider (6.6 vs 10.9). The descent bridge is NOT confirmed: the analytic ε↔k₋ form systematically over-predicts measured descent speed (corr 0.08–0.59) — real descents are behaviour- and cap-limited — so k₋ stays a free, corpus-dependent coefficient.",
+      "name": "Entry 41: the elevation-source substitution — paper 1's law on planner DEM profiles",
+      "text": "the elevation-source substitution — paper 1's law on planner DEM profiles",
       "appearance": [
         {
           "@id": "https://github.com/danlessa/bicycling-energy-model/blob/main/research/journal/MODEL_COMPARISON_JOURNAL.md"
@@ -85,20 +90,11 @@
       "conditionsOfAccess": "Available on request from the author, coordinates stripped."
     },
     {
-      "@id": "#data/results/time_comparison.csv",
-      "@type": "File",
-      "name": "data/results/time_comparison.csv",
-      "description": "Per-ride CSV — gitignored (rows carry ride names/dates tied to private activities); described hash-only, never distributed. Regenerates via `python3 src/harness/time_compare.py`.",
-      "sha256": "4ef32cbee3228ff8c267794fb9e467a0f72afb3c7494adce594788ade954d6b7",
-      "contentSize": "143539",
-      "encodingFormat": "text/csv"
-    },
-    {
       "@id": "#run",
       "@type": "CreateAction",
-      "name": "Entry 13 harness run",
+      "name": "Entry 41 harness run",
       "description": "Re-executable from the repository and the private inputs; see the journal entry for protocol, endpoints and verdicts.",
-      "endTime": "2026-07-02",
+      "endTime": "2026-07-28",
       "actionStatus": {
         "@id": "http://schema.org/CompletedActionStatus"
       },
@@ -107,32 +103,33 @@
       },
       "instrument": [
         {
-          "@id": "#src/harness/time_compare.py"
+          "@id": "#src/harness/e41_dem_route.py"
         }
       ],
       "object": [
         {
           "@id": "#ride-recordings"
         }
-      ],
-      "result": [
-        {
-          "@id": "#data/results/time_comparison.csv"
-        }
       ]
     },
     {
-      "@id": "#src/harness/time_compare.py",
+      "@id": "#src/harness/e41_dem_route.py",
       "@type": [
         "File",
         "SoftwareApplication",
         "SoftwareSourceCode"
       ],
-      "name": "src/harness/time_compare.py",
-      "url": "https://github.com/danlessa/bicycling-energy-model/blob/6c457b2e82d78522db68912236bf3d3f382c277b/src/harness/time_compare.py",
-      "sha256": "18b0557a1f253596aa79f2da43df95ff99dac5e3fcee6de5208745a345454cbe",
+      "name": "src/harness/e41_dem_route.py",
+      "url": "https://github.com/danlessa/bicycling-energy-model/blob/6c457b2e82d78522db68912236bf3d3f382c277b/src/harness/e41_dem_route.py",
+      "sha256": "88be134504c3ed782dde252213ff2efdd6ebff2d4fb18d2dfd5fefdae162e2c4",
       "version": "6c457b2e82d78522db68912236bf3d3f382c277b",
       "programmingLanguage": "Python"
+    },
+    {
+      "@id": "https://github.com/danlessa/bicycling-energy-model/blob/main/research/article/paper2-dem-deployment.md",
+      "@type": "CreativeWork",
+      "name": "research/article/paper2-dem-deployment.md",
+      "encodingFormat": "text/markdown"
     },
     {
       "@id": "ro-crate-preview.html",

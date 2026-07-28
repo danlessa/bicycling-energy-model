@@ -1,5 +1,5 @@
 <!--
-  paper2-edge-cost.md — SCAFFOLD (not a draft). Second paper of the series.
+  paper3-edge-cost.md — SCAFFOLD (not a draft). Third paper of the series.
 
   Working question: how do you discretize the ride-level closed form of paper 1
   into a per-edge cost usable inside a shortest-path search (Dijkstra and
@@ -93,8 +93,11 @@ ride. The realisation is deployed in an open-source energy-field router
 - **2.4 Scale experiments.** The existing chain: IGC 5 m ground truth
   [E19 `igc_resolution_test.py`], σ-smoothing calibration
   [E20 `goal_calibration.py`, `goal_smooth_rasters.py`], the
-  resolution × smoothing × threshold trio [E21 `scale_trio.py`]. These become
-  this paper's core methodology section rather than paper 1's aside.
+  resolution × smoothing × threshold trio [E21 `scale_trio.py`]. The
+  ROUTE-grain prescription (DEM source → σ → constants) is paper 2's
+  deliverable (paper2-dem-deployment.md, a letter this paper cites); this
+  paper keeps only the EDGE-grain consequences (per-edge grade error,
+  cost-surface stability under σ).
 - **2.5 Sanity gates.** Synthetic gates already exist (`SANITY=1
   regime_compare.py`; scale/goal per-gate blocks, two documented-benign
   failures). TODO: a paper-2 `bootstrap_ci`-style battery re-deriving every

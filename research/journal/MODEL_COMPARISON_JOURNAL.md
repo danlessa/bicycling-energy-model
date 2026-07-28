@@ -108,6 +108,13 @@ changed. See Entry 11.)*
 - **Entry 30** (pre-registration + Tier B results: the canonical simulation under the same
   sweep, one-at-a-time, `SWEEP_CANON=1` in
   [`param_sweep.py`](../../src/harness/param_sweep.py)) — this commit
+- **Entry 42** (pre-registration + results: the lumped ε_d — is mean descent grade a valid
+  proxy for the drop-weighted estimator at energy level?,
+  [`e42_lump.py`](../../src/harness/e42_lump.py)) — this commit
+- **Entry 41** (pre-registration + results: the elevation-source substitution — paper 1's
+  law on planner DEM profiles, seven arms on one arc grid, with the track-quality /
+  raster-validity / anomaly QA gates,
+  [`e41_dem_route.py`](../../src/harness/e41_dem_route.py)) — this commit
 - **Entry 40** (pre-registration + results: the roller-recycling covariate — recyclable
   energy share vs the form-3 residual; slope = transfer efficiency η̂,
   [`e40_roller.py`](../../src/harness/e40_roller.py)) — this commit
@@ -132,6 +139,264 @@ changed. See Entry 11.)*
 - **Entry 32** (review-v3 consolidation: Table 4 descent-RMS full regeneration, the D3+D4
   transfer-only pool, per-corpus allegiance sign tests, and the gate battery extended to the
   numbers the review caught un-gated — [`bootstrap_ci.py`](../../src/harness/bootstrap_ci.py)) — this commit
+
+---
+
+## 2026-07-28 — Entry 42: the lumped ε_d — pricing the hand recipe's proxy
+
+*Prompt (Danilo), on review-v4's finding that §4.1.2's lumped variant is validated nowhere at
+energy level: "we should use the inverted params protocol. let's assume that mean descent
+grade = corrected vertical meters / x_downhill (eg. fraction of distance below threshold).
+test it and compare. If the result is not favourable, then we should not recommend using the
+mean descent as a proxy."*
+
+### Pre-registration (written before any result was seen)
+
+**The gap.** Every ε_d cell in the paper's tables uses the drop-weighted estimator (eq. (5),
+`eps_geom`); the §4.1.2 hand recipe prescribes the lumped variant, eq. (3) at the mean
+descent grade. The lumped form's only evidence is Entry 8's ε-space ladder on D1 under
+retired conventions. This entry scores it at energy level, everywhere.
+
+**Protocol** ([`e42_lump.py`](../../src/harness/e42_lump.py)). Corpora D1–D5, Entry-33/35
+populations. Physics: the **regime-consistent per-ride set** (m̂ᵣ, Ĉ_rr,ᵣ, ĈdAᵣ^reg, wind,
+joined from `e35_residual.csv`) — the near-zero-bias pair, so the lumped-vs-drop-weighted
+difference is not laundered through a standing bias (the Entry-39 deconfounding logic).
+Definitions, fixed now:
+
+- **s̄_lump = h̃₋ / x₋** — corrected vertical metres (τ = 2 m deadbanded descent total) over
+  the descending distance (Σ of 30 m cells of the deadbanded profile with grade ≤ −1.5%,
+  the paper's x₋);
+- **ε_lump = min(1, (α/β)/s̄_lump) − ε₀**, unclamped, α/β at the ride's model v_f — exactly
+  the recipe's arithmetic;
+- scored: F3 · ε_lump and F4 · ε_lump against measured energy, beside F3/F4 · ε_d
+  (drop-weighted; the F3 · ε_d column must reproduce Entry 35's regime medians — parity
+  gate) — accuracy AND bias with 95% CIs, paired lumped-vs-drop-weighted sign tests;
+- diagnostics: per-ride ε_lump − ε_d (median, IQR) and Spearman ρ of |paired Δ%-difference|
+  against the descent-grade dispersion (SD of descent-cell grades) — the mixed-descent
+  mechanism, finally measured.
+
+**Registered predictions.**
+
+- **P1 (favourable threshold):** the lumped penalty is ≤ 0.5 pp of med|Δ%| per corpus with
+  bias shifts ≤ 1 pp — the proxy is fine for hand use.
+- **P2 (mechanism):** where the two diverge, it is on mixed-descent rides (ρ > 0 against
+  grade dispersion), and the lumped form's error is an *over-refund* (the min(1,·) cap
+  binds harder on the lumped mean than drop-weighting allows: gentle cells drag s̄ down,
+  inflating ε_lump).
+- **P3 (the decision rule, fixed by Danilo now):** if the penalty exceeds ~1 pp of median
+  error or shifts bias materially on any open corpus, **the paper stops recommending mean
+  descent grade as a proxy** — §4.1.2 is rewritten (flat ε_f as the hand default, the
+  drop-weighted estimator labelled software-only), rather than the proxy being kept with a
+  caveat. Either outcome is publishable; the unfavourable one changes the recipe.
+
+### Results (first full run, 2026-07-28 — 1,378 rides; populations shrink slightly where no cell clears the descent threshold: D3 433, D4 215, D5 617)
+
+Parity gates green on D1–D4; D5 reads 5.04 vs the 4.9 anchor — the 617-vs-636 population
+difference, same disclosed class as Entries 33/35. F3 rows (med|Δ%| [CI] · bias [CI]):
+
+| corpus | F3 · ε_d (drop-weighted) | F3 · ε_lump | paired (lump closer) | ε_lump − ε_d |
+|---|--:|--:|--:|--:|
+| D1 | 6.6 [3.8, 8.1] · +0.1 [−1.7, +5.0] | 6.3 [4.1, 8.8] · **+3.6** [+1.3, +8.8] | 19/44, p = 0.45 | −0.079 |
+| D2 | 4.6 [2.7, 6.1] · +1.4 [−0.3, +3.7] | **7.2** [5.1, 10.4] · **+6.1** [+4.3, +8.3] | 16/69, p < 10⁻⁴ | −0.112 |
+| D3 | 3.1 [2.9, 3.3] · −1.4 [−1.9, −0.9] | 3.1 [2.7, 3.5] · +0.6 [+0.1, +0.9] | 221/432, p = 0.67 | −0.083 |
+| D4 | 3.2 [2.8, 3.6] · −2.7 [−3.0, −2.2] | 2.6 [2.3, 2.8] · −1.3 [−1.7, −0.6] | 143/215, p < 10⁻⁴ | −0.110 |
+| D5 | 5.0 [4.7, 5.5] · −0.8 [−1.4, −0.1] | 4.7 [4.2, 5.4] · **+2.7** [+1.7, +3.4] | 287/617, p = 0.09 | −0.098 |
+
+**The mechanism (P2: half-confirmed, direction refuted).** The proxy under-refunds by a
+near-constant **−0.08 to −0.11 of ε on every corpus** — the registered prediction had the
+sign backwards. The cause is definitional: h̃₋ accumulates descent metres from *all*
+downhill cells while x₋ counts only cells steeper than −1.5%, so s̄_lump = h̃₋/x₋ is biased
+steep and eq. (3) refunds less. The dispersion mechanism is confirmed (ρ of the paired
+|Δ%-difference| against descent-grade SD: +0.17 to +0.55, positive everywhere): mixed
+descents diverge most, as registered.
+
+**Why the accuracy columns flatter the proxy (do not be fooled).** On D3/D4/D5 the
+under-refund's positive push *cancels* the regime-physics residual negative biases — D4's
+"significant win" (p < 10⁻⁴) is two wrongs netting, the exact artifact class Entry 29
+taught us not to reward. The bias columns tell the truth: shifts of +1.4 to +4.7 pp
+everywhere. And this regime-physics test was the proxy's *best case*: under the frozen
+priors (the recipe's actual context) D1/D5 carry positive standing biases, so the proxy's
+push would compound rather than cancel.
+
+**Verdict (P3, the registered decision rule): UNFAVOURABLE.** D2 fails on accuracy outright
+(+2.6 pp, p < 10⁻⁴); the open corpora fail on the bias criterion (+3.5 pp on D1 and D5).
+Per the rule Danilo fixed at registration, **the paper stops recommending mean descent
+grade as a proxy**: §4.1.2's hand default becomes the flat ε_f = 0.20 — honestly framed as
+conservative (it under-refunds open descents, so the hand estimate errs toward
+*overestimating* the energy demand, the safe direction for planning) — and the
+drop-weighted ε_d of eq. (5) is labelled software-only. Executed in the paper the same day.
+
+Instrument: [`e42_lump.py`](../../src/harness/e42_lump.py) (`E42_SMOKE=1`); output
+`e42_lump.csv` (1,378 rides); the five ε-offset medians and the two decisive paired tests
+are gated in `bootstrap_ci.py`.
+
+---
+
+## 2026-07-28 — Entry 41: the elevation-source substitution — paper 1's law on planner DEM profiles
+
+*Prompt (Danilo): implement `research/article/paper2-dem-deployment.PLAN.md` — the letter on
+deploying the closed form at planning time, where there is no barometric stream. Mid-flight
+amendments: use the WIDE IGC-SP raster (`mdt_igc_2010.tif`) rather than the validated
+`sampa_geral.tif` crop, "but be careful, as the data quality is not homogeneous — some places
+have seams… if we detect them when cropping, we should not use it for that crop"; and "it is
+supposed to be a DTM, but sometimes behaves as a DSM… keep an eye on anomalies and don't be
+afraid to filter rides out."*
+
+### Pre-registration (written before any full run)
+
+**The question.** Paper 1 validates $E \approx \alpha x + \beta(h_+ - \varepsilon h_-)$ on
+the rides' **own barometric elevation streams**, and excludes DEMs by design (§2.3.3). A
+planner has no such stream: it has a polyline and a DEM. What does the elevation-source swap
+cost the law, and what is the cheapest repair that keeps it?
+
+**The design — ONE substitution.** Every ride is re-evaluated with the elevation profile
+replaced by a DEM sampled along its own recorded track. Measured power, per-ride regime
+powers, masses, the frozen priors (Crr 0.008 · CdA 0.40 · ρ 1.13 · k_eff 0.98 · wind 0 ·
+G 9.7864), τ = 2 m, c = 3 m/km, ε₀ = 0.13, ε_f = 0.20 — all unchanged. So every gap between
+an arm and the control is the elevation source and nothing else. ε_d IS recomputed on the
+substituted profile: it is geometry-dependent by construction (paper 1 eq. (4)–(5),
+unclamped), and holding it fixed would hide half the effect.
+
+**Seven arms, one grid.** Every arm lives on the ride's own 5 m arc-length grid. A coarser
+polyline step is sampled at that step and linearly interpolated back onto the 5 m grid —
+linear interpolation adds no local extrema, so h±, the τ deadband and ε_coast read the coarse
+geometry while the scoring grid stays fixed. Only the SOURCE varies.
+
+| arm | elevation source | polyline step | pre-smoothing |
+|---|---|---|---|
+| `own` | recorded barometer (paper-1 control) | 5 m | — |
+| `igc5` | IGC-SP 2010 5 m DTM | 5 m | — |
+| `igc5s10` | IGC-SP 2010 5 m DTM | 5 m | 1-D Gaussian σ = 10 m |
+| `igc5s30` | IGC-SP 2010 5 m DTM | 5 m | 1-D Gaussian σ = 30 m |
+| `igc30` | IGC-SP 2010 5 m DTM | 30 m | — |
+| `fab5` | FABDEM V1-2 (30 m, global) | 5 m | — |
+| `fab30` | FABDEM V1-2 (30 m, global) | 30 m | — |
+
+The σ arms smooth the **profile**, not the raster — the operation a planner can actually run
+(it holds a polyline, not a 20 GB GeoTIFF), and mask-normalized exactly like Entry 20's
+deployable raster scheme. That substitution is a **gate, not a result** (below).
+
+**Amendment — the physics protocol (Danilo, before any full run: "we should use the
+ride-inverted params rather than the frozen priors").** Every arm is evaluated under **two**
+protocols, and the **regime-consistent per-ride physics is primary**: m̂, Ĉrr, ĈdA_reg and
+wind joined per ride from `e35_residual.csv` (Entry 35 / paper 1 §3.5.2, Table 6). The reason is the
+same deconfounding that produced Entry 39 out of Entry 38: at the frozen priors every corpus
+carries a standing bias, so swapping the elevation source partly *cancels or amplifies* that
+bias and med|Δ%| reads the bias rather than the source. Entry 19 measured exactly this
+failure — "JAAM is the under-predicted corpus, so the spurious extra energy lands as
+accuracy," and igc5 beat igc30 there for no good reason. At the regime-consistent α the
+honest (α, ε) pair is ε_d on every corpus (Entry 35), so the bundle rule (paper 1 §4.3.4)
+is respected rather than assumed. The **frozen-prior protocol is retained** as the second
+arm of the contrast, and it is what the PARITY gate checks — it is the protocol paper 1
+published, so it is the only one with a published reference. Rides with no `e35_residual`
+row fall back to the frozen constants, flagged per ride (`e35_join`). The physical floor
+that defines the population stays at the frozen protocol, so the population is paper 1's
+regardless of the amendment. One property of this choice is load-bearing and is stated here
+so it is not mistaken for circularity: the per-ride constants are inverted ONCE, from the
+ride's own recorded stream, and then held FIXED across all seven arms. Re-inverting them per
+arm would let mass and drag absorb the elevation error and hide exactly what the experiment
+measures — the circularity paper 1 §2.3.2 warns about. The constants are a property of the
+rider and the bicycle; a planner knows them without knowing the DEM.
+
+**Models.** F1–F4 × {ε_d, ε_f} + the forward simulation, per arm. The CSV stores the closed
+form's components per arm (a_roll, a_aero, X, h± raw and deadbanded, aero gated and ungated),
+so any F-variant at any ε and any noise rate c is arithmetic afterwards — which is what P3's
+per-source c refit needs, with no second engine pass.
+
+**Populations.** The paper-1 clean corpora (D1–D5, their own filters verbatim, including the
+physical floor E_meas ≥ β·h̃₊/k_eff evaluated on the `own` arm) intersected with the QA gates
+below. They will NOT equal paper 1's corpora — raster coverage and track quality both cut —
+and the funnel is reported per corpus. Notably **D1 and D5 contain rides outside São Paulo**
+(D1: Roraima, Rio de Janeiro, Poland/Ukraine; D5: Lombardy), which simply fall outside the
+raster; this is disclosed, not repaired.
+
+**QA gates** (pre-registered, applied identically to every arm so no arm is advantaged):
+
+- **G1 track quality** — the share of route length sitting inside GPS-fix gaps > 50 m must be
+  ≤ **0.5%**. A planner's polyline has no dropouts; where the recording lost GPS, the track
+  is a straight chord and the DEM charges terrain the rider never crossed. **This gate comes
+  first**: the largest profile artifacts on the *validated* raster are track dropouts, not
+  raster defects (measured, this entry: the worst one-step |Δh| on Entry 20's 864 cached
+  profiles are 638 m, 537 m, 320 m — all at GPS gaps of 294 m, 223 m, 1,426 m). A single
+  max-gap threshold was tried first and rejected as disproportionate: it scales with ride
+  length, so it deleted all of D1. Census over all 1,493 candidate rides (this entry, before
+  any energy was scored): median gap share 0.000–0.006% per corpus, so the gate bites only on
+  the tail — it keeps 38/43 D1, 66/70 D2, 484/486 D3, 222/223 D4, 630/671 D5.
+- **G2 raster validity** — ≥ 99% of a ride's samples with 0.5 m < h < 3000 m, on every arm.
+  The wide survey stores voids as huge magnitudes (band min −40,263, max +7,955), so the
+  band is two-sided, unlike Entry 19's `h > 0.5` on the crop.
+- **G3 anomaly census** — a one-step |Δh| > 10 m over a 5 m step is a 200% grade: a defect
+  (block seam, void edge, or an un-filtered building/canopy wall where the DTM behaves as a
+  DSM), not terrain. Counted per arm and reported. G1+G2 and G1+G2+G3 are **co-primary**
+  populations and the letter reports both: the anomaly-free one is what a planner gets after
+  QA-ing its crop (Danilo's "filter rides out"), the full one is what it gets if it does not
+  check. G3 is applied jointly across arms — a ride is dropped only if ANY arm carries an
+  anomaly — so the comparison stays paired and no source is advantaged by its own defects.
+
+**Estimands.** Per corpus and per arm: median |Δ%| and median signed Δ%, each with a 95%
+percentile bootstrap CI (mulberry32, seeds 42/43, B = 10⁴ — house convention), for
+F3·ε_d, F4·ε_d, F3·ε_f, F4·ε_f and the simulation; the paired per-ride Δ%(arm) − Δ%(own);
+the per-arm noise rate c(τ=2) = (h₊ − h̃₊)/x; the per-arm h₊ ratio to the control; the per-arm
+ε_d. Headline pool = D3+D4 (the two independent riders), mirroring paper 1's out-of-sample
+headline.
+
+**Registered predictions.**
+
+- **P1 — the raw fine DEM over-charges.** Entry 6 put the recorded barometer 21% *below* the
+  5 m survey on smoothed ascent (k_DEM = 1.26); Entry 19 found h₊(igc5) > h₊(igc30) on
+  919/922 rides. Arithmetic for a typical D3 ride (h̃₊ ≈ 500 m, E ≈ 900 kJ, β = 0.744 kJ/m):
+  a +26% ascent inflation is Δh₊ ≈ 130 m → +97 kJ gross, of which the descent term refunds
+  ≈ ε ≈ 0.45, leaving ≈ +6%. **Registered: `igc5`'s signed bias exceeds `own`'s by a median
+  +3 to +10 pp on the D3+D4 pool, positive on every corpus.** Falsified by a negative or
+  null shift.
+- **P2 (headline) — smoothing restores the calibration.** Entry 20's gate levels are
+  med|Δ%| < 5 and |bias| < 2. **Registered: at σ = 30 m — the scale ε₀ was calibrated on —
+  F3·ε_d's med|Δ%| lands within 2 pp of its own-stream value and |bias| < 2 on D3+D4.**
+  *Failure mode:* if P2 fails, the letter's conclusion inverts — planner-grade DEM energy
+  needs per-source recalibration and the prescription table becomes a warning table. Either
+  outcome is publishable; the letter ships either way.
+- **P3 — c is a property of the source, not a constant.** Paper 1 measures c = 3.1 m/km on
+  barometric recordings (IQR 2.6–3.7); Entry 38 puts c(τ=2) at 2.5–4.5 m/km across corpora.
+  **Registered: (a) `igc5`'s c exceeds 4.5 m/km and `fab5`'s exceeds 6.0 m/km, each with a
+  95% CI clear of the barometric 3.1; (b) recomputing F4 with the arm's own median c brings
+  F4's bias within 2 pp of F3's on the same arm**, whereas the frozen c = 3 leaves it
+  strongly positive on the noisiest sources.
+- **P4 — the artifact tail.** Two operationalizations, because E26's portal detector fires
+  on 915 of 923 rides and is therefore useless as a binary flag. **(a)** The G3 anomaly-free
+  subset shifts the DEM arms' median by ≥ 1 pp toward the control relative to the full
+  population. **(b)** Where the E26 join exists, the top decile of portal exposure
+  (`span_m` per route-km, `dh_plus_removed_igc5`) carries a more positive DEM-minus-own
+  residual than the rest by ≥ 1 pp.
+
+**Sanity gates (abort on failure).**
+
+1. **PARITY** — the `own` arm IS paper 1's protocol, so it must reproduce the published
+   *per-ride* Δ% from `longoes_frozen.csv` (D1) and `{censo,ppaz,jaam,danlessa}_comparison.csv`
+   (D2–D5) for F3·ε_d, F4·ε_d, F3·ε_f, F4·ε_f and the simulation, to ≤ 0.02 pp. Far stricter
+   than a median comparison; if it fails, nothing downstream is trustworthy.
+2. **σ-equivalence** — the 1-D profile Gaussian at σ = 10 m must reproduce Entry 20's 2-D
+   *raster* Gaussian at the same σ on the rides Entry 20 cached (median h₊ agreement within
+   10%, p90 within 25%). *Falsifier:* if it fails, the letter cannot inherit Entry 20's σ
+   prescription and must present the 1-D form on its own evidence.
+3. **Conservation** — the simulation's energy identity ≤ 1e-6 relative on every arm.
+4. **Re-gridding is inert** — every arm reports the same route length to float equality.
+
+**Disclosed deviations.** (i) A 4-rides-per-corpus smoke run preceded this registration, to
+wire the harness and prove the four sanity gates; its treatment numbers (n = 11) were seen.
+The predictions above are anchored to Entries 6/19/20/38 arithmetic, not to that smoke, and
+the smoke's own arms are not quoted anywhere. (ii) The wide raster replaces the validated
+`sampa_geral.tif` crop of Entries 19–21; on their overlap the two agree to 0.01 m median, and
+the only >10 m disagreements are where the *crop* runs off its own edge and reads 0 — but the
+wide product's quality is not homogeneous, which is what G2/G3 exist for. (iii) FABDEM 1°×1°
+tiles are fetched from the collective's own server; a 1° cell is the coarsest geographic
+identifier there is, so no ride-derived geometry leaves the machine. (iv) A pre-filter drops
+rides falling outside the largest WGS84 rectangle inscribed in the IGC raster's UTM footprint
+before any sampling. It is inert — such rides have no IGC elevation at all and G2 would drop
+them — and exists only so the FABDEM fetch does not pull tiles for Roraima, Lombardy and
+Poland.
+
+Instrument: [`e41_dem_route.py`](../../src/harness/e41_dem_route.py) (`E41_SMOKE=n`); output
+`e41_dem_route.csv`.
 
 ---
 
@@ -465,10 +730,10 @@ terrain even though the energy is demonstrably being recycled). So the registere
 is roller-drop share vs form-3 residual, NOT vs ε_bal — and it joins Entry 34's untested
 route-side candidates with a mechanism and a scale attached.
 
-Edge-cost consequence (paper 2): momentum is **non-local** — no per-edge cost can carry KE
+Edge-cost consequence (paper 3, edge-cost — renumbered same day when the DEM letter took the paper-2 slot): momentum is **non-local** — no per-edge cost can carry KE
 across edges, so any edge realisation over-charges closely-spaced rollers by construction;
 λ ≈ 200 m and h_KE ≈ 2–6 m bound the error's scale and the raster smoothing that would
-absorb it. Registered as a pitfall in the paper-2 scaffold.
+absorb it. Registered as a pitfall in the edge-cost scaffold (paper 3).
 
 **Interpretation addendum (same day, Danilo): momentum acts as a smoother.** "The scale of
 smoothing is determined not only by the physical geometry, but by its interaction with the
@@ -499,7 +764,7 @@ may be exactly why one constant worked so well. Three consequences:
    travel-limited suspension: the mechanism did not need a new filter family, it needed a
    new reading of the existing one's parameter (τ = travel = η·v_f²/2g; damping = λ).
 3. **Fixed-scale deployment bakes in one speed.** A raster pre-smoothed at a single σ
-   (paper 2's mitigation for the 5 m/30 m problem) encodes one rider speed; the momentum
+   (the edge-cost paper's mitigation for the 5 m/30 m problem) encodes one rider speed; the momentum
    reading says the right smoothing varies with v_f — across riders, and even within one
    ride between regimes.
 
@@ -964,7 +1229,7 @@ too thin to fit three parameters honestly. The refined statement for the paper: 
 S-curve is the confirmed mechanism (occupancy fades monotonically with grade; intensity is
 the rider-level carrier), and the constant ε₀ is its correct ride-level summary** — a
 grade-resolved estimator would need per-segment evaluation (the router's per-edge grain,
-paper 2 territory), not a ride-level s̄.
+edge-cost-paper territory), not a ride-level s̄.
 
 Instrument: [`scurve_deficit.py`](../../src/harness/scurve_deficit.py) (deterministic,
 seeded bootstrap CIs; `SCURVE_SMOKE=1`); output `scurve_deficit.csv` (1,287 rides).
@@ -1265,7 +1530,7 @@ registration ran clamped; re-run unclamped the anchor gates still pass (the anch
 clamps), and only implausible low-ρC_dA corner cells can differ — Entry 29's published grid
 keeps its as-written values, per the journal convention. Also this session: the paper renamed
 `paper.md` → `paper1-closed-form.md`, and a second paper scaffolded
-([`paper2-edge-cost.md`](../../research/article/paper2-edge-cost.md)) for the edge-cost
+([`paper3-edge-cost.md`](../../research/article/paper3-edge-cost.md)) for the edge-cost
 discretization question, where the clamp asymmetry is registered as a pitfall.
 
 **Gate extensions** ([`bootstrap_ci.py`](../../src/harness/bootstrap_ci.py), all passing):

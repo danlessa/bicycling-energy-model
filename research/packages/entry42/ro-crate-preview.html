@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Entrada 25 — pacote de evidência</title>
+<title>Entrada 42 — pacote de evidência</title>
 <style>
 :root {
   --paper:#f6f9f8; --ink:#1d2b30; --muted:#5b7076; --accent:#16717f;
@@ -58,19 +58,19 @@ ul { margin:.4rem 0; padding-left:1.2rem; }
 <body>
 <main>
 <header>
-  <div class="eyebrow">Pacote de evidência · RO-Crate</div>
-  <h1>Entrada 25 — the simujaules grid-connectivity note, imported verbatim</h1>
+  <div class="eyebrow">Pacote de evidência · RO-Crate (Process Run)</div>
+  <h1>Entrada 42 — the lumped ε_d — pricing the hand recipe&#x27;s proxy</h1>
   <div class="badges">
-    <span>2026-07-24</span>
+    <span>2026-07-28</span>
     <span>commit 6c457b2e82d7</span>
-    <span>somente afirmação</span>
+    <span>com execução de harness</span>
   </div>
 </header>
 
 <section>
   <h2>A afirmação</h2>
   <blockquote>
-    the simujaules grid-connectivity note, imported verbatim
+    the lumped ε_d — pricing the hand recipe&#x27;s proxy
     <footer>Conforme registrado no
     <a href="https://github.com/danlessa/bicycling-energy-model/blob/main/research/journal/MODEL_COMPARISON_JOURNAL.md">diário de comparação de modelos</a> e no grafo de
     afirmações (<a href="https://github.com/danlessa/bicycling-energy-model/blob/main/research/notes/claims.ttl">claims.ttl</a>) — a prosa da entrada
@@ -79,9 +79,28 @@ ul { margin:.4rem 0; padding-left:1.2rem; }
 </section>
 
 <section>
+  <h2>Como foi produzida</h2>
+  <p>Instrumento(s): <code>src/harness/e42_lump.py</code> (sha256 <code class='hash'>e9e87daa4a191ec0…</code>, <a href="https://github.com/danlessa/bicycling-energy-model/blob/6c457b2e82d78522db68912236bf3d3f382c277b/src/harness/e42_lump.py">fonte no commit</a>).</p>
+  <p class='muted'>Insumos primários: gravações de pedaladas privadas (FIT com GPS e potência) — fora do repositório e deste pacote; agregados sem coordenadas disponíveis sob pedido.</p>
+  <p class="muted">Reconstruir os pacotes:
+  <code>python3 research/packages/make_crates.py</code>.</p>
+</section>
+
+<section>
+  <h2>Arquivos de resultado (apenas hash — dados privados)</h2>
+  <p class="muted">CSVs por pedalada ficam fora do repositório (nomes e datas de
+  atividades privadas). Os hashes permitem a um verificador com acesso
+  consentido confirmar que recebeu os mesmos arquivos.</p>
+  <div class="tablewrap"><table>
+    <tr><th>arquivo</th><th>tamanho</th><th>sha256</th><th>regenera via</th></tr>
+    <tr><td><code>data/results/e42_lump.csv</code></td><td class='num'>146,183 B</td><td><code class='hash'>41b5f251fb89e65c…</code></td><td>python3 src/harness/e42_lump.py</td></tr>
+  </table></div>
+</section>
+
+<section>
   <h2>Contexto</h2>
   <ul>
-    <li>Diário (entrada 25): <a href="https://github.com/danlessa/bicycling-energy-model/blob/main/research/journal/MODEL_COMPARISON_JOURNAL.md">MODEL_COMPARISON_JOURNAL.md</a></li>
+    <li>Diário (entrada 42): <a href="https://github.com/danlessa/bicycling-energy-model/blob/main/research/journal/MODEL_COMPARISON_JOURNAL.md">MODEL_COMPARISON_JOURNAL.md</a></li>
     <li>Grafo de afirmações: <a href="https://github.com/danlessa/bicycling-energy-model/blob/main/research/notes/claims.ttl">claims.ttl</a></li>
     
     <li>Pacote de pesquisa: <a href="https://doi.org/10.5281/zenodo.21282165">https://doi.org/10.5281/zenodo.21282165</a></li>

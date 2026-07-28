@@ -129,9 +129,9 @@
         "SoftwareSourceCode"
       ],
       "name": "src/harness/perride_invert.py",
-      "url": "https://github.com/danlessa/bicycling-energy-model/blob/d2cfbe81d246a77a1c355f56615931c334049816/src/harness/perride_invert.py",
+      "url": "https://github.com/danlessa/bicycling-energy-model/blob/6c457b2e82d78522db68912236bf3d3f382c277b/src/harness/perride_invert.py",
       "sha256": "401fac870f9c305ec3d93775d16d9afb395d1ed9f65c676cea5b5ff827c753e4",
-      "version": "d2cfbe81d246a77a1c355f56615931c334049816",
+      "version": "6c457b2e82d78522db68912236bf3d3f382c277b",
       "programmingLanguage": "Python"
     },
     {

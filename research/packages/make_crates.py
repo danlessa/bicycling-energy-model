@@ -75,6 +75,8 @@ PRODUCER = {
     "e38_tau.csv": "python3 src/harness/e38_tau.py",
     "e39_tau_reg.csv": "python3 src/harness/e39_tau_reg.py",
     "e40_roller.csv": "python3 src/harness/e40_roller.py",
+    "e42_lump.csv": "python3 src/harness/e42_lump.py",
+    "e41_dem_route.csv": "python3 src/harness/e41_dem_route.py",
 }
 
 # entry → (instrument harness scripts, result CSVs, uses private tracks,
@@ -131,6 +133,9 @@ ENTRIES = {
     38: (["src/harness/e38_tau.py"], ["e38_tau.csv"], True, []),
     39: (["src/harness/e39_tau_reg.py"], ["e39_tau_reg.csv"], True, []),
     40: (["src/harness/e40_roller.py"], ["e40_roller.csv"], True, []),
+    41: (["src/harness/e41_dem_route.py"], ["e41_dem_route.csv"], True,
+         ["research/article/paper2-dem-deployment.md"]),
+    42: (["src/harness/e42_lump.py"], ["e42_lump.csv"], True, []),
 }
 
 # entry 22 reads the per-ride CSVs the other harnesses wrote

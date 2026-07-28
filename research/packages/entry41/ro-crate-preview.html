@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Entrada 25 — pacote de evidência</title>
+<title>Entrada 41 — pacote de evidência</title>
 <style>
 :root {
   --paper:#f6f9f8; --ink:#1d2b30; --muted:#5b7076; --accent:#16717f;
@@ -58,19 +58,19 @@ ul { margin:.4rem 0; padding-left:1.2rem; }
 <body>
 <main>
 <header>
-  <div class="eyebrow">Pacote de evidência · RO-Crate</div>
-  <h1>Entrada 25 — the simujaules grid-connectivity note, imported verbatim</h1>
+  <div class="eyebrow">Pacote de evidência · RO-Crate (Process Run)</div>
+  <h1>Entrada 41 — the elevation-source substitution — paper 1&#x27;s law on planner DEM profiles</h1>
   <div class="badges">
-    <span>2026-07-24</span>
+    <span>2026-07-28</span>
     <span>commit 6c457b2e82d7</span>
-    <span>somente afirmação</span>
+    <span>com execução de harness</span>
   </div>
 </header>
 
 <section>
   <h2>A afirmação</h2>
   <blockquote>
-    the simujaules grid-connectivity note, imported verbatim
+    the elevation-source substitution — paper 1&#x27;s law on planner DEM profiles
     <footer>Conforme registrado no
     <a href="https://github.com/danlessa/bicycling-energy-model/blob/main/research/journal/MODEL_COMPARISON_JOURNAL.md">diário de comparação de modelos</a> e no grafo de
     afirmações (<a href="https://github.com/danlessa/bicycling-energy-model/blob/main/research/notes/claims.ttl">claims.ttl</a>) — a prosa da entrada
@@ -79,11 +79,19 @@ ul { margin:.4rem 0; padding-left:1.2rem; }
 </section>
 
 <section>
+  <h2>Como foi produzida</h2>
+  <p>Instrumento(s): <code>src/harness/e41_dem_route.py</code> (sha256 <code class='hash'>88be134504c3ed78…</code>, <a href="https://github.com/danlessa/bicycling-energy-model/blob/6c457b2e82d78522db68912236bf3d3f382c277b/src/harness/e41_dem_route.py">fonte no commit</a>).</p>
+  <p class='muted'>Insumos primários: gravações de pedaladas privadas (FIT com GPS e potência) — fora do repositório e deste pacote; agregados sem coordenadas disponíveis sob pedido.</p>
+  <p class="muted">Reconstruir os pacotes:
+  <code>python3 research/packages/make_crates.py</code>.</p>
+</section>
+
+<section>
   <h2>Contexto</h2>
   <ul>
-    <li>Diário (entrada 25): <a href="https://github.com/danlessa/bicycling-energy-model/blob/main/research/journal/MODEL_COMPARISON_JOURNAL.md">MODEL_COMPARISON_JOURNAL.md</a></li>
+    <li>Diário (entrada 41): <a href="https://github.com/danlessa/bicycling-energy-model/blob/main/research/journal/MODEL_COMPARISON_JOURNAL.md">MODEL_COMPARISON_JOURNAL.md</a></li>
     <li>Grafo de afirmações: <a href="https://github.com/danlessa/bicycling-energy-model/blob/main/research/notes/claims.ttl">claims.ttl</a></li>
-    
+    <li>Documento relacionado: <a href="https://github.com/danlessa/bicycling-energy-model/blob/main/research/article/paper2-dem-deployment.md">research/article/paper2-dem-deployment.md</a></li>
     <li>Pacote de pesquisa: <a href="https://doi.org/10.5281/zenodo.21282165">https://doi.org/10.5281/zenodo.21282165</a></li>
     <li>Metadados legíveis por máquina: <code>ro-crate-metadata.json</code></li>
   </ul>

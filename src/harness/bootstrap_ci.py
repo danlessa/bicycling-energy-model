@@ -175,6 +175,29 @@ def paired(label: str, rows: list[dict], col_a: str, col_b: str) -> None:
           f"sign test p={to_fixed(sign_p(w, l), 4)}")
 
 
+def strat_signed_gate(label: str, strata_cols: list[list[float]], es: float,
+                      ecis: tuple[float, float]) -> None:
+    global failed
+    pooled = [x for v in strata_cols for x in v]
+    ms = median(pooled)
+    rand = rng(43)
+    stats = []
+    for _ in range(B):
+        samp = []
+        for v in strata_cols:
+            n = len(v)
+            samp.extend(v[int(rand() * n)] for _ in range(n))
+        stats.append(median(samp))
+    stats.sort()
+    slo, shi = stats[250], stats[9749]
+    ok = (abs(ms - es) <= 0.11 and abs(slo - ecis[0]) <= 0.06
+          and abs(shi - ecis[1]) <= 0.06)
+    print(f"{label.ljust(34)} signed {to_fixed(ms, 2)} [{to_fixed(slo, 1)}, {to_fixed(shi, 1)}]"
+          + (" GATE-OK" if ok else f" GATE-FAIL(exp {es} {ecis})"))
+    if not ok:
+        failed = True
+
+
 def num(r: dict, c: str) -> float:
     return parse_float(r.get(c))
 
@@ -380,12 +403,40 @@ for _lab, _col, _ea, _eci in (
     strat_report(_lab, [col([r for r in rows_ if r.get("dataOK", "true") == "true"], _col)
                         for rows_ in _strata_src], _ea, _eci)
 
-# transfer-only pool (D3+D4) — the paper's out-of-sample headline
-for _lab, _col, _ea, _eci in (
-        ("pooled D3+D4 smooth · ε=geom", "sm_geom", 5.6, (5.2, 6.2)),
-        ("pooled D3+D4 canonical", "canon_d", 6.3, (5.8, 6.8))):
-    strat_report(_lab, [col([r for r in rows_ if r.get("dataOK", "true") == "true"], _col)
-                        for rows_ in _strata_transfer], _ea, _eci)
+for _lab, _col, _es, _ecis in (
+        ("T3 pooled signed sm_geom", "sm_geom", 0.4, (-0.1, 1.1)),
+        ("T3 pooled signed pm_geom", "pm_geom", -2.4, (-3.0, -1.9)),
+        ("T3 pooled signed sm_flat", "sm_0.20", 5.9, (5.2, 6.5)),
+        ("T3 pooled signed pm_flat", "pm_0.20", 2.8, (2.2, 3.5)),
+        ("T3 pooled signed canon", "canon_d", 0.7, (0.1, 1.3))):
+    strat_signed_gate(_lab, [col([r for r in rows_ if r.get("dataOK", "true") == "true"], _col)
+                             for rows_ in _strata_src], _es, _ecis)
+
+# transfer-only pool (D3+D4) — the paper's out-of-sample headline (abs + signed)
+for _lab, _col, _ea, _eci, _es, _ecis in (
+        ("pooled D3+D4 smooth · ε=geom", "sm_geom", 5.6, (5.2, 6.2), 1.1, (0.4, 1.7)),
+        ("pooled D3+D4 canonical", "canon_d", 6.3, (5.8, 6.8), 1.3, (0.6, 2.0))):
+    _strata_cols = [col([r for r in rows_ if r.get("dataOK", "true") == "true"], _col)
+                    for rows_ in _strata_transfer]
+    strat_report(_lab, _strata_cols, _ea, _eci)
+    _pooled_signed = [x for v in _strata_cols for x in v]
+    _ms = median(_pooled_signed)
+    _rand = rng(43)
+    _stats = []
+    for _ in range(B):
+        _samp = []
+        for v in _strata_cols:
+            _n = len(v)
+            _samp.extend(v[int(_rand() * _n)] for _ in range(_n))
+        _stats.append(median(_samp))
+    _stats.sort()
+    _slo, _shi = _stats[250], _stats[9749]
+    _ok = (abs(_ms - _es) <= 0.11 and abs(_slo - _ecis[0]) <= 0.06
+           and abs(_shi - _ecis[1]) <= 0.06)
+    print(f"  signed: {to_fixed(_ms, 2)} [{to_fixed(_slo, 1)}, {to_fixed(_shi, 1)}]"
+          + (" GATE-OK" if _ok else f" GATE-FAIL(exp {_es} {_ecis})"))
+    if not _ok:
+        failed = True
 
 # ---------- 3d. Per-ride inverted physics (Entry 33 / paper Table 5) ----------
 print("\n== Per-ride inverted physics (Entry 33, Table 5) ==")
@@ -401,6 +452,14 @@ PI = {
                  ("f4_f", 5.8, -0.4, (5.3, 6.3)), ("canon_d", 7.2, -3.5, (6.7, 7.9))],
 }
 PI_M = {"longoes": 76.6, "censo": 82.3, "ppaz": 75.4, "jaam": 98.7, "danlessa": 73.7}
+for _corpus, _exp in (("ppaz", 7.1), ("jaam", 9.7), ("danlessa", 9.3)):
+    _sub = [r for r in pi if r.get("corpus") == _corpus]
+    _v = [abs(num(r, "f4_d")) for r in _sub if is_finite(num(r, "f4_d"))]
+    _ok = abs(median(_v) - _exp) <= 0.11
+    print(f"E33 {_corpus} f4_d (caption note): {to_fixed(median(_v), 2)}"
+          + (" GATE-OK" if _ok else f" GATE-FAIL(exp {_exp})"))
+    if not _ok:
+        failed = True
 for _corpus, _rows in PI.items():
     _sub = [r for r in pi if r.get("corpus") == _corpus]
     for _c, _ea, _es, _eci in _rows:
@@ -459,6 +518,13 @@ for _lab, _col, _ea, _eci in (
         ("T6 pooled f4_f_reg", "f4_f_reg", 4.5, (4.2, 4.8)),
         ("T6 pooled canon_reg", "canon_reg", 4.0, (3.7, 4.2))):
     strat_report(_lab, [col(s, _col) for s in _e35_strata], _ea, _eci)
+for _lab, _col, _es, _ecis in (
+        ("T6 pooled signed f3_d", "f3_d_reg", -1.4, (-1.8, -1.0)),
+        ("T6 pooled signed f3_f", "f3_f_reg", 3.8, (3.4, 4.2)),
+        ("T6 pooled signed f4_f", "f4_f_reg", 0.8, (0.2, 1.3)),
+        ("T6 pooled signed canon", "canon_reg", -0.8, (-1.1, -0.5))):
+    strat_signed_gate(_lab, [col(s, _col) for s in _e35_strata], _es, _ecis)
+
 # braking strict-reading medians (paper §3.4 prose: 0.6-0.8% open / 1.3-1.4% stop-heavy)
 for _corpus, _exp in (("longoes", 0.64), ("censo", 1.36), ("ppaz", 0.72),
                       ("jaam", 0.79), ("danlessa", 1.34)):
@@ -498,6 +564,14 @@ print(f"E36 pooled D3-D5: balance-ε₀ reg {median(_pg):.3f} frz {median(_pf):.
       f"bias-ε₀ {median(_pb):.3f}" + (" GATE-OK" if _ok else " GATE-FAIL(exp .115/.109/.202)"))
 if not _ok:
     failed = True
+
+_pi_str = [[r for r in pi if r.get("corpus") == c] for c in ("ppaz", "jaam", "danlessa")]
+for _lab, _col, _es, _ecis in (
+        ("T5 pooled signed f3_d", "f3_d", -4.2, (-4.5, -3.7)),
+        ("T5 pooled signed f3_f", "f3_f", 0.4, (-0.0, 0.8)),
+        ("T5 pooled signed f4_f", "f4_f", -2.4, (-2.7, -1.9)),
+        ("T5 pooled signed canon", "canon_d", -4.3, (-4.7, -3.9))):
+    strat_signed_gate(_lab, [col(s, _col) for s in _pi_str], _es, _ecis)
 
 for _corpus, _em in PI_M.items():
     _mv = [num(r, "m_hat") for r in pi if r.get("corpus") == _corpus
@@ -555,6 +629,30 @@ for _corpus, _erho, _eres in (("longoes", 0.444, 0.48), ("censo", 0.125, 0.44),
     _ok = abs(_rho - _erho) <= 0.0015 and abs(_res - _eres) <= 0.011
     print(f"E40 {_corpus}: ρ(RES,Δ%)={_rho:+.3f} RES med={to_fixed(_res, 2)}%"
           + (" GATE-OK" if _ok else f" GATE-FAIL(exp {_erho}/{_eres})"))
+    if not _ok:
+        failed = True
+
+# ---------- 3h. Lumped-eps proxy (Entry 42) ----------
+print("\n== Lumped ε proxy (Entry 42) ==")
+e42 = parse_csv("e42_lump.csv")
+for _corpus, _de in (("longoes", -0.079), ("censo", -0.112), ("ppaz", -0.083),
+                     ("jaam", -0.110), ("danlessa", -0.098)):
+    _v = [num(r, "d_eps") for r in e42 if r.get("corpus") == _corpus
+          and is_finite(num(r, "d_eps"))]
+    _ok = abs(median(_v) - _de) <= 0.0011
+    print(f"E42 {_corpus}: med(ε_lump − ε_d) = {median(_v):+.3f}"
+          + (" GATE-OK" if _ok else f" GATE-FAIL(exp {_de})"))
+    if not _ok:
+        failed = True
+for _corpus, _w, _n in (("censo", 16, 69), ("jaam", 143, 215)):
+    _sub = [r for r in e42 if r.get("corpus") == _corpus]
+    _wc = sum(1 for r in _sub if is_finite(num(r, "f3_lump")) and is_finite(num(r, "f3_d"))
+              and abs(num(r, "f3_lump")) < abs(num(r, "f3_d")))
+    _lc = sum(1 for r in _sub if is_finite(num(r, "f3_lump")) and is_finite(num(r, "f3_d"))
+              and abs(num(r, "f3_lump")) > abs(num(r, "f3_d")))
+    _ok = _wc == _w and _wc + _lc == _n and sign_p(_wc, _lc) <= 0.001
+    print(f"E42 paired {_corpus}: {_wc}/{_wc + _lc}"
+          + (" GATE-OK" if _ok else f" GATE-FAIL(exp {_w}/{_n})"))
     if not _ok:
         failed = True
 
