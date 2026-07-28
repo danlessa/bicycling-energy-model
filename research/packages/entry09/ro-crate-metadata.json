@@ -129,9 +129,9 @@
         "SoftwareSourceCode"
       ],
       "name": "src/harness/censo_compare.py",
-      "url": "https://github.com/danlessa/bicycling-energy-model/blob/212db81f2d0822a1814721dbb5bd5f405958c8b9/src/harness/censo_compare.py",
+      "url": "https://github.com/danlessa/bicycling-energy-model/blob/de0bd507764197d4a4616c06aaa1006ed96a0628/src/harness/censo_compare.py",
       "sha256": "05de4017c974afe5167186b76ed437cfbb2700a849f5e920e165c540283f764c",
-      "version": "212db81f2d0822a1814721dbb5bd5f405958c8b9",
+      "version": "de0bd507764197d4a4616c06aaa1006ed96a0628",
       "programmingLanguage": "Python"
     },
     {

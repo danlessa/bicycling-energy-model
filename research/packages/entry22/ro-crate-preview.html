@@ -62,7 +62,7 @@ ul { margin:.4rem 0; padding-left:1.2rem; }
   <h1>Entrada 22 — error bars for the headline medians — the champion &quot;beats&quot; the sim only on the median, so the article now claims parity</h1>
   <div class="badges">
     <span>2026-07-09</span>
-    <span>commit 212db81f2d08</span>
+    <span>commit de0bd5077641</span>
     <span>com execução de harness</span>
   </div>
 </header>
@@ -80,7 +80,7 @@ ul { margin:.4rem 0; padding-left:1.2rem; }
 
 <section>
   <h2>Como foi produzida</h2>
-  <p>Instrumento(s): <code>src/harness/bootstrap_ci.py</code> (sha256 <code class='hash'>7538852b006c3ef7…</code>, <a href="https://github.com/danlessa/bicycling-energy-model/blob/212db81f2d0822a1814721dbb5bd5f405958c8b9/src/harness/bootstrap_ci.py">fonte no commit</a>).</p>
+  <p>Instrumento(s): <code>src/harness/bootstrap_ci.py</code> (sha256 <code class='hash'>f98bb343758e84be…</code>, <a href="https://github.com/danlessa/bicycling-energy-model/blob/de0bd507764197d4a4616c06aaa1006ed96a0628/src/harness/bootstrap_ci.py">fonte no commit</a>).</p>
   
   <p class="muted">Reconstruir os pacotes:
   <code>python3 research/packages/make_crates.py</code>.</p>
@@ -208,6 +208,41 @@ E33 cda_hat ppaz: 0.2575 (n=374) GATE-OK
 E33 cda_hat jaam: 0.3913 (n=202) GATE-OK
 E33 cda_hat danlessa: 0.2929 (n=385) GATE-OK
 E33 D1 m̂−m_logged: bias 2.4, |err| 5.3 (n=33) GATE-OK
+
+== Regime-consistent aero (Entry 35, Table 6) ==
+T6 censo f3_d_reg                  n= 69  med|Δ%|=  4.64 [2.7, 6.1]  medΔ%=   1.39 [-0.3, 3.7] GATE-OK
+T6 censo f3_f_reg                  n= 69  med|Δ%|=  7.99 [6.4, 10.6]  medΔ%=   6.35 [4.8, 8.3] GATE-OK
+T6 censo f4_f_reg                  n= 69  med|Δ%|=  8.42 [7.2, 11.2]  medΔ%=   7.99 [6.3, 10.3] GATE-OK
+T6 censo canon_reg                 n= 69  med|Δ%|=  7.61 [4.6, 9.9]  medΔ%=   4.60 [3.0, 7.8] GATE-OK
+T6 ppaz f3_d_reg                   n=441  med|Δ%|=  3.09 [2.8, 3.3]  medΔ%=  -1.29 [-1.8, -0.8] GATE-OK
+T6 ppaz f3_f_reg                   n=441  med|Δ%|=  3.98 [3.3, 4.7]  medΔ%=   3.64 [2.6, 4.4] GATE-OK
+T6 ppaz f4_f_reg                   n=441  med|Δ%|=  3.93 [3.5, 4.3]  medΔ%=  -0.18 [-0.8, 0.6] GATE-OK
+T6 ppaz canon_reg                  n=441  med|Δ%|=  3.18 [2.8, 3.6]  medΔ%=  -1.21 [-1.6, -0.5] GATE-OK
+T6 jaam f3_d_reg                   n=219  med|Δ%|=  3.24 [2.8, 3.6]  medΔ%=  -2.69 [-3.1, -2.2] GATE-OK
+T6 jaam f3_f_reg                   n=219  med|Δ%|=  2.80 [2.1, 3.4]  medΔ%=   2.50 [1.9, 3.1] GATE-OK
+T6 jaam f4_f_reg                   n=219  med|Δ%|=  4.25 [3.7, 4.8]  medΔ%=  -2.41 [-3.2, -1.9] GATE-OK
+T6 jaam canon_reg                  n=219  med|Δ%|=  3.25 [2.6, 3.6]  medΔ%=  -2.39 [-2.8, -1.8] GATE-OK
+T6 danlessa f3_d_reg               n=636  med|Δ%|=  4.91 [4.6, 5.3]  medΔ%=  -0.55 [-1.2, -0.1] GATE-OK
+T6 danlessa f3_f_reg               n=636  med|Δ%|=  5.87 [5.1, 6.7]  medΔ%=   4.78 [4.0, 5.7] GATE-OK
+T6 danlessa f4_f_reg               n=636  med|Δ%|=  5.26 [4.7, 5.9]  medΔ%=   3.55 [2.5, 4.5] GATE-OK
+T6 danlessa canon_reg              n=636  med|Δ%|=  5.12 [4.8, 5.7]  medΔ%=   0.32 [-0.3, 1.2] GATE-OK
+T6 pooled f3_d_reg                 n=1296  med|Δ%|=3.90 [3.6, 4.1] GATE-OK
+T6 pooled f3_f_reg                 n=1296  med|Δ%|=4.47 [4.1, 4.8] GATE-OK
+T6 pooled f4_f_reg                 n=1296  med|Δ%|=4.47 [4.2, 4.8] GATE-OK
+T6 pooled canon_reg                n=1296  med|Δ%|=4.04 [3.7, 4.2] GATE-OK
+T6 brake-strict longoes: 0.64% GATE-OK
+T6 brake-strict censo: 1.36% GATE-OK
+T6 brake-strict ppaz: 0.72% GATE-OK
+T6 brake-strict jaam: 0.79% GATE-OK
+T6 brake-strict danlessa: 1.34% GATE-OK
+
+== ε₀ per dataset (Entry 36) ==
+E36 longoes: balance-ε₀ 0.113 bias-ε₀ 0.127 GATE-OK
+E36 censo: balance-ε₀ 0.070 bias-ε₀ 0.099 GATE-OK
+E36 ppaz: balance-ε₀ 0.116 bias-ε₀ 0.201 GATE-OK
+E36 jaam: balance-ε₀ 0.098 bias-ε₀ 0.355 GATE-OK
+E36 danlessa: balance-ε₀ 0.115 bias-ε₀ 0.153 GATE-OK
+E36 pooled D3-D5: balance-ε₀ reg 0.115 frz 0.109 bias-ε₀ 0.202 GATE-OK
 E33 m̂ longoes: 76.6 (n=33) GATE-OK
 E33 m̂ censo: 82.3 (n=17) GATE-OK
 E33 m̂ ppaz: 75.4 (n=230) GATE-OK

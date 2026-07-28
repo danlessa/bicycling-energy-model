@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Entrada 16 — pacote de evidência</title>
+<title>Entrada 35 — pacote de evidência</title>
 <style>
 :root {
   --paper:#f6f9f8; --ink:#1d2b30; --muted:#5b7076; --accent:#16717f;
@@ -59,9 +59,9 @@ ul { margin:.4rem 0; padding-left:1.2rem; }
 <main>
 <header>
   <div class="eyebrow">Pacote de evidência · RO-Crate (Process Run)</div>
-  <h1>Entrada 16 — does it hold with the *real* rider physics? + the author&#x27;s full export</h1>
+  <h1>Entrada 35 — the honest-physics residual — where do the missing 4–5 points live?</h1>
   <div class="badges">
-    <span>2026-07-04</span>
+    <span>2026-07-28</span>
     <span>commit de0bd5077641</span>
     <span>com execução de harness</span>
   </div>
@@ -70,7 +70,7 @@ ul { margin:.4rem 0; padding-left:1.2rem; }
 <section>
   <h2>A afirmação</h2>
   <blockquote>
-    The energy law&#x27;s ~4–7% accuracy is robust to assumed-vs-fitted physics, but P. Paz&#x27;s 35% ε win does not survive: under best-guess physics both independent riders TIE the geometric estimator against their own best flat constant (JAAM fully robust throughout). The author&#x27;s full export validates the mass machinery (71–75 kg vs known ≈ 73; the earlier 79.9 was genuine brevet loadout) and the 0.13 offset, in-sample. Fitted CdA clusters at the aero-position value (0.26–0.34), ~35% below the assumed 0.40 — the flat-fit sees the tucked/drafting rider.
+    the honest-physics residual — where do the missing 4–5 points live?
     <footer>Conforme registrado no
     <a href="https://github.com/danlessa/bicycling-energy-model/blob/main/research/journal/MODEL_COMPARISON_JOURNAL.md">diário de comparação de modelos</a> e no grafo de
     afirmações (<a href="https://github.com/danlessa/bicycling-energy-model/blob/main/research/notes/claims.ttl">claims.ttl</a>) — a prosa da entrada
@@ -80,7 +80,7 @@ ul { margin:.4rem 0; padding-left:1.2rem; }
 
 <section>
   <h2>Como foi produzida</h2>
-  <p>Instrumento(s): <code>src/harness/danlessa_compare.py</code> (sha256 <code class='hash'>b17c5b288c7b87b5…</code>, <a href="https://github.com/danlessa/bicycling-energy-model/blob/de0bd507764197d4a4616c06aaa1006ed96a0628/src/harness/danlessa_compare.py">fonte no commit</a>).</p>
+  <p>Instrumento(s): <code>src/harness/e35_residual.py</code> (sha256 <code class='hash'>15488475f4efadb6…</code>, <a href="https://github.com/danlessa/bicycling-energy-model/blob/de0bd507764197d4a4616c06aaa1006ed96a0628/src/harness/e35_residual.py">fonte no commit</a>).</p>
   <p class='muted'>Insumos primários: gravações de pedaladas privadas (FIT com GPS e potência) — fora do repositório e deste pacote; agregados sem coordenadas disponíveis sob pedido.</p>
   <p class="muted">Reconstruir os pacotes:
   <code>python3 research/packages/make_crates.py</code>.</p>
@@ -93,14 +93,14 @@ ul { margin:.4rem 0; padding-left:1.2rem; }
   consentido confirmar que recebeu os mesmos arquivos.</p>
   <div class="tablewrap"><table>
     <tr><th>arquivo</th><th>tamanho</th><th>sha256</th><th>regenera via</th></tr>
-    <tr><td><code>data/results/danlessa_comparison.csv</code></td><td class='num'>155,474 B</td><td><code class='hash'>03868d6792a42eeb…</code></td><td>python3 src/harness/danlessa_compare.py</td></tr>
+    <tr><td><code>data/results/e35_residual.csv</code></td><td class='num'>407,004 B</td><td><code class='hash'>94efc491f1c4815f…</code></td><td>python3 src/harness/e35_residual.py</td></tr>
   </table></div>
 </section>
 
 <section>
   <h2>Contexto</h2>
   <ul>
-    <li>Diário (entrada 16): <a href="https://github.com/danlessa/bicycling-energy-model/blob/main/research/journal/MODEL_COMPARISON_JOURNAL.md">MODEL_COMPARISON_JOURNAL.md</a></li>
+    <li>Diário (entrada 35): <a href="https://github.com/danlessa/bicycling-energy-model/blob/main/research/journal/MODEL_COMPARISON_JOURNAL.md">MODEL_COMPARISON_JOURNAL.md</a></li>
     <li>Grafo de afirmações: <a href="https://github.com/danlessa/bicycling-energy-model/blob/main/research/notes/claims.ttl">claims.ttl</a></li>
     
     <li>Pacote de pesquisa: <a href="https://doi.org/10.5281/zenodo.21282165">https://doi.org/10.5281/zenodo.21282165</a></li>

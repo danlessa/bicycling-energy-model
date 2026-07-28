@@ -19,16 +19,16 @@
     {
       "@id": "./",
       "@type": "Dataset",
-      "name": "Entry 17 evidence package — a regime-decomposed closed form — does splitting the ride by slope beat the champion?",
-      "description": "Evidence package for journal Entry 17 (2026-07-06): aggregates, hashes and provenance only — the prose remains authoritative in the journal. Regenerate all packages: `python3 research/packages/make_crates.py`.",
+      "name": "Entry 36 evidence package — ε₀ per dataset — regressed, two ways, against the frozen 0.13",
+      "description": "Evidence package for journal Entry 36 (2026-07-28): aggregates, hashes and provenance only — the prose remains authoritative in the journal. Regenerate all packages: `python3 research/packages/make_crates.py`.",
       "author": {
         "@id": "#danilo"
       },
-      "dateCreated": "2026-07-06",
+      "dateCreated": "2026-07-28",
       "isPartOf": {
         "@id": "https://doi.org/10.5281/zenodo.21282165"
       },
-      "url": "https://github.com/danlessa/bicycling-energy-model/tree/main/research/packages/entry17",
+      "url": "https://github.com/danlessa/bicycling-energy-model/tree/main/research/packages/entry36",
       "hasPart": [],
       "mentions": [
         {
@@ -66,8 +66,8 @@
     {
       "@id": "#claim",
       "@type": "Claim",
-      "name": "Entry 17: a regime-decomposed closed form — does splitting the ride by slope beat the champion?",
-      "text": "Regime decomposition does not beat the champion: its win/loss pattern is a bias trade (a variant wins exactly where the champion's parameter bias points the other way), shown causally by the fitted-physics rerun.",
+      "name": "Entry 36: ε₀ per dataset — regressed, two ways, against the frozen 0.13",
+      "text": "ε₀ per dataset — regressed, two ways, against the frozen 0.13",
       "appearance": [
         {
           "@id": "https://github.com/danlessa/bicycling-energy-model/blob/main/research/journal/MODEL_COMPARISON_JOURNAL.md"
@@ -85,20 +85,20 @@
       "conditionsOfAccess": "Available on request from the author, coordinates stripped."
     },
     {
-      "@id": "#data/results/regime_comparison.csv",
+      "@id": "#data/results/e36_eps0.csv",
       "@type": "File",
-      "name": "data/results/regime_comparison.csv",
-      "description": "Per-ride CSV — gitignored (rows carry ride names/dates tied to private activities); described hash-only, never distributed. Regenerates via `python3 src/harness/regime_compare.py`.",
-      "sha256": "6ecbbd2b88ac217287368a91e6528f5bf116c252e1067e8c32743d355e7c22dc",
-      "contentSize": "549824",
+      "name": "data/results/e36_eps0.csv",
+      "description": "Per-ride CSV — gitignored (rows carry ride names/dates tied to private activities); described hash-only, never distributed. Regenerates via `python3 src/harness/e36_eps0.py`.",
+      "sha256": "d4a584d3d210716e21b1d430eaf4fae12a1229da78467e0f4bb253238d5d80cf",
+      "contentSize": "181162",
       "encodingFormat": "text/csv"
     },
     {
       "@id": "#run",
       "@type": "CreateAction",
-      "name": "Entry 17 harness run",
+      "name": "Entry 36 harness run",
       "description": "Re-executable from the repository and the private inputs; see the journal entry for protocol, endpoints and verdicts.",
-      "endTime": "2026-07-06",
+      "endTime": "2026-07-28",
       "actionStatus": {
         "@id": "http://schema.org/CompletedActionStatus"
       },
@@ -107,7 +107,7 @@
       },
       "instrument": [
         {
-          "@id": "#src/harness/regime_compare.py"
+          "@id": "#src/harness/e36_eps0.py"
         }
       ],
       "object": [
@@ -117,20 +117,20 @@
       ],
       "result": [
         {
-          "@id": "#data/results/regime_comparison.csv"
+          "@id": "#data/results/e36_eps0.csv"
         }
       ]
     },
     {
-      "@id": "#src/harness/regime_compare.py",
+      "@id": "#src/harness/e36_eps0.py",
       "@type": [
         "File",
         "SoftwareApplication",
         "SoftwareSourceCode"
       ],
-      "name": "src/harness/regime_compare.py",
-      "url": "https://github.com/danlessa/bicycling-energy-model/blob/de0bd507764197d4a4616c06aaa1006ed96a0628/src/harness/regime_compare.py",
-      "sha256": "88e98405a5d57a42e3ade771233f461317b701ecb1459285d1def581395f8ce5",
+      "name": "src/harness/e36_eps0.py",
+      "url": "https://github.com/danlessa/bicycling-energy-model/blob/de0bd507764197d4a4616c06aaa1006ed96a0628/src/harness/e36_eps0.py",
+      "sha256": "741dad8186fdb486edfd73c4d83993aca5b9d384e73210b52391b8cd6d98e1ae",
       "version": "de0bd507764197d4a4616c06aaa1006ed96a0628",
       "programmingLanguage": "Python"
     },

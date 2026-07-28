@@ -18,6 +18,8 @@ resolve their inputs and this directory relative to their own location).
 | `longoes_frozen.csv` | `python3 src/harness/longoes_frozen.py` | 31 |
 | `perride_invert.csv` | `python3 src/harness/perride_invert.py` (`INVERT_SMOKE=1`, `INVERT_NOFETCH=1`) | 33 |
 | `scurve_deficit.csv` | `python3 src/harness/scurve_deficit.py` (`SCURVE_SMOKE=1`) | 34 |
+| `e35_residual.csv` | `python3 src/harness/e35_residual.py` (`E35_SMOKE=1`) | 35 |
+| `e36_eps0.csv` | `python3 src/harness/e36_eps0.py` (`E36_SMOKE=1`) | 36 |
 | `cda_estimate.csv`, `param_fit.csv` | `python3 src/harness/cda_estimate.py` / `param_fit.mjs` | 15 |
 | `danlessa_comparison.csv` | `python3 src/harness/danlessa_compare.py` | 16 |
 | `regime_comparison.csv` | `python3 src/harness/regime_compare.py` | 17–18 |

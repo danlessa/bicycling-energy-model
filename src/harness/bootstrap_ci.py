@@ -435,6 +435,70 @@ print(f"E33 D1 m̂−m_logged: bias {to_fixed(median(_me), 1)}, |err| "
       + (" GATE-OK" if _ok else " GATE-FAIL(exp +2.4/5.3)"))
 if not _ok:
     failed = True
+# ---------- 3e. Regime-consistent aero (Entry 35 / paper Table 6) ----------
+print("\n== Regime-consistent aero (Entry 35, Table 6) ==")
+e35 = parse_csv("e35_residual.csv")
+T6 = {
+    "censo": [("f3_d_reg", 4.6, 1.4, (2.7, 6.1)), ("f3_f_reg", 8.0, 6.4, (6.4, 10.6)),
+              ("f4_f_reg", 8.4, 8.0, (7.2, 11.2)), ("canon_reg", 7.6, 4.6, (4.6, 9.9))],
+    "ppaz": [("f3_d_reg", 3.1, -1.3, (2.8, 3.3)), ("f3_f_reg", 4.0, 3.6, (3.3, 4.7)),
+             ("f4_f_reg", 3.9, -0.2, (3.5, 4.3)), ("canon_reg", 3.2, -1.2, (2.8, 3.6))],
+    "jaam": [("f3_d_reg", 3.2, -2.7, (2.8, 3.6)), ("f3_f_reg", 2.8, 2.5, (2.1, 3.4)),
+             ("f4_f_reg", 4.2, -2.4, (3.7, 4.8)), ("canon_reg", 3.3, -2.4, (2.6, 3.6))],
+    "danlessa": [("f3_d_reg", 4.9, -0.5, (4.6, 5.3)), ("f3_f_reg", 5.9, 4.8, (5.1, 6.7)),
+                 ("f4_f_reg", 5.3, 3.5, (4.7, 5.9)), ("canon_reg", 5.1, 0.3, (4.8, 5.7))],
+}
+for _corpus, _rows in T6.items():
+    _sub = [r for r in e35 if r.get("corpus") == _corpus]
+    for _c, _ea, _es, _eci in _rows:
+        report(f"T6 {_corpus} {_c}", col(_sub, _c), _ea, _es, expect_ci=_eci)
+_e35_strata = [[r for r in e35 if r.get("corpus") == c] for c in ("ppaz", "jaam", "danlessa")]
+for _lab, _col, _ea, _eci in (
+        ("T6 pooled f3_d_reg", "f3_d_reg", 3.9, (3.6, 4.1)),
+        ("T6 pooled f3_f_reg", "f3_f_reg", 4.5, (4.1, 4.8)),
+        ("T6 pooled f4_f_reg", "f4_f_reg", 4.5, (4.2, 4.8)),
+        ("T6 pooled canon_reg", "canon_reg", 4.0, (3.7, 4.2))):
+    strat_report(_lab, [col(s, _col) for s in _e35_strata], _ea, _eci)
+# braking strict-reading medians (paper §3.4 prose: 0.6-0.8% open / 1.3-1.4% stop-heavy)
+for _corpus, _exp in (("longoes", 0.64), ("censo", 1.36), ("ppaz", 0.72),
+                      ("jaam", 0.79), ("danlessa", 1.34)):
+    _v = [num(r, "brake_share_cad0_pct") for r in e35 if r.get("corpus") == _corpus
+          and is_finite(num(r, "brake_share_cad0_pct"))]
+    _ok = abs(median(_v) - _exp) <= 0.011
+    print(f"T6 brake-strict {_corpus}: {to_fixed(median(_v), 2)}%"
+          + (" GATE-OK" if _ok else f" GATE-FAIL(exp {_exp})"))
+    if not _ok:
+        failed = True
+
+# ---------- 3f. eps0 per dataset (Entry 36) ----------
+print("\n== ε₀ per dataset (Entry 36) ==")
+e36 = parse_csv("e36_eps0.csv")
+for _corpus, _bal, _bias in (("longoes", 0.113, 0.127), ("censo", 0.070, 0.099),
+                             ("ppaz", 0.115, 0.201), ("jaam", 0.098, 0.356),
+                             ("danlessa", 0.115, 0.153)):
+    _sub = [r for r in e36 if r.get("corpus") == _corpus]
+    _g = [num(r, "gapR") for r in _sub if is_finite(num(r, "gapR"))
+          and num(r, "balR_sbar") >= 0.03]
+    _b = [num(r, "eps0_bias_i") for r in _sub if is_finite(num(r, "eps0_bias_i"))]
+    _ok = abs(median(_g) - _bal) <= 0.0011 and abs(median(_b) - _bias) <= 0.0011
+    print(f"E36 {_corpus}: balance-ε₀ {median(_g):.3f} bias-ε₀ {median(_b):.3f}"
+          + (" GATE-OK" if _ok else f" GATE-FAIL(exp {_bal}/{_bias})"))
+    if not _ok:
+        failed = True
+
+_e36_str = [[r for r in e36 if r.get("corpus") == c] for c in ("ppaz", "jaam", "danlessa")]
+_pg = [num(r, "gapR") for s in _e36_str for r in s
+       if is_finite(num(r, "gapR")) and num(r, "balR_sbar") >= 0.03]
+_pf = [num(r, "gapF") for s in _e36_str for r in s
+       if is_finite(num(r, "gapF")) and num(r, "balR_sbar") >= 0.03]
+_pb = [num(r, "eps0_bias_i") for s in _e36_str for r in s if is_finite(num(r, "eps0_bias_i"))]
+_ok = (abs(median(_pg) - 0.115) <= 0.0011 and abs(median(_pf) - 0.109) <= 0.0011
+       and abs(median(_pb) - 0.202) <= 0.0011)
+print(f"E36 pooled D3-D5: balance-ε₀ reg {median(_pg):.3f} frz {median(_pf):.3f} "
+      f"bias-ε₀ {median(_pb):.3f}" + (" GATE-OK" if _ok else " GATE-FAIL(exp .115/.109/.202)"))
+if not _ok:
+    failed = True
+
 for _corpus, _em in PI_M.items():
     _mv = [num(r, "m_hat") for r in pi if r.get("corpus") == _corpus
            and r.get("m_src") in ("inverted", "thin")]

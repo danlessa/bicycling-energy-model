@@ -70,6 +70,8 @@ PRODUCER = {
     "longoes_frozen.csv": "python3 src/harness/longoes_frozen.py",
     "perride_invert.csv": "python3 src/harness/perride_invert.py",
     "scurve_deficit.csv": "python3 src/harness/scurve_deficit.py",
+    "e35_residual.csv": "python3 src/harness/e35_residual.py",
+    "e36_eps0.csv": "python3 src/harness/e36_eps0.py",
 }
 
 # entry → (instrument harness scripts, result CSVs, uses private tracks,
@@ -120,6 +122,8 @@ ENTRIES = {
     33: (["src/harness/perride_invert.py"], ["perride_invert.csv"], True, []),
     34: (["src/harness/scurve_deficit.py"], ["scurve_deficit.csv"], True,
          ["research/notes/original_notes.md"]),
+    35: (["src/harness/e35_residual.py"], ["e35_residual.csv"], True, []),
+    36: (["src/harness/e36_eps0.py"], ["e36_eps0.csv"], True, []),
 }
 
 # entry 22 reads the per-ride CSVs the other harnesses wrote
