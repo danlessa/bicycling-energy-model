@@ -72,7 +72,7 @@
       "@id": "#claim",
       "@type": "Claim",
       "name": "Entry 8: a closed form for ε from route geometry",
-      "text": "ε is predictable from grade alone on real descents: ε ≈ clamp01(min(1, (α/β)/s̄) − ε₀), with ε₀ ≈ 0.13 the near-constant COASTING DEFICIT — the share of the descent pure coasting would refund but the rider does not collect, through residual descent pedalling and pre-corner braking; the remaining scatter is rider behaviour, not route geometry.",
+      "text": "ε is predictable from grade alone on real descents: ε ≈ min(1, (α/β)/s̄) − ε₀ (unclamped since 2026-07-28 — the old clamp01 was provably inert on every measured ride), with ε₀ ≈ 0.13 the near-constant COASTING DEFICIT — the share of the descent pure coasting would refund but the rider does not collect, through residual descent pedalling and pre-corner braking; the remaining scatter is rider behaviour, not route geometry.",
       "appearance": [
         {
           "@id": "https://github.com/danlessa/bicycling-energy-model/blob/main/research/journal/MODEL_COMPARISON_JOURNAL.md"
@@ -134,9 +134,9 @@
         "SoftwareSourceCode"
       ],
       "name": "src/harness/eps_hypothesis.py",
-      "url": "https://github.com/danlessa/bicycling-energy-model/blob/cf52def91651b94f2b4e7b0ca2c32e67b92688ec/src/harness/eps_hypothesis.py",
-      "sha256": "7d17e1185d64c31fb308065a021c788c5c9eaf0b0c7962bc52d4af4e8eaabdef",
-      "version": "cf52def91651b94f2b4e7b0ca2c32e67b92688ec",
+      "url": "https://github.com/danlessa/bicycling-energy-model/blob/bede649e485fae974e498a8d24c975ddf14d8d8f/src/harness/eps_hypothesis.py",
+      "sha256": "c09f57b5c2638ae67b8215f0693d9fbc431ed4b4af1f84e663a62c5abcda2cd2",
+      "version": "bede649e485fae974e498a8d24c975ddf14d8d8f",
       "programmingLanguage": "Python"
     },
     {

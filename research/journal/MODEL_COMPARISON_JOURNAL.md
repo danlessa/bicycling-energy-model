@@ -108,6 +108,430 @@ changed. See Entry 11.)*
 - **Entry 30** (pre-registration + Tier B results: the canonical simulation under the same
   sweep, one-at-a-time, `SWEEP_CANON=1` in
   [`param_sweep.py`](../../src/harness/param_sweep.py)) — this commit
+- **Entry 34** (the S-curve deficit hypothesis: grade-resolved ε₀·g(s) as pedalling
+  probability — exploratory first cut + registered confirmatory design) — this commit
+- **Entry 33** (pre-registration + results: per-ride physics inversion — m̂/Ĉrr/ĈdA from each
+  ride's own qualifying segments + wind step, the Table-3 analogue,
+  [`perride_invert.py`](../../src/harness/perride_invert.py)) — this commit
+- **Entry 32** (review-v3 consolidation: Table 4 descent-RMS full regeneration, the D3+D4
+  transfer-only pool, per-corpus allegiance sign tests, and the gate battery extended to the
+  numbers the review caught un-gated — [`bootstrap_ci.py`](../../src/harness/bootstrap_ci.py)) — this commit
+
+---
+
+## 2026-07-28 — Entry 34: the S-curve deficit — ε₀ as a grade-conditional pedalling probability
+
+*Prompt (Danilo), on the unclamped ε_d going negative beyond s_*/ε₀ ≈ 15%: "I feel this is a
+weakness that we should figure out, esp. considering the intuition of coasting deficit being
+associated with pedalling. Pedalling is way more likely on gentler grades than steeper ones.
+We should have a continuous transition from 1 to 0 rather than clamping it. I would expect the
+probability of pedalling on descents to follow a S-shaped curve, whose curve parameters is
+conditional on both event context, rider behaviour and route characteristics."*
+
+**The object under study — disambiguated.** What this entry explores is the characterisation
+of
+
+$$\varepsilon := \varepsilon_{\mathrm{coast}} - \delta,$$
+
+where δ is the **deficit term** — the amount by which real recovery falls short of the coasting
+ideal. Three levels must not be conflated:
+
+1. **The decomposition** ε = ε_coast − δ is a *definition* of δ (given ε_coast's geometry).
+2. **The mechanistic identity**: the Appendix ledger (below) gives δ an exact mechanistic
+   expression — per descent segment, δᵢ = E_legs,i/(β·hᵢ). This is not a hypothesis; it is
+   what δ *is*, model-free.
+3. **Models of δ** are the hypotheses. The published law is the **constant model**,
+   δ ≈ ε₀ = 0.13. This entry registers alternatives that infer δ from ride observables:
+
+$$\text{constant:}\ \ \delta \approx \varepsilon_0 \qquad\text{vs}\qquad \text{S-curve:}\ \ \delta(\bar s) \approx \varepsilon_0 \cdot g(\bar s), \quad g(s) = \frac{1}{1 + e^{(s - s_{50})/w}}$$
+
+with g the S-shaped pedalling probability (Danilo's hypothesis: pedalling is far likelier on
+gentle grades than steep ones) and (s₅₀, w) conditional on rider, event context and route
+character. Structural payoff of the S-curve model: as g → 0 on steep grades the estimator
+returns to the non-negative coasting limit — the negative-prediction weakness disappears *by
+mechanism*, not by clamp; the constant model is the g ≡ 1 special case, which the corpora
+cannot distinguish from the S-curve below ~6% mean grade. Two further models of δ enter as
+nulls/refinements via the factorization below: the *dilution* model (constant behaviour,
+δ ∝ 1/(v̄·s̄)) and the *measured-factors* model (δ from observed pedalling occupancy ×
+intensity).
+
+**The exact source of ε₀, from the Appendix ledger** *(added on Danilo's note: "describe what
+is the source of the original eps_0 given the appendix derivations… eps = eps_coast −
+eps_due_to_deficit, where eps_due_to_deficit = P(descent_pedalling) ×
+magnitude_of_loss_when_pedalling; i suspect that magnitude of loss when pedalling is
+conditional on average power output on descents").*
+
+Paper Appendix A.2's balance form is E_legs,i = α·Δxᵢ − εᵢ·β·hᵢ per descent segment. On real
+descents (s > s_*, where ε_coast = (α/β)/s = α·Δxᵢ/(β·hᵢ)) this rearranges **exactly** to
+
+$$\varepsilon_i = \varepsilon_{\mathrm{coast}}(s_i) - \frac{E_{\mathrm{legs},i}}{\beta\,h_i} \quad\Rightarrow\quad \delta_i = \frac{E_{\mathrm{legs},i}}{\beta\,h_i}$$
+
+— δᵢ IS the segment's descent pedal energy over its k_eff-scaled drop, no approximation
+(level 2 above). **Ride-level δ (no subscript) is then defined as the drop-weighted mean of
+the δᵢ** — the same aggregation the appendix uses for ε itself — and it telescopes: the hᵢ
+cancel, leaving
+
+$$\delta \;=\; \frac{\sum_i \delta_i\,h_i}{\sum_i h_i} \;=\; \frac{E_{\mathrm{legs},-}}{\beta\,H_-}$$
+
+— total descent pedal energy over the scaled total drop. This is exactly what the measured
+ε_coast − ε_bal estimates, so the exploratory table below and the ride-level factorization
+are statements about this δ. So the calibrated ε₀ = 0.13 is the empirical statement *riders pedal ≈ 13% of the released
+potential energy back into their descents*. Danilo's factorization is then an identity split
+of that numerator: writing E_legs,- = p_ped · P̄_ped · t₋ (occupancy × intensity × time),
+
+$$\delta = \frac{p_{\mathrm{ped}}\,\bar P_{\mathrm{ped}}\,t_-}{\beta\,H_-} = \frac{p_{\mathrm{ped}}\,\bar P_{\mathrm{ped}}}{\beta\,\bar v_-\,\bar s_-}$$
+
+— (probability of pedalling) × (pedal power while pedalling) ÷ (gravitational power released,
+k_eff-scaled). **How g relates to the factorization** *(Danilo: "how does p · P̄ · t relate to g?")*. They are
+not the same object. The identity gives δ's full grade profile as a product of three factors:
+
+$$\delta(s) = \underbrace{p_{\mathrm{ped}}(s)}_{\text{occupancy}} \cdot \underbrace{\frac{\bar P_{\mathrm{ped}}(s)}{\beta\,\bar v(s)\,s}}_{\text{magnitude}}$$
+
+The S-curve model δ ≈ ε₀·g(s̄) is the hypothesis that **g is the occupancy factor alone** —
+g(s) := p_ped(s), the S-shaped probability of pedalling — with **ε₀ absorbing the magnitude
+factor at the gentle-grade reference where g ≈ 1**. That reading makes ε₀ a rider's intensity
+habit (P̄_ped over released power at their typical descents), which is precisely why ε₀ should
+be rider-conditional (the magnitude conjecture above). But the magnitude factor is *also*
+grade-dependent — the 1/(v̄·s) dilution — so the observable fade of δ with grade is the
+*product* of the S-curve and the dilution, steeper than either alone. Fitting ε₀·g(s) to raw
+δ therefore conflates them: g would absorb dilution it doesn't own. That is what design step
+1b prevents — measure p_ped(s) directly and g is identified on its own; the dilution needs no
+fit at all (v̄ and s are observed).
+
+Three consequences sharpen the hypothesis:
+
+1. **Both factors are directly observable** in the power stream — p_ped as the fraction of
+   descent time with P > threshold, P̄_ped as the mean power over those samples (the regime
+   extractor's speed-gated descent power is nearly this already). g(s) need not be inferred
+   from residuals; it can be *measured* as p_ped(s) per grade bin.
+2. **A mechanical null exists**: even at constant behaviour (p_ped, P̄_ped fixed), δ ∝
+   1/(v̄₋·s̄₋) — the same pedalling dilutes against more gravitational power on steeper drops.
+   A fade with grade is therefore predicted by dilution alone; the S-curve model is confirmed
+   only if p_ped itself falls with s beyond what dilution explains. Conversely P. Paz's
+   *rising* δ means his p_ped·P̄_ped grows super-linearly with grade — strong behaviour, not
+   noise.
+3. **The magnitude term carries the rider-conditionality**: P̄_ped on descents is a power
+   *habit* (Danilo's conjecture: conditional on the rider's average descent power output),
+   which is exactly where JAAM's high-power riding style and P. Paz's coasting style should
+   separate — testable as corr(per-ride δ, descent-regime power / (β·v̄₋·s̄₋)) across each
+   corpus.
+
+**Exploratory first cut (DISCLOSED PEEK — this is not a confirmation).** Ride-level measured
+δ (= ε_coast − ε_bal) vs mean descent grade s̄ on real descents (s̄ ≥ 3%), current canonical
+CSVs:
+
+| rider | s̄ ∈ [3,4)% | [4,5)% | [5,6)% | Spearman ρ(s̄, δ) |
+|---|--:|--:|--:|--:|
+| P. Paz (n = 161) | +0.083 | +0.113 | +0.116 | **+0.13** (rises) |
+| JAAM (n = 21) | +0.137 | — | — | **−0.57** (fades, small n) |
+| author (n = 221) | +0.138 | +0.098 | +0.056 | **−0.28** (fades) |
+
+The grade-dependence of δ is real but **rider-conditional in sign**: the author and JAAM fade (as
+the pedalling-probability story predicts), P. Paz *rises* — the coasting-style open-road
+descender pedals *more* (relative to his coasting ideal) on his steeper descents, or his
+steeper descents carry something else (surface? corners?) the ride-level s̄ can't see. This is
+exactly the "parameters conditional on rider behaviour" clause of the hypothesis — and it
+rules out a universal one-curve replacement for ε₀ at ride level.
+
+**Registered confirmatory design (fixed before any fitting).**
+
+1. **Grain**: segment-level, not ride-level — per 30 m descent cell, deficit vs cell grade
+   within rides (ride-level s̄ is a coarse proxy and confounds route mix with behaviour).
+1b. **Measure the factors, don't infer them**: per grade bin, pedalling occupancy p_ped(s)
+   (share of descent time at P > 10 W) and intensity P̄_ped(s); test the dilution model of δ
+   (δ ∝ 1/(v̄s) at constant p_ped·P̄_ped) BEFORE attributing any fade to the S-curve, and
+   test corr(δ, descent-regime power) for the magnitude-conditionality conjecture.
+2. **Fit**: per-rider logistic (ε₀, s₅₀, w) by least squares on a chronological calibration
+   half of each rider's real-descent rides; frozen constant-ε₀ = 0.13 as the null, the
+   dilution-only model as the second null.
+3. **Test**: held-out chronological half, RMS of ε_bal − ε_d(s̄) per ride; success =
+   out-of-sample RMS improvement ≥ 5% over the constant on ≥ 2 of 3 riders.
+4. **Failure mode**: keep the constant ε₀ (g ≡ 1) and publish the S-curve as refuted at this
+   data's grade range; the negative-prediction region stays labelled extrapolation.
+5. Event context and route covariates (brevet vs training; unpaved fraction) enter only
+   AFTER the grade-only fit, as residual predictors — same discipline as Entry 8's ε ladder.
+
+Owner in the paper: §4.4's coasting-deficit thread (a sentence lands there now; the fit is
+future work). Status: hypothesis registered, fit NOT run.
+
+---
+
+## 2026-07-28 — Entry 33: per-ride physics inversion — the Table-3 analogue under m̂/Ĉrr/ĈdA inverted from each ride's own segments
+
+*Prompt (Danilo): "generate another result aiming to produce something analogue to Table 3, one
+where m, Crr and CdA are inverted per ride", with a six-step strategy (wind rule; flat/climb
+segmentation; clipping; well-behaved flags; mass from a temporally-spread climb subset; Crr from
+the remaining climbs at frozen CdA; CdA from flats).*
+
+### Pre-registration (written before any result was seen)
+
+**Question.** Table 3 scores the law under one frozen constants set (plus per-corpus mass).
+Table 4 showed *rider-level* fitted physics moves individual numbers but not conclusions. The
+open middle: *per-ride* inversion — every ride carries its own m̂, Ĉrr, ĈdA extracted from its
+own power stream, with no human judgment. If it works, it is the answer to §4.4's "infer
+per-ride parameters from the ride data itself"; if it is too ill-conditioned, that is the
+result.
+
+**Protocol** ([`perride_invert.py`](../../src/harness/perride_invert.py)). Frozen throughout:
+ρ = 1.13 (by the P1 degeneracy, ĈdA is really the ρ·C_dA product at 1.13), k_eff = 0.98,
+G = 9.7864, climb threshold 2%, flat band (−1.5%, 2%), ε machinery unchanged (unclamped ε_d,
+ε_f = 0.20). Priors double as fallbacks: C_rr⁰ = 0.008, C_dA⁰ = 0.40, per-corpus anchor mass
+(logged on D1; 78 / 74.5 / 101.9 / 74.7 on D2–D5).
+
+- **Step 0 — wind.** Round trip (GPS start–end separation < max(1 km, 2% of distance)) ⇒
+  w = 0. Else: historical daily wind (speed max, dominant direction, 10 m) at the track
+  *centroid quantized to 0.25°* (≈ 25 km cells — no endpoint or fine geometry leaves the
+  machine, per the repo privacy rule), open-meteo archive, disk-cached; signed headwind
+  w = ½ · V_ground · cos(wind_from − net travel bearing), positive = headwind (the engines'
+  sign). Cache miss with fetch disabled ⇒ w = 0, flagged.
+- **Step 1 — segmentation** on the 5 m profile aggregated to 30 m cells (the ε cell scale):
+  *climb segments* = maximal cell runs with s ≥ 2% in every cell and total gain ≥ 40 m;
+  *flat segments* = maximal runs with every cell inside the flat band and length ≥ 1 km.
+- **Step 2 — clip** the first 100 m of each flat; climbs until 10 m of gain is consumed.
+- **Step 3 — well-behaved flags** (all three required, evaluated on the raw points):
+  (a) no braking: no deceleration steeper than 1.5 m/s² (from speeds > 3 m/s);
+  (b) power present: P > 10 W over ≥ 90% of segment time;
+  (c) no stops: moving time (v ≥ 0.5 km/h) ≥ 99% of total and no recording gap > 10 s.
+- **Step 4 — mass** from n_m = min(n, max(2, ⌈n/3⌉)) well-behaved climbs chosen for temporal
+  spread (greedy max-min on segment midpoints — first, last, then most-isolated), so m̂ is an
+  *average-mass* estimator over the ride: per segment
+  m̂ᵢ = (k_eff·Eᵢ − ½ρC_dA⁰·Aᵢ) / (g(hᵢ + C_rr⁰·x̃ᵢ) + ½Δ(v²)ᵢ), with Eᵢ = ∫P dt,
+  Aᵢ = ∫v_rel|v_rel| dx, x̃ᵢ = cosθ̄·xᵢ; gain-weighted mean of segments with m̂ᵢ ∈ [40, 200] kg.
+- **Step 5 — Ĉrr** from the *remaining* well-behaved climbs (disjoint from step 4's, so the
+  m–C_rr collinearity on any one climb is broken across segments), at frozen C_dA⁰:
+  C_rr,ᵢ = (k_eff·Eᵢ − ½ρC_dA⁰Aᵢ − m̂g·hᵢ − ½m̂Δ(v²)ᵢ)/(m̂g·x̃ᵢ), gain-weighted
+  ("larger / more inclined" ≡ gain = length × grade), valid range [0.001, 0.04].
+- **Step 6 — ĈdA** from the well-behaved flats, given m̂ and Ĉrr:
+  C_dA,ᵢ = (k_eff·Eᵢ − Ĉrr·m̂g·x̃ᵢ − m̂g·Δhᵢ − ½m̂Δ(v²)ᵢ)/(½ρAᵢ), weight xᵢ/(1 + σ_h,ᵢ)
+  (σ_h = intra-segment elevation SD — the operationalisation of "lower height variability"),
+  valid range [0.10, 1.00] m².
+
+Any estimator with no valid segment falls back to its prior, per-field, and the CSV records
+the source of every constant. Scoring: the Table-3 grid (forms 1–4 × ε_d/ε_f + canonical,
+v_f from the ride's flat power at the inverted physics) on D1–D5; mulberry32 bootstrap CIs,
+seeds 42/43. `INVERT_SMOKE=1` = 40 rides/corpus; `INVERT_NOFETCH=1` = no network.
+
+**Pre-registered predictions.**
+
+- **P1 (mass validates).** Corpus-median m̂ lands within ±3 kg of the known/implied anchors
+  (D1 logged 71–80; D5 ≈ 73–75; D3 ≈ 74.5; D4 ≈ 102) on the rides where mass inverts.
+- **P2 (moves toward fitted physics).** Where rider-level fitted constants differ most from
+  the priors (JAAM: C_dA 0.323, C_rr 0.0108), the per-ride table moves the corpus medians
+  toward Table 4's fitted column, not away.
+- **P3 (coverage is corpus-shaped).** D2's urban rides almost never contain a 1 km
+  uninterrupted in-band flat or a clean 40 m climb → near-total fallback, D2's column ≈
+  Table 3's. Coverage is highest on D1 (brevets: long flats, sustained climbs).
+- **P4 (segment noise, ride stability).** Per-segment estimates scatter widely, but
+  ride-level m̂ is stable: within-corpus IQR ≤ ±8 kg on D3–D5's mass-inverted rides.
+- **P5 (parity persists).** Law-vs-simulation parity survives per-ride physics (both engines
+  read the same inverted constants — the Entry-30 lockstep, now at per-ride grain).
+- **P6 (no free lunch).** The fully-inverted subset is selection-biased toward mountainous,
+  well-measured rides; its medians are NOT comparable to the corpus medians and will be
+  reported separately.
+
+### Results (first full run, 2026-07-28 — 1,409 rides)
+
+**Populations.** D1 44 · D2 69 · D3 441 · D4 219 · D5 636. Note D2/D5 are *larger* than the
+published clean corpora (62/621): this harness's eligibility is parse + power + ≥ 3 km, not the
+per-corpus clean filters — the analogue table is therefore its own population, disclosed as
+such (the frozen-vs-inverted comparisons below are between medians of slightly different ride
+sets on those two corpora).
+
+**Coverage** (P3: corpus-shaped, confirmed). mass inverted / full inversion / wind fetched:
+D1 33/19/0 · D2 17/**1**/0 · D3 230/106/178 · D4 103/20/82 · D5 340/56/192. The urban corpus
+almost never offers a qualifying segment, exactly as registered; D1's brevets are loops or
+out-and-back (zero wind fetches — every non-loop is on the corpora with manifest dates).
+452 wind lookups total, all through the 0.25°-quantized-centroid cache.
+
+**P1 — the mass inversion validates (confirmed; D4 at the boundary).**
+
+| corpus | m̂ median (IQR) | anchor | Δ |
+|---|--:|--:|--:|
+| D1 | 76.6 (69.9–82.9) | logged 71–80 | in range |
+| D2 (n = 17) | 82.3 (73.7–84.7) | 78.0 | +4.3 (thin) |
+| D3 | 75.4 (71.3–79.8) | 74.5 | **+0.9** |
+| D4 | 98.7 (94.7–103.3) | 101.9 | −3.2 |
+| D5 | 73.7 (68.4–80.8) | 74.7 | **−1.0** |
+
+P4 (ride-level stability) also confirmed: every IQR half-width ≤ ±6.2 kg, under the ±8
+registration.
+
+**The inverted constants — per-corpus summary (medians over the inverted subsets, seeded
+bootstrap 95% CIs; n in parentheses).**
+
+| corpus | m̂ (kg) | mass ref | Ĉrr | ĈdA (m²) |
+|---|--:|--:|--:|--:|
+| D1 | 76.6 [73.1, 82.4] (33) | logged 71–80 | 0.0093 [0.0082, 0.0110] (23) | 0.308 [0.269, 0.347] (34) |
+| D2 | 82.3 [73.7, 84.7] (17) | 78.0 | 0.0063 (n = 1) | 0.344 [0.294, 0.418] (31) |
+| D3 | 75.4 [74.2, 76.1] (230) | 74.5 | 0.0083 [0.0079, 0.0088] (146) | 0.258 [0.246, 0.277] (374) |
+| D4 | 98.7 [97.0, 100.9] (103) | 101.9 | 0.0095 [0.0080, 0.0112] (22) | 0.391 [0.380, 0.398] (202) |
+| D5 | 73.7 [72.1, 74.6] (340) | 74.7 | 0.0088 [0.0081, 0.0096] (87) | 0.293 [0.285, 0.302] (385) |
+| *prior / fallback* | *anchor* | — | *0.008* | *0.40* |
+
+Accuracy and bias where ride-level ground truth exists — D1's logged masses: per-ride
+m̂ − m_logged has median bias **+2.4 kg [−0.7, +4.4]** and median |error| **5.3 kg
+[3.1, 6.4]** (n = 33) — the per-ride estimate is ±5 kg-noisy, the corpus median converges.
+On D3/D5 the m̂ CIs (±1 kg) bracket the anchors; on D4 the CI [97.0, 100.9] sits ~3 kg
+below the whole-corpus climb inversion (101.9) — two different estimators (temporally-spread
+segment subset vs corpus-pooled sustained climbs) resolving a real, small difference, not a
+failure. Ĉrr: the 0.008 prior was a good guess everywhere, and D4 moves toward JAAM's fitted
+0.0108 (P2: supported for C_rr). ĈdA inverts **low everywhere** — 0.26 (D3) / 0.29 (D5) /
+0.31 (D1) against the 0.40 prior, with only heavy-rider D4 near it (0.391) — and the CIs are
+tight enough that this is not noise. Reading: the flat-derived ĈdA is an *effective* aero —
+it absorbs drafting (P. Paz's group brevets), riding position on easy ground, and the ρ·C_dA
+degeneracy — not a wind-tunnel number. It is, however, the aero the rides actually
+experienced.
+
+**The analogue scoreboard vs frozen Table 3** — accuracy and bias together, 95% CIs
+throughout (frozen = paper Table 3's published values; * = ε_f in-sample on D2; frozen and
+inverted D2/D5 populations differ slightly, 62/621 vs 69/636):
+
+| corpus | model | frozen med\|Δ%\| | frozen medΔ% | inverted med\|Δ%\| | inverted medΔ% |
+|---|---|--:|--:|--:|--:|
+| D2 | form 3 · ε_d | 7.7 [6.0, 9.3] | −5.1 [−7.6, −2.2] | 7.0 [5.4, 9.5] | −3.1 [−4.7, −1.1] |
+| D2 | form 3 · ε_f | 4.7* [3.3, 6.2] | −0.9 [−3.3, +1.1] | 5.8 [4.9, 7.8] | −0.5 [−1.7, +2.4] |
+| D2 | form 4 · ε_f | 3.9* [3.2, 6.1] | +1.0 [−1.6, +3.5] | 5.4 [3.2, 7.1] | +2.4 [−0.5, +6.1] |
+| D2 | simulation | 6.6 [4.7, 8.7] | −3.5 [−6.4, −1.8] | 7.8 [4.7, 9.5] | −2.2 [−4.7, +1.4] |
+| D3 | form 3 · ε_d | 5.8 [5.3, 6.4] | +4.3 [+3.1, +4.9] | 5.1 [4.6, 5.5] | −3.8 [−4.4, −3.2] |
+| D3 | form 3 · ε_f | 10.1 [9.3, 10.7] | +10.0 [+8.8, +10.7] | **3.2 [2.7, 3.6]** | **+0.2 [−0.3, +0.7]** |
+| D3 | form 4 · ε_f | 6.8 [6.0, 7.6] | +5.4 [+4.1, +6.6] | 4.8 [4.3, 5.2] | −3.0 [−3.6, −2.5] |
+| D3 | simulation | 6.8 [6.2, 7.8] | +5.0 [+3.8, +5.9] | 5.7 [5.3, 6.2] | −4.6 [−5.2, −4.0] |
+| D4 | form 3 · ε_d | 5.5 [4.4, 6.4] | −4.7 [−5.7, −3.7] | 6.0 [5.2, 6.5] | −5.2 [−6.2, −4.4] |
+| D4 | form 3 · ε_f | 3.5 [3.1, 4.2] | +0.4 [−0.8, +1.2] | 3.1 [2.6, 3.3] | −0.4 [−1.2, +0.4] |
+| D4 | form 4 · ε_f | 5.6 [4.8, 6.4] | −4.3 [−5.0, −3.3] | 6.4 [5.9, 7.0] | −5.3 [−6.1, −4.4] |
+| D4 | simulation | 5.4 [4.9, 6.1] | −5.0 [−5.8, −4.3] | 5.8 [4.9, 6.5] | −4.9 [−6.0, −4.3] |
+| D5 | form 3 · ε_d | 6.2 [5.6, 6.9] | −0.3 [−1.6, +0.6] | 7.5 [7.1, 8.0] | −4.0 [−4.7, −3.2] |
+| D5 | form 3 · ε_f | 8.1 [7.3, 8.7] | +5.6 [+4.1, +6.6] | **5.3 [4.6, 6.1]** | **+0.9 [+0.3, +1.8]** |
+| D5 | form 4 · ε_f | 6.9 [6.2, 7.5] | +3.8 [+2.8, +5.0] | 5.8 [5.3, 6.3] | −0.4 [−1.1, +0.3] |
+| D5 | simulation | 6.1 [5.5, 6.7] | +0.1 [−0.9, +0.9] | 7.2 [6.7, 7.9] | −3.5 [−4.3, −2.6] |
+
+Read jointly, the moves separate into three kinds. (i) *Genuine improvement* — D3 f3·ε_f:
+accuracy 10.1 → 3.2 with the bias going +10.0 → +0.2 and the CIs disjoint; D5 f3·ε_f
+8.1 → 5.3 with bias +5.6 → +0.9, CIs disjoint. The effective aero removes a real, signed
+overcharge. (ii) *Bias substitution, not improvement* — D3 f3·ε_d's accuracy "gain"
+(5.8 → 5.1) swaps a +4.3 bias for a −3.8 one, CIs of the biases on opposite sides of zero:
+the over-refund replaces the overcharge, the Entry-29 cancellation pattern. (iii) *Within-CI
+noise* — most D4 rows and the D2 column (thin coverage, population shift): accuracy CIs
+overlap heavily, no call to make.
+
+The headline is the **flat-ε row**: under fully automatic per-ride physics the ε_f law lands
+at 3.2 / 3.1 / 5.3 on D3–D5 — on D3 a 10.1 → 3.2 collapse, with the frozen run's +10.0 bias
+going to **+0.2** (D4 −0.4, D5 +0.9: near-zero bias on all three riders). Meanwhile the
+ε_d rows *worsen* on D4/D5 (biases −3.8 / −5.2 / −4.0): with the effective (lower) α, ε_coast
+shrinks and the frozen ε₀ = 0.13 over-refunds — precisely Entry 29's learning L2 (the deficit
+estimate is conditional on ρ·C_dA) and Entry 34's constant-model conditionality, now visible
+as a sign flip in the regime rule: **under inverted physics the flat constant beats ε_d on
+every corpus, including the open terrain where ε_d won under frozen priors.** The regime
+rule is a statement about a (physics, ε-variant) *pair*, not about ε alone.
+
+**Pooled D3–D5** (stratified bootstrap, n = 1,296): f3·ε_d 6.3 [6.0, 6.6] · −4.2
+[−4.5, −3.7]; **f3·ε_f 3.8 [3.6, 4.1] · +0.4 [−0.0, +0.8]**; f4·ε_f 5.7 [5.2, 6.0] · −2.4
+[−2.7, −1.9]; simulation 6.4 [6.1, 6.7] · −4.3 [−4.7, −3.9]. Against the frozen pool's best
+(5.9 [5.5, 6.2], form 3 · ε_d, bias +0.4): the automatic-physics flat-ε law is ~2 points
+more accurate at the same near-zero bias, CIs disjoint.
+
+**P5 — parity persists (confirmed).** Law vs simulation within 0.6 pp of med|Δ%| on every
+corpus, and the two engines' biases move together (both go negative under the effective
+physics on D3–D5) — the Entry-30 lockstep at per-ride grain.
+
+**P6 — subsets (confirmed, reported separately only).** Full-inversion subsets: D1 n = 19
+f3_d 3.7 / canon 3.9 · D3 n = 106 4.6 / 6.2 · D4 n = 20 2.6 / 2.6 · D5 n = 56 4.6 / 4.2 —
+better than their corpora, as selection toward mountainous well-measured rides predicts; not
+comparable to corpus medians.
+
+**The epistemic caveat (registered up front, restated with the result).** The inversion reads
+each ride's own power stream and then scores models on that same ride — partially in-sample
+*per ride*, a different question from frozen-prior transfer: "can the ride's telemetry replace
+judgment and priors?" Answer: **yes for mass** (P1), **effectively for aero** (with drafting
+folded into the constant — which is why it fixes the frozen run's D3 bias), **noisily for
+C_rr** (coverage 33–146 rides/corpus, medians sane). For *prediction before the ride*, the
+per-rider aggregates of these per-ride inversions (75.4 / 98.7 / 73.7 kg; effective ĈdA
+0.26–0.39) are the transferable output.
+
+Output: `perride_invert.csv` (1,409 rides, every constant's source flagged) + the geo/wind
+caches. Gated: the four analogue-table rows × four corpora (medians + CI bands) and the four
+m̂ medians, in `bootstrap_ci.py`.
+
+---
+
+## 2026-07-28 — Entry 32: review v3 — the un-gated numbers were exactly where the rot was
+
+*Prompt (Danilo): "do another review for quality", then "ok do it" on the consolidated findings.*
+
+A third adversarial review (six lenses; five completed — the journal-fidelity lens stalled and
+was spot-checked by hand instead) over the post-Entry-31 paper. No new *protocol* defects: the
+dual-protocol design survived. What it found instead is a pattern worth recording as a
+methodological lesson: **every number the review caught stale or irreproducible was a number
+the gate battery did not cover.** The gated medians and CI bands were all clean; the rot lived
+in Table 4's descent-RMS row, a real-descent count, a paired-test p-value, and prose claims
+("statistically indistinguishable", "4–5 points", "exactly as predicted") that no script
+re-derives. The fix was therefore twofold: regenerate + correct, and *extend the gates to the
+class of number that failed*.
+
+**Regenerations** (all from the current canonical/fitted CSVs, the same files every existing
+gate passes on; method = the JAAM-gate convention: clean rides, ε_bal/ε_coast finite,
+s̄ ≥ 3%, RMS of ε_bal − clamp01(ε_coast − 0.13) vs RMS around the corpus's own median ε_bal):
+
+| statistic | was (stale vintage) | is (current) |
+|---|---|---|
+| D3 P. Paz assumed RMS pair | 0.091 vs 0.139 | **0.096 vs 0.145** (n = 161; margin 35% → 34%) |
+| D3 P. Paz fitted RMS pair | 0.082 vs 0.086 | **0.085 vs 0.089** (still a statistical tie) |
+| D4 JAAM assumed RMS pair | 0.091 vs 0.086 | **0.090 vs 0.085** (Entry 31's values; Table 4 had kept the old ones) |
+| D4 JAAM fitted RMS pair | 0.089 vs 0.086 | **0.088 vs 0.085** |
+| D5 author real-descent stats | "210 real descents", RMS 0.090/0.121 | **n = 221**, 0.092/0.126 (gap 0.14 unchanged) |
+| P. Paz mass-sweep triple 70/74.5/78 kg | 0.096/0.091/0.088 | **0.101/0.096/0.092** (own-flat 0.153/0.145/0.139) |
+| time model T1b vs T0 paired p | 0.011 | **0.0124** (243/433; endpoint p's now stated qualitatively) |
+
+**New analyses the review forced.** (1) The *transfer-only* pool D3+D4 (n = 660, stratified
+bootstrap, seeds 42/43): form 3 · ε_d **5.6 [5.2, 6.2]** (signed +1.1 [+0.4, +1.7]) vs
+canonical **6.3 [5.8, 6.8]** (+1.3 [+0.6, +2.0]). The paper now leads with this as the
+genuinely out-of-sample number and demotes the full D3–D5 pool (5.9 vs 6.2) to "with the
+author's in-sample history added" — the reviewer was right that 48.5% of the old headline pool
+was the calibration rider. (2) Per-corpus paired allegiance: on D3 the *law* is significantly
+closer (280/441, p < 1e-4); on D5 the *simulation* is (351/621, p = 0.0013). Median parity
+with opposite per-ride allegiances is the honest statement — "statistically indistinguishable"
+was wrong on D5 and is retired everywhere a paired test can separate the engines.
+
+**Claim repairs (no number change).** The informed→blind shift is form-specific
+(+4.7 form 3, +3.2 simulation, +1.8 form 4; forms 1–2 *improve* blind via bias cancellation)
+— "4–5 points moving both engines together" restated per-engine at all five sites, flagged
+in-sample. H1 downgraded confirmed → supported (frozen protocol moves the deadband's
+contribution to the bias; equivalence never formally tested). "Exactly as the Entry-30 sweep
+predicted" weakened to consistency (Entry 30's registration excluded D1). Mass exempted from
+the "judged" list everywhere (it is logged, identical in both runs — it buys none of the
+informed-blind gap). §3.1's First/Third/Second enumeration reordered. A.4's noise rate
+3.2 → 3.1. Scale reconciliation: §2.4 now states which constant lives at which scale
+(c, τ on the 5 m profile; ε₀ on 30 m descent cells = the deployment scale). Fig 3 rewired
+(E_meas → accuracy arrow was missing); Fig 4 now draws the informed primary comparison
+*outside* the frozen chain and credits ε_f to D2.
+
+**The ε_d clamp removed (Danilo: "it is adding nothing for us").** The ride-level
+dynamic estimator is now ε_d = ε_coast − ε₀, *unclamped* — in `eps_geom`
+([`engines.py`](../../src/bicycling_energy_model/engines.py)), the applet mirror, the
+compare-harness RMS predictors, `param_sweep.py`, the gate battery, the paper, the spec
+(`original_notes.md`) and `claims.ttl`, together. Justification measured, not assumed: the
+top half is inert by construction (ε_coast ≤ 1 ⇒ ε_d ≤ 0.87) and the floor never fired on
+any measured ride — min ε_coast per corpus 0.270 (D3), 0.309 (D4), 0.142 (D5), and D1's
+stored ε_d never reached 0 — so removal is provably drift-free at the ride level:
+`longoes_frozen.csv` and `censo_comparison.csv` regenerate **bit-identical**, and the full
+gate battery passes unchanged. Two deliberate survivors: the **per-edge** v2Edge floor
+(sampasimu / applet edge realisation / `r1d_v2_edge`) stays — single 30 m edges beyond
+s_*/ε₀ ≈ 15% are common even where ride means are not, so there the floor is model content —
+and Entries 8/10's exploratory harnesses (`eps_hypothesis.py`, `eps_sp_test.py`) keep their
+explicitly-labelled clamped variants as historical record. The sweep corners: Entry 29's
+registration ran clamped; re-run unclamped the anchor gates still pass (the anchor never
+clamps), and only implausible low-ρC_dA corner cells can differ — Entry 29's published grid
+keeps its as-written values, per the journal convention. Also this session: the paper renamed
+`paper.md` → `paper1-closed-form.md`, and a second paper scaffolded
+([`paper2-edge-cost.md`](../../research/article/paper2-edge-cost.md)) for the edge-cost
+discretization question, where the clamp asymmetry is registered as a pitfall.
+
+**Gate extensions** ([`bootstrap_ci.py`](../../src/harness/bootstrap_ci.py), all passing):
+the three descent-RMS pairs (D3/D4/D5, n + both RMS values, tol 0.002), the D3/D5 allegiance
+sign tests (printed), the transfer-only pooled medians + CI bands, and the time-model paired
+test (243/433, p = 0.012). The paper's "gate script" sentence rescoped to what is actually
+gated. Lesson, stated once: *a review lens aimed at "numbers the gates don't cover" is worth
+more than three aimed at the gated ones.*
 
 ---
 
@@ -2398,27 +2822,29 @@ law over **its own edges** with **its own** reference speed. The reference speed
 (never measured): flat `v₌ = flatEqSpeed(P₌)`; climb `v_c(i) = min(v₌, k_eff·P₊/(C_rr·mg·cosθᵢ + mg·sinθᵢ))`;
 descent `v₋(i) = descentEqSpeed(P₋, |sᵢ|)` (the `P₋`+gravity aero-equilibrium, capped at `v_max`).
 
-```
-E_new = E_flat + E_climb + E_descent,   with regime(i) = climb  if sᵢ ≥ climbThr
-                                                        descent if sᵢ ≤ descThr
-                                                        flat    otherwise
-  E_flat   = Σ_{flat i}   [ α_r·dxᵢ + α_a(v₌)·dxᵢ + β·dhᵢ ]            (dhᵢ signed; no floor)
-  E_climb  = Σ_{climb i}  [ α_r·dxᵢ + α_a(v_c(i))·dxᵢ + β·dhᵢ ]        (dhᵢ > 0)
-  E_descent (one of three, never mixed):
-    R1a  = Σ_{desc i} max(0,  α_r·dxᵢ + α_a(v₌)·dxᵢ − ε·β·|dhᵢ| )                 (base-law ε clamp)
-    R1b  = Σ_{desc i} P₋ · (dxᵢ·secᵢ / v₋(i))                                     (= P₋·t₋; no ε)
-    R1c  = Σ_{desc i} max(0,  C_rr·mg·cosθᵢ + ½ρC_dA·(v₌+w)|v₌+w| + mg·sinθᵢ )·dxᵢ·secᵢ / k_eff
-                                                     (leg force-deficit at flat cruise; sinθᵢ<0; no ε, no P₋)
-```
+$$E_{\mathrm{new}} = E_{\mathrm{flat}} + E_{\mathrm{climb}} + E_{\mathrm{descent}}, \qquad \mathrm{regime}(i) = \begin{cases} \text{climb} & s_i \ge \text{climbThr} \\ \text{descent} & s_i \le \text{descThr} \\ \text{flat} & \text{otherwise} \end{cases}$$
+
+$$\begin{aligned}
+E_{\mathrm{flat}} &= \sum_{\text{flat } i} \big[\, \alpha_r\,dx_i + \alpha_a(v_{=})\,dx_i + \beta\,dh_i \,\big] \quad && \text{($dh_i$ signed; no floor)} \\
+E_{\mathrm{climb}} &= \sum_{\text{climb } i} \big[\, \alpha_r\,dx_i + \alpha_a(v_c(i))\,dx_i + \beta\,dh_i \,\big] \quad && \text{($dh_i > 0$)}
+\end{aligned}$$
+
+$E_{\mathrm{descent}}$ (one of three, never mixed):
+
+$$\begin{aligned}
+R1a &= \sum_{\mathrm{desc}\ i} \max\big(0,\ \alpha_r\,dx_i + \alpha_a(v_{=})\,dx_i - \varepsilon\,\beta\,|dh_i|\big) && \text{(base-law $\varepsilon$ clamp)} \\
+R1b &= \sum_{\mathrm{desc}\ i} P_-\cdot \frac{dx_i\,\mathrm{sec}_i}{v_-(i)} && \text{($= P_-\,t_-$; no $\varepsilon$)} \\
+R1c &= \sum_{\mathrm{desc}\ i} \max\big(0,\ C_{rr}\,mg\cos\theta_i + \tfrac{1}{2}\rho C_dA\,(v_{=}+w)|v_{=}+w| + mg\sin\theta_i\big)\cdot \frac{dx_i\,\mathrm{sec}_i}{k_{\mathrm{eff}}} && \text{(leg force-deficit at flat cruise; $\sin\theta_i < 0$; no $\varepsilon$, no $P_-$)}
+\end{aligned}$$
 
 *(B) E_new2 — the totals decomposition (Danilo).* Read the base closed form `E(d, P, h) = α(P)·d + β·h`
 off three whole-ride totals, with `d=0` on the climb/descent components:
 
-```
-E_new2 = E_flat(d=x, P=P₌, h=0) + E_climb(d=0, P=P₊, h=h₊) + E_descent(d=0, P=P₋, h=−h₋)
-       = α(P₌)·x               + β·h₊                     − ε·β·h₋
-       = α_r·x + α_a(v₌)·x  +  β·h₊  −  ε·β·h₋             (aero over the WHOLE distance x — the 'off' mode)
-```
+$$\begin{aligned}
+E_{\mathrm{new2}} &= E_{\mathrm{flat}}(d{=}x,\, P{=}P_{=},\, h{=}0) + E_{\mathrm{climb}}(d{=}0,\, P{=}P_+,\, h{=}h_+) + E_{\mathrm{descent}}(d{=}0,\, P{=}P_-,\, h{=}{-h_-}) \\
+&= \alpha(P_{=})\,x + \beta\,h_+ - \varepsilon\,\beta\,h_- \\
+&= \alpha_r\,x + \alpha_a(v_{=})\,x + \beta\,h_+ - \varepsilon\,\beta\,h_- \qquad \text{(aero over the WHOLE distance $x$ — the ‘off’ mode)}
+\end{aligned}$$
 
 `d=0` makes the climb/descent **powers drop out** (they would only scale a zero distance), so `β·h₊`
 carries the climb (`E_climb ≈ P₊·t₊ ≈ β·h₊`, pure lift) and `−ε·β·h₋` the descent credit. `x, h₊, h₋`
@@ -3236,10 +3662,9 @@ long descents → a non-zero floor tied to max safe speed; close/low rollers and
 **Hypothesis.** On any descent where the legs are idle (coast *or* brake — both save the
 same `α·dx`), `ε(s) = (α·dx − E_legs)/(β·h₋)` collapses to a function of grade alone:
 
-```text
-ε_coast(s) = min(1, α/(β·s)),   α/β = Crr + ½ρCdA(v_f+w)²/(mg)
-ε ≈ clamp[0,1]( ε_coast − c_κ·κ − c_u·f_unpaved )     (+ braking penalties)
-```
+$$\varepsilon_{\mathrm{coast}}(s) = \min\!\Big(1,\ \frac{\alpha}{\beta\,s}\Big), \qquad \frac{\alpha}{\beta} = C_{rr} + \frac{\tfrac{1}{2}\rho C_dA\,(v_f + w)^2}{m g}$$
+
+$$\varepsilon \approx \mathrm{clamp}_{[0,1]}\big(\varepsilon_{\mathrm{coast}} - c_\kappa\,\kappa - c_u\,f_{\mathrm{unpaved}}\big) \qquad (+\ \text{braking penalties})$$
 
 drop-weighted over the descent profile (or lumped with `s̄ = H₋/X₋`). Tested against the
 per-ride **descent-energy-balance ε** (`epsFromBalance`, the app's `epsFromFIT`: 30 m cells,
@@ -3555,9 +3980,7 @@ into α?*
 `α = α_r + α_a`, keep rolling `α_r` over all of x, and apply the aero part `α_a`
 only over the **non-climbing fraction** `f_flat = 1 − x₊/x`:
 
-```text
-E ≈ α_r·x + α_a·x·f_flat + β(h₊ − ε·h₋)
-```
+$$E \approx \alpha_r\,x + \alpha_a\,x\,f_{\mathrm{flat}} + \beta\,(h_+ - \varepsilon\,h_-)$$
 
 Summed from the profile this is exactly the engine's `'zero'` climb-aero mode; the
 near-exact variant `'vc'` charges climb aero at `v_c ≈ k_eff·P_climb/(C_rr·mg·cosθ +

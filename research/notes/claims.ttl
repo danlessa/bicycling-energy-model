@@ -212,7 +212,7 @@
 
 :assert8 a schema:Claim ;
   schema:about :q8 ;
-  schema:text "ε is predictable from grade alone on real descents: ε ≈ clamp01(min(1, (α/β)/s̄) − ε₀), with ε₀ ≈ 0.13 the near-constant COASTING DEFICIT — the share of the descent pure coasting would refund but the rider does not collect, through residual descent pedalling and pre-corner braking; the remaining scatter is rider behaviour, not route geometry." ;
+  schema:text "ε is predictable from grade alone on real descents: ε ≈ min(1, (α/β)/s̄) − ε₀ (unclamped since 2026-07-28 — the old clamp01 was provably inert on every measured ride), with ε₀ ≈ 0.13 the near-constant COASTING DEFICIT — the share of the descent pure coasting would refund but the rider does not collect, through residual descent pedalling and pre-corner braking; the remaining scatter is rider behaviour, not route geometry." ;
   prov:wasGeneratedBy :run8 .
 
 :assert8_ev1 a schema:Claim ;
@@ -285,7 +285,7 @@
 
 :assert12 a schema:Claim ;
   schema:about :q12 ;
-  schema:text "The frozen rider-1 estimator survives the transfer: clamp01(ε_coast − 0.13) beats even P. Paz's own best flat constant by ~35% (RMS 0.091 vs 0.139 at s̄ ≥ 3%); the −0.13 offset reproduces independently (measured gap 0.12); the energy law lands ~5–7% median with only mass data-implied (per-ride median m̂ 74.5 kg), and ε_geom is the best variant (+0.6% bias) on this open, coastable corpus." ;
+  schema:text "The frozen rider-1 estimator survives the transfer: ε_coast − 0.13 beats even P. Paz's own best flat constant by ~34% (RMS 0.096 vs 0.145 at s̄ ≥ 3%, n = 161); the −0.13 offset reproduces independently (measured gap 0.12); the energy law lands ~5–7% median with only mass data-implied (per-ride median m̂ 74.5 kg), and ε_geom is the best variant (+0.6% bias) on this open, coastable corpus." ;
   prov:wasGeneratedBy :run12 ;
   cito:citesAsEvidence :ppaz_comparison.csv ;
   rdfs:comment "Qualified by Entry 14 (the ε skill is rider-dependent) and Entry 16 (under fitted physics the 35% win becomes a tie); framing corrected by Entry 14: P. Paz is an independent rider, not a collective member." .

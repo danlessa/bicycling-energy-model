@@ -195,23 +195,25 @@ $\epsilon=(\alpha X_- - E_{legs,-})/(\beta H_-)$ on 30 m cells with $\alpha$ at 
   corners. It is a property of riding habit, not of the route. Working estimator:
 
 $$
-\boxed{\ \epsilon \approx \mathrm{clamp}_{[0,1]}\big(\epsilon_{coast} - 0.13\big)\ }
+\boxed{\ \epsilon \approx \epsilon_{coast} - 0.13\ }
 $$
 
 **Per-edge vs. aggregate application.** The estimator above is stated on the drop-weighted
-aggregate — one $\epsilon$ per ride. A per-edge realisation (apply the clamp to every
-individual segment's $\epsilon_{coast}(s_i) - 0.13$, *then* sum the segment credits — as
-`sampasimu`'s `v2Edge` does, since a per-edge graph cost has no natural notion of "the whole
-route") is also licensed by the derivation: both forms are linear in the un-clamped
-$\epsilon_{coast}(s_i)-0.13$, so they agree **exactly** wherever the clamp doesn't bind. They
-diverge only where a route mixes gentle and cliff-steep descents: the aggregate form lets a
-long gentle stretch's high $\epsilon_{coast}$ pull the *route-level* offset up before the
-clamp floors it at 0, while the per-edge form floors each cliff segment independently —
+aggregate — one $\epsilon$ per ride — and is published **unclamped** (2026-07-28, journal
+Entry 32): $0 \leq \epsilon_{coast} \leq 1$ already bounds it to $[-0.13,\,0.87]$, and no
+measured ride ever pushed it below $+0.01$, so the historical $\mathrm{clamp}_{[0,1]}$ was
+dead weight, not model content. A per-edge realisation (clamp every individual segment's
+$\epsilon_{coast}(s_i) - 0.13$ at 0, *then* sum the segment credits — as `sampasimu`'s
+`v2Edge` does, since a per-edge graph cost has no natural notion of "the whole route")
+**keeps its floor**, because single segments beyond the floor grade are common even where
+ride means are not. Both forms are linear in the same $\epsilon_{coast}(s_i)-0.13$, so they
+agree **exactly** wherever no per-edge floor binds; they diverge only where a route mixes
+gentle and cliff-steep descents, the per-edge form flooring each cliff segment independently —
 never letting easy coasting elsewhere "average out" a drop no rider actually coasts down. The
 per-edge form is therefore the more physically defensible of the two on mixed profiles; on a
 synthetic worst case (a route mostly gentle grade with one short pitch beyond ε's floor grade,
 ≈14%) the two forms diverge by roughly 10% of the descent-credit term, and the divergence is
-invisible on the smooth terrain most rides are made of, where the clamp rarely binds at all.
+invisible on the smooth terrain most rides are made of, where the floor rarely binds at all.
 
 - **The clamp-to-$1$ limit is reversed on flat terrain.** Gentle rides are pedalled
   *through* the dips, so the measured $\epsilon\to 0$, not $1$ (NS3 Caracaí: predicted

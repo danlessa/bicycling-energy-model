@@ -97,8 +97,11 @@ home of the *derivation* and the side-by-side comparison.
 - `research/packages/` — per-entry evidence RO-Crates; regenerate via
   `make_crates.py` (re-executes `bootstrap_ci.py` and aborts on gate failure).
   RO-Crate envelope at the repo root `ro-crate-metadata.json`.
-- `research/article/` — the paper: `article-draft.md` + `article-draft.pt-BR.md`
-  (canonical citation target) and the piece series
+- `research/article/` — the papers and pieces: `paper1-closed-form.md` (the
+  IMRAD paper — EN only so far; a pt-BR mirror is planned and the lockstep
+  rule will then apply), `paper2-edge-cost.md` (scaffold: the edge-cost
+  discretization paper), the older monoliths `article-draft.md` +
+  `article-draft.pt-BR.md` (canonical citation target) and the piece series
   (`piece1-energy-demand{,.pt-BR}.md`; Pieces 2–3 pending). **A piece edit and
   its pt-BR mirror move in lockstep** — run a bilingual parity diff before
   committing. `figs/` (`make_figures.py` — NOTE: it hardcodes the headline

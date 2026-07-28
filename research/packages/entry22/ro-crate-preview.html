@@ -62,7 +62,7 @@ ul { margin:.4rem 0; padding-left:1.2rem; }
   <h1>Entrada 22 — error bars for the headline medians — the champion &quot;beats&quot; the sim only on the median, so the article now claims parity</h1>
   <div class="badges">
     <span>2026-07-09</span>
-    <span>commit cf52def91651</span>
+    <span>commit bede649e485f</span>
     <span>com execução de harness</span>
   </div>
 </header>
@@ -80,7 +80,7 @@ ul { margin:.4rem 0; padding-left:1.2rem; }
 
 <section>
   <h2>Como foi produzida</h2>
-  <p>Instrumento(s): <code>src/harness/bootstrap_ci.py</code> (sha256 <code class='hash'>191247caced055e2…</code>, <a href="https://github.com/danlessa/bicycling-energy-model/blob/cf52def91651b94f2b4e7b0ca2c32e67b92688ec/src/harness/bootstrap_ci.py">fonte no commit</a>).</p>
+  <p>Instrumento(s): <code>src/harness/bootstrap_ci.py</code> (sha256 <code class='hash'>7538852b006c3ef7…</code>, <a href="https://github.com/danlessa/bicycling-energy-model/blob/bede649e485fae974e498a8d24c975ddf14d8d8f/src/harness/bootstrap_ci.py">fonte no commit</a>).</p>
   
   <p class="muted">Reconstruir os pacotes:
   <code>python3 research/packages/make_crates.py</code>.</p>
@@ -114,6 +114,16 @@ approx cf                          n= 44  med|Δ%|=  8.59 [7.2, 11.0]  medΔ%=  
 approx off (baseline)              n= 44  med|Δ%|= 19.14 [17.3, 21.5]  medΔ%=  19.14 [17.3, 21.6] GATE-OK
 PAIRED champion (cfS) vs canonical: A closer on 24/44 (55%), sign test p=0.6516
 
+== Longões FROZEN protocol (44 rides), Entry 31 ==
+form 1 · ε_d (original)            n= 44  med|Δ%|= 14.85 [10.6, 22.6]  medΔ%=  13.97 [10.2, 22.5] GATE-OK
+form 2 · ε_d (split)               n= 44  med|Δ%|=  7.90 [5.5, 13.6]  medΔ%=   4.87 [0.9, 10.9] GATE-OK
+form 3 · ε_d (proposed)            n= 44  med|Δ%|=  8.17 [4.5, 10.8]  medΔ%=   2.22 [-2.5, 4.5] GATE-OK
+form 4 · ε_d (scalar c)            n= 44  med|Δ%|=  7.63 [5.6, 11.6]  medΔ%=  -0.49 [-5.0, 3.7] GATE-OK
+canonical (frozen)                 n= 44  med|Δ%|=  8.37 [5.1, 10.9]  medΔ%=   2.47 [-1.6, 7.1] GATE-OK
+ascent-noise rate: median 3.06 m/km [IQR 2.6–3.7] GATE-OK
+PAIRED frozen form 3 vs canonical: A closer on 22/44 (50%), sign test p=1.0000
+PAIRED frozen form 4 vs canonical: A closer on 17/44 (39%), sign test p=0.1742
+
 == Censo (clean urban rides), §8.4 sweep ==
 canonical                          n= 62  med|Δ%|=  6.63 [4.7, 8.7]  medΔ%=  -3.52 [-6.4, -1.8] GATE-OK
 smooth · ε=0.10                    n= 62  med|Δ%|=  4.41 [3.6, 6.2]  medΔ%=   3.26 [0.7, 4.7] GATE-OK
@@ -126,9 +136,14 @@ smooth · ε=geom                    n= 62  med|Δ%|=  7.71 [6.0, 9.3]  medΔ%= 
 smooth · ε=0.00                    n= 62  med|Δ%|=  7.39 [5.6, 9.4]  medΔ%=   7.23 [4.9, 9.2] GATE-OK
 poor-man · ε=0.00                  n= 62  med|Δ%|= 10.35 [8.3, 13.4]  medΔ%=  10.35 [8.2, 13.7] GATE-OK
 PAIRED poor-man ε0.20 vs canonical: A closer on 33/62 (53%), sign test p=0.7035
+PAIRED frozen sm_geom vs canonical: A closer on 27/62 (44%), sign test p=0.3742
+PAIRED frozen pm_geom vs canonical: A closer on 28/62 (45%), sign test p=0.5258
 
 == P. Paz (441 rides), §8.6 ==
 poor-man · ε=geom                  n=441  med|Δ%|=  4.89 [4.4, 5.8]  medΔ%=   0.59 [-0.1, 1.3] GATE-OK
+smooth · ε=geom                    n=441  med|Δ%|=  5.76 [5.3, 6.4]  medΔ%=   4.28 [3.1, 4.9] GATE-OK
+smooth · ε=0.20                    n=441  med|Δ%|= 10.09 [9.3, 10.7]  medΔ%=  10.03 [8.8, 10.7] GATE-OK
+poor-man · ε=0.20                  n=441  med|Δ%|=  6.83 [6.0, 7.6]  medΔ%=   5.39 [4.1, 6.6] GATE-OK
 canonical                          n=441  med|Δ%|=  6.76 [6.2, 7.8]  medΔ%=   4.96 [3.8, 5.9] GATE-OK
 PAIRED pm_geom vs canonical: A closer on 265/441 (60%), sign test p=0.0000
 PAIRED pm_geom vs sm_0.20: A closer on 331/436 (76%), sign test p=0.0000
@@ -136,11 +151,73 @@ PAIRED pm_geom vs sm_0.20: A closer on 331/436 (76%), sign test p=0.0000
 == JAAM (219 rides), §8.6 ==
 smooth · ε=0.20                    n=219  med|Δ%|=  3.46 [3.1, 4.2]  medΔ%=   0.39 [-0.8, 1.2] GATE-OK
 smooth · ε=geom                    n=219  med|Δ%|=  5.49 [4.4, 6.4]  medΔ%=  -4.70 [-5.7, -3.7] GATE-OK
+poor-man · ε=geom                  n=219  med|Δ%|=  8.97 [7.9, 9.7]  medΔ%=  -8.41 [-9.5, -7.5] GATE-OK
+poor-man · ε=0.20                  n=219  med|Δ%|=  5.55 [4.8, 6.4]  medΔ%=  -4.35 [-5.0, -3.3] GATE-OK
+canonical                          n=219  med|Δ%|=  5.44 [4.9, 6.1]  medΔ%=  -4.96 [-5.8, -4.3] GATE-OK
 PAIRED sm_0.20 vs sm_geom: A closer on 140/215 (65%), sign test p=0.0000
+JAAM real descents: n=21 rms_dyn=0.090 rms_flat0.20=0.111 rms_best_in=0.085 GATE-OK
+
+== Author-full (621 rides), paper §3.4 ==
+smooth · ε=geom                    n=621  med|Δ%|=  6.18 [5.6, 6.9]  medΔ%=  -0.26 [-1.6, 0.6] GATE-OK
+poor-man · ε=geom                  n=621  med|Δ%|=  7.14 [6.4, 8.1]  medΔ%=  -1.94 [-3.0, -1.4] GATE-OK
+smooth · ε=0.20                    n=621  med|Δ%|=  8.08 [7.3, 8.7]  medΔ%=   5.55 [4.1, 6.6] GATE-OK
+poor-man · ε=0.20                  n=621  med|Δ%|=  6.88 [6.2, 7.5]  medΔ%=   3.84 [2.8, 5.0] GATE-OK
+canonical                          n=621  med|Δ%|=  6.14 [5.5, 6.7]  medΔ%=   0.05 [-0.9, 0.9] GATE-OK
+
+== Paired tests and descent statistics (paper §3.3-3.4) ==
+PAIRED D3 sm_geom vs canonical: A closer on 280/441 (63%), sign test p=0.0000
+PAIRED D5 sm_geom vs canonical: A closer on 270/621 (43%), sign test p=0.0013
+D3 descents (assumed)              n=161  RMS dyn=0.096 vs own-flat=0.145  gap=0.12 GATE-OK
+D4 descents (assumed)              n= 21  RMS dyn=0.090 vs own-flat=0.085  gap=0.13 GATE-OK
+D5 descents (in-sample)            n=221  RMS dyn=0.092 vs own-flat=0.126  gap=0.14 GATE-OK
+
+== Pooled D3–D5 (1,281 rides), paper Table 3 ==
+pooled smooth · ε=geom             n=1281  med|Δ%|=5.90 [5.5, 6.2] GATE-OK
+pooled poor-man · ε=geom           n=1281  med|Δ%|=6.63 [6.3, 7.1] GATE-OK
+pooled smooth · ε=0.20             n=1281  med|Δ%|=7.50 [7.0, 8.0] GATE-OK
+pooled poor-man · ε=0.20           n=1281  med|Δ%|=6.57 [6.1, 7.0] GATE-OK
+pooled canonical                   n=1281  med|Δ%|=6.23 [5.9, 6.6] GATE-OK
+pooled D3+D4 smooth · ε=geom       n=660  med|Δ%|=5.63 [5.2, 6.2] GATE-OK
+pooled D3+D4 canonical             n=660  med|Δ%|=6.26 [5.8, 6.8] GATE-OK
+
+== Per-ride inverted physics (Entry 33, Table 5) ==
+E33 censo f3_d                     n= 69  med|Δ%|=  6.95 [5.4, 9.5]  medΔ%=  -3.07 [-4.7, -1.1] GATE-OK
+E33 censo f3_f                     n= 69  med|Δ%|=  5.77 [4.9, 7.8]  medΔ%=  -0.45 [-1.7, 2.4] GATE-OK
+E33 censo f4_f                     n= 69  med|Δ%|=  5.38 [3.2, 7.1]  medΔ%=   2.44 [-0.5, 6.1] GATE-OK
+E33 censo canon_d                  n= 69  med|Δ%|=  7.80 [4.7, 9.5]  medΔ%=  -2.19 [-4.7, 1.4] GATE-OK
+E33 ppaz f3_d                      n=441  med|Δ%|=  5.14 [4.6, 5.5]  medΔ%=  -3.79 [-4.4, -3.2] GATE-OK
+E33 ppaz f3_f                      n=441  med|Δ%|=  3.18 [2.7, 3.6]  medΔ%=   0.17 [-0.3, 0.7] GATE-OK
+E33 ppaz f4_f                      n=441  med|Δ%|=  4.77 [4.3, 5.2]  medΔ%=  -3.01 [-3.6, -2.5] GATE-OK
+E33 ppaz canon_d                   n=441  med|Δ%|=  5.70 [5.3, 6.2]  medΔ%=  -4.63 [-5.2, -4.0] GATE-OK
+E33 jaam f3_d                      n=219  med|Δ%|=  6.02 [5.2, 6.5]  medΔ%=  -5.23 [-6.2, -4.4] GATE-OK
+E33 jaam f3_f                      n=219  med|Δ%|=  3.07 [2.6, 3.3]  medΔ%=  -0.43 [-1.2, 0.4] GATE-OK
+E33 jaam f4_f                      n=219  med|Δ%|=  6.39 [5.9, 7.0]  medΔ%=  -5.27 [-6.1, -4.4] GATE-OK
+E33 jaam canon_d                   n=219  med|Δ%|=  5.83 [4.9, 6.5]  medΔ%=  -4.94 [-6.0, -4.3] GATE-OK
+E33 danlessa f3_d                  n=636  med|Δ%|=  7.45 [7.1, 8.0]  medΔ%=  -4.01 [-4.7, -3.2] GATE-OK
+E33 danlessa f3_f                  n=636  med|Δ%|=  5.29 [4.6, 6.1]  medΔ%=   0.90 [0.3, 1.8] GATE-OK
+E33 danlessa f4_f                  n=636  med|Δ%|=  5.81 [5.3, 6.3]  medΔ%=  -0.36 [-1.1, 0.3] GATE-OK
+E33 danlessa canon_d               n=636  med|Δ%|=  7.18 [6.7, 7.9]  medΔ%=  -3.48 [-4.3, -2.6] GATE-OK
+E33 pooled f3_d                    n=1296  med|Δ%|=6.26 [6.0, 6.6] GATE-OK
+E33 pooled f3_f                    n=1296  med|Δ%|=3.84 [3.6, 4.1] GATE-OK
+E33 pooled f4_f                    n=1296  med|Δ%|=5.68 [5.2, 6.0] GATE-OK
+E33 pooled canon                   n=1296  med|Δ%|=6.37 [6.1, 6.7] GATE-OK
+E33 crr_hat ppaz: 0.0083 (n=146) GATE-OK
+E33 crr_hat jaam: 0.0095 (n=22) GATE-OK
+E33 crr_hat danlessa: 0.0088 (n=87) GATE-OK
+E33 cda_hat ppaz: 0.2575 (n=374) GATE-OK
+E33 cda_hat jaam: 0.3913 (n=202) GATE-OK
+E33 cda_hat danlessa: 0.2929 (n=385) GATE-OK
+E33 D1 m̂−m_logged: bias 2.4, |err| 5.3 (n=33) GATE-OK
+E33 m̂ longoes: 76.6 (n=33) GATE-OK
+E33 m̂ censo: 82.3 (n=17) GATE-OK
+E33 m̂ ppaz: 75.4 (n=230) GATE-OK
+E33 m̂ jaam: 98.7 (n=103) GATE-OK
+E33 m̂ danlessa: 73.7 (n=340) GATE-OK
 
 == Time model, P. Paz (§8.8 primary endpoint) ==
 T1b full (frozen)                  n=441  med|Δ%|=  6.60 [5.9, 7.2]  medΔ%=   3.79 [2.8, 4.7] GATE-OK
 T0 naive x/v_f                     n=441  med|Δ%|=  7.64 [7.0, 8.5]  medΔ%=  -0.45 [-2.0, 0.9] GATE-OK
+PAIRED T1b vs T0: 243/433, p=0.0124 GATE-OK
 
 all gates pass
 </pre>

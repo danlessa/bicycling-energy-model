@@ -370,8 +370,8 @@ for lab, sub in [("all clean rides", eOK), ("s̄ ≥ 3%", [r for r in eOK if r["
     print(f"  med ε_bal {f(med_of(eb), 2)} · med ε_coast {f(med_of(ecst), 2)} · "
           f"med s̄ {f(med_of([r['sbar'] for r in sub]) * 100, 1)}% · corr {f(corr_of(ecst, eb), 2)}")
     print("  RMS(ε_bal − pred):")
-    print(f"    frozen  clamp01(ε_coast − 0.13)      "
-          f"{f(rms([r['epsBal'] - clamp01(r['epsCoast'] - 0.13) for r in sub]), 3)}")
+    print(f"    frozen  ε_coast − 0.13 (unclamped)      "
+          f"{f(rms([r['epsBal'] - (r['epsCoast'] - 0.13) for r in sub]), 3)}")
     print(f"    frozen  flat ε = 0.20                {f(rms([x - 0.20 for x in eb]), 3)}")
     print(f"    frozen  flat ε = 0.23                {f(rms([x - 0.23 for x in eb]), 3)}")
     print(f"    in-sample flat = median ε_bal ({f(flatIn, 2)})  "
@@ -386,7 +386,7 @@ for lab, sub in [("all clean rides", eOK), ("s̄ ≥ 3%", [r for r in eOK if r["
 # Entry-27 re-baseline).  Deterministic seed, percentile method, same B as bootstrap_ci.
 _real = [r for r in eOK if r["sbar"] >= 0.03]
 if len(_real) >= 5:
-    _froz = [r["epsBal"] - clamp01(r["epsCoast"] - 0.13) for r in _real]
+    _froz = [r["epsBal"] - (r["epsCoast"] - 0.13) for r in _real]
     _flat = [r["epsBal"] - 0.20 for r in _real]
     _rnd = random.Random(20260725)
     _n, _B, _bs = len(_real), 10000, []
@@ -401,7 +401,7 @@ if len(_real) >= 5:
           f"(percentile, B=10⁴, seed 20260725)")
 
 print("\n----------------------------------------------------------------")
-print("TERRAIN / GEOGRAPHY CUTS — frozen clamp01(ε_coast−0.13), real descents (s̄ ≥ 3%)")
+print("TERRAIN / GEOGRAPHY CUTS — frozen ε_coast−0.13 (unclamped), real descents (s̄ ≥ 3%)")
 print("note: JAAM power rides are ~93% São Paulo (medAlt ~737 m); the non-SP tail is small.")
 real = [r for r in eOK if r["sbar"] >= 0.03]
 cuts = [
@@ -420,7 +420,7 @@ for lab, sub in cuts:
         print("  " + lab.ljust(32) + str(len(sub)).rjust(4) + "  (too few)")
         continue
     eb = [r["epsBal"] for r in sub]
-    rFrozen = rms([r["epsBal"] - clamp01(r["epsCoast"] - 0.13) for r in sub])
+    rFrozen = rms([r["epsBal"] - (r["epsCoast"] - 0.13) for r in sub])
     rIn = rms([x - med_of(eb) for x in eb])
     print("  " + lab.ljust(32) + str(len(sub)).rjust(4) + f(rFrozen, 3).rjust(12)
           + f(rIn, 3).rjust(12) + f(med_of(eb), 2).rjust(11))

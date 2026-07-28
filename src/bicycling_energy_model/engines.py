@@ -436,7 +436,10 @@ def approx_time(prof: Profile, p: SimParams, vf: float,
 def eps_geom(prof: Profile, p: SimParams, vf: float) -> float:
     """Geometry-only closed-form eps (JS epsGeom; journal Entry 8): coasting
     limit eps(s) = min(1, (a/b)/s), drop-weighted over 30 m descent cells,
-    minus the coasting deficit EPS0. Uses the MODEL v_f — needs no power."""
+    minus the coasting deficit EPS0. UNCLAMPED (2026-07-28, Entry 32): the
+    result lives in [-EPS0, 1-EPS0] by construction and stayed positive on
+    every measured ride; the old clamp01 was provably inert on the corpora.
+    Uses the MODEL v_f — needs no power."""
     p = SimParams.of(p)
     mg = p.m * G
     beta = mg / p.keff
@@ -471,7 +474,7 @@ def eps_geom(prof: Profile, p: SimParams, vf: float) -> float:
             epsW += drop * min(1.0, ab / (drop / DX))
     if Hd < 1:
         return float("nan")
-    return max(0.0, min(1.0, epsW / Hd - EPS0))
+    return epsW / Hd - EPS0
 
 
 def approx_components(prof: Profile, p: SimParams, vf: float,

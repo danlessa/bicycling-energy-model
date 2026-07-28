@@ -18,7 +18,7 @@ Pipeline (engines imported from src/bicycling_energy_model — the shared verifi
      physical floor (∫P·dt ≥ m̂·g·h₊_sm/k_eff) + cadence cross-check.
   3. ε SECOND-RIDER TEST: per-ride descent-balance ε_bal vs geometric ε_coast on 30 m
      cells (α at the MEASURED flat speed, VSTOP-gated). The estimators are FROZEN from
-     the first rider: clamp01(ε_coast − 0.13), flat 0.20, flat 0.23. Nothing here is
+     the first rider: ε_coast − 0.13 (unclamped), flat 0.20, flat 0.23. Nothing here is
      refit — this is out-of-sample across rider, meter, and terrain.
 
   python3 src/harness/ppaz_inventory.py && python3 src/harness/ppaz_compare.py
@@ -334,10 +334,6 @@ for tag, _ in EPS_SWEEP:
 eOK = [r for r in clean if is_finite(r["epsBal"]) and is_finite(r["epsCoast"])]
 
 
-def clamp01(x: float) -> float:
-    return max(0, min(1, x))
-
-
 def rms(xs: list[float]) -> float:
     s = 0.0
     for x in xs:
@@ -377,8 +373,8 @@ for lab, sub in (("all clean rides", eOK), ("s̄ ≥ 3%", [r for r in eOK if r["
     print(f"  med ε_bal {f(med_of(eb), 2)} · med ε_coast {f(med_of(ecst), 2)} · "
           f"med s̄ {f(med_of([r['sbar'] for r in sub]) * 100, 1)}% · corr {f(corr_of(ecst, eb), 2)}")
     print("  RMS(ε_bal − pred):")
-    print(f"    frozen  clamp01(ε_coast − 0.13)      "
-          f"{f(rms([r['epsBal'] - clamp01(r['epsCoast'] - 0.13) for r in sub]), 3)}")
+    print(f"    frozen  ε_coast − 0.13 (unclamped)      "
+          f"{f(rms([r['epsBal'] - (r['epsCoast'] - 0.13) for r in sub]), 3)}")
     print(f"    frozen  flat ε = 0.20                {f(rms([x - 0.20 for x in eb]), 3)}")
     print(f"    frozen  flat ε = 0.23                {f(rms([x - 0.23 for x in eb]), 3)}")
     print(f"    in-sample flat = median ε_bal ({f(flatIn, 2)})  "

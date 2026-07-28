@@ -146,10 +146,6 @@ def mulberry_boot_ci(values: list[float], seed: int = 42) -> tuple[float, float]
     return stats[math.floor(0.025 * B)], stats[math.ceil(0.975 * B) - 1]
 
 
-def clamp01(x: float) -> float:
-    return max(0.0, min(1.0, x))
-
-
 # ---------------------------------------------------------------- per-ride reduction
 
 def geom_sums(prof: dict) -> tuple[float, float, float, float]:
@@ -317,7 +313,7 @@ def eval_combo(rides: list[dict], CdA: float, Crr: float, rho: float,
             continue
         cells, Hd = r["geo"]
         if Hd >= 1:
-            epsg = clamp01(sum(d * min(1.0, ab / s) for d, s in cells) / Hd - EPS0)
+            epsg = sum(d * min(1.0, ab / s) for d, s in cells) / Hd - EPS0
         else:
             epsg = 0.2                                 # harness fallback (nan → 0.2)
         for tag, eps in (("sm_geom", epsg), ("sm_flat", 0.20)):
@@ -336,7 +332,7 @@ def eval_combo(rides: list[dict], CdA: float, Crr: float, rho: float,
             if b["Hd"] / b["Xd"] >= 0.03 and is_finite(eps_bal) and is_finite(eps_coast):
                 gaps.append(eps_coast - eps_bal)
                 ebs.append(eps_bal)
-                preds.append(clamp01(eps_coast - EPS0))
+                preds.append(eps_coast - EPS0)
     # dynamic-vs-flat verdict on real descents (P3): RMS of ε_bal against the
     # frozen dynamic estimator vs the corpus's own in-sample best flat constant
     def _rms(v: list[float]) -> float:

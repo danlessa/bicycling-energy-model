@@ -1,0 +1,192 @@
+{
+  "@context": [
+    "https://w3id.org/ro/crate/1.1/context",
+    {
+      "sha256": "https://w3id.org/ro/terms/workflow-run#sha256"
+    }
+  ],
+  "@graph": [
+    {
+      "@id": "ro-crate-metadata.json",
+      "@type": "CreativeWork",
+      "conformsTo": {
+        "@id": "https://w3id.org/ro/crate/1.1"
+      },
+      "about": {
+        "@id": "./"
+      }
+    },
+    {
+      "@id": "./",
+      "@type": "Dataset",
+      "name": "Entry 32 evidence package — review v3 — the un-gated numbers were exactly where the rot was",
+      "description": "Evidence package for journal Entry 32 (2026-07-28): aggregates, hashes and provenance only — the prose remains authoritative in the journal. Regenerate all packages: `python3 research/packages/make_crates.py`.",
+      "author": {
+        "@id": "#danilo"
+      },
+      "dateCreated": "2026-07-28",
+      "isPartOf": {
+        "@id": "https://doi.org/10.5281/zenodo.21282165"
+      },
+      "url": "https://github.com/danlessa/bicycling-energy-model/tree/main/research/packages/entry32",
+      "hasPart": [],
+      "mentions": [
+        {
+          "@id": "#claim"
+        },
+        {
+          "@id": "#run"
+        }
+      ],
+      "subjectOf": {
+        "@id": "https://github.com/danlessa/bicycling-energy-model/blob/main/research/journal/MODEL_COMPARISON_JOURNAL.md"
+      },
+      "conformsTo": {
+        "@id": "https://w3id.org/ro/wfrun/process/0.5"
+      }
+    },
+    {
+      "@id": "#danilo",
+      "@type": "Person",
+      "name": "Danilo Lessa Bernardineli",
+      "email": "danilo.lessa@gmail.com"
+    },
+    {
+      "@id": "https://github.com/danlessa/bicycling-energy-model/blob/main/research/journal/MODEL_COMPARISON_JOURNAL.md",
+      "@type": "CreativeWork",
+      "name": "Model comparison journal",
+      "encodingFormat": "text/markdown"
+    },
+    {
+      "@id": "https://github.com/danlessa/bicycling-energy-model/blob/main/research/notes/claims.ttl",
+      "@type": "Dataset",
+      "name": "Claims–questions–evidence graph (Entries 1–24)",
+      "encodingFormat": "text/turtle"
+    },
+    {
+      "@id": "#claim",
+      "@type": "Claim",
+      "name": "Entry 32: review v3 — the un-gated numbers were exactly where the rot was",
+      "text": "review v3 — the un-gated numbers were exactly where the rot was",
+      "appearance": [
+        {
+          "@id": "https://github.com/danlessa/bicycling-energy-model/blob/main/research/journal/MODEL_COMPARISON_JOURNAL.md"
+        }
+      ],
+      "subjectOf": {
+        "@id": "https://github.com/danlessa/bicycling-energy-model/blob/main/research/notes/claims.ttl"
+      }
+    },
+    {
+      "@id": "#data/results/ppaz_comparison.csv",
+      "@type": "File",
+      "name": "data/results/ppaz_comparison.csv",
+      "description": "Per-ride CSV — gitignored (rows carry ride names/dates tied to private activities); described hash-only, never distributed. Regenerates via `python3 src/harness/ppaz_compare.py`.",
+      "sha256": "f501456006f633b93463e71654589860869b28dbba42adea30f2b3be17c9d3c1",
+      "contentSize": "105177",
+      "encodingFormat": "text/csv"
+    },
+    {
+      "@id": "#data/results/jaam_comparison.csv",
+      "@type": "File",
+      "name": "data/results/jaam_comparison.csv",
+      "description": "Per-ride CSV — gitignored (rows carry ride names/dates tied to private activities); described hash-only, never distributed. Regenerates via `python3 src/harness/jaam_compare.py`.",
+      "sha256": "7abd3b7fbdabb4c4751d0a47fa59d62af451c031d8b877d1f8c9cabcfb9ba75e",
+      "contentSize": "55153",
+      "encodingFormat": "text/csv"
+    },
+    {
+      "@id": "#data/results/danlessa_comparison.csv",
+      "@type": "File",
+      "name": "data/results/danlessa_comparison.csv",
+      "description": "Per-ride CSV — gitignored (rows carry ride names/dates tied to private activities); described hash-only, never distributed. Regenerates via `python3 src/harness/danlessa_compare.py`.",
+      "sha256": "03868d6792a42eebf7a82cef26f41d67b465a874cd2eaf2927413aad53c57619",
+      "contentSize": "155474",
+      "encodingFormat": "text/csv"
+    },
+    {
+      "@id": "#data/results/longoes_frozen.csv",
+      "@type": "File",
+      "name": "data/results/longoes_frozen.csv",
+      "description": "Per-ride CSV — gitignored (rows carry ride names/dates tied to private activities); described hash-only, never distributed. Regenerates via `python3 src/harness/longoes_frozen.py`.",
+      "sha256": "1becef0b982fd4d7877ba2dd369d4a35e329ee01c5548b53d93e1e8a8be4191c",
+      "contentSize": "5460",
+      "encodingFormat": "text/csv"
+    },
+    {
+      "@id": "#data/results/time_comparison.csv",
+      "@type": "File",
+      "name": "data/results/time_comparison.csv",
+      "description": "Per-ride CSV — gitignored (rows carry ride names/dates tied to private activities); described hash-only, never distributed. Regenerates via `python3 src/harness/time_compare.py`.",
+      "sha256": "4ef32cbee3228ff8c267794fb9e467a0f72afb3c7494adce594788ade954d6b7",
+      "contentSize": "143539",
+      "encodingFormat": "text/csv"
+    },
+    {
+      "@id": "#run",
+      "@type": "CreateAction",
+      "name": "Entry 32 harness run",
+      "description": "Re-executable from the repository and the private inputs; see the journal entry for protocol, endpoints and verdicts.",
+      "endTime": "2026-07-28",
+      "actionStatus": {
+        "@id": "http://schema.org/CompletedActionStatus"
+      },
+      "agent": {
+        "@id": "#danilo"
+      },
+      "instrument": [
+        {
+          "@id": "#src/harness/bootstrap_ci.py"
+        }
+      ],
+      "result": [
+        {
+          "@id": "#data/results/ppaz_comparison.csv"
+        },
+        {
+          "@id": "#data/results/jaam_comparison.csv"
+        },
+        {
+          "@id": "#data/results/danlessa_comparison.csv"
+        },
+        {
+          "@id": "#data/results/longoes_frozen.csv"
+        },
+        {
+          "@id": "#data/results/time_comparison.csv"
+        }
+      ]
+    },
+    {
+      "@id": "#src/harness/bootstrap_ci.py",
+      "@type": [
+        "File",
+        "SoftwareApplication",
+        "SoftwareSourceCode"
+      ],
+      "name": "src/harness/bootstrap_ci.py",
+      "url": "https://github.com/danlessa/bicycling-energy-model/blob/bede649e485fae974e498a8d24c975ddf14d8d8f/src/harness/bootstrap_ci.py",
+      "sha256": "7538852b006c3ef72486897cb5661f562d5eed410721299bddd3c5575c6e9d62",
+      "version": "bede649e485fae974e498a8d24c975ddf14d8d8f",
+      "programmingLanguage": "Python"
+    },
+    {
+      "@id": "ro-crate-preview.html",
+      "@type": [
+        "File",
+        "CreativeWork"
+      ],
+      "name": "Pré-visualização humana do pacote (convenção RO-Crate)",
+      "encodingFormat": "text/html",
+      "about": {
+        "@id": "./"
+      }
+    },
+    {
+      "@id": "https://doi.org/10.5281/zenodo.21282165",
+      "@type": "Dataset",
+      "name": "bicycling-energy-model — research package",
+      "url": "https://github.com/danlessa/bicycling-energy-model"
+    }
+  ]
+}

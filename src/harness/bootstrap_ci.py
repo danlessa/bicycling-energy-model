@@ -111,7 +111,7 @@ def report(label: str, deltas: list[float], expect_abs: float | None = None,
            expect_ci_signed: tuple[float, float] | None = None) -> None:
     """Print (and optionally gate) the median and its bootstrap CI.
 
-    expect_ci / expect_ci_signed assert the PUBLISHED 95% bands (paper.md /
+    expect_ci / expect_ci_signed assert the PUBLISHED 95% bands (paper1-closed-form.md /
     article) on |Δ%| and signed Δ% respectively. The bootstrap is seeded, so
     the bounds are deterministic given the data; 0.06 tolerance only absorbs
     the 1-decimal rounding the published values carry.
@@ -272,7 +272,7 @@ _sub = [r for r in jm if r.get("dataOK") == "true"
         and is_finite(num(r, "epsBal")) and is_finite(num(r, "epsCoast"))
         and num(r, "sbar") >= 0.03]
 _eb = [num(r, "epsBal") for r in _sub]
-_pred = [max(0.0, min(1.0, num(r, "epsCoast") - 0.13)) for r in _sub]
+_pred = [num(r, "epsCoast") - 0.13 for r in _sub]
 _rms = lambda v: math.sqrt(sum(x * x for x in v) / len(v))
 _dyn = _rms([_eb[i] - _pred[i] for i in range(len(_eb))])
 _f20 = _rms([x - 0.20 for x in _eb])
@@ -296,6 +296,44 @@ report("poor-man · ε=geom", col(dl, "pm_geom"), 7.1, -1.9, expect_ci=(6.4, 8.1
 report("smooth · ε=0.20", col(dl, "sm_0.20"), 8.1, 5.6, expect_ci=(7.3, 8.7))
 report("poor-man · ε=0.20", col(dl, "pm_0.20"), 6.9, 3.8, expect_ci=(6.2, 7.5))
 report("canonical", col(dl, "canon_d"), 6.1, None, expect_ci=(5.5, 6.7))
+
+# ---------- 3b2. Paired sign tests + descent statistics (paper §3.3-3.4) ----------
+print("\n== Paired tests and descent statistics (paper §3.3-3.4) ==")
+paired("PAIRED D3 sm_geom vs canonical", pp, "sm_geom", "canon_d")
+paired("PAIRED D5 sm_geom vs canonical", dl, "sm_geom", "canon_d")
+
+
+def descent_rms(rows: list[dict], label: str, exp_n: int | None = None,
+                exp_pair: tuple[float, float] | None = None) -> None:
+    """Frozen dynamic-eps RMS vs the corpus's own in-sample best flat, on
+    real descents (s_bar >= 3%) — the paper's Table 4 RMS row."""
+    global failed
+    sub = [r for r in rows if r.get("dataOK", "true") == "true"
+           and is_finite(num(r, "epsBal")) and is_finite(num(r, "epsCoast"))
+           and num(r, "sbar") >= 0.03]
+    eb = [num(r, "epsBal") for r in sub]
+    pred = [num(r, "epsCoast") - 0.13 for r in sub]
+    rms = lambda v: math.sqrt(sum(x * x for x in v) / len(v))
+    dyn = rms([eb[i] - pred[i] for i in range(len(eb))])
+    flat_in = rms([x - median(eb) for x in eb])
+    gap = median([num(r, "epsCoast") for r in sub]) - median(eb)
+    ok = True
+    if exp_n is not None:
+        ok = ok and len(sub) == exp_n
+    if exp_pair is not None:
+        ok = ok and abs(dyn - exp_pair[0]) <= 0.002 and abs(flat_in - exp_pair[1]) <= 0.002
+    print(f"{label.ljust(34)} n={str(len(sub)).rjust(3)}  "
+          f"RMS dyn={to_fixed(dyn, 3)} vs own-flat={to_fixed(flat_in, 3)}  "
+          f"gap={to_fixed(gap, 2)}"
+          + ("" if exp_pair is None else (" GATE-OK" if ok else
+             f" GATE-FAIL(exp n={exp_n} {exp_pair})")))
+    if not ok:
+        failed = True
+
+
+descent_rms(pp, "D3 descents (assumed)", 161, (0.096, 0.145))
+descent_rms(jm, "D4 descents (assumed)", 21, (0.090, 0.085))
+descent_rms(dl, "D5 descents (in-sample)", 221, (0.092, 0.126))
 
 # ---------- 3c. Pooled D3-D5 (paper Table 3; stratified bootstrap) ----------
 print("\n== Pooled D3–D5 (1,281 rides), paper Table 3 ==")
@@ -332,6 +370,7 @@ def strat_report(label: str, strata: list[list[float]], expect_abs: float,
 
 
 _strata_src = [pp, jm, dl]
+_strata_transfer = [pp, jm]
 for _lab, _col, _ea, _eci in (
         ("pooled smooth · ε=geom", "sm_geom", 5.9, (5.5, 6.2)),
         ("pooled poor-man · ε=geom", "pm_geom", 6.6, (6.3, 7.1)),
@@ -340,6 +379,70 @@ for _lab, _col, _ea, _eci in (
         ("pooled canonical", "canon_d", 6.2, (5.9, 6.6))):
     strat_report(_lab, [col([r for r in rows_ if r.get("dataOK", "true") == "true"], _col)
                         for rows_ in _strata_src], _ea, _eci)
+
+# transfer-only pool (D3+D4) — the paper's out-of-sample headline
+for _lab, _col, _ea, _eci in (
+        ("pooled D3+D4 smooth · ε=geom", "sm_geom", 5.6, (5.2, 6.2)),
+        ("pooled D3+D4 canonical", "canon_d", 6.3, (5.8, 6.8))):
+    strat_report(_lab, [col([r for r in rows_ if r.get("dataOK", "true") == "true"], _col)
+                        for rows_ in _strata_transfer], _ea, _eci)
+
+# ---------- 3d. Per-ride inverted physics (Entry 33 / paper Table 5) ----------
+print("\n== Per-ride inverted physics (Entry 33, Table 5) ==")
+pi = parse_csv("perride_invert.csv")
+PI = {
+    "censo": [("f3_d", 7.0, -3.1, (5.4, 9.5)), ("f3_f", 5.8, -0.5, (4.9, 7.8)),
+              ("f4_f", 5.4, 2.4, (3.2, 7.1)), ("canon_d", 7.8, -2.2, (4.7, 9.5))],
+    "ppaz": [("f3_d", 5.1, -3.8, (4.6, 5.5)), ("f3_f", 3.2, 0.2, (2.7, 3.6)),
+             ("f4_f", 4.8, -3.0, (4.3, 5.2)), ("canon_d", 5.7, -4.6, (5.3, 6.2))],
+    "jaam": [("f3_d", 6.0, -5.2, (5.2, 6.5)), ("f3_f", 3.1, -0.4, (2.6, 3.3)),
+             ("f4_f", 6.4, -5.3, (5.9, 7.0)), ("canon_d", 5.8, -4.9, (4.9, 6.5))],
+    "danlessa": [("f3_d", 7.5, -4.0, (7.1, 8.0)), ("f3_f", 5.3, 0.9, (4.6, 6.1)),
+                 ("f4_f", 5.8, -0.4, (5.3, 6.3)), ("canon_d", 7.2, -3.5, (6.7, 7.9))],
+}
+PI_M = {"longoes": 76.6, "censo": 82.3, "ppaz": 75.4, "jaam": 98.7, "danlessa": 73.7}
+for _corpus, _rows in PI.items():
+    _sub = [r for r in pi if r.get("corpus") == _corpus]
+    for _c, _ea, _es, _eci in _rows:
+        report(f"E33 {_corpus} {_c}", col(_sub, _c), _ea, _es, expect_ci=_eci)
+# pooled D3-D5 (Table 5 pooled column) — stratified, same convention as Table 3's pool
+_pi_strata = [[r for r in pi if r.get("corpus") == c] for c in ("ppaz", "jaam", "danlessa")]
+for _lab, _col, _ea, _eci in (
+        ("E33 pooled f3_d", "f3_d", 6.3, (6.0, 6.6)),
+        ("E33 pooled f3_f", "f3_f", 3.8, (3.6, 4.1)),
+        ("E33 pooled f4_f", "f4_f", 5.7, (5.2, 6.0)),
+        ("E33 pooled canon", "canon_d", 6.4, (6.1, 6.7))):
+    strat_report(_lab, [col(s, _col) for s in _pi_strata], _ea, _eci)
+# constants medians (Entry 33 constants table) + D1 per-ride mass accuracy
+for _corpus, _field, _src, _exp, _tol in (
+        ("ppaz", "crr_hat", "crr_src", 0.0083, 0.00011), ("jaam", "crr_hat", "crr_src", 0.0095, 0.00011),
+        ("danlessa", "crr_hat", "crr_src", 0.0088, 0.00011),
+        ("ppaz", "cda_hat", "cda_src", 0.258, 0.0011), ("jaam", "cda_hat", "cda_src", 0.391, 0.0011),
+        ("danlessa", "cda_hat", "cda_src", 0.293, 0.0011)):
+    _v = [num(r, _field) for r in pi if r.get("corpus") == _corpus
+          and r.get(_src) == "inverted"]
+    _ok = abs(median(_v) - _exp) <= _tol
+    print(f"E33 {_field} {_corpus}: {median(_v):.4f} (n={len(_v)})"
+          + (" GATE-OK" if _ok else f" GATE-FAIL(exp {_exp})"))
+    if not _ok:
+        failed = True
+_d1 = [r for r in pi if r.get("corpus") == "longoes" and r.get("m_src") in ("inverted", "thin")
+       and is_finite(num(r, "m_logged"))]
+_me = [num(r, "m_hat") - num(r, "m_logged") for r in _d1]
+_ok = abs(median(_me) - 2.4) <= 0.11 and abs(median([abs(e) for e in _me]) - 5.3) <= 0.11
+print(f"E33 D1 m̂−m_logged: bias {to_fixed(median(_me), 1)}, |err| "
+      f"{to_fixed(median([abs(e) for e in _me]), 1)} (n={len(_d1)})"
+      + (" GATE-OK" if _ok else " GATE-FAIL(exp +2.4/5.3)"))
+if not _ok:
+    failed = True
+for _corpus, _em in PI_M.items():
+    _mv = [num(r, "m_hat") for r in pi if r.get("corpus") == _corpus
+           and r.get("m_src") in ("inverted", "thin")]
+    _ok = abs(median(_mv) - _em) <= 0.11
+    print(f"E33 m̂ {_corpus}: {to_fixed(median(_mv), 1)} (n={len(_mv)})"
+          + (" GATE-OK" if _ok else f" GATE-FAIL(exp {_em})"))
+    if not _ok:
+        failed = True
 
 # ---------- 4. Time model, P. Paz (§8.8 primary endpoint) ----------
 # Target = tMovBin, exactly as time_compare's scoreboard() scores it.
@@ -353,6 +456,16 @@ def t_delta(r: dict, c: str) -> float:
 
 report("T1b full (frozen)", [x for x in (t_delta(r, "T1b_pred") for r in tm) if is_finite(x)], 6.6, 3.8, expect_ci=(5.9, 7.2))
 report("T0 naive x/v_f", [x for x in (t_delta(r, "T0_pred") for r in tm) if is_finite(x)], 7.6, None, expect_ci=(7.0, 8.5))
+_tw = sum(1 for r in tm if is_finite(t_delta(r, "T1b_pred")) and is_finite(t_delta(r, "T0_pred"))
+          and abs(t_delta(r, "T1b_pred")) < abs(t_delta(r, "T0_pred")))
+_tl = sum(1 for r in tm if is_finite(t_delta(r, "T1b_pred")) and is_finite(t_delta(r, "T0_pred"))
+          and abs(t_delta(r, "T1b_pred")) > abs(t_delta(r, "T0_pred")))
+_tp = sign_p(_tw, _tl)
+_ok = _tw == 243 and abs(_tp - 0.012) <= 0.001
+print(f"PAIRED T1b vs T0: {_tw}/{_tw + _tl}, p={to_fixed(_tp, 4)}"
+      + (" GATE-OK" if _ok else " GATE-FAIL(exp 243/433 p=0.012)"))
+if not _ok:
+    failed = True
 
 if failed:
     print("\nONE OR MORE GATES FAILED", file=sys.stderr)

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Conceptual (data-free) diagrams for the IMRAD paper (paper.md).
+"""Conceptual (data-free) diagrams for the IMRAD paper (paper1-closed-form.md).
 
 Unlike make_figures.py these plot no ride data — they are explanatory
 drawings, regenerated here so no committed SVG is ever hand-edited.

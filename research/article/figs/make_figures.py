@@ -457,3 +457,56 @@ def fig8():
 
 if __name__ == '__main__':
     fig1(); fig2(); fig3(); fig4(); fig5(); fig6(); fig7(); fig8()
+
+
+# ---- Figure 8: the regime rule as a slopegraph over Table 3 ----
+def fig14():
+    """med|Δ%| per corpus for the two form-3 ε rules + the simulation
+    (Table 3's narrative in one glance); form-4 variants as faint context.
+    Numbers = the gated Table 3 values (update on re-baseline)."""
+    CORP = ['D2\ncenso', 'D3\nP. Paz', 'D4\nJAAM', 'D5\nauthor†', 'D3–D5\npooled']
+    SERIES = [  # label, color, dash, width, opacity, [(med, lo, hi)]
+        ('form 3 · ε_d', VERM, '', 2.4, 1.0,
+         [(7.7, 6.0, 9.3), (5.8, 5.3, 6.4), (5.5, 4.4, 6.4), (6.2, 5.6, 6.9), (5.9, 5.5, 6.2)]),
+        ('form 3 · ε_f', BLUE, '6 4', 2.4, 1.0,
+         [(4.7, 3.3, 6.2), (10.1, 9.3, 10.7), (3.5, 3.1, 4.2), (8.1, 7.3, 8.7), (7.5, 7.0, 8.0)]),
+        ('simulation', GREEN, '2 3', 2.0, 1.0,
+         [(6.6, 4.7, 8.7), (6.8, 6.2, 7.8), (5.4, 4.9, 6.1), (6.1, 5.5, 6.7), (6.2, 5.9, 6.6)]),
+        ('form 4 · ε_d', GREY, '', 1.2, 0.55,
+         [(6.4, 4.8, 8.6), (4.9, 4.4, 5.8), (9.0, 7.9, 9.7), (7.1, 6.4, 8.1), (6.6, 6.3, 7.1)]),
+        ('form 4 · ε_f', GREY, '6 4', 1.2, 0.55,
+         [(3.9, 3.2, 6.1), (6.8, 6.0, 7.6), (5.6, 4.8, 6.4), (6.9, 6.2, 7.5), (6.6, 6.1, 7.0)]),
+    ]
+    f = Fig(560, 380, pad=(40, 130, 60, 54))
+    xr, yr = (-0.3, 4.3), (2.5, 11)
+    f.frame(xr, yr, '', 'median |Δ%|', xticks=[], yticks=[3, 5, 7, 9, 11],
+            title='The regime rule across corpora (Table 3)')
+    for li, (lab, color, dash, w, op, pts) in enumerate(SERIES):
+        jitter = (li - 2) * 0.045          # avoid whisker overlap at shared x
+        path = [f.map(i + jitter, v, xr, yr) for i, (v, lo, hi) in enumerate(pts)]
+        d = 'M' + ' L'.join(f'{px:.1f},{py:.1f}' for px, py in path)
+        dd = f' stroke-dasharray="{dash}"' if dash else ''
+        f.body.append(f'<path d="{d}" fill="none" stroke="{color}" stroke-width="{w}"'
+                      f'{dd} opacity="{op}"/>')
+        for i, (v, lo, hi) in enumerate(pts):
+            cx, cy = f.map(i + jitter, v, xr, yr)
+            if op == 1.0:
+                _, ylo = f.map(0, lo, xr, yr)
+                _, yhi = f.map(0, hi, xr, yr)
+                f.body.append(f'<line x1="{cx:.1f}" y1="{ylo:.1f}" x2="{cx:.1f}" y2="{yhi:.1f}" '
+                              f'stroke="{color}" stroke-width="1" opacity="0.5"/>')
+            f.body.append(f'<circle cx="{cx:.1f}" cy="{cy:.1f}" r="{3.2 if op == 1 else 2.2}" '
+                          f'fill="{color}" opacity="{op}" data-tip="{lab}: {v:.1f} [{lo:.1f}, {hi:.1f}]"/>')
+        lx, ly = path[-1]
+        dy = {0: 10, 1: 4, 2: -2, 3: -6, 4: 14}[li]   # separate coincident end labels
+        f.body.append(f'<text x="{lx + 8:.0f}" y="{ly + dy:.0f}" {FONT} font-size="11" '
+                      f'fill="{color}" opacity="{max(op, 0.8)}">{lab}</text>')
+    for i, lab in enumerate(CORP):
+        xc, _ = f.map(i, 0, xr, yr)
+        for k, line in enumerate(lab.split('\n')):
+            f.body.append(f'<text x="{xc:.0f}" y="{f.y1 + 16 + k * 13:.0f}" text-anchor="middle" '
+                          f'{FONT} font-size="11" fill="{INK}">{line}</text>')
+    f.body.append(f'<text x="{f.x0 + 6:.0f}" y="{f.y1 - 8:.0f}" {FONT} font-size="10.5" '
+                  f'fill="{GREY}">lower is better · whiskers: 95% CI · faint: form 4 · '
+                  f'* D2 ε_f is in-sample</text>')
+    f.save('fig8-regime-slopes.svg')

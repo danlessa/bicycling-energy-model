@@ -65,6 +65,10 @@ PRODUCER = {
     "e26_grid.csv": "node ../simujaules/docs/grid-e26.mjs",
     "e26_grid_cal.csv": "E26_BUNDLE=cal node ../simujaules/docs/grid-e26.mjs",
     "e26_detour.csv": "python3 src/harness/e26_detour.py",
+    "param_sweep.csv": "python3 src/harness/param_sweep.py",
+    "param_sweep_canon.csv": "SWEEP_CANON=1 python3 src/harness/param_sweep.py",
+    "longoes_frozen.csv": "python3 src/harness/longoes_frozen.py",
+    "perride_invert.csv": "python3 src/harness/perride_invert.py",
 }
 
 # entry → (instrument harness scripts, result CSVs, uses private tracks,
@@ -106,6 +110,14 @@ ENTRIES = {
          ["model_comparison.csv", "censo_comparison.csv", "eps_sp.csv",
           "igc_resolution_test.csv"], False, []),
     28: (["src/harness/bootstrap_ci.py"], [], False, []),
+    29: (["src/harness/param_sweep.py"], ["param_sweep.csv"], True, []),
+    30: (["src/harness/param_sweep.py"], ["param_sweep_canon.csv"], True, []),
+    31: (["src/harness/longoes_frozen.py"], ["longoes_frozen.csv"], True, []),
+    32: (["src/harness/bootstrap_ci.py"],
+         ["ppaz_comparison.csv", "jaam_comparison.csv", "danlessa_comparison.csv",
+          "longoes_frozen.csv", "time_comparison.csv"], False, []),
+    33: (["src/harness/perride_invert.py"], ["perride_invert.csv"], True, []),
+    34: ([], [], False, ["research/notes/original_notes.md"]),
 }
 
 # entry 22 reads the per-ride CSVs the other harnesses wrote
