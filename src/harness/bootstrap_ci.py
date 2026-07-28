@@ -200,6 +200,21 @@ for label, c, ea, es, eci in LG:
     report(label, col(lg, c), ea, es, expect_ci=eci)
 paired("PAIRED champion (cfS) vs canonical", lg, "cfS_vs_emp", "canon_vs_emp")
 
+# ---------- 1b. Longões FROZEN protocol (Entry 31 / paper Table 2) ----------
+print("\n== Longões FROZEN protocol (44 rides), Entry 31 ==")
+lf = parse_csv("longoes_frozen.csv")
+LF = [
+    ("form 1 · ε_d (original)", "f1_d", 14.9, 14.0, (10.6, 22.6)),
+    ("form 2 · ε_d (split)", "f2_d", 7.9, 4.9, (5.5, 13.6)),
+    ("form 3 · ε_d (proposed)", "f3_d", 8.2, 2.2, (4.5, 10.8)),
+    ("form 4 · ε_d (scalar c)", "f4_d", 7.6, -0.5, (5.6, 11.6)),
+    ("canonical (frozen)", "canon_d", 8.4, 2.5, (5.1, 10.9)),
+]
+for label, c, ea, es, eci in LF:
+    report(label, col(lf, c), ea, es, expect_ci=eci)
+paired("PAIRED frozen form 3 vs canonical", lf, "f3_d", "canon_d")
+paired("PAIRED frozen form 4 vs canonical", lf, "f4_d", "canon_d")
+
 # ---------- 2. Censo sweep (62 clean rides), §8.4 ----------
 print("\n== Censo (clean urban rides), §8.4 sweep ==")
 cz = [r for r in parse_csv("censo_comparison.csv") if r.get("dataOK") == "true"]
@@ -221,6 +236,8 @@ CZ = [
 for label, c, ea, es, eci, ecis in CZ:
     report(label, col(cz, c), ea, es, expect_ci=eci, expect_ci_signed=ecis)
 paired("PAIRED poor-man ε0.20 vs canonical", cz, "pm_0.20", "canon_d")
+paired("PAIRED frozen sm_geom vs canonical", cz, "sm_geom", "canon_d")
+paired("PAIRED frozen pm_geom vs canonical", cz, "pm_geom", "canon_d")
 
 # ---------- 3. P. Paz (441) and JAAM (219), §8.6 ----------
 print("\n== P. Paz (441 rides), §8.6 ==")
@@ -241,6 +258,24 @@ report("poor-man · ε=geom", col(jm, "pm_geom"), 9.0, -8.4, expect_ci=(7.9, 9.7
 report("poor-man · ε=0.20", col(jm, "pm_0.20"), 5.6, -4.3, expect_ci=(4.8, 6.4))
 report("canonical", col(jm, "canon_d"), 5.4, -5.0, expect_ci=(4.9, 6.1))
 paired("PAIRED sm_0.20 vs sm_geom", jm, "sm_0.20", "sm_geom")
+
+# JAAM real-descent statistics (paper §3.3; regenerated one-pass, Entry 31)
+_sub = [r for r in jm if r.get("dataOK") == "true"
+        and is_finite(num(r, "epsBal")) and is_finite(num(r, "epsCoast"))
+        and num(r, "sbar") >= 0.03]
+_eb = [num(r, "epsBal") for r in _sub]
+_pred = [max(0.0, min(1.0, num(r, "epsCoast") - 0.13)) for r in _sub]
+_rms = lambda v: math.sqrt(sum(x * x for x in v) / len(v))
+_dyn = _rms([_eb[i] - _pred[i] for i in range(len(_eb))])
+_f20 = _rms([x - 0.20 for x in _eb])
+_best = _rms([x - median(_eb) for x in _eb])
+_ok = (len(_sub) == 21 and abs(_dyn - 0.090) <= 0.005
+       and abs(_f20 - 0.111) <= 0.005 and abs(_best - 0.085) <= 0.005)
+print(f"JAAM real descents: n={len(_sub)} rms_dyn={to_fixed(_dyn, 3)} "
+      f"rms_flat0.20={to_fixed(_f20, 3)} rms_best_in={to_fixed(_best, 3)}"
+      + (" GATE-OK" if _ok else " GATE-FAIL(exp n=21/0.090/0.111/0.085)"))
+if not _ok:
+    failed = True
 
 # ---------- 3b. Author-full D5 (621 rides), paper §3.4 ----------
 print("\n== Author-full (621 rides), paper §3.4 ==")

@@ -105,8 +105,157 @@ changed. See Entry 11.)*
 - **Entry 29** (pre-registration + Tier A results: physical-constants sensitivity sweep over
   CdA × Crr × ρ, closed forms + ε machinery on D2–D5 via per-ride aggregates,
   [`param_sweep.py`](../../src/harness/param_sweep.py)) — this commit
+- **Entry 30** (pre-registration + Tier B results: the canonical simulation under the same
+  sweep, one-at-a-time, `SWEEP_CANON=1` in
+  [`param_sweep.py`](../../src/harness/param_sweep.py)) — this commit
 
 ---
+
+## 2026-07-28 — Entry 31: the D1 protocol correction — frozen re-run, the D2∩D5 discovery, and the review-v2 response
+
+*Prompt (Danilo): a second adversarial review over the rewritten paper; on its blocking finding
+B1, "re-run (b)"; beyond that, "do all fixes and improvements".*
+
+A six-lens adversarial review of the IMRAD paper (verification consolidator re-computing every
+disputed number from the repo's own data) returned 3 blocking / 20 important / 13 polish
+findings. The three blocking ones each changed published numbers or claims; this entry records
+them and the re-runs they forced.
+
+**B1 — Table 2's protocol was not what the paper claimed.** `compare.py` scores every D1
+approximate form with the longões sheet's hand-entered per-ride ε and per-ride sheet physics
+(m/Crr/CdA/ρ/k_eff/wind per ride) — the monolith disclosed this; the IMRAD compression dropped
+the disclosure and then §2.3 asserted the frozen literature-typical protocol corpus-wide.
+Decision: **re-run D1 under the frozen protocol** ([`longoes_frozen.py`](../../src/harness/longoes_frozen.py):
+Crr 0.008 / CdA 0.40 / ρ 1.13 / k_eff 0.98 / wind 0; mass = the per-ride logged system mass,
+the one legitimate per-rider input; v_f from extracted flat power; ε frozen to ε_d or ε_f).
+The new D1 scoreboard (44 rides, conservation ≤ 1.5e-08):
+
+| model | med\|Δ%\| [95% CI] | medΔ% [95% CI] |
+|---|--:|--:|
+| form 1 · ε_d | 14.9 [10.6, 22.6] | +14.0 [+10.2, +22.5] |
+| form 2 · ε_d | 7.9 [5.5, 13.6] | +4.9 [+0.9, +10.9] |
+| form 3 · ε_d | 8.2 [4.5, 10.8] | +2.2 [−2.5, +4.5] |
+| form 4 · ε_d | 7.6 [5.6, 11.6] | −0.5 [−5.0, +3.7] |
+| form 3 · ε_f = 0.20 | 9.2 [7.0, 13.3] | +7.8 [+3.1, +12.5] |
+| form 4 · ε_f = 0.20 | 7.9 [5.9, 11.8] | +3.6 [+0.8, +9.2] |
+| canonical | 8.4 [5.1, 10.9] | +2.5 [−1.6, +7.1] |
+
+Paired: form 2 beats form 1 on 37/44 (p < 1e-4); form 3 vs canonical 22/44 (**p = 1.00** —
+parity, exactly); form 4 vs canonical 17/44 (p = 0.17). Sustained-climb balance under frozen
+physics: 2,535 sections, 41,790 vs 43,979 kJ, **ratio 0.95**.
+
+**What moved and what did not — and the reframe (Danilo).** The sheet run is not flattery: it
+is an *informed-parameters* run — per-ride best guesses: literature-anchored values adjusted by
+the author's judgment of each ride's wind, surface (paved/unpaved → C_rr) and loadout, plus a
+hand-chosen per-ride ε (which shades into per-ride fitting). Its 3.5% (simulation 5.2%) is what
+the law achieves with condition-informed judgment; the frozen 8.2% (simulation 8.4%) is what it
+achieves blind. The difference, ≈ 4–5 pp on both engines at once, is the measured value of that
+judgment over a single constants-fit-all set. **Hierarchy decision (Danilo): the paper
+calibrates against the informed run — useful beats blind for the study's purpose — with the
+frozen run as the coherence check and the choice owned in the paper's §4.3;** both runs are
+first-class in Table 2 and both are gated — consistent with the Entry-29/30 sweeps (parameters
+move absolute error at the several-pp scale, in lockstep) and a direct motivation for the
+measured-constants route of the paper's §4.4. Fully frozen, D1 becomes the HARDEST corpus
+(long, wind-exposed brevets are where zero-wind generic constants bite hardest). The paper's core claims survive intact: parity is
+p = 1.00, the attribution ladder still stands (the split remains the dominant fix,
+14.9 → 7.9; the deadband's contribution shifts from the median to the bias, +4.9 → +2.2),
+and Tier B's Q2 (both engines move in lockstep) is what predicted this shape. The old
+compare.py numbers remain valid AS the informed-parameters run (kept, still gated); the paper
+publishes BOTH runs in its Table 2, informed as the calibration headline (see the hierarchy
+decision below) and frozen as the blind coherence check.
+
+**B3 — D2 is not disjoint from D5.** An exact activity-level join (energy ±1%, distance ±2%)
+matches **58 of the 62 clean censo rides to clean D5 rides** — the censo recordings are
+overwhelmingly the author's own device on collective rides, re-evaluated under the
+generic-rider assumption. Unique rides = 1,387 − 44 (D1 ⊂ D5) − 58 = **1,285**, not the 1,343
+the paper's title carried. Disclosed in §2.3; title/abstract/Conclusions recounted.
+
+**Regenerated in one pass (review items I3/P3/I16).** JAAM real descents (s̄ ≥ 3%): n = **21**
+(not 20), frozen-ε_d RMS **0.090** vs frozen-flat 0.111, difference −0.020 [−0.070, +0.024],
+own in-sample best flat (0.28) RMS **0.085** — the paper had stitched two vintages. Gap
+convention fixed as med(ε_coast) − med(ε_bal) with bootstrap CIs: P. Paz 0.12 [0.10, 0.14],
+JAAM 0.13 [0.10, 0.19], author-full **0.14 [0.12, 0.16]** (the published 0.13 was 0.37 − 0.24
+on pre-rounded medians), P. Paz fitted 0.19 [0.17, 0.20], JAAM fitted 0.12 [0.10, 0.17].
+Fitted-physics law medians for the paper's Table 4: P. Paz sm·ε_d 7.0 [6.2, 7.6]
+(−6.2 [−7.1, −5.3]), JAAM 4.7 [4.0, 5.7] (−3.5 [−4.6, −2.8]).
+
+**Other review corrections applied to the paper** (the full list lives in the review record):
+the deficit's causal story corrected to descent pedalling + clamp effects (braking cancels out
+of ε_bal — the paper's own A.5 algebra); the per-segment balance's dropped ΔKE term stated;
+the s sign convention (magnitude in descent formulas) declared; wind added to the constants
+table (0 for D2–D5, per-ride logged on the old D1 run); the "3.5–6.2% on every corpus" range
+rebuilt from frozen-only numbers; form 4's fourth input (the climbing-distance fraction)
+disclosed; ε = 0 over-prediction qualified to form 3; acronyms expanded; fig1 relabelled to
+the paper's form vocabulary; sweep-paragraph rewritten to name all six predictions.
+
+---
+
+## 2026-07-27 — Entry 30: pre-registration — Tier B: the canonical simulation under the sweep
+
+*Prompt (Danilo): "let's do tier b".*
+
+Entry 29 swept the closed forms; the canonical simulation was deferred because it is the
+expensive engine (a distance-marching integration per ride per combination). This entry
+registers Tier B before results.
+
+**Design.** One-at-a-time around the anchor, leaning on Entry 29's exactly-confirmed ρ·CdA
+degeneracy (the simulation's drag term also carries ρ and CdA only as their product): the CdA
+axis {0.25 … 0.50} at Crr 0.008, the Crr axis {0.004 … 0.014} at CdA 0.40, ρ fixed at 1.13 —
+11 distinct combinations plus one equal-product degeneracy-check partner (CdA = 0.40·1.13 at
+ρ = 1.00). Corpora **D2–D5**, mass re-inverted per combination exactly as Tier A. **D1 is
+excluded, by scope correction to Entry 29's "Tier B (… D1)":** the longões pipeline feeds
+per-ride *sheet* physics (each ride its own m/Crr/CdA/ρ), so there is no shared-constant
+anchor to perturb — the corpus asks a different question than this sweep.
+
+**Implementation.** `SWEEP_CANON=1` mode of `param_sweep.py`: the reduction pass additionally
+keeps each ride's resampled profile and regime powers; each combination then runs
+`canonical()` per ride. Same order-statistic CIs on med|Δ%| and med Δ%; same gates (anchor
+canonical medians vs the published 6.6 / 6.8 / 5.4 / 6.1; CI-method cross-check; degeneracy
+pair ≤ 1e-9 pp). Output `param_sweep_canon.csv`.
+
+**Pre-registered predictions.**
+- **Q1 (degeneracy):** the canonical simulation depends on ρ and CdA only through ρ·CdA —
+  the equal-product partner matches the anchor to numerical precision.
+- **Q2 (paired stability — the design principle, quantified):** because both engines read the
+  same constants, the *model-vs-model* gap is much less parameter-sensitive than either
+  model's absolute error: across the OAT range, the spread of (canonical med|Δ%| − form-3
+  med|Δ%|) is less than half the spread of canonical med|Δ%| itself, per corpus.
+- **Q3 (bias monotonicity):** canonical signed bias rises monotonically along both axes
+  (more assumed resistance → more predicted energy) on every corpus.
+- **Q4 (comparable magnitude):** the canonical error's sensitivity is the same order as the
+  closed forms' — the constants, not the engine, set the sensitivity scale.
+
+### Results (appended after the registration above was frozen)
+
+All gates pass: anchor canonical medians reproduce the published 6.6 / 6.8 / 5.4 / 6.1, anchor
+m̂ exact, CI methods converged, and 48 rows landed in `param_sweep_canon.csv`.
+
+**Q1 (degeneracy) — CONFIRMED, bitwise.** The equal-product partner matches the anchor to
+|Δmed| = 0.00e+00 on every corpus (the partner passes CdA = 0.40·1.13 as the same float, so
+the products are identical bit patterns and the whole integration reproduces exactly).
+
+**Q2 (paired stability — the design principle quantified) — CONFIRMED, decisively.** Across
+the OAT range, spread of (canonical med|Δ%| − form-3 med|Δ%|) vs spread of canonical med|Δ%|:
+censo 3.0 vs 8.5 pp (ratio 0.36), P. Paz 0.8 vs 6.8 (0.11), JAAM 0.8 vs 11.7 (**0.07**),
+author-full 1.1 vs 3.5 (0.31). On the transfer riders the model-vs-model comparison is
+**9–14× less parameter-sensitive** than either model's absolute error — the shared-constants
+design (§2.1 of the paper) measured, not asserted.
+
+**Q3 (bias monotonicity) — CONFIRMED, 8/8 axes.** Canonical signed bias rises monotonically
+along both axes on every corpus (e.g. JAAM CdA-axis −15.0 → +0.5; censo Crr-axis
+−12.9 → +11.5). The anchor sits mid-ladder everywhere, its residual biases (+5.0 / −5.0 / …)
+small against the axis span.
+
+**Q4 (comparable magnitude) — CONFIRMED.** Canonical spreads 3.5–11.7 pp vs form-3 spreads
+2.9–11.0 pp over the same cells — same order, form 3 slightly wider on the censo, canonical
+slightly wider elsewhere. The constants, not the engine, set the sensitivity scale.
+
+**Reading.** Tier B closes the sweep's loop: absolute accuracy is parameter-limited at the
+several-pp scale for BOTH engines, in lockstep — which is precisely why the paper's paired
+conclusions (parity, the regime rule, the deficit's recurrence) survive parameter excursions
+that move the absolute numbers by ±6 pp. Four-for-four on Tier B predictions vs two-for-six
+on Tier A is itself informative: what we understand well is the machinery's structure; what we
+understood less well (Tier A's P2/P5/P6) was where the *data* gets to talk.
 
 ## 2026-07-27 — Entry 29: pre-registration — the physical-constants sensitivity sweep (CdA × Crr × ρ)
 

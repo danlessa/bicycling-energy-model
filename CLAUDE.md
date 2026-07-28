@@ -46,7 +46,9 @@ home of the *derivation* and the side-by-side comparison.
   Entry-20 anchor constants — refresh them whenever Entry 20 re-runs),
   `bootstrap_ci.py` (bootstrap CIs + paired sign tests for every published
   median AND its 95% band — **the gate script**; exits non-zero on failure),
-  `param_sweep.py` (Entry 29; the pre-registered CdA × Crr × ρ sensitivity
+  `longoes_frozen.py` (Entry 31; D1 under the frozen
+  shared-constants protocol — the blind half of the paper's Table 2; the
+  informed half stays `compare.py`), `param_sweep.py` (Entry 29; the pre-registered CdA × Crr × ρ sensitivity
   sweep on D2–D5 — per-ride aggregates once, every combination arithmetic;
   exact order-statistic CIs, a gate-checked deviation from the bootstrap
   convention; `SWEEP_SMOKE=1`, `SWEEP_FREEZE_M=1`; self-gates anchor m̂ and

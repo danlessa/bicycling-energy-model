@@ -14,6 +14,8 @@ resolve their inputs and this directory relative to their own location).
 | `ppaz_comparison.csv` | `python3 src/harness/ppaz_compare.py` | 12 |
 | `time_comparison.csv` | `python3 src/harness/time_compare.py` | 13 |
 | `jaam_comparison.csv` | `python3 src/harness/jaam_compare.py` | 14 |
+| `param_sweep.csv` / `param_sweep_canon.csv` | `python3 src/harness/param_sweep.py` (`SWEEP_CANON=1` for the latter) | 29–30 |
+| `longoes_frozen.csv` | `python3 src/harness/longoes_frozen.py` | 31 |
 | `cda_estimate.csv`, `param_fit.csv` | `python3 src/harness/cda_estimate.py` / `param_fit.mjs` | 15 |
 | `danlessa_comparison.csv` | `python3 src/harness/danlessa_compare.py` | 16 |
 | `regime_comparison.csv` | `python3 src/harness/regime_compare.py` | 17–18 |

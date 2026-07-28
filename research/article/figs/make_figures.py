@@ -147,47 +147,59 @@ def num(s):
 # moves (they were missed in the Entry-27 gravity re-baseline and caught by an audit). The full
 # variant ranking stays in the §8.1 table — this figure carries the attribution story.
 def fig1():
-    stages = [
-        ('baseline\n(off, raw h±)', 19.1),
-        ('+ climb-aero fix\n(cf α-split)', 8.6),
-        ('+ 2 m deadband\n(ascent noise)', 3.5),
+    """Calibration scoreboard under BOTH protocols (Entry 31): per form,
+    informed per-ride parameters (solid) vs blind frozen constants (light),
+    with 95% CI whiskers and the simulation under each protocol as lines."""
+    rows = [  # label, informed (med, lo, hi), blind (med, lo, hi)
+        ('form 1\noriginal', (19.1, 17.3, 21.5), (14.9, 10.6, 22.6)),
+        ('form 2\n+ aero split', (8.6, 7.2, 11.0), (7.9, 5.5, 13.6)),
+        ('form 3\n+ 2 m deadband', (3.5, 2.0, 5.6), (8.2, 4.5, 10.8)),
+        ('form 4\n+ scalar c', (5.9, 3.6, 8.3), (7.6, 5.6, 11.6)),
     ]
-    CANON = 5.2
-    f = Fig(520, 340, pad=(40, 24, 66, 54))
-    xr, yr = (0, 3), (0, 21)
+    SIM_INF, SIM_BLD = 5.2, 8.4
+    f = Fig(560, 370, pad=(46, 24, 66, 54))
+    xr, yr = (0, 4), (0, 24)
     f.frame(xr, yr, '', 'median |Δ%| vs measured ∫P·dt',
             xticks=[], yticks=[0, 5, 10, 15, 20],
-            title='Where the closed-form error comes from (44 rides)')
-    bw = 0.52
-    cols = [GREY, BLUE, VERM]
-    tops = []
-    for i, (lab, v) in enumerate(stages):
-        xl, yb = f.map(i + 0.5 - bw / 2, 0, xr, yr)
-        xrr, yt = f.map(i + 0.5 + bw / 2, v, xr, yr)
-        tops.append(((xl + xrr) / 2, yt, v, xl, xrr))
-        tip = f'{lab.replace(chr(10), " ")}: {v:.1f}% median |Δ%|'
-        f.body.append(f'<rect x="{xl:.1f}" y="{yt:.1f}" width="{xrr-xl:.1f}" height="{yb-yt:.1f}" '
-                      f'rx="3" fill="{cols[i]}" fill-opacity="0.9" data-tip="{tip}"/>')
-        f.body.append(f'<text x="{(xl+xrr)/2:.1f}" y="{yt-7:.1f}" text-anchor="middle" {FONT} '
-                      f'font-size="13" font-weight="600" fill="{INK}">{v:.1f}%</text>')
-        for k, line in enumerate(lab.split('\n')):
-            f.body.append(f'<text x="{(xl+xrr)/2:.1f}" y="{f.y1+16+k*13:.0f}" text-anchor="middle" '
+            title='Calibration scoreboard: informed vs blind (44 rides)')
+    bw = 0.26
+    for i, (lab, inf, bld) in enumerate(rows):
+        for k, ((v, lo, hi), fill, op) in enumerate(((inf, VERM, 0.9), (bld, GREY, 0.75))):
+            cx0 = i + 0.5 + (k - 0.5) * (bw + 0.04)
+            xl, yb = f.map(cx0 - bw / 2, 0, xr, yr)
+            xrr, yt = f.map(cx0 + bw / 2, v, xr, yr)
+            tip = f'{lab.replace(chr(10), " ")} — {"informed" if k == 0 else "blind"}: {v:.1f}% [{lo:.1f}, {hi:.1f}]'
+            f.body.append(f'<rect x="{xl:.1f}" y="{yt:.1f}" width="{xrr-xl:.1f}" '
+                          f'height="{yb-yt:.1f}" rx="2.5" fill="{fill}" '
+                          f'fill-opacity="{op}" data-tip="{tip}"/>')
+            cx = (xl + xrr) / 2
+            _, ylo = f.map(0, lo, xr, yr)
+            _, yhi = f.map(0, hi, xr, yr)
+            f.body.append(f'<line x1="{cx:.1f}" y1="{ylo:.1f}" x2="{cx:.1f}" y2="{yhi:.1f}" '
+                          f'stroke="{INK}" stroke-width="1.2"/>')
+            for yy in (ylo, yhi):
+                f.body.append(f'<line x1="{cx-4:.1f}" y1="{yy:.1f}" x2="{cx+4:.1f}" y2="{yy:.1f}" '
+                              f'stroke="{INK}" stroke-width="1.2"/>')
+            f.body.append(f'<text x="{cx:.1f}" y="{yhi-6:.1f}" text-anchor="middle" {FONT} '
+                          f'font-size="10.5" font-weight="600" fill="{INK}">{v:.1f}</text>')
+        xc, _ = f.map(i + 0.5, 0, xr, yr)
+        for k2, line in enumerate(lab.split('\n')):
+            f.body.append(f'<text x="{xc:.1f}" y="{f.y1+16+k2*13:.0f}" text-anchor="middle" '
                           f'{FONT} font-size="11" fill="{INK}">{line}</text>')
-    # delta connectors between consecutive bar tops
-    for i in range(2):
-        (cx0, y0, v0, _, xr0), (cx1, y1, v1, xl1, _) = tops[i], tops[i + 1]
-        f.body.append(f'<line x1="{xr0:.1f}" y1="{y0:.1f}" x2="{xl1:.1f}" y2="{y0:.1f}" '
-                      f'stroke="{GREY}" stroke-width="1.2" stroke-dasharray="3 3"/>')
-        f.body.append(f'<line x1="{xl1:.1f}" y1="{y0:.1f}" x2="{xl1:.1f}" y2="{y1:.1f}" '
-                      f'stroke="{GREY}" stroke-width="1.2" stroke-dasharray="3 3"/>')
-        f.body.append(f'<text x="{xl1-5:.1f}" y="{(y0+y1)/2+4:.1f}" text-anchor="end" {FONT} '
-                      f'font-size="11" fill="{INK}">−{v0-v1:.1f}</text>')
-    # canonical reference line
-    _, yc = f.map(0, CANON, xr, yr)
-    f.body.append(f'<line x1="{f.x0}" y1="{yc:.1f}" x2="{f.x1}" y2="{yc:.1f}" '
-                  f'stroke="{GREEN}" stroke-width="1.6" stroke-dasharray="5 4"/>')
-    f.body.append(f'<text x="{f.x0+8:.0f}" y="{yc-6:.1f}" {FONT} '
-                  f'font-size="11" fill="{GREEN}">canonical forward sim 5.2%</text>')
+    for v, dash, lab_ in ((SIM_INF, '5 4', 'simulation, informed 5.2%'),
+                          (SIM_BLD, '2 3', 'simulation, blind 8.4%')):
+        _, yc = f.map(0, v, xr, yr)
+        xlab, _ = f.map(2.0, 0, xr, yr)
+        f.body.append(f'<line x1="{f.x0}" y1="{yc:.1f}" x2="{f.x1}" y2="{yc:.1f}" '
+                      f'stroke="{GREEN}" stroke-width="1.5" stroke-dasharray="{dash}"/>')
+        dy = -5 if v == SIM_BLD else 13
+        f.body.append(f'<text x="{xlab:.0f}" y="{yc+dy:.1f}" text-anchor="middle" {FONT} '
+                      f'font-size="10.5" fill="{GREEN}">{lab_}</text>')
+    lx = f.x1 - 218
+    f.body.append(f'<rect x="{lx}" y="{f.y0+8}" width="11" height="11" rx="2" fill="{VERM}" fill-opacity="0.9"/>')
+    f.body.append(f'<text x="{lx+16}" y="{f.y0+17}" {FONT} font-size="10.5" fill="{INK}">informed per-ride</text>')
+    f.body.append(f'<rect x="{lx+118}" y="{f.y0+8}" width="11" height="11" rx="2" fill="{GREY}" fill-opacity="0.75"/>')
+    f.body.append(f'<text x="{lx+134}" y="{f.y0+17}" {FONT} font-size="10.5" fill="{INK}">blind frozen</text>')
     f.save('fig1-attribution.svg')
 
 

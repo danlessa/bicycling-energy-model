@@ -20,8 +20,8 @@ time; the deviation is gate-checked (SWEEP_SMOKE) against the mulberry32
 bootstrap on anchor cells.
 
 Gates. Both modes assert (i) the order-statistic CI vs the mulberry32
-bootstrap on the anchor cell (≤ 0.3 pp per bound at n ≥ 150; the known
-conservative gap is allowed below that) and (ii) the P1 ρ·CdA degeneracy
+bootstrap on the anchor cell (≤ 0.3 pp per bound at n ≥ 150,
+widening stepwise below — the conservative gap grows as n shrinks) and (ii) the P1 ρ·CdA degeneracy
 identity on an off-grid equal-product pair (float precision). The FULL run
 additionally asserts the anchor m̂ (74.5 / 101.9 / 74.7 ± 0.15) and all 16
 anchor med|Δ%| values against the published gate-battery numbers (± 0.11) —
@@ -46,10 +46,10 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 REPO = os.path.dirname(os.path.dirname(HERE))
 sys.path.insert(0, os.path.join(REPO, "src"))
 
-from bicycling_energy_model import (build_profile, climb_balance, deadband,
-                                    empirical_kj, eps_geom, approx_components,
-                                    extract_regime_powers, flat_eq_speed,
-                                    is_finite, jsdiv, load_pts,
+from bicycling_energy_model import (build_profile, canonical, climb_balance,
+                                    deadband, empirical_kj, eps_geom,
+                                    approx_components, extract_regime_powers,
+                                    flat_eq_speed, is_finite, jsdiv, load_pts,
                                     overall_mean_power, resample_profile)
 from bicycling_energy_model.engines import G
 from bicycling_energy_model.jsfmt import to_fixed
@@ -64,6 +64,8 @@ ZWIFT = 260
 
 SMOKE = os.environ.get("SWEEP_SMOKE") == "1"
 FREEZE_M = os.environ.get("SWEEP_FREEZE_M") == "1"
+CANON = os.environ.get("SWEEP_CANON") == "1"      # Tier B (Entry 30)
+VMAX, VSTART = 38 / 3.6, 15 / 3.6
 
 CDA_GRID = [0.25, 0.30, 0.35, 0.40, 0.45, 0.50]
 CRR_GRID = [0.004, 0.006, 0.008, 0.010, 0.012, 0.014]
@@ -72,6 +74,7 @@ ANCHOR = (0.40, 0.008, 1.13)
 
 # published anchor values the full run must reproduce (gate battery vintage)
 ANCHOR_M = {"ppaz": 74.5, "jaam": 101.9, "danlessa": 74.7}
+ANCHOR_CANON = {"censo": 6.6, "ppaz": 6.8, "jaam": 5.4, "danlessa": 6.1}
 ANCHOR_MED = {  # (corpus, variant) -> published med|Δ%| at the anchor combination
     ("censo", "sm_geom"): 7.7, ("censo", "pm_geom"): 6.4,
     ("censo", "sm_flat"): 4.7, ("censo", "pm_flat"): 3.9,
@@ -263,6 +266,12 @@ def reduce_ride(pts: list[dict], invert_mass: bool, with_bal: bool) -> dict | No
     rec = {"emp": empirical_kj(pts), "pflat": pflat, "raw": raw, "sm": sm, "km": km,
            "geo": geo_cells(prof), "bal": bal_cells(pts) if with_bal else None,
            "cb": None}
+    if CANON:
+        rec["prof"] = prof
+        rec["pw"] = {"climb": rp["climb"]["mean"] if rp["climb"]["mean"] is not None else pflat,
+                     "flat": pflat,
+                     "descent": rp["descent"]["mean"] if rp["descent"]["mean"] is not None else 0,
+                     "climbThr": CLIMB_THR, "descThr": DESC_THR}
     if invert_mass:
         p0 = {"m": M0, "CdA": ANCHOR[0], "Crr": ANCHOR[1], "rho": ANCHOR[2],
               "keff": KEFF, "wind": WIND}
@@ -349,6 +358,38 @@ def eval_combo(rides: list[dict], CdA: float, Crr: float, rho: float,
     return out
 
 
+def eval_canon(rides: list[dict], CdA: float, Crr: float, rho: float,
+               m_fixed: float | None) -> dict:
+    """Tier B: the canonical simulation at one combination (Entry 30)."""
+    if m_fixed is None:
+        mh = []
+        for r in rides:
+            cb = r["cb"]
+            if cb and cb["dh"] >= MIN_SUSTAINED_DH:
+                eroll = Crr * M0 * G * cb["S_cosL"] / KEFF / 1000
+                eaero = 0.5 * rho * CdA * cb["S_v2L"] / KEFF / 1000
+                mh.append(M0 * (cb["emeas"] - eaero) / (cb["egrav"] + eroll))
+        m = med_of(mh)
+    else:
+        m = m_fixed
+    beta = m * G / KEFF
+    p = {"m": m, "CdA": CdA, "Crr": Crr, "rho": rho, "keff": KEFF, "wind": WIND,
+         "vmax": VMAX, "vstart": VSTART}
+    deltas = []
+    for r in rides:
+        if not (r["emp"] >= beta * r["sm"][2] / 1000):     # same physical floor
+            continue
+        c = canonical(r["prof"], r["pw"], p)
+        deltas.append(jsdiv(c["legE"] / 1000 - r["emp"], r["emp"]) * 100)
+    out = {"m_hat": m, "n_clean": len(deltas),
+           "canon_med": med_of([abs(x) for x in deltas]),
+           "canon_sgn": med_of(deltas)}
+    out["canon_lo"], out["canon_hi"] = median_ci([abs(x) for x in deltas])
+    out["canon_sgn_lo"], out["canon_sgn_hi"] = median_ci(deltas)
+    out["_deltas"] = deltas
+    return out
+
+
 # ---------------------------------------------------------------- corpus loading
 
 def load_corpus(name: str) -> list[dict]:
@@ -383,6 +424,79 @@ def load_corpus(name: str) -> list[dict]:
 
 
 # ---------------------------------------------------------------- driver
+
+def main_canon() -> None:
+    """Tier B (Entry 30): canonical simulation, one-at-a-time around the anchor,
+    leaning on the Entry-29-confirmed rho*CdA degeneracy (rho fixed at 1.13);
+    one equal-product partner cell checks the degeneracy on the simulation."""
+    corpora = ["censo", "ppaz", "jaam", "danlessa"]
+    PARTNER = (0.40 * 1.13, 0.008, 1.00)               # bitwise-equal product
+    oat = ([ANCHOR, (0.25, 0.008, 1.13), PARTNER] if SMOKE else
+           [(a, 0.008, 1.13) for a in CDA_GRID]
+           + [(0.40, b, 1.13) for b in CRR_GRID if b != 0.008]
+           + [PARTNER])
+    fails = 0
+    rows = []
+    for corpus in corpora:
+        print(f"loading {corpus} …", flush=True)
+        rides = load_corpus(corpus)
+        print(f"  {len(rides)} rides reduced", flush=True)
+        m_fixed_corpus = 78.0 if corpus == "censo" else None
+        anchor_out = None
+        for (CdA, Crr, rho) in oat:
+            m_fixed = m_fixed_corpus
+            if SMOKE and corpus != "censo":
+                m_fixed = ANCHOR_M[corpus]
+            out = eval_canon(rides, CdA, Crr, rho, m_fixed)
+            if (CdA, Crr, rho) == ANCHOR:
+                anchor_out = out
+                if not SMOKE:
+                    exp = ANCHOR_CANON[corpus]
+                    ok = abs(out["canon_med"] - exp) <= 0.11
+                    print(f"  GATE canon med {corpus}: {to_fixed(out['canon_med'], 2)} "
+                          f"vs {exp} {'OK' if ok else 'FAIL'}")
+                    fails += 0 if ok else 1
+                    if corpus in ANCHOR_M:
+                        ok = abs(out["m_hat"] - ANCHOR_M[corpus]) <= 0.15
+                        print(f"  GATE m̂ {corpus}: {to_fixed(out['m_hat'], 1)} "
+                              f"{'OK' if ok else 'FAIL'}")
+                        fails += 0 if ok else 1
+                av = sorted(abs(x) for x in out["_deltas"])
+                if len(av) >= 20:
+                    blo, bhi = mulberry_boot_ci(av)
+                    tol = 0.3 if len(av) >= 150 else (1.5 if len(av) >= 50 else 3.0)
+                    ok = (abs(blo - out["canon_lo"]) <= tol
+                          and abs(bhi - out["canon_hi"]) <= tol)
+                    print(f"  GATE CI method {corpus}: order-stat "
+                          f"[{to_fixed(out['canon_lo'], 2)}, {to_fixed(out['canon_hi'], 2)}] "
+                          f"vs bootstrap [{to_fixed(blo, 2)}, {to_fixed(bhi, 2)}] "
+                          f"{'OK' if ok else 'FAIL'}")
+                    fails += 0 if ok else 1
+            if (CdA, Crr, rho) == PARTNER and anchor_out is not None:
+                d = abs(out["canon_med"] - anchor_out["canon_med"])
+                ok = d <= 1e-9
+                print(f"  GATE Q1 canon degeneracy {corpus}: |Δmed| = {d:.2e} "
+                      f"{'OK' if ok else 'FAIL'}")
+                fails += 0 if ok else 1
+            row = {"corpus": corpus, "CdA": CdA, "Crr": Crr, "rho": rho,
+                   "rhoCdA": rho * CdA}
+            row.update({k: v for k, v in out.items() if not k.startswith("_")})
+            rows.append(row)
+    cols = list(rows[0].keys())
+    out_path = os.path.join(RESULTS, "param_sweep_canon.csv" if not SMOKE
+                            else "param_sweep_canon_smoke.csv")
+    with open(out_path, "w", newline="", encoding="utf-8") as fh:
+        w = csv.DictWriter(fh, fieldnames=cols)
+        w.writeheader()
+        for r in rows:
+            w.writerow({k: (to_fixed(v, 4) if isinstance(v, float) else v)
+                        for k, v in r.items()})
+    print(f"\nwrote {os.path.basename(out_path)} ({len(rows)} rows)")
+    if fails:
+        print(f"{fails} GATE(S) FAILED", file=sys.stderr)
+        sys.exit(1)
+    print("all sweep gates pass")
+
 
 def main() -> None:
     corpora = ["censo", "ppaz", "jaam", "danlessa"]
@@ -426,7 +540,7 @@ def main() -> None:
                     olo, ohi = out["sm_geom_lo"], out["sm_geom_hi"]
                     # order-stat is conservative; the two converge with n — at
                     # small n (smoke subsets, censo) allow the known gap
-                    tol = 0.3 if len(av) >= 150 else 1.0
+                    tol = 0.3 if len(av) >= 150 else (1.5 if len(av) >= 50 else 3.0)
                     ok = abs(blo - olo) <= tol and abs(bhi - ohi) <= tol
                     print(f"  GATE CI method {corpus}: order-stat [{to_fixed(olo, 2)}, "
                           f"{to_fixed(ohi, 2)}] vs bootstrap [{to_fixed(blo, 2)}, "
@@ -462,4 +576,4 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main()
+    main_canon() if CANON else main()

@@ -190,7 +190,7 @@ def fig10() -> None:
     b.append(txt(X(s_at) + 12, Y(eps_coast(s_at) - EPS0) + 16,
                  'coasting deficit ε₀ = 0.13', 12, 'start'))
     b.append(txt(X(s_at) + 12, Y(eps_coast(s_at) - EPS0) + 32,
-                 'pedalling into the descent + braking', 11, 'start', GREY))
+                 'pedalling into the descent (braking cancels out)', 11, 'start', GREY))
 
     # curve labels
     b.append(txt(X(0.045), Y(0.62), 'ideal coasting: ε = min(1, (α/β)/s)',
