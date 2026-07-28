@@ -45,7 +45,12 @@ home of the *derivation* and the side-by-side comparison.
   `GOAL_SMOKE=1`), `scale_trio.py` (Entry 21; `SCALE_SMOKE=1`; carries the
   Entry-20 anchor constants — refresh them whenever Entry 20 re-runs),
   `bootstrap_ci.py` (bootstrap CIs + paired sign tests for every published
-  median — **the gate script**; exits non-zero on failure), the Entry-26 scripts
+  median AND its 95% band — **the gate script**; exits non-zero on failure),
+  `param_sweep.py` (Entry 29; the pre-registered CdA × Crr × ρ sensitivity
+  sweep on D2–D5 — per-ride aggregates once, every combination arithmetic;
+  exact order-statistic CIs, a gate-checked deviation from the bootstrap
+  convention; `SWEEP_SMOKE=1`, `SWEEP_FREEZE_M=1`; self-gates anchor m̂ and
+  all 16 anchor medians on every full run), the Entry-26 scripts
   (`e26_pairs.py`, `e26_portal_profiles.py`, `e26_detour.py`), plus
   `fetch*.py` / `build_model_inputs.py` / `verify.py` and `dem/`
   (`dem/coords/` is gitignored — per-ride GPS).
