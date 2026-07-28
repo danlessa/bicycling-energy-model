@@ -211,19 +211,19 @@ The independent riders' exports were shared with consent and are never published
 
 ### 3.1 Two corrections take the closed form to parity with simulation
 
-On the 44-ride calibration corpus, the original form 1 errs by 19.1% median [17.3, 21.5] and over-predicts nearly every ride (+19.1% median signed). The split alone (form 2) halves the error to 8.6% [7.2, 11.0] (better than form 1 on 43 of 44 rides; the median ride spends 21% of its distance climbing); smoothing the elevation with the 2 m deadband (form 3, the proposed law) removes the ascent-noise half ([Table 2](#tab2), [Figure 5](#fig5)).
+On the 44-ride calibration corpus, the original form 1 errs by 19.1% median [17.3, 21.5] and over-predicts nearly every ride (+19.1% [+17.3, +21.6] median signed). The split alone (form 2) halves the error to 8.6% [7.2, 11.0] (better than form 1 on 43 of 44 rides; the median ride spends 21% of its distance climbing); smoothing the elevation with the 2 m deadband (form 3, the proposed law) removes the ascent-noise half ([Table 2](#tab2), [Figure 5](#fig5)).
 
 <a id="tab2"></a>
 
 **Table 2.** Calibration-corpus scoreboard: median $\lvert\Delta\%\rvert$ [95% CI] and median signed $\Delta\%$ per model variant (44 rides; the corrections are in-sample here).
 
-| model (D1, in-sample for the corrections) | median $\lvert\Delta\%\rvert$ | 95% CI | median $\Delta\%$ |
+| model (D1, in-sample for the corrections) | median $\lvert\Delta\%\rvert$ | 95% CI | median $\Delta\%$ [95% CI] |
 |---|--:|:--|--:|
-| **form 3, split + elevation smoothed (proposed)** | **3.5** | [2.0, 5.6] | +2.1 |
-| forward simulation | 5.2 | [3.8, 7.3] | −1.8 |
-| form 4, split + elevation correction | 5.9 | [3.6, 8.3] | −0.6 |
-| form 2, split only | 8.6 | [7.2, 11.0] | +8.4 |
-| form 1, original | 19.1 | [17.3, 21.5] | +19.1 |
+| **form 3, split + elevation smoothed (proposed)** | **3.5** | [2.0, 5.6] | +2.1 [+0.5, +4.3] |
+| forward simulation | 5.2 | [3.8, 7.3] | −1.8 [−3.9, +0.3] |
+| form 4, split + elevation correction | 5.9 | [3.6, 8.3] | −0.6 [−2.7, +2.4] |
+| form 2, split only | 8.6 | [7.2, 11.0] | +8.4 [+6.8, +11.0] |
+| form 1, original | 19.1 | [17.3, 21.5] | +19.1 [+17.3, +21.6] |
 
 <a id="fig5"></a>
 
@@ -257,15 +257,15 @@ With every behavioural constant frozen from the calibration rider, the energy la
 
 <a id="tab3"></a>
 
-**Table 3.** Frozen-constant transfer to the two independent riders: median $|\Delta\%|$ [95% CI] with median signed $\Delta\%$ in parentheses; all four form × $\varepsilon$ combinations are frozen, best per rider in bold.
+**Table 3.** Frozen-constant transfer to the two independent riders: median $|\Delta\%|$ [95% CI] with median signed $\Delta\%$ [95% CI] in parentheses; all four form × $\varepsilon$ combinations are frozen, best per rider in bold.
 
 | frozen model | D3 (P. Paz, 441 rides) | D4 (JAAM, 219 rides) |
 |---|---|---|
-| form 3, dynamic $\varepsilon_d$ | 5.8 [5.3, 6.4] (+4.3) | 5.5 [4.4, 6.4] (−4.7) |
-| form 4, dynamic $\varepsilon_d$ | **4.9** [4.4, 5.8] (+0.6) | 9.0 [7.9, 9.7] (−8.4) |
-| form 3, flat $\varepsilon_f = 0.20$ | 10.1 [9.3, 10.7] (+10.0) | **3.5** [3.1, 4.2] (+0.4) |
-| form 4, flat $\varepsilon_f = 0.20$ | 6.8 [6.0, 7.6] (+5.4) | 5.6 [4.8, 6.4] (−4.3) |
-| forward simulation | 6.8 [6.2, 7.8] (+5.0) | 5.4 [4.9, 6.1] (−5.0) |
+| form 3, dynamic $\varepsilon_d$ | 5.8 [5.3, 6.4] (+4.3 [+3.1, +4.9]) | 5.5 [4.4, 6.4] (−4.7 [−5.7, −3.7]) |
+| form 4, dynamic $\varepsilon_d$ | **4.9** [4.4, 5.8] (+0.6 [−0.1, +1.3]) | 9.0 [7.9, 9.7] (−8.4 [−9.5, −7.5]) |
+| form 3, flat $\varepsilon_f = 0.20$ | 10.1 [9.3, 10.7] (+10.0 [+8.8, +10.7]) | **3.5** [3.1, 4.2] (+0.4 [−0.8, +1.2]) |
+| form 4, flat $\varepsilon_f = 0.20$ | 6.8 [6.0, 7.6] (+5.4 [+4.1, +6.6]) | 5.6 [4.8, 6.4] (−4.3 [−5.0, −3.3]) |
+| forward simulation | 6.8 [6.2, 7.8] (+5.0 [+3.8, +5.9]) | 5.4 [4.9, 6.1] (−5.0 [−5.8, −4.3]) |
 
 The grid matches the regime rule from [§3.2](#3.2) — the dynamic estimator wins on the open-road rider (D3), the flat constant on the gentle-terrain rider (D4) — and adds a sharper observation: the form × $\varepsilon$ interaction is itself regime-dependent. Form 4 with $\varepsilon_d$ is the *best* cell on P. Paz (4.9, the journal's published headline for that corpus) and the *worst* on JAAM (9.0), where the scalar elevation correction and the dynamic estimator compound on gentle terrain. With the regime-appropriate $\varepsilon$, the law stays at or better than simulation parity on both riders. Adding the calibration-regime corpora (D1 3.5% [2.0, 5.6], D2 4.7% [3.3, 6.2] with the regime-appropriate $\varepsilon$; D5 6.2% [5.6, 6.9], [§3.4](#3.4)), the law holds at **3.5–6.2% median error on every corpus** when the [§3.2](#3.2) regime rule picks the $\varepsilon$ variant.
 
@@ -285,11 +285,13 @@ The grid matches the regime rule from [§3.2](#3.2) — the dynamic estimator wi
 
 | | P. Paz, assumed | P. Paz, fitted | JAAM, assumed | JAAM, fitted |
 |---|--:|--:|--:|--:|
-| simulation median $\lvert\Delta\%\rvert$ (signed) | 6.8 [6.2, 7.8] (+5.0) | 7.5 [6.6, 8.7] (−6.9) | 5.4 [4.9, 6.1] (−5.0) | 5.0 [4.3, 5.6] (−4.0) |
+| simulation median $\lvert\Delta\%\rvert$ (signed [95% CI]) | 6.8 [6.2, 7.8] (+5.0 [+3.8, +5.9]) | 7.5 [6.6, 8.7] (−6.9 [−8.1, −5.7]) | 5.4 [4.9, 6.1] (−5.0 [−5.8, −4.3]) | 5.0 [4.3, 5.6] (−4.0 [−4.9, −3.1]) |
 | dynamic-$\varepsilon$ RMS vs own best flat (real descents) | 0.091 vs 0.139 | 0.082 vs 0.086 | 0.091 vs 0.086 | 0.089 vs 0.086 |
 | measured deficit gap | 0.12 | 0.19 | 0.13 | 0.13 |
 
 **Mass.** The implied-mass machinery validates in-sample: the author's full history returns 74.7 kg (sustained-climb inversion) and 71.4 kg (independent parameter fit) against a known ≈ 73 kg, and resolves an earlier 79.9 kg calibration-subset estimate as genuine brevet loadout. Sweeping P. Paz's mass 70/74.5/78 kg moves the frozen-estimator RMS only 0.096/0.091/0.088 — no conclusion in this section changes within the plausible range.
+
+**Physical-constants sweep.** A pre-registered 108-point sweep over $C_dA \times C_{rr} \times \rho$ (lab journal, Entry 29) extends the two-point checks above to a map. Three structural facts were confirmed: $\rho$ and $C_dA$ enter every quantity only as their product (exact to float precision — the map is two-dimensional); the mass inversion *compensates* (±3 kg of $\hat m$ against ±60% parameter excursions, with the law's medians moving only by points); and the D3 dynamic-vs-flat verdict flips exactly where the fitted rerun said it would, as $\rho C_dA$ falls. Two hopes were refuted: the deficit gap's value is monotone in $\rho C_dA$ (spanning −0.07 to +0.19 across the grid — so $\varepsilon_0 = 0.13$ means *at the prior, at this scale*, while the positive gap's recurrence holds across the plausible region), and no parameter choice minimizes error across the model variants simultaneously — each variant's apparent gain (~1–2 points) is a signed-bias cancellation pointing in a different corner for each rider, which is the circularity argument of [§2.3](#2.3) measured rather than argued.
 
 **In-sample validation at scale.** On the author's 621 clean rides the frozen grid replays the calibration story at fourteen times the sample ([Table 5](#tab5)): form 3 with $\varepsilon_d$ and the simulation are statistically indistinguishable (6.2 vs 6.1, both with near-zero bias), the flat constant loses on the author's open terrain — the [§3.2](#3.2) regime rule confirmed at scale — and the coasting deficit recurs (measured gap 0.13 on 210 real descents).
 
@@ -297,13 +299,13 @@ The grid matches the regime rule from [§3.2](#3.2) — the dynamic estimator wi
 
 **Table 5.** In-sample validation at scale (D5, the author's 621 clean rides): median $\lvert\Delta\%\rvert$ [95% CI] and median signed $\Delta\%$, frozen constants throughout.
 
-| model | median $\lvert\Delta\%\rvert$ | 95% CI | median $\Delta\%$ |
+| model | median $\lvert\Delta\%\rvert$ | 95% CI | median $\Delta\%$ [95% CI] |
 |---|--:|:--|--:|
-| forward simulation | 6.1 | [5.5, 6.7] | +0.1 |
-| **form 3, dynamic $\varepsilon_d$** | **6.2** | [5.6, 6.9] | −0.3 |
-| form 4, flat $\varepsilon_f = 0.20$ | 6.9 | [6.2, 7.5] | +3.8 |
-| form 4, dynamic $\varepsilon_d$ | 7.1 | [6.4, 8.1] | −1.9 |
-| form 3, flat $\varepsilon_f = 0.20$ | 8.1 | [7.3, 8.7] | +5.6 |
+| forward simulation | 6.1 | [5.5, 6.7] | +0.1 [−0.9, +0.9] |
+| **form 3, dynamic $\varepsilon_d$** | **6.2** | [5.6, 6.9] | −0.3 [−1.6, +0.6] |
+| form 4, flat $\varepsilon_f = 0.20$ | 6.9 | [6.2, 7.5] | +3.8 [+2.8, +5.0] |
+| form 4, dynamic $\varepsilon_d$ | 7.1 | [6.4, 8.1] | −1.9 [−3.0, −1.4] |
+| form 3, flat $\varepsilon_f = 0.20$ | 8.1 | [7.3, 8.7] | +5.6 [+4.1, +6.6] |
 
 ## 4. Discussion
 
@@ -373,7 +375,7 @@ The [§1.3](#1.3) hypothesis — that the shortfall from the coasting ideal is o
 
 #### Per-rider physics without circularity
 
-The physical constants are literature-typical priors by design ([§2.3](#2.3)): fitting $C_{rr}$ or $C_dA$ to the same ride energies the models are scored on would let the parameters absorb modelling error, making the accuracy figures partly self-fulfilling. The estimator available today — the virtual-elevation family [Chung 2012] — reads $C_dA$ from fast, flat segments, where riders are tucked or drafting, so it recovers the aero-position value rather than the whole-ride average; used as a model input it *worsens* prediction (P. Paz's bias flips +5.0 → −6.9, [Table 4](#tab4)). A defensible per-rider estimation therefore needs data separation: constants fitted on one slice of a rider's history — or on dedicated coast-down or loop protocols — and scored on another. A cheaper intermediate step is a systematic sensitivity analysis over the four physical constants ($C_dA$, $C_{rr}$, $m$, $\rho$): the mass sweep and the fitted-physics rerun of [§3.4](#3.4) are two points of that map, and completing it would say which conclusions are parameter-limited before any new estimation machinery is built. The complementary route is experimental — reproduce the analysis under conditions where all four are precisely *known*: a weighed rider and bike, tyres with bench-measured $C_{rr}$ on a known surface, a measured drag area, logged weather. That removes the priors from the error budget entirely, at the cost of controlled rides replacing found ones. All three routes fold naturally into the blind-prediction protocol below.
+The physical constants are literature-typical priors by design ([§2.3](#2.3)): fitting $C_{rr}$ or $C_dA$ to the same ride energies the models are scored on would let the parameters absorb modelling error, making the accuracy figures partly self-fulfilling. The estimator available today — the virtual-elevation family [Chung 2012] — reads $C_dA$ from fast, flat segments, where riders are tucked or drafting, so it recovers the aero-position value rather than the whole-ride average; used as a model input it *worsens* prediction (P. Paz's bias flips +5.0 → −6.9, [Table 4](#tab4)). The sensitivity map of [§3.4](#3.4) turns that risk from argument into measurement: the would-be gains from moving the constants are signed-bias cancellations pointing in different corners for different riders and variants — there is no common better direction to tune toward. What remains, therefore, are the routes that bring *external* information. One is data separation: constants fitted on one slice of a rider's history — or on dedicated coast-down or loop protocols — and scored on another. The other is fully experimental — reproduce the analysis under conditions where all four constants are precisely *known*: a weighed rider and bike, tyres with bench-measured $C_{rr}$ on a known surface, a measured drag area, logged weather. That removes the priors from the error budget entirely, at the cost of controlled rides replacing found ones. Both routes fold naturally into the blind-prediction protocol below.
 
 #### Blind prediction
 

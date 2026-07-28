@@ -66,20 +66,20 @@ changed. See Entry 11.)*
 - **Entry 17** (a regime-decomposed closed form E_new = E_flat + E_climb + E_descent, and a totals
   variant E_new2, tested vs the champion on all five corpora,
   [`regime_compare.py`](../../src/harness/regime_compare.py)) — this commit
-- **Entry 21** (hypothesis: the resolution gap is a PARAMETER problem — scale-dependent
-  behavioural trio (k_s, ε₀, climbThr) vs scale-free rider physics; fit the trio as a pure
-  5 m→30 m resolution transfer, no DEM edits,
-  [`scale_trio.py`](../../src/harness/scale_trio.py)) — this commit
-- **Entry 20** (goal-driven: can the deployed pipeline hit ±5% error / ±2% bias? smoothing σ +
-  per-rider calibration, train/validation,
-  [`goal_calibration.py`](../../src/harness/goal_calibration.py)) — this commit
-- **Entry 19** (the app's usual DEM: v2Edge on the deployed IGC-SP 5 m raster vs its 30 m resample,
-  censo rides, [`igc_resolution_test.py`](../../src/harness/igc_resolution_test.py)) — this commit
 - **Entry 18** (correction: R1a is NOT the deployed sampasimu cost — dead-clamp proof + Jensen
   sign flip + R1d pre-registration and results (the Jensen prediction fails to a resolution effect;
   the bias-trade law claims R1d too),
   [`verify_v2edge_clamp.py`](../../src/harness/verify_v2edge_clamp.py) +
   [`regime_compare.py`](../../src/harness/regime_compare.py)) — this commit
+- **Entry 19** (the app's usual DEM: v2Edge on the deployed IGC-SP 5 m raster vs its 30 m resample,
+  censo rides, [`igc_resolution_test.py`](../../src/harness/igc_resolution_test.py)) — this commit
+- **Entry 20** (goal-driven: can the deployed pipeline hit ±5% error / ±2% bias? smoothing σ +
+  per-rider calibration, train/validation,
+  [`goal_calibration.py`](../../src/harness/goal_calibration.py)) — this commit
+- **Entry 21** (hypothesis: the resolution gap is a PARAMETER problem — scale-dependent
+  behavioural trio (k_s, ε₀, climbThr) vs scale-free rider physics; fit the trio as a pure
+  5 m→30 m resolution transfer, no DEM edits,
+  [`scale_trio.py`](../../src/harness/scale_trio.py)) — this commit
 - **Entry 22** (bootstrap 95% CIs + paired sign tests for the article's headline medians; the
   champion-vs-canonical "beats" claim demoted to parity,
   [`bootstrap_ci.py`](../../src/harness/bootstrap_ci.py)) — this commit
@@ -92,16 +92,153 @@ changed. See Entry 11.)*
   [`ascent-error-literature.md`](../notes/ascent-error-literature.md)) — this commit
 - **Entry 25** (the simujaules grid-connectivity note imported verbatim; canonical original in
   `../simujaules/docs/grid-connectivity-sensitivity-2026-07-11.md`) — this commit
-- **Entry 27** (re-baseline: G = 9.7864 across all 14 rider-physics sites, `flat_eq_speed` back
-  to the applet's bisection (numpy dropped, the Python package stdlib-only again), V8-exactness
-  retired; full-suite rerun + gate/journal/article reconciliation) — this commit
 - **Entry 26** (pre-registration only: the direction ladder on the Entry-19 corpus's real
   endpoints, and portals (bridges/tunnels) in the track-as-whole and discretized scenarios —
   harnesses to follow) — this commit
+- **Entry 27** (re-baseline: G = 9.7864 across all 14 rider-physics sites, `flat_eq_speed` back
+  to the applet's bisection (numpy dropped, the Python package stdlib-only again), V8-exactness
+  retired; full-suite rerun + gate/journal/article reconciliation) — this commit
 - **Entry 28** (harness dedup — one shared implementation in
   [`src/bicycling_energy_model/`](../../src/bicycling_energy_model/) replacing the per-file
   copies, `v8math.py` and `analysis/parity/` retired — plus the `src/`/`research/journal/`/
   `data/inputs|results/` repo restructure) — this commit
+- **Entry 29** (pre-registration + Tier A results: physical-constants sensitivity sweep over
+  CdA × Crr × ρ, closed forms + ε machinery on D2–D5 via per-ride aggregates,
+  [`param_sweep.py`](../../src/harness/param_sweep.py)) — this commit
+
+---
+
+## 2026-07-27 — Entry 29: pre-registration — the physical-constants sensitivity sweep (CdA × Crr × ρ)
+
+*Prompt (Danilo): scope a parameter sweep over CdA ∈ [0.25, 0.50] step 0.05, Crr ∈ [0.003, 0.015]
+step 0.002, ρ ∈ [1.0, 1.225] step 0.05; pre-register it; add 95% CI bands for the absolute median
+error; implement Tier A.*
+
+Motivation: the paper (§2.3, §4.4) defends the literature-typical priors (CdA 0.40, Crr 0.008,
+ρ 1.13) with an anti-circularity argument and names a systematic sensitivity map as the cheap
+next step — §3.4's mass sweep and fitted-physics rerun are two isolated points of that map.
+This entry registers the map's design **before** looking at any result.
+
+**Grid.** Simplified from the prompt's rough suggestion so every anchor is a lattice point:
+CdA {0.25 … 0.50 step 0.05} (6, prior 0.40 on-grid); Crr {0.004 … 0.014 step 0.002} (6, prior
+0.008 on-grid); ρ {1.00, 1.13, 1.225} (3 — the prior plus the physical extremes; the axis is
+predicted exactly redundant by P1, so three points suffice to *test* that) → **108 combinations**. Mass is
+**re-inverted per combination** (the self-consistent mode: m̂ uses the same constants, so the
+sweep measures the deployable system, compensation included); a frozen-mass mode
+(`SWEEP_FREEZE_M=1`) isolates the direct effect on demand.
+
+**Tier A scope** (this entry): the closed forms (form 3 = deadband, form 4 = scalar) under both
+frozen ε rules (dynamic ε_d, flat ε_f = 0.20) plus the ε machinery (ε_bal, ε_coast, the deficit
+gap on s̄ ≥ 3% — D3–D5 only; the censo harness has no descent-balance cells), on **D2 censo,
+D3 P. Paz, D4 JAAM, D5 author-full** — the four corpora sharing the manifest pipeline. D1 and the canonical simulation are Tier B (one-at-a-time around the
+prior; separate entry). Implementation: per-ride **aggregates extracted once** (X, x_aero,
+h± raw/smoothed, k_smooth geometry, regime powers, measured flat speed, the 30 m descent-cell
+(drop, grade) lists, and the climb-balance sums e_meas/Σdh/Σcos·L/Σv²L), then each combination
+is arithmetic — no per-combo harness reruns. The physical floor stays combo-dependent (β moves
+with m̂), so the clean-ride count n may vary by combination and is recorded.
+
+**CI bands.** Every med|Δ%| (and the gap median) carries a 95% CI. For ~10⁴ cells the seeded
+mulberry32 bootstrap is not computable in stdlib time, so the sweep uses the **exact
+order-statistic (binomial-rank) CI for the median** — distribution-free, deterministic, RNG-free.
+Deviation from the repo's bootstrap convention is deliberate and **gate-checked**: the smoke gate
+recomputes one anchor cell with the mulberry32 bootstrap and asserts the two intervals agree
+within 0.3 pp per bound.
+
+**Pre-registered predictions.**
+- **P1 (degeneracy, exact):** ρ and CdA never appear separately anywhere in Tier A — only as
+  the product ρ·CdA (aero rate, ε machinery, mass inversion's e_aero). Cells with equal
+  (ρ·CdA, Crr) must agree to float precision; the sweep is effectively 2-D. Registered as a
+  falsifiable internal-consistency gate, not just an observation.
+- **P2 (deficit robustness):** the measured gap med(ε_coast − ε_bal) stays within ≈ 0.10–0.19
+  across the physically plausible box (the §3.4 fitted-physics excursion bounds it); a
+  systematic drift beyond that range would qualify the constancy hypothesis further.
+- **P3 (verdict boundary):** the dynamic-vs-flat RMS verdict on D3 flips from win to tie as
+  ρ·CdA falls toward P. Paz's fitted 0.26 — the Entry-16 mechanism, now as a boundary in the
+  map rather than two points.
+- **P4 (mass compensation):** re-inverted m̂ falls as ρ·CdA rises (the inversion assigns less
+  of the measured climb energy to aero's complement); m̂·g stays the meaningful invariant and
+  the energy-law medians move much less than the constants do.
+- **P5 (interior optimum, Danilo):** the median error rises as any parameter moves to the
+  extrema of its range — operationally: for each corpus × variant, med|Δ%| at every grid
+  extremum (one axis at its end, the others at the anchor) is ≥ its anchor value.
+- **P6 (common minimizer, Danilo):** there is a parameter choice that minimizes the error
+  across all models simultaneously — operationally: some single (ρ·CdA, Crr) cell lies within
+  the 95% CI of every variant's own grid minimum, per corpus.
+
+*(P5–P6 were added after the harness was implemented and its smoke gates ran, but before any
+full-run result was inspected.)*
+
+**Outputs & gates.** `data/results/param_sweep.csv` (one row per combination × corpus:
+m̂, n_clean, med|Δ%| + CI + signed for sm/pm × ε_d/ε_f, gap median + CI, median s*, median v_f).
+Both modes assert the CI-method cross-check (≤ 0.3 pp per bound at n ≥ 150; the order
+statistic's known conservative gap is allowed below that) and the P1 degeneracy identity on
+an off-grid equal-product pair (float precision). The FULL run additionally asserts the anchor
+m̂ (74.5 / 101.9 / 74.7 ± 0.15) and all 16 anchor med|Δ%| against the published gate-battery
+values (± 0.11) — end-to-end parity with the shipped harnesses. `SWEEP_SMOKE=1` runs a
+40-ride, 3-combination subset with published masses forced (a subset cannot re-invert mass).
+
+### Results (appended after the pre-registration above was frozen)
+
+All gates pass: anchor m̂ reproduces 74.5 / 101.9 / 74.7 exactly (0.1 kg print precision), all
+16 anchor med|Δ%| match the published gate-battery values, the CI methods agree at production n
+(e.g. P. Paz sm·ε_d: order-stat [5.29, 6.37] vs bootstrap [5.29, 6.36]), and 432 rows landed in
+`param_sweep.csv` (with 95% CIs on both med|Δ%| and med Δ%, per the prompt).
+
+**P1 (ρ·CdA degeneracy) — CONFIRMED, exact.** Equal-product off-grid pair agrees to
+≤ 4 × 10⁻¹⁴ pp on every corpus. The sweep is 2-D: (ρ·CdA, Crr).
+
+**P2 (gap 0.10–0.19 across the box) — REFUTED over the full grid.** gap_med spans
+−0.065 … +0.188 (P. Paz), 0.001 … 0.180 (JAAM), 0.011 … 0.184 (author-full). The gap rises
+monotonically with ρ·CdA (it is α-driven); it stays in the predicted band only near the
+plausible mid-box. The deficit's *value* is parameter-conditional — stronger than §3.4's
+two-point version of the same statement; its positivity (recurrence) holds everywhere except
+the implausible low-ρ·CdA corners of one corpus, where the per-cell clamp lets ε_coast dip
+below ε_bal.
+
+**P3 (D3 verdict boundary) — CONFIRMED.** The dynamic estimator beats the in-sample flat
+constant on 95/108 cells for P. Paz (anchor 0.091 vs 0.139) and loses exactly where predicted —
+the low-ρ·CdA corner (0.097 vs 0.076); JAAM stays at tie-or-lose on most of the grid (dyn wins
+35/108), the author-full 94/108. The Entry-16 two-point flip is a smooth boundary in ρ·CdA.
+
+**P4 (mass compensation) — CONFIRMED.** m̂ falls with ρ·CdA: 77.3 → 72.0 kg (P. Paz),
+104.5 → 100.5 (JAAM), 76.5 → 73.3 (author) as ρ·CdA goes 0.25 → 0.61 at Crr 0.008 — a ±3 kg
+compensation against ±60% parameter excursions, while the law's medians move only a few pp.
+
+**P5 (interior optimum, Danilo) — REFUTED, 29 violations.** Errors do NOT rise toward every
+extremum: variants with signed bias at the anchor improve when the constants move against the
+bias. Cleanest examples: P. Paz sm·ε_f improves 10.1 → 5.8 at CdA 0.25 (its +10 over-prediction
+shrinks); JAAM pm·ε_d improves 9.0 → 3.6 at Crr 0.014 (its −8.4 under-prediction fills in);
+censo sm·ε_d improves 7.7 → 5.4 at CdA 0.50. The anchor is not an error minimum — it is the
+literature-typical prior, and the sweep now quantifies what that costs (~1–2 pp of median error
+versus each variant's in-grid best).
+
+**P6 (common minimizer, Danilo) — REFUTED as a universal claim.** Per corpus, cells lying
+within every variant's min-CI: censo 3, P. Paz 1, JAAM 0, author-full 0. And the per-variant
+minima sit in *different corners for different corpora* (P. Paz pm·ε_d at ρ·CdA 0.25/Crr 0.014;
+JAAM's minima near ρ·CdA 0.45–0.57): no single parameter choice minimizes error across models,
+let alone across riders. This is the sweep's sharpest lesson: per-variant, per-rider tuning
+could buy ≈ 1–2 pp of median error, but there is no consistent "better constants" direction —
+the gains are signed-bias cancellation, exactly the circularity §2.3 of the paper declines.
+
+**Reading.** The error surface is shallow (per-variant grid minima 3.5–6.1% vs anchor values
+3.5–10.1%); the constants matter at the pp level, not the factor level; and the quantities that
+were *supposed* to be parameter-robust behave as claimed (recurrence of a positive gap,
+anchor-region verdicts), while the quantities §3.4 already flagged as parameter-sensitive (the
+gap's value, the dynamic-vs-flat margin) are confirmed to be so, now as continuous maps rather
+than point pairs. Tier B (canonical, one-at-a-time; D1) remains open.
+
+**Learnings (Danilo's summary, refined).**
+1. **The mass inversion is robust — because it compensates.** ±3 kg of output against ±60%
+   parameter excursions; m̂ absorbs what the aero term over/under-claims, so m̂·g keeps doing
+   invariant-preserving work and the law's medians barely move.
+2. **ε₀'s *value* is conditional on ρ·CdA; its *existence* is not.** The gap is monotone in
+   ρ·CdA, so "0.13" means "at the literature-typical prior, at the 30 m scale"; the
+   unconditional fact is a positive, near-common gap recurring across riders over the
+   plausible box.
+3. **In-data tuning of Crr/CdA is bias laundering.** The apparent gains are signed-bias
+   cancellations pointing in different corners for different riders and variants — no common
+   better direction exists. The clean escapes bring *external* information: direct measurement
+   (weighed mass, bench Crr, measured CdA, logged ρ) or, weaker, temporally held-out fitting.
 
 ---
 
