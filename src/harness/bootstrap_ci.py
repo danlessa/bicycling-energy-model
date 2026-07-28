@@ -289,6 +289,50 @@ report("smooth · ε=0.20", col(dl, "sm_0.20"), 8.1, 5.6, expect_ci=(7.3, 8.7))
 report("poor-man · ε=0.20", col(dl, "pm_0.20"), 6.9, 3.8, expect_ci=(6.2, 7.5))
 report("canonical", col(dl, "canon_d"), 6.1, None, expect_ci=(5.5, 6.7))
 
+# ---------- 3c. Pooled D3-D5 (paper Table 3; stratified bootstrap) ----------
+print("\n== Pooled D3–D5 (1,281 rides), paper Table 3 ==")
+
+
+def strat_report(label: str, strata: list[list[float]], expect_abs: float,
+                 expect_ci: tuple[float, float]) -> None:
+    """Pooled median with stratified bootstrap: resample within each corpus,
+    pool, take the median (respects the within-corpus sampling model)."""
+    global failed
+    pooled_abs = [abs(x) for s in strata for x in s]
+    m = median(pooled_abs)
+
+    def ci(vals_per_stratum: list[list[float]], seed: int) -> tuple[float, float]:
+        rand = rng(seed)
+        stats = []
+        for _ in range(B):
+            samp = []
+            for s in vals_per_stratum:
+                n = len(s)
+                samp.extend(s[int(rand() * n)] for _ in range(n))
+            stats.append(median(samp))
+        stats.sort()
+        return stats[math.floor(0.025 * B)], stats[math.ceil(0.975 * B) - 1]
+
+    lo, hi = ci([[abs(x) for x in s] for s in strata], 42)
+    ok = (abs(m - expect_abs) <= 0.11
+          and abs(lo - expect_ci[0]) <= 0.06 and abs(hi - expect_ci[1]) <= 0.06)
+    print(f"{label.ljust(34)} n={len(pooled_abs)}  med|Δ%|={to_fixed(m, 2)} "
+          f"[{to_fixed(lo, 1)}, {to_fixed(hi, 1)}]"
+          + (" GATE-OK" if ok else f" GATE-FAIL(exp {expect_abs} ci{expect_ci})"))
+    if not ok:
+        failed = True
+
+
+_strata_src = [pp, jm, dl]
+for _lab, _col, _ea, _eci in (
+        ("pooled smooth · ε=geom", "sm_geom", 5.9, (5.5, 6.2)),
+        ("pooled poor-man · ε=geom", "pm_geom", 6.6, (6.3, 7.1)),
+        ("pooled smooth · ε=0.20", "sm_0.20", 7.5, (7.0, 8.0)),
+        ("pooled poor-man · ε=0.20", "pm_0.20", 6.6, (6.1, 7.0)),
+        ("pooled canonical", "canon_d", 6.2, (5.9, 6.6))):
+    strat_report(_lab, [col([r for r in rows_ if r.get("dataOK", "true") == "true"], _col)
+                        for rows_ in _strata_src], _ea, _eci)
+
 # ---------- 4. Time model, P. Paz (§8.8 primary endpoint) ----------
 # Target = tMovBin, exactly as time_compare's scoreboard() scores it.
 print("\n== Time model, P. Paz (§8.8 primary endpoint) ==")
