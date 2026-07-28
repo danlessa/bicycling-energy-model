@@ -258,6 +258,29 @@ def fig4():
             xfmt=lambda v: f'{v:g}', yfmt=lambda v: f'{v:g}',
             title='ε closed form vs measured (44 rides)')
     f.line([(0, 0), (1, 1)], xr, yr, GREY, 1.2, dash='4 3')            # y = x
+    # 95% CI band on the fitted line's one parameter: bootstrap the median
+    # offset ε_coast − ε_bal over the drawn real-descent subset (mulberry32
+    # seed 42, B=10^4 — the bootstrap_ci.py convention), band = the region
+    # between the parallel lines y = x − hi … y = x − lo.
+    offs = sorted(ec - eb for ec, eb, sb, be in P if sb >= 0.03)
+
+    def _rng(seed):
+        a = seed & 0xFFFFFFFF
+
+        def rand():
+            nonlocal a
+            a = (a + 0x6D2B79F5) & 0xFFFFFFFF
+            t = ((a ^ (a >> 15)) * (1 | a)) & 0xFFFFFFFF
+            t = ((t + (((t ^ (t >> 7)) * (61 | t)) & 0xFFFFFFFF)) & 0xFFFFFFFF) ^ t
+            return ((t ^ (t >> 14)) & 0xFFFFFFFF) / 4294967296
+        return rand
+
+    rand, n, B = _rng(42), len(offs), 10000
+    boots = sorted(med([offs[int(rand() * n)] for _ in range(n)]) for _ in range(B))
+    o_lo, o_hi = boots[int(0.025 * B)], boots[int(0.975 * B) - 1]
+    corners = [(max(0, o_lo), max(0, -o_lo)), (1, 1 - o_lo), (1, 1 - o_hi), (max(0, o_hi), max(0, -o_hi))]
+    px = ['{:.1f},{:.1f}'.format(*f.map(x, y, xr, yr)) for x, y in corners]
+    f.body.append(f'<polygon points="{" ".join(px)}" fill="{GREEN}" opacity="0.13" stroke="none"/>')
     f.line([(0.13, 0), (1, 0.87)], xr, yr, GREEN, 2.0)                 # y = x − 0.13 (calibrated)
     for ec, eb, sb, be in P:
         r = 3 + 7 * math.sqrt(be / bmax)          # area ∝ descent energy β·H₋
@@ -274,6 +297,9 @@ def fig4():
               tip=f'ε_coast {ec:.2f} → ε_bal {eb:.2f} · s̄ {sb*100:.1f}% · βH₋ {be/1000:.0f} kJ')
     f.body.append(f'<text x="{f.x1-10:.0f}" y="{f.y0+18:.0f}" text-anchor="end" {FONT} '
                   f'font-size="11" fill="{GREEN}">ε = ε_coast − 0.13</text>')
+    f.body.append(f'<text x="{f.x1-10:.0f}" y="{f.y0+32:.0f}" text-anchor="end" {FONT} '
+                  f'font-size="10" fill="{GREEN}" opacity="0.85">band: 95% CI of the median '
+                  f'offset [{o_lo:.2f}, {o_hi:.2f}]</text>')
     f.legend([('real descents (s̄ ≥ 3%)', VERM, 's0'), ('gentle (near-zero descent kJ)', GREY, 's1')],
              f.x0 + 12, f.y1 - 40)
     f.body.append(f'<text x="{f.x0+12:.0f}" y="{f.y1-4:.0f}" {FONT} font-size="10" '
