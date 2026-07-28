@@ -212,6 +212,14 @@ LF = [
 ]
 for label, c, ea, es, eci in LF:
     report(label, col(lf, c), ea, es, expect_ci=eci)
+_nr = sorted(col(lf, "noise_rate"))
+_nm = median(_nr)
+_ok = abs(_nm - 3.1) <= 0.11
+print(f"ascent-noise rate: median {to_fixed(_nm, 2)} m/km "
+      f"[IQR {to_fixed(_nr[int(0.25*(len(_nr)-1))], 1)}–{to_fixed(_nr[int(0.75*(len(_nr)-1))], 1)}]"
+      + (" GATE-OK" if _ok else " GATE-FAIL(exp 3.1)"))
+if not _ok:
+    failed = True
 paired("PAIRED frozen form 3 vs canonical", lf, "f3_d", "canon_d")
 paired("PAIRED frozen form 4 vs canonical", lf, "f4_d", "canon_d")
 

@@ -111,8 +111,8 @@ h_+^{\text{corr}} = \max(0,\; h_+ - c\,x), \qquad
 $$
 
 where **$x$ and $h_+$ are both in metres** (as in $\alpha x$), so $c$ is **dimensionless** —
-a $\approx 0.3\%$ "noise grade" the DEM/track adds. (Measured 3.2 m/km, IQR 2.7–3.8 —
-calibrate per source.) It **auto-adapts**: $k_{smooth} \approx 0.89$ on a flat ride
+a $\approx 0.3\%$ "noise grade" the DEM/track adds. (Measured 3.2 m/km, IQR 2.7–3.8 at Entry 5;
+re-measured 3.1 m/km, IQR 2.6–3.7 under the Entry-28 pipeline — calibrate per source.) It **auto-adapts**: $k_{smooth} \approx 0.89$ on a flat ride
 ($h_+/x \approx 30$ m/km, where the noise floor is a big share) and $\approx 0.98$ on a hilly
 one ($\approx 150$ m/km, where real ascent dominates). Apply the same to $h_-$.
 

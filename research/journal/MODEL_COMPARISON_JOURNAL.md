@@ -179,6 +179,13 @@ on pre-rounded medians), P. Paz fitted 0.19 [0.17, 0.20], JAAM fitted 0.12 [0.10
 Fitted-physics law medians for the paper's Table 4: P. Paz sm·ε_d 7.0 [6.2, 7.6]
 (−6.2 [−7.1, −5.3]), JAAM 4.7 [4.0, 5.7] (−3.5 [−4.6, −2.8]).
 
+**The noise rate, regenerated and evidenced.** The paper asserted c's provenance ("measured
+3.2 m/km, IQR 2.7–3.8") without in-paper evidence (Danilo's catch). Recomputed under the
+current pipeline: **3.1 m/km median, IQR 2.6–3.7** (44 rides; raw − deadband h₊ per route-km;
+pure geometry, so G-independent — the small drift from Entry 5's 3.2 is pipeline vintage).
+Now measured in `longoes_frozen.py` (per-ride `noise_rate` column), gated in `bootstrap_ci.py`,
+and stated as §3.1's third attribution check.
+
 **Other review corrections applied to the paper** (the full list lives in the review record):
 the deficit's causal story corrected to descent pedalling + clamp effects (braking cancels out
 of ε_bal — the paper's own A.5 algebra); the per-segment balance's dropped ΔKE term stated;

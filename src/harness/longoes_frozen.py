@@ -125,9 +125,12 @@ for e in inputs:
                 - (c["dKE"] + c["Wrr"] + c["Waero"] + c["Wgrav"] + c["Wbrake"])) \
         / max(1, p["keff"] * c["legE"])
     cons_max = max(cons_max, resid)
+    hp_raw = sum(max(0, prof["h"][i] - prof["h"][i - 1]) for i in range(1, len(prof["h"])))
+    hp_sm = sum(max(0, profS["h"][i] - profS["h"][i - 1]) for i in range(1, len(profS["h"])))
     row = {"ride": e["label"], "emp": emp, "m": e["m"], "vf_kmh": vf * 3.6,
            "epsG": eps_d, "canon": c["legE"] / 1000,
-           "canon_d": jsdiv(c["legE"] / 1000 - emp, emp) * 100}
+           "canon_d": jsdiv(c["legE"] / 1000 - emp, emp) * 100,
+           "noise_rate": (hp_raw - hp_sm) / (prof["x"][-1] / 1000)}
     for tag, eps in (("d", eps_d), ("f", 0.20)):
         a1 = approximate(prof, p, vf, eps, opt("off"))      # form 1: original
         a2 = approximate(prof, p, vf, eps, opt("zero"))     # form 2: split, raw
@@ -169,6 +172,13 @@ for la, ka, lb, kb in (("form 2", "f2_d", "form 1", "f1_d"),
     w = sum(1 for r in rows if abs(r[ka]) < abs(r[kb]))
     l = sum(1 for r in rows if abs(r[ka]) > abs(r[kb]))
     print(f"  {la} vs {lb}: closer on {w}/{w + l}, p = {to_fixed(sign_p(w, l), 4)}")
+
+nr = sorted(r["noise_rate"] for r in rows)
+n_ = len(nr)
+print(f"\nascent-noise accumulation (raw − deadband h₊ per route-km): "
+      f"median {to_fixed((nr[(n_-1)//2] + nr[n_//2]) / 2, 2)} m/km, "
+      f"IQR {to_fixed(nr[int(0.25*(n_-1))], 1)}–{to_fixed(nr[int(0.75*(n_-1))], 1)} "
+      f"— the measurement behind c ≈ 3 m/km (form 4)")
 
 ratio = SC["emeas"] / (SC["egrav"] + SC["eroll"] + SC["eaero"])
 print(f"\nsustained-climb balance (frozen physics): {SC['n']} sections, "
