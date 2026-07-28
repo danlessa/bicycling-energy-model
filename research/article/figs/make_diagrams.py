@@ -114,8 +114,8 @@ def fig9() -> None:
            for i in range(41)]
     b.append(path(jag, GREY, 1.3))
     b.append(path(smo, INK, 1.8))
-    b.append(txt(ix + iw / 2, iy + 14, 'sub-metre noise inflates h₊', 11))
-    b.append(txt(ix + iw / 2, iy + ih - 6, 'deadband τ = 2 m keeps real climbs', 10, 'middle', GREY))
+    b.append(txt(ix + iw / 2, iy + 14, 'noise inflates h₊', 11))
+    b.append(txt(ix + iw / 2, iy + ih - 6, 'inertia pays the bumps · τ keeps climbs', 9, 'middle', GREY))
 
     # equation strip with color-matched terms
     ey = 348
@@ -239,7 +239,7 @@ def fig11() -> None:
     b.append(arrow(158, 244, 200, 244, INK))
     box(204, 196, 148, 96, BLUE, [
         ('calibrate', 13, BLUE), ('ε₀ = 0.13', 11, INK),
-        ('c ≈ 3 m/km', 11, INK), ('choose form 3/4', 11, INK)])
+        ('c ≈ 3 m/km', 11, INK), ('choose F3/F4', 11, INK)])
 
     # padlock = freeze
     b.append(arrow(356, 244, 392, 244, INK))

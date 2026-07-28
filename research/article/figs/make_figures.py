@@ -151,10 +151,10 @@ def fig1():
     informed per-ride parameters (solid) vs blind frozen constants (light),
     with 95% CI whiskers and the simulation under each protocol as lines."""
     rows = [  # label, informed (med, lo, hi), blind (med, lo, hi)
-        ('form 1\noriginal', (19.1, 17.3, 21.5), (14.9, 10.6, 22.6)),
-        ('form 2\n+ aero split', (8.6, 7.2, 11.0), (7.9, 5.5, 13.6)),
-        ('form 3\n+ 2 m deadband', (3.5, 2.0, 5.6), (8.2, 4.5, 10.8)),
-        ('form 4\n+ scalar c', (5.9, 3.6, 8.3), (7.6, 5.6, 11.6)),
+        ('F1\noriginal', (19.1, 17.3, 21.5), (14.9, 10.6, 22.6)),
+        ('F2\n+ aero split', (8.6, 7.2, 11.0), (7.9, 5.5, 13.6)),
+        ('F3\n+ 2 m deadband', (3.5, 2.0, 5.6), (8.2, 4.5, 10.8)),
+        ('F4\n+ scalar c', (5.9, 3.6, 8.3), (7.6, 5.6, 11.6)),
     ]
     SIM_INF, SIM_BLD = 5.2, 8.4
     f = Fig(560, 370, pad=(46, 24, 66, 54))
@@ -455,8 +455,6 @@ def fig8():
     f.save('fig8-jaam-eps.svg')
 
 
-if __name__ == '__main__':
-    fig1(); fig2(); fig3(); fig4(); fig5(); fig6(); fig7(); fig8()
 
 
 # ---- Figure 8: the regime rule as a slopegraph over Table 3 ----
@@ -466,15 +464,15 @@ def fig14():
     Numbers = the gated Table 3 values (update on re-baseline)."""
     CORP = ['D2\ncenso', 'D3\nP. Paz', 'D4\nJAAM', 'D5\nauthor†', 'D3–D5\npooled']
     SERIES = [  # label, color, dash, width, opacity, [(med, lo, hi)]
-        ('form 3 · ε_d', VERM, '', 2.4, 1.0,
+        ('F3 · ε_d', VERM, '', 2.4, 1.0,
          [(7.7, 6.0, 9.3), (5.8, 5.3, 6.4), (5.5, 4.4, 6.4), (6.2, 5.6, 6.9), (5.9, 5.5, 6.2)]),
-        ('form 3 · ε_f', BLUE, '6 4', 2.4, 1.0,
+        ('F3 · ε_f', BLUE, '6 4', 2.4, 1.0,
          [(4.7, 3.3, 6.2), (10.1, 9.3, 10.7), (3.5, 3.1, 4.2), (8.1, 7.3, 8.7), (7.5, 7.0, 8.0)]),
         ('simulation', GREEN, '2 3', 2.0, 1.0,
          [(6.6, 4.7, 8.7), (6.8, 6.2, 7.8), (5.4, 4.9, 6.1), (6.1, 5.5, 6.7), (6.2, 5.9, 6.6)]),
-        ('form 4 · ε_d', GREY, '', 1.2, 0.55,
+        ('F4 · ε_d', GREY, '', 1.2, 0.55,
          [(6.4, 4.8, 8.6), (4.9, 4.4, 5.8), (9.0, 7.9, 9.7), (7.1, 6.4, 8.1), (6.6, 6.3, 7.1)]),
-        ('form 4 · ε_f', GREY, '6 4', 1.2, 0.55,
+        ('F4 · ε_f', GREY, '6 4', 1.2, 0.55,
          [(3.9, 3.2, 6.1), (6.8, 6.0, 7.6), (5.6, 4.8, 6.4), (6.9, 6.2, 7.5), (6.6, 6.1, 7.0)]),
     ]
     f = Fig(560, 380, pad=(40, 130, 60, 54))
@@ -507,6 +505,10 @@ def fig14():
             f.body.append(f'<text x="{xc:.0f}" y="{f.y1 + 16 + k * 13:.0f}" text-anchor="middle" '
                           f'{FONT} font-size="11" fill="{INK}">{line}</text>')
     f.body.append(f'<text x="{f.x0 + 6:.0f}" y="{f.y1 - 8:.0f}" {FONT} font-size="10.5" '
-                  f'fill="{GREY}">lower is better · whiskers: 95% CI · faint: form 4 · '
+                  f'fill="{GREY}">lower is better · whiskers: 95% CI · faint: F4 · '
                   f'* D2 ε_f is in-sample</text>')
     f.save('fig8-regime-slopes.svg')
+
+
+if __name__ == '__main__':
+    fig1(); fig2(); fig3(); fig4(); fig5(); fig6(); fig7(); fig8(); fig14()

@@ -508,6 +508,56 @@ for _corpus, _em in PI_M.items():
     if not _ok:
         failed = True
 
+# ---------- 3g. Deadband-suspension thread (Entries 38-40 / paper §4.4) ----------
+print("\n== Deadband thread (E39 τ* + E40 roller), §4.4 ==")
+e39 = parse_csv("e39_tau_reg.csv")
+_j39 = [r for r in e39 if r.get("corpus") == "jaam"]
+_w = sum(1 for r in _j39 if is_finite(num(r, "t30_d")) and is_finite(num(r, "t20_d"))
+         and abs(num(r, "t30_d")) < abs(num(r, "t20_d")))
+_l = sum(1 for r in _j39 if is_finite(num(r, "t30_d")) and is_finite(num(r, "t20_d"))
+         and abs(num(r, "t30_d")) > abs(num(r, "t20_d")))
+_m35 = median([abs(num(r, "t35_d")) for r in _j39 if is_finite(num(r, "t35_d"))])
+_m20 = median([abs(num(r, "t20_d")) for r in _j39 if is_finite(num(r, "t20_d"))])
+_ok = (_w == 137 and _w + _l == 215 and sign_p(_w, _l) <= 0.001
+       and abs(_m35 - 3.06) <= 0.011 and abs(_m20 - 3.24) <= 0.011)
+print(f"E39 jaam: τ=3 beats τ=2 on {_w}/{_w + _l} (p={to_fixed(sign_p(_w, _l), 5)}); "
+      f"med|Δ%| τ3.5={to_fixed(_m35, 2)} τ2.0={to_fixed(_m20, 2)}"
+      + (" GATE-OK" if _ok else " GATE-FAIL(exp 137/215, 3.06/3.24)"))
+if not _ok:
+    failed = True
+
+
+def _ranks(v):
+    idx = sorted(range(len(v)), key=lambda i: v[i])
+    r = [0.0] * len(v)
+    for rank, i in enumerate(idx):
+        r[i] = rank
+    return r
+
+
+def _spearman(xs, ys):
+    rx, ry = _ranks(xs), _ranks(ys)
+    mx, my = sum(rx) / len(rx), sum(ry) / len(ry)
+    n_ = sum((rx[i] - mx) * (ry[i] - my) for i in range(len(rx)))
+    d_ = math.sqrt(sum((r - mx) ** 2 for r in rx) * sum((r - my) ** 2 for r in ry))
+    return n_ / d_ if d_ > 0 else NAN
+
+
+e40 = parse_csv("e40_roller.csv")
+for _corpus, _erho, _eres in (("longoes", 0.444, 0.48), ("censo", 0.125, 0.44),
+                              ("ppaz", 0.204, 0.23), ("jaam", 0.429, 0.03),
+                              ("danlessa", 0.394, 0.46)):
+    _sub = [r for r in e40 if r.get("corpus") == _corpus]
+    _xy = [(num(r, "res_pct"), num(r, "f3_d_reg")) for r in _sub
+           if is_finite(num(r, "res_pct")) and is_finite(num(r, "f3_d_reg"))]
+    _rho = _spearman([a for a, _ in _xy], [b for _, b in _xy])
+    _res = median([a for a, _ in _xy])
+    _ok = abs(_rho - _erho) <= 0.0015 and abs(_res - _eres) <= 0.011
+    print(f"E40 {_corpus}: ρ(RES,Δ%)={_rho:+.3f} RES med={to_fixed(_res, 2)}%"
+          + (" GATE-OK" if _ok else f" GATE-FAIL(exp {_erho}/{_eres})"))
+    if not _ok:
+        failed = True
+
 # ---------- 4. Time model, P. Paz (§8.8 primary endpoint) ----------
 # Target = tMovBin, exactly as time_compare's scoreboard() scores it.
 print("\n== Time model, P. Paz (§8.8 primary endpoint) ==")
