@@ -228,6 +228,7 @@ pp = parse_csv("ppaz_comparison.csv")
 report("poor-man · ε=geom", col(pp, "pm_geom"), 4.9, 0.6, expect_ci=(4.4, 5.8))
 report("smooth · ε=geom", col(pp, "sm_geom"), 5.8, 4.3, expect_ci=(5.3, 6.4))
 report("smooth · ε=0.20", col(pp, "sm_0.20"), 10.1, 10.0, expect_ci=(9.3, 10.7))
+report("poor-man · ε=0.20", col(pp, "pm_0.20"), 6.8, 5.4, expect_ci=(6.0, 7.6))
 report("canonical", col(pp, "canon_d"), 6.8, 5.0, expect_ci=(6.2, 7.8))
 paired("PAIRED pm_geom vs canonical", pp, "pm_geom", "canon_d")
 paired("PAIRED pm_geom vs sm_0.20", pp, "pm_geom", "sm_0.20")
@@ -236,6 +237,8 @@ print("\n== JAAM (219 rides), §8.6 ==")
 jm = parse_csv("jaam_comparison.csv")
 report("smooth · ε=0.20", col(jm, "sm_0.20"), 3.5, 0.4, expect_ci=(3.1, 4.2))
 report("smooth · ε=geom", col(jm, "sm_geom"), 5.5, -4.7, expect_ci=(4.4, 6.4))
+report("poor-man · ε=geom", col(jm, "pm_geom"), 9.0, -8.4, expect_ci=(7.9, 9.7))
+report("poor-man · ε=0.20", col(jm, "pm_0.20"), 5.6, -4.3, expect_ci=(4.8, 6.4))
 report("canonical", col(jm, "canon_d"), 5.4, -5.0, expect_ci=(4.9, 6.1))
 paired("PAIRED sm_0.20 vs sm_geom", jm, "sm_0.20", "sm_geom")
 
@@ -246,6 +249,9 @@ if len(dl) != 621:
     print(f"GATE-FAIL: expected 621 clean author-full rides, got {len(dl)}")
     failed = True
 report("smooth · ε=geom", col(dl, "sm_geom"), 6.2, -0.3, expect_ci=(5.6, 6.9))
+report("poor-man · ε=geom", col(dl, "pm_geom"), 7.1, -1.9, expect_ci=(6.4, 8.1))
+report("smooth · ε=0.20", col(dl, "sm_0.20"), 8.1, 5.6, expect_ci=(7.3, 8.7))
+report("poor-man · ε=0.20", col(dl, "pm_0.20"), 6.9, 3.8, expect_ci=(6.2, 7.5))
 report("canonical", col(dl, "canon_d"), 6.1, None, expect_ci=(5.5, 6.7))
 
 # ---------- 4. Time model, P. Paz (§8.8 primary endpoint) ----------
