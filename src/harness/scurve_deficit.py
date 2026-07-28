@@ -64,7 +64,7 @@ def med_of(xs: list[float]) -> float:
     return (s[math.floor(k)] + s[math.ceil(k)]) / 2
 
 
-def rng(seed: int):
+def rng(seed: int) -> "Callable[[], float]":
     a = seed & 0xFFFFFFFF
 
     def rand() -> float:

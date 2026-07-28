@@ -35,6 +35,11 @@ scaffold.
   ρ 1.13 / k_eff 0.98 / wind 0; ε₀ = 0.13 (UNCLAMPED ε_d — see paper 1
   eq. (4)–(5)); ε_f = 0.20; τ = 2 m; c ≈ 3 m/km. Never re-fit any of these
   here; the letter *tests* their transfer, it does not recalibrate them.
+- **Type annotations.** Every function under `src/` (harnesses included)
+  carries full annotations — the Entry-28 invariant, enforced by a runnable
+  cell in `research/journal/journal.qmd`. String annotations are fine.
+  As of this writing `e41_dem_route.py` has 17 unannotated functions; fix
+  them before the qmd is next rendered.
 - **Style rules (letter inherits paper 1's).** Models are F1–F4. No paragraph
   over 200 words; ≤ 5 paragraphs per header; numbered subsections; display
   equations tagged (`\tag{L1}`, `\tag{L2}`, … for the letter) and cited from

@@ -84,7 +84,7 @@ def med_of(xs: list[float]) -> float:
     return (s[math.floor(k)] + s[math.ceil(k)]) / 2
 
 
-def rng(seed: int):
+def rng(seed: int) -> "Callable[[], float]":
     a = seed & 0xFFFFFFFF
 
     def rand() -> float:
@@ -465,7 +465,7 @@ def run_ride(pts: list[dict], label: str, corpus: str, date: str | None,
 
 # ---------------------------------------------------------------- corpora
 
-def iter_corpus(name: str):
+def iter_corpus(name: str) -> "Iterator[tuple]":
     """Yields (pts, label, date, fit_path) per ride."""
     if name == "longoes":
         inputs = json.load(open(os.path.join(DATA, "model_inputs.json")))

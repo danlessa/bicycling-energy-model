@@ -73,7 +73,7 @@ def med_of(xs: list[float]) -> float:
     return (s[math.floor(k)] + s[math.ceil(k)]) / 2
 
 
-def rng(seed: int):
+def rng(seed: int) -> "Callable[[], float]":
     a = seed & 0xFFFFFFFF
 
     def rand() -> float:
@@ -257,7 +257,7 @@ def run_ride(pts: list[dict], corpus: str, ride: str,
     return row
 
 
-def iter_corpus(name: str):
+def iter_corpus(name: str) -> "Iterator[tuple]":
     if name == "longoes":
         for e in json.load(open(os.path.join(DATA, "model_inputs.json"))):
             if not e.get("file") or not e.get("has_power"):

@@ -523,15 +523,214 @@ have failed loudly.
 
 ---
 
+## Act VII — The sensitivity map (Entries 29–30)
+
+### Entry 29 — Sweeping the constants nobody measured
+**Data:** the four blind corpora, re-scored over a 108-point grid of
+CdA × C_rr × ρ — pre-registered, six predictions on record before a single
+cell was computed.
+
+Three predictions held: ρ and CdA enter every quantity only as their
+product (exact to fourteen decimal places — the grid is secretly
+two-dimensional); the mass inversion *compensates* for parameter excursions
+(±60% on the constants moves the inferred mass by ±3 kg and the law's
+medians by points, not tens); and the dynamic-vs-flat verdict on P. Paz
+flips exactly where the fitted-physics rerun said it would. Three fell: the
+coasting deficit's measured value is *not* parameter-free (it slides
+monotonically with ρ·CdA, from −0.07 to +0.19 across the grid — so 0.13
+means *at the priors, at this scale*); the priors do not sit at any error
+minimum; and no single cell minimizes every model at once. The lesson that
+keeps paying: apparent gains from moving constants are signed-bias
+cancellation — the circularity argument, measured rather than argued.
+[[package]](../packages/entry29/ro-crate-preview.html)
+
+### Entry 30 — The simulation rides the same rollercoaster
+**Data:** the forward simulation under the same excursions, one at a time.
+
+Both engines' absolute errors move together by up to ±6 points, while the
+law-vs-simulation *gap* moves 9–14× less on the transfer riders. That
+lockstep is why the paper's paired conclusions survive parameter
+uncertainty that its absolute numbers do not — and it became the standing
+signature to check every time a protocol changed.
+[[package]](../packages/entry30/ro-crate-preview.html)
+
+---
+
+## Act VIII — The protocol reckoning (Entries 31–32)
+
+### Entry 31 — What Table 2 actually was
+**Data:** the 44 calibration brevets, re-run under the frozen constants
+every other corpus uses.
+
+An adversarial review caught the paper asserting a protocol the calibration
+scoreboard never used: D1 had been scored with the ride log's own per-ride
+physics and hand-entered ε. Rather than merely disclosing, the corpus was
+re-run blind — and the story got better, not worse: the corrected forms
+cluster at 7.6–8.2% against the simulation's 8.4% (parity exactly:
+22 of 44, p = 1.00), and the informed-vs-blind gap became a *result*, the
+measured price of condition knowledge. A second catch: 58 of the urban
+corpus's 62 rides are the author's own recordings — the honest unique-ride
+count is 1,285.
+[[package]](../packages/entry31/ro-crate-preview.html)
+
+### Entry 32 — The rot lives where the gates don't reach
+**Data:** none new — a third review, and the regenerations it forced.
+
+Every stale number the review caught (a descent-RMS table row, a
+real-descent count, a paired p-value) was a number the gate battery did not
+cover; every gated number was clean. The fixes were mechanical; the lesson
+was structural, and the battery grew to cover the classes that had rotted.
+The same entry retired the ε_d clamp — provably inert on every measured
+ride — and recorded that the transfer-only pool (the two independent
+riders, 660 rides) is the paper's honest headline: 5.6% against the
+simulation's 6.3%.
+[[package]](../packages/entry32/ro-crate-preview.html)
+
+---
+
+## Act IX — Physics from the rides themselves (Entries 33, 35, 36)
+
+### Entry 33 — No human judgment: every ride sets its own constants
+**Data:** 1,409 rides, each segmented into strict climbs and flats; mass,
+rolling and aero inverted per ride from its own power stream; wind from a
+loop test plus historical weather at a coarsened centroid.
+
+The mass estimator validates beautifully (corpus medians within ~1–3 kg of
+known and implied anchors; JAAM 98.7 vs 101.9). The inverted C_rr says the
+0.008 prior was a good guess. The inverted aero comes out *low*
+everywhere — an **effective** CdA that absorbs drafting — and that exposed
+the study's deepest structural fact: only the (cost, refund) *pair* is
+identified by ride energies. Handing the law an honest cost side while
+keeping the frozen refund constant mis-pairs them, and the regime rule
+flips. The flat-ε law under automatic physics hit 3.8% pooled — but the
+bias columns showed why: compensation, not recovery.
+[[package]](../packages/entry33/ro-crate-preview.html)
+
+### Entry 35 — The residual, hunted down
+**Data:** two registered arms — braking measured as excess deceleration
+beyond the physics coasting decel, and a regime-consistent aero inverted
+from each ride's flat power at its *measured* flat speed.
+
+Braking is real but small once the instrument's own noise is subtracted
+(≈ 0.7–1.4% of ride energy — the cadence cross-check exposed the raw
+estimator as jitter-dominated, vindicating the skeptical prior). The
+residual was the flats-selection bias of the segment aero: the
+regime-consistent ĈdA closes it almost entirely, law and simulation in
+lockstep, **with ε₀ = 0.13 untouched** — the frozen deficit works as
+designed the moment the cost side is honest. Pooled: 3.9% vs the
+simulation's 4.0%, the study's best frozen-behaviour numbers.
+[[package]](../packages/entry35/ro-crate-preview.html)
+
+### Entry 36 — ε₀ interrogated, and vindicated
+**Data:** the deficit regressed per corpus, two ways — the mechanism-level
+balance statistic and the law-level bias-zeroing value — with chronological
+out-of-sample tests.
+
+The balance-level deficit is a tight band (0.10–0.13 on the four non-urban
+corpora, both physics protocols); the bias-zeroing values are larger
+exactly where a known cost-side remainder exists — a costume, not a
+constant. Out of sample, every refit transfers no better than the frozen
+0.13, and the pooled "best estimate" (0.110) transfers *worse*. The
+re-freeze question was asked and answered the same day: 0.13 stays, for
+measured reasons.
+[[package]](../packages/entry36/ro-crate-preview.html)
+
+---
+
+## Act X — The deficit's mechanism, and the bicycle as a suspension (Entries 34, 37–40)
+
+### Entry 34 — The S-curve: right mechanism, wrong estimator
+**Data:** 1,287 rides at 30 m descent-cell grain; pedalling occupancy and
+intensity measured per grade bin; a pre-registered logistic fit with
+held-out halves.
+
+The intuition — the deficit is pedalling, and pedalling fades with
+grade — is *confirmed as mechanism*: occupancy falls monotonically for all
+three riders (0.6 → 0.05 from gentle to steep), faster than the dilution
+null, while intensity is flat in grade and rider-conditional. But the
+S-curve *estimator* lost its registered test 0 for 3: ride-mean grade blurs
+the curve (given freedom, the fit reconstructs 0.13), and the frozen
+constant out-transfers every refit under temporal drift. The published
+summary: the S-curve is the mechanism; the constant is its correct
+ride-level shadow.
+[[package]](../packages/entry34/ro-crate-preview.html)
+
+### Entry 37 — Momentum is a suspension
+**Data:** none — arithmetic, and two exact results.
+
+Cruising kinetic energy is worth h = v²/2g of climb (2.5–6.3 m at
+25–40 km/h): the rider–terrain system is a travel-limited suspension —
+KE↔PE exchange the spring, drag the damper, h_KE the travel. Two clean
+facts fell out: the fitted deadband τ = 2 m equals h_KE at the calibration
+rider's cruising speed, and excess speed decays on a flat with the *exact*,
+C_rr-free length λ = m/(ρ·CdA) ≈ 200 m (C_rr sets the floor, not the
+length; wind rescales by v/(v+w)). Smoothing stopped being data hygiene
+alone and became, in part, physics — rider-relative physics.
+[[package]](../packages/entry37/ro-crate-preview.html)
+
+### Entries 38–39 — The τ-sweep, confounded and then rescued
+**Data:** the deadband swept 0.5–6 m on every corpus, first under frozen
+priors, then under the near-zero-bias regime physics.
+
+Under frozen priors the sweep measured nothing but bias compensation — the
+optimum tracked each corpus's standing bias, Entry 29's lesson at a new
+dial. Deconfounded, the one corpus whose bias is flat in τ (the heaviest
+rider) put its optimum exactly on the momentum prediction (τ* = 3.5 m
+against h_KE = 3.1, with τ = 3 beating τ = 2 at p = 7×10⁻⁵) — the
+suspension reading's first real evidence. Deployment keeps τ = 2 m: the
+basins are flat; the case for per-rider τ is scientific, not practical.
+[[package]](../packages/entry39/ro-crate-preview.html)
+
+### Entry 40 — Rollers: a real signal with the wrong suspect
+**Data:** a registered recyclable-energy covariate against the law's
+residual, 1,409 rides.
+
+Roller-rich rides are systematically over-predicted on every corpus — the
+terrain signal is real — but the regression coefficients sit an order of
+magnitude above the physical ceiling for momentum recycling, and the
+covariate also correlates with the measured deficit, which recycling
+forbids. Verdict: recycling itself is energetically sub-resolution
+(≤ 0.5% of ride energy); the over-prediction belongs to the whole 2–6 m
+oscillation band the 2 m deadband passes through — the same object
+Entry 39 saw from the other side.
+[[package]](../packages/entry40/ro-crate-preview.html)
+
+---
+
+## Act XI — Pricing the shortcuts (Entries 41–42)
+
+### Entry 41 — The elevation-source substitution (in flight)
+The DEM-deployment letter's registered experiment: paper 1's law on
+planner-grade DEM profiles of the same rides, with the smoothing
+prescription as the deliverable. Running as this act is written.
+
+### Entry 42 — The pencil shortcut, priced and rejected
+**Data:** 1,378 rides; the hand recipe's mean-descent-grade ε against the
+drop-weighted estimator, under the honest per-ride physics.
+
+The shortcut under-refunds by a near-constant 0.08–0.11 of ε on every
+corpus — a definitional bias (its numerator counts all descent metres, its
+denominator only the steep distance). On the rider corpora that error
+*cancels* other residuals and flatters the accuracy column; the bias
+column tells the truth, and the urban corpus fails outright. By the
+decision rule fixed at registration, the paper's recipe stopped
+recommending it the same day: by hand, use the flat ε = 0.20 — it errs on
+the safe side — and leave the dynamic estimator to software.
+[[package]](../packages/entry42/ro-crate-preview.html)
+
+---
+
 ## Recurring terms, once
 
-- **The champion** — the corrected closed form: aero split off climbs
-  (Entry 3) + 2 m deadband profile (Entry 5), ε by the corpus rule (Entry 9).
+- **The champion / F3** — the corrected closed form (the paper's F1–F4
+  naming arrived with the IMRAD paper): aero split off climbs (Entry 3) +
+  2 m deadband profile (Entry 5), ε by the corpus rule (Entry 9).
 - **Canonical** — the forward-dynamics simulation; the reference, not the
   product.
-- **ε** — fraction of descent PE refunded to the rider; geometric estimator
-  `min(1, (α/β)/s̄) − ε₀` with the coasting deficit ε₀ ≈ 0.13 (Entry 8);
-  flat ε ≈ 0.20 in stop-go cities.
+- **ε** — fraction of descent PE refunded to the rider; dynamic estimator
+  = drop-weighted coasting limit minus the deficit ε₀ ≈ 0.13, *unclamped*
+  since Entry 32 (the clamp was provably inert); flat ε ≈ 0.20 in stop-go
+  cities — and, since Entry 42, the recommended *hand* value everywhere.
 - **α, β** — cost per metre travelled (roll+aero) and per metre climbed
   (gravity), both divided by drivetrain efficiency.
 - **med |Δ%| / bias** — median absolute and median signed error vs measured
@@ -541,6 +740,13 @@ have failed loudly.
 - **The bias-trade law** — any variant that shifts total energy wins exactly
   where the current parameter bias points the other way (Entry 17); the reason
   "cleaner physics" kept failing to beat the champion.
+- **The pairing rule** — only the (cost, refund) *pair* is identified by
+  ride energies (Entries 33/35): change the physics and ε₀ must move with
+  it, or the regime rule inverts. The regime-consistent aero (ĈdA from flat
+  power at *measured* flat speed) restores the pair automatically.
+- **The suspension** — momentum as a travel-limited suspension (Entry 37):
+  travel h_KE = v²/2g, damper length λ = m/(ρ·CdA); the deadband as, in
+  part, a momentum filter.
 - **Corpora** — longões (44 author brevets), censo (62 urban collective
   rides), P. Paz (441), JAAM (219), danlessa (the author's full export, 621
   clean) — the last three are the transfer tests.

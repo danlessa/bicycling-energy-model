@@ -50,7 +50,7 @@ def med_of(xs: list[float]) -> float:
     return (s[math.floor(k)] + s[math.ceil(k)]) / 2
 
 
-def rng(seed: int):
+def rng(seed: int) -> "Callable[[], float]":
     a = seed & 0xFFFFFFFF
 
     def rand() -> float:
@@ -142,7 +142,7 @@ def recyclable(runs: list[tuple[str, float, float]], h_ke: float,
     return total, hdrop, n_rec
 
 
-def iter_corpus(name: str):
+def iter_corpus(name: str) -> "Iterator[tuple]":
     if name == "longoes":
         for e in json.load(open(os.path.join(DATA, "model_inputs.json"))):
             if not e.get("file") or not e.get("has_power"):

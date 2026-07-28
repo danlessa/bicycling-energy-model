@@ -382,6 +382,71 @@ assert bad == 0
 print("boundary coercion:", SimParams.of({"m": 75, "Crr": 0.008, "CdA": 0.4, "rho": 1.13, "keff": 0.98}))
 ```
 
+# Entries 29–42 — the IMRAD-paper era: sweeps, pairing, and the suspension
+
+Fourteen entries in one arc, written alongside `research/article/paper1-closed-form.md`
+(each has its full lab record and RO-Crate; the curated journal tells the story). The
+executable skeleton:
+
+**Sweeps and lockstep (29–30).** The pre-registered CdA × C_rr × ρ grid confirmed the exact
+ρ·CdA degeneracy and mass-inversion compensation, and refuted parameter-free-ness of the
+deficit gap (it slides −0.07…+0.19 with ρ·CdA — so ε₀ = 0.13 means *at the priors, at this
+scale*). The simulation moves in lockstep with the law under the same excursions (gap moves
+9–14× less than the absolute errors) — why paired conclusions outlive parameter uncertainty.
+
+**Protocol reckoning (31–32).** D1 re-run blind (parity survives: 22/44, p = 1.00; the
+informed→blind shift became the measured price of condition knowledge); the unique-ride
+count corrected to 1,285; the ε_d clamp removed as provably inert; and the review lesson —
+every stale number lived outside the gate battery — answered by growing the battery.
+
+**Per-ride physics and the pairing (33, 35–36).** Fully automatic inversion validates for
+mass, reads an *effective* (drafting-inclusive) aero, and exposes the identification fact:
+only the (cost, refund) pair is constrained by ride energies. The lever mismatch makes it
+quantitative:
+
+```{python}
+from bicycling_energy_model.engines import G, EPS0
+assert G == 9.7864 and EPS0 == 0.13
+m, H_over_x = 74.5, 1/100          # D3: median drop per metre of route ≈ 1/100
+beta = m * G / 0.98
+lever_match = 1/(beta * H_over_x)   # dε*/dα  = x/(β·h₋)  per newton, per metre ratio
+lever_eps_d = 29/beta               # x₋/(β·h₋) ≈ (1/s̄)/β at s̄ = 3.5 %
+print(f"matching-ε lever {lever_match:.3f} /N vs ε_d lever {lever_eps_d:.3f} /N "
+      f"→ ratio {lever_match/lever_eps_d:.1f}× — no descent-geometry estimator can absorb a mis-priced α")
+```
+
+The repair needs no refit: the regime-consistent aero (flat power over *measured* flat
+speed) restores the pair with ε₀ untouched — pooled 3.9 % [3.6, 4.1] vs the simulation's
+4.0 % [3.7, 4.2] (Entry 35) — and Entry 36's out-of-sample tests keep the frozen 0.13 over
+every per-corpus refit.
+
+**Mechanism and suspension (34, 37–40).** The deficit's ledger identity is exact
+(δᵢ = E_legs,ᵢ/(β·hᵢ)); measured at cell grain, pedalling *occupancy* fades monotonically
+with grade for all riders while *intensity* is a rider habit — the S-curve is the mechanism,
+the constant its correct ride-level summary (the logistic estimator lost its held-out test
+0/3). Momentum reads as a travel-limited suspension:
+
+```{python}
+G = 9.7864
+for kmh in (25, 30, 35, 40):
+    v = kmh/3.6
+    print(f"{kmh} km/h → h_KE = v²/2g = {v*v/(2*G):.1f} m")
+m, rho, cda = 75, 1.13, 0.31
+print(f"exact excess-speed decay length λ = m/(ρ·CdA) = {m/(rho*cda):.0f} m (C_rr sets the floor, not the length)")
+```
+
+The τ-sweeps (38–39) showed the error-optimal deadband tracks *standing bias* unless
+deconfounded; on the one clean corpus the optimum lands on the momentum prediction
+(τ* = 3.5 m vs h_KE = 3.1 m, τ = 3 > τ = 2 at p = 7×10⁻⁵). The roller covariate (40)
+found a real terrain signal an order of magnitude too big for recycling — the 2–6 m band
+the 2 m deadband passes is the joint suspect. Deployment keeps τ = 2 m.
+
+**Pricing the shortcuts (41–42).** The mean-descent-grade pencil proxy under-refunds by a
+near-constant 0.08–0.11 of ε (its numerator counts all descent metres, its denominator only
+below-threshold distance) and was rejected by the pre-fixed decision rule — the paper's hand
+recipe now uses ε_f = 0.20, which errs on the safe side. Entry 41 (the DEM-deployment
+letter's substitution experiment) runs in a parallel line of work.
+
 # Reproducing everything
 
 Each entry's full study is one harness command (all resolve their paths relative to their own location; outputs land in the gitignored `data/results/`, and every FIT/GPX parse is served from the on-disk points cache — delete `data/results/cache/` to force a re-parse):
@@ -406,6 +471,14 @@ Each entry's full study is one harness command (all resolve their paths relative
 | 23, 25 | sibling repo: `../simujaules/docs/grid-sens.mjs` family | — |
 | 26 | `e26_pairs.py` → `node ../simujaules/docs/grid-e26.mjs` → `e26_portal_profiles.py` → `e26_detour.py` | `e26_*.{json,csv}` |
 | 27 | the full suite above, then `bootstrap_ci.py` (14/24 gates failed loudly on the first post-change run — by design) | — |
+| 29–30 | `python3 src/harness/param_sweep.py` (`SWEEP_CANON=1` for Tier B) | `param_sweep*.csv` |
+| 31 | `python3 src/harness/longoes_frozen.py` | `longoes_frozen.csv` |
+| 33 | `python3 src/harness/perride_invert.py` | `perride_invert.csv` |
+| 34 | `python3 src/harness/scurve_deficit.py` | `scurve_deficit.csv` |
+| 35–36 | `python3 src/harness/e35_residual.py`, `e36_eps0.py` | `e35_residual.csv`, `e36_eps0.csv` |
+| 38–39 | `python3 src/harness/e38_tau.py`, `e39_tau_reg.py` | `e38_tau.csv`, `e39_tau_reg.csv` |
+| 40, 42 | `python3 src/harness/e40_roller.py`, `e42_lump.py` | `e40_roller.csv`, `e42_lump.csv` |
+| 41 | `python3 src/harness/e41_dem_route.py` (parallel line; needs the IGC-SP raster) | `e41_dem_route.csv` |
 
 A sensitivity sweep (`PPAZ_M=78 python3 src/harness/ppaz_compare.py`) writes an **env-suffixed CSV** (`ppaz_comparison.PPAZ_M78.csv`) instead of overwriting the canonical file — a sweep and a real result cannot collide.
 

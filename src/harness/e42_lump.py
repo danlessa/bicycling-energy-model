@@ -57,7 +57,7 @@ PARITY = {"longoes": 6.6, "censo": 4.6, "ppaz": 3.1, "jaam": 3.2,
           "danlessa": 4.9}
 
 
-def med_of(xs):
+def med_of(xs: "list[float]") -> float:
     s = sorted(x for x in xs if is_finite(x))
     if not s:
         return float("nan")
@@ -65,10 +65,10 @@ def med_of(xs):
     return (s[math.floor(k)] + s[math.ceil(k)]) / 2
 
 
-def rng(seed):
+def rng(seed: int) -> "Callable[[], float]":
     a = seed & 0xFFFFFFFF
 
-    def rand():
+    def rand() -> float:
         nonlocal a
         a = (a + 0x6D2B79F5) & 0xFFFFFFFF
         t = ((a ^ (a >> 15)) * (1 | a)) & 0xFFFFFFFF
@@ -78,7 +78,7 @@ def rng(seed):
     return rand
 
 
-def boot_ci(values, seed):
+def boot_ci(values: "list[float]", seed: int) -> "tuple[float, float]":
     rand = rng(seed)
     n, B = len(values), 10000
     stats = sorted(med_of([values[int(rand() * n)] for _ in range(n)])
@@ -86,7 +86,7 @@ def boot_ci(values, seed):
     return stats[math.floor(0.025 * B)], stats[math.ceil(0.975 * B) - 1]
 
 
-def sign_p(w, l):
+def sign_p(w: int, l: int) -> float:
     n = w + l
     p = 0.0
     for k in range(n + 1):
@@ -96,7 +96,7 @@ def sign_p(w, l):
     return min(1.0, p)
 
 
-def ranks(v):
+def ranks(v: "list[float]") -> "list[float]":
     idx = sorted(range(len(v)), key=lambda i: v[i])
     r = [0.0] * len(v)
     for rank, i in enumerate(idx):
@@ -104,7 +104,7 @@ def ranks(v):
     return r
 
 
-def spearman(xs, ys):
+def spearman(xs: "list[float]", ys: "list[float]") -> float:
     rx, ry = ranks(xs), ranks(ys)
     mx, my = sum(rx) / len(rx), sum(ry) / len(ry)
     num = sum((rx[i] - mx) * (ry[i] - my) for i in range(len(rx)))
@@ -118,7 +118,7 @@ with open(os.path.join(RESULTS, "e35_residual.csv"), encoding="utf-8") as fh:
         E35[(r["corpus"], r["ride"])] = r
 
 
-def descent_stats(profS):
+def descent_stats(profS: dict) -> "dict | None":
     """x₋, h̃₋, and descent-cell grade dispersion on the deadbanded profile."""
     px, ph = profS["x"], profS["h"]
     x0 = px[0]
@@ -127,7 +127,7 @@ def descent_stats(profS):
         return None
     j = 0
 
-    def h_at(d):
+    def h_at(d: float) -> float:
         nonlocal j
         while j < len(px) - 2 and px[j + 1] < d:
             j += 1
@@ -151,7 +151,7 @@ def descent_stats(profS):
     return {"x_dn": x_dn, "h_dn": h_dn, "sbar_lump": h_dn / x_dn, "grade_sd": sd}
 
 
-def run_ride(pts, corpus, ride, m_logged):
+def run_ride(pts: list, corpus: str, ride: str, m_logged: "float | None") -> "dict | None":
     j = E35.get((corpus, ride))
     if j is None:
         return None
@@ -198,7 +198,7 @@ def run_ride(pts, corpus, ride, m_logged):
     return row
 
 
-def iter_corpus(name):
+def iter_corpus(name: str) -> "Iterator[tuple]":
     if name == "longoes":
         for e in json.load(open(os.path.join(DATA, "model_inputs.json"))):
             if not e.get("file") or not e.get("has_power"):
@@ -223,7 +223,7 @@ def iter_corpus(name):
         yield (pts, os.path.basename(a["file"]), None)
 
 
-def main():
+def main() -> None:
     all_rows = []
     for corpus in ("longoes", "censo", "ppaz", "jaam", "danlessa"):
         rows = []

@@ -601,7 +601,7 @@ if not _ok:
     failed = True
 
 
-def _ranks(v):
+def _ranks(v: list) -> list:
     idx = sorted(range(len(v)), key=lambda i: v[i])
     r = [0.0] * len(v)
     for rank, i in enumerate(idx):
@@ -609,7 +609,7 @@ def _ranks(v):
     return r
 
 
-def _spearman(xs, ys):
+def _spearman(xs: list, ys: list) -> float:
     rx, ry = _ranks(xs), _ranks(ys)
     mx, my = sum(rx) / len(rx), sum(ry) / len(ry)
     n_ = sum((rx[i] - mx) * (ry[i] - my) for i in range(len(rx)))
