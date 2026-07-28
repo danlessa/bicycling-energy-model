@@ -165,9 +165,9 @@
         "SoftwareSourceCode"
       ],
       "name": "src/harness/bootstrap_ci.py",
-      "url": "https://github.com/danlessa/bicycling-energy-model/blob/de0bd507764197d4a4616c06aaa1006ed96a0628/src/harness/bootstrap_ci.py",
+      "url": "https://github.com/danlessa/bicycling-energy-model/blob/d918dd762b3fbbf979039cd4fd31f52c69501969/src/harness/bootstrap_ci.py",
       "sha256": "f98bb343758e84be3cb00db75bcff21f64d5dd92d8c735c57fa466f29dbb6c16",
-      "version": "de0bd507764197d4a4616c06aaa1006ed96a0628",
+      "version": "d918dd762b3fbbf979039cd4fd31f52c69501969",
       "programmingLanguage": "Python"
     },
     {

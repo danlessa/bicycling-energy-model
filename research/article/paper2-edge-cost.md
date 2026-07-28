@@ -131,6 +131,14 @@ ride. The realisation is deployed in an open-source energy-field router
     function of edge length — connect to c);
   - asymmetry and turn costs (out of scope for the physics, but state what
     the router must not assume);
+  - momentum non-locality (paper-1 journal Entry 37): kinetic energy worth
+    h_KE = v²/2g ≈ 2–6 m of climb carries across edges, and no per-edge cost
+    can transport it — closely-spaced rollers (within the dissipation length
+    λ = m/(ρ·C_dA) ≈ 200 m) are over-charged by construction. h_KE and λ
+    bound the error's scale and the raster pre-smoothing that would absorb
+    it; the deadband τ ≈ η·v_f²/2g reading makes the filter speed-dependent,
+    which a deployment must either accept as calibrated-at-one-speed or
+    parameterise;
   - the grade-resolved deficit (paper-1 journal Entry 34): pedalling occupancy
     fades monotonically with cell grade for all riders while intensity is
     rider-level — a per-EDGE ε₀(s) = ε₀·g(s) is therefore physically licensed

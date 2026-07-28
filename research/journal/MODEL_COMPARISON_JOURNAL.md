@@ -108,6 +108,9 @@ changed. See Entry 11.)*
 - **Entry 30** (pre-registration + Tier B results: the canonical simulation under the same
   sweep, one-at-a-time, `SWEEP_CANON=1` in
   [`param_sweep.py`](../../src/harness/param_sweep.py)) — this commit
+- **Entry 37** (hypothesis note, no run: the KE-equivalent height — momentum as the
+  deadband's mechanism, roller spacing as an ε covariate, and the dissipation length
+  λ = m/(ρ·C_dA)) — this commit
 - **Entry 36** (pre-registration + results: ε₀ regressed per dataset — balance-level vs
   bias-zeroing, at regime-consistent and frozen physics, with a chronological out-of-sample
   test, [`e36_eps0.py`](../../src/harness/e36_eps0.py)) — this commit
@@ -124,6 +127,57 @@ changed. See Entry 11.)*
   numbers the review caught un-gated — [`bootstrap_ci.py`](../../src/harness/bootstrap_ci.py)) — this commit
 
 ---
+
+## 2026-07-28 — Entry 37: the KE-equivalent height — momentum under rollers (hypothesis note, no run)
+
+*Prompt (Danilo): "On hilly terrain, esp. closely spaced hills together, we would expect the
+descent inertia to play a role when going over the next hill. For a 75 kg rider at speeds of
+25, 30, 35 and 40 km/h, the kinetic energy would be equivalent to the gravitational potential
+of 2.4 m, 3.5 m, 4.8 m and 6.3 m. Note that only a part of it would actually be transferred
+[…] a substantial part of the kinetic energy gets dissipated on the intermediate flat
+section. This is somewhat captured by the deadband filter. The larger the amount of short
+hills (and close spacing between them / smaller the flat section), the more we would expect
+epsilon to play a role."*
+
+The numbers verify exactly (h_KE = v²/2g at G = 9.7864: 2.46 / 3.55 / 4.83 / 6.31 m), and
+two quantitative consequences fall out immediately.
+
+**1. The deadband may literally be the momentum filter.** The fitted τ = 2 m (Entry 5, on
+the author's corpus) sits at the KE-equivalent height of the author's measured flat speed:
+h_KE(21.2 km/h) = 1.77 m ≈ τ. A bump smaller than h_KE(v) is paid by momentum and repaid on
+its far side — energetically it *is* flat ground, which is exactly what the deadband encodes.
+If this identification is right, τ is not a universal constant but a **speed-dependent**
+one, τ ≈ η·v_f²/2g (η ≤ 1 the transfer efficiency): P. Paz and JAAM cruise at ≈ 28 km/h, so
+their momentum filter should sit near **3.1–3.2 m**, not 2 m. Registered test (future run):
+sweep τ per corpus (the Entry-5 protocol on D3–D5) and check whether the med|Δ%|-minimising
+τ tracks v_f²/2g across riders. If yes, the deployed constant τ = 2 m under-filters fast
+riders — and c ≈ 3 m/km (form 4's scalar) inherits the same speed dependence.
+
+**2. "Close spacing" has a physical scale, and it is speed-independent.** Excess KE above
+the equilibrium speed decays over a flat with characteristic length **λ = m/(ρ·C_dA)** (pure
+quadratic drag; rolling adds a slow linear drain): ≈ 220 m for the author (C_dA ≈ 0.30),
+≈ 170 m at the frozen prior, ≈ 230 m for JAAM (heavier — heavier riders coast farther).
+So hills within ≈ 200 m of each other recycle descent KE into the next rise; flats beyond
+≈ 2–3 λ (500–700 m) dissipate most of it. Danilo's "smaller the flat section" clause,
+quantified.
+
+**Where the effect should show — and where it should NOT.** Rollers with amplitude between
+τ = 2 m and h_KE(v) (≈ 2–6 m) are charged full β·h± by form 3 but are partially
+momentum-paid in reality, so the *form-3 signed residual* should trend positive
+(over-prediction) with a ride's share of drop in such rollers spaced ≲ λ apart. Crucially,
+this should NOT appear in ε_bal: the balance books only descent-cell pedal energy, and on
+rollers the recycled KE surfaces as *cheaper pedalling on the following rise* — a different
+ledger line (this reconciles the §3.2 boundary finding that measured ε_bal → 0 on gentle
+terrain even though the energy is demonstrably being recycled). So the registered covariate
+is roller-drop share vs form-3 residual, NOT vs ε_bal — and it joins Entry 34's untested
+route-side candidates with a mechanism and a scale attached.
+
+Edge-cost consequence (paper 2): momentum is **non-local** — no per-edge cost can carry KE
+across edges, so any edge realisation over-charges closely-spaced rollers by construction;
+λ ≈ 200 m and h_KE ≈ 2–6 m bound the error's scale and the raster smoothing that would
+absorb it. Registered as a pitfall in the paper-2 scaffold.
+
+Status: hypothesis registered with test designs; nothing fitted, no harness yet.---
 
 ## 2026-07-28 — Entry 36: ε₀ per dataset — regressed, two ways, against the frozen 0.13
 

@@ -129,9 +129,9 @@
         "SoftwareSourceCode"
       ],
       "name": "src/harness/e36_eps0.py",
-      "url": "https://github.com/danlessa/bicycling-energy-model/blob/de0bd507764197d4a4616c06aaa1006ed96a0628/src/harness/e36_eps0.py",
+      "url": "https://github.com/danlessa/bicycling-energy-model/blob/d918dd762b3fbbf979039cd4fd31f52c69501969/src/harness/e36_eps0.py",
       "sha256": "741dad8186fdb486edfd73c4d83993aca5b9d384e73210b52391b8cd6d98e1ae",
-      "version": "de0bd507764197d4a4616c06aaa1006ed96a0628",
+      "version": "d918dd762b3fbbf979039cd4fd31f52c69501969",
       "programmingLanguage": "Python"
     },
     {

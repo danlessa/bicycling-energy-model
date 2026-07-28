@@ -129,9 +129,9 @@
         "SoftwareSourceCode"
       ],
       "name": "src/harness/longoes_frozen.py",
-      "url": "https://github.com/danlessa/bicycling-energy-model/blob/de0bd507764197d4a4616c06aaa1006ed96a0628/src/harness/longoes_frozen.py",
+      "url": "https://github.com/danlessa/bicycling-energy-model/blob/d918dd762b3fbbf979039cd4fd31f52c69501969/src/harness/longoes_frozen.py",
       "sha256": "a23883d56576f05fbecc926195dcb3d2c70f917261c8c073ea5c539573454d79",
-      "version": "de0bd507764197d4a4616c06aaa1006ed96a0628",
+      "version": "d918dd762b3fbbf979039cd4fd31f52c69501969",
       "programmingLanguage": "Python"
     },
     {
