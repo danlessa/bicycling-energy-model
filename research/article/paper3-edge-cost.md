@@ -73,7 +73,13 @@ ride. The realisation is deployed in an open-source energy-field router
   30 m calibration scale unless constants are re-fitted or the raster
   pre-smoothed [E19–E21 partial]; (H3) minimum-energy routes differ
   materially from minimum-distance ones only above a hilliness threshold
-  (detour experiments, [E26 `e26_detour.py`]).
+  (detour experiments, [E26 `e26_detour.py`]); (H4) the two elevation repairs
+  do not stack at edge grain either — pre-smoothing the raster and re-weighting
+  portal edges remove the same artifact, so applying both over-corrects, as
+  measured at route grain in [E41] (§3.2 below). H4's edge-grain twist: a bridge
+  may span one or two cells, so its vertical curve is sub-resolution and the
+  straight-deck over-correction could be *larger* here than the −2.43 m
+  [−3.26, −1.68] measured per touched ride at route grain.
 
 ## 2. Methods
 
@@ -98,6 +104,21 @@ ride. The realisation is deployed in an open-source energy-field router
   deliverable (paper2-dem-deployment.md, a letter this paper cites); this
   paper keeps only the EDGE-grain consequences (per-edge grade error,
   cost-surface stability under σ).
+  **DONE — cite, do not re-derive** [E41]: paper 2's Table 2 IS that
+  prescription (source × polyline step × σ → the c to use → the measured
+  accuracy band), with σ applied to the *profile* rather than the raster —
+  validated against E20's raster-space smoothing to −1.1% of h₊ (p90 6.9%).
+  Its measured per-source noise rates are the numbers to inherit: barometric
+  3.10 m/km [3.01, 3.18], IGC-SP 5 m 4.95 [4.89, 5.00], FABDEM sampled at
+  30 m 7.52 [7.12, 7.76], FABDEM oversampled at 5 m 10.14 [9.86, 10.59].
+  Two route-grain results this paper must NOT assume carry over unchanged:
+  (i) the penalty is terrain-dependent (bias shift +0.7 pp on gentle terrain
+  vs +20.1 pp on mountain brevets), so an edge-grain scale rule fitted on
+  urban grids will not hold on escarpments; (ii) oversampling a coarse DEM
+  is itself a cost (FABDEM at 5 m steps doubles h₊ vs 30 m steps and costs
+  0.7 pp accuracy / 2.3 pp bias) — a router on an 8-connected grid samples
+  at the grid pitch, so this is a *grid-design* parameter here, not a free
+  choice.
 - **2.5 Sanity gates.** Synthetic gates already exist (`SANITY=1
   regime_compare.py`; scale/goal per-gate blocks, two documented-benign
   failures). TODO: a paper-2 `bootstrap_ci`-style battery re-deriving every
@@ -113,6 +134,20 @@ ride. The realisation is deployed in an open-source energy-field router
   the deadband is *not* expressible as an edge weight (proof sketch: it is a
   running max/min over the path — non-local by construction) — hence the
   scalar c correction is the only form-3-family option available per edge.
+  **Registered carry-over from [E41] — the repairs do not stack.** At route
+  grain, σ-smoothing and the bridge/tunnel (portal) deck correction address
+  the SAME artifact: after σ = 30 m the profile's in-span ascent already
+  matches the barometer (+0.05 m [−0.29, +0.28]), and applying the deck as
+  well subtracts twice and makes energy significantly worse (400/935 rides
+  closer, p < 10⁻⁴). Both levers exist at edge grain too — the raster can be
+  pre-smoothed AND portal edges re-weighted — so the same double-subtraction
+  is available and must be tested, not assumed away. Related: the straight
+  deck is a known-sign OVER-correction, because a road bridge carries a
+  vertical curve the rider climbs and a chord erases it — measured against
+  the ride's own barometer, −2.43 m [−3.26, −1.68] on bridges vs −0.29
+  [−0.40, −0.20] on tunnels. At edge grain a bridge may span only one or two
+  cells, so the crown is sub-resolution and the error could be larger, not
+  smaller. TODO: an H4 pre-registering both.
 - **3.3 Route studies.** Detour/portal experiments [E26]; minimum-energy vs
   minimum-distance routes on real Pedal Hidrográfico territory; energy-field
   maps (Simujaules). TODO: quantify H3.
