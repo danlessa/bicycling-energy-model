@@ -476,7 +476,10 @@ def main() -> None:
             for r in rows:
                 fh.write(",".join(
                     (f'"{v}"' if isinstance(v, str)
-                     else js_str(v) if isinstance(v, bool)
+                     # lowercase, matching every other harness's CSV and what
+                     # bootstrap_ci's `== "true"` filters expect. js_str renders a
+                     # Python bool as "True", which silently emptied the gate.
+                     else ("true" if v else "false") if isinstance(v, bool)
                      else to_fixed(v, 3) if is_finite(v) else "")
                     for v in (r.get(k, float("nan")) for k in cols)) + "\n")
         print(f"\nwrote {os.path.basename(dest)} ({len(rows)} rides)")

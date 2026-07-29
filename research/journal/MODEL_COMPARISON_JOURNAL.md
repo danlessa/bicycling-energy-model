@@ -155,8 +155,9 @@ and register the implementation: "ok do it and commit".*
 and flat $\varepsilon_f = 0.20$ otherwise. **No harness implements it.** The `s̄ >= 0.03`
 expressions in `ppaz_compare.py`, `jaam_compare.py`, `danlessa_compare.py` and `time_compare.py`
 select reporting subsets; none switches the estimator. Every published $\varepsilon_d$ column
-applies the dynamic estimator to all rides, including the 52% whose own mean descent grade is
-below 3% — the regime the paper says it should not be used in.
+applies the dynamic estimator to all rides, including the 69% of Table 3's own corpora whose mean descent grade is
+below 3% (52% if the count is taken over all nine corpora Entry 45 scored — the
+figure first written here, with the wrong denominator for the claim) — the regime the paper says it should not be used in.
 
 **The experiment.** Add a per-ride switch to the frozen-grid harnesses: use
 $\varepsilon_d = \varepsilon_{\mathrm{coast}} - \varepsilon_0$ when $\bar s \geq 3\%$ and
@@ -173,7 +174,7 @@ the open-road ones (D3, D5, D6) — the rule was inferred from exactly that cont
 a consistency check, not a discovery. P2: with the switch in place, the grade-inverse deficit
 beats the constant on the open corpora, because it is then only ever evaluated where Entry 45
 found it accurate. P3: unswitched, the grade-inverse deficit is *worse* than the constant,
-because half the rides fall in the band where it under-predicts by 20–70%. **P3 is the one that
+because two-thirds of Table 3's rides fall in the band where it under-predicts by 20–70%. **P3 is the one that
 matters** — if it holds, eq. (8) is unusable without the switch, and the article's conditional
 framing is correct rather than merely cautious.
 
@@ -417,7 +418,7 @@ wrong direction. If a guard is wanted, evaluate G at $\max(\bar s, 1\%)$: it cos
 **What this does to the article claim.** §3.3's regime rule (dynamic $\varepsilon_d$ on mean
 descent grade ≥ 3%, flat $\varepsilon_f$ otherwise) is a **recommendation that no harness
 implements** — the `s̄ >= 0.03` filters in the `*_compare.py` files are reporting slices, not
-gates, and Table 3 applies $\varepsilon_d$ to every ride including the **52%** below 3%. The
+gates, and Table 3 applies $\varepsilon_d$ to every ride including the **69%** of Table 3's corpora below 3%. The
 article text was corrected accordingly: the cross-reference now points at §3.3 rather than a
 section invented the same day, the scope condition is labelled unenforced, and the claim is
 shrunk to *where the dynamic estimator applies at all, its deficit should be grade-inverse*.

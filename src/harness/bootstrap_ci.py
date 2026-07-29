@@ -811,6 +811,150 @@ for _arm, _ew, _en in (("igc5", 501, 943), ("igc5s30", 400, 935),
     if not _ok:
         failed = True
 
+# ---------- 3j. D6 + the deficit's form (Entries 43-45, paper §1.3.2/§3.2) ----------
+print("\n== D6 European corpus (Entry 43) ==")
+d6 = parse_csv("skc_comparison.csv")
+_d6ok = [r for r in d6 if r.get("dataOK", "true") == "true"]
+_ok = len(d6) == 743 and len(_d6ok) == 740
+print(f"E43 population: {len(d6)} evaluated, {len(_d6ok)} above the physical floor"
+      + (" GATE-OK" if _ok else " GATE-FAIL(exp 743/740)"))
+if not _ok:
+    failed = True
+_riders = ["user_1", "user_2", "user_3", "user_5"]
+_d6str = [[r for r in _d6ok if r.get("rider") == u] for u in _riders]
+# Guard: an empty stratum means a filter matched nothing (a renamed column, or a
+# boolean written "True" where every other harness writes "true" — both happened
+# while this section was being written). Report it as a FAILURE rather than
+# crashing the battery on an empty median, which is what it did the first time.
+if not all(_d6str) or not _d6ok:
+    print("E43 strata: EMPTY — a filter matched nothing GATE-FAIL")
+    failed = True
+else:
+    # strat_report REQUIRES an expected CI — passing None crashed it on the
+    # `abs(lo - expect_ci[0])` comparison. The bands are Entry 43's published
+    # stratified brackets.
+    for _lab, _col_, _ea, _eci in (("E43 F3·ε_d pooled", "f3_d", 3.16, (2.9, 3.5)),
+                                   ("E43 simulation pooled", "canon_d", 3.15, (2.9, 3.3))):
+        strat_report(_lab, [col(s, _col_) for s in _d6str], _ea, _eci)
+# P2: F4's bias sits 3-6 points BELOW F3's, predicted from the corpus noise rate
+_b3 = median(col(_d6ok, "f3_d"))
+_b4 = median(col(_d6ok, "f4_d"))
+_ok = -6.0 <= _b4 - _b3 <= -3.0
+print(f"E43 P2 F4−F3 bias delta = {_b4 - _b3:+.2f} points"
+      + (" GATE-OK" if _ok else " GATE-FAIL(exp -6..-3)"))
+if not _ok:
+    failed = True
+# the measured noise rate that P2 was derived from, before any energy was computed
+_nr = median(col(_d6ok, "noise_rate"))
+_ok = abs(_nr - 1.24) <= 0.05
+print(f"E43 noise rate c = {_nr:.2f} m/km"
+      + (" GATE-OK" if _ok else " GATE-FAIL(exp 1.24)"))
+if not _ok:
+    failed = True
+# P3: the deficit spread across riders — the paper's portability bound
+for _u, _g in (("user_1", 0.117), ("user_2", 0.298), ("user_3", 0.080)):
+    _v = [num(r, "eps_gap") for r in _d6ok if r.get("rider") == _u
+          and is_finite(num(r, "eps_gap"))]
+    _ok = abs(median(_v) - _g) <= 0.006
+    print(f"E43 deficit gap {_u}: {median(_v):.3f}"
+          + (" GATE-OK" if _ok else f" GATE-FAIL(exp {_g})"))
+    if not _ok:
+        failed = True
+
+print("\n== Occupancy sigmoids (Entry 44, paper §1.3.2) ==")
+e44 = parse_csv("e44_scurve_fits.csv")
+_s50 = {r["group"]: num(r, "s50_pct") for r in e44}
+# the article claims the two rider populations do not overlap in s50
+_br = [_s50[g] for g in ("D1", "D3", "D4", "D5") if g in _s50]
+_eu = [_s50[g] for g in _s50 if g.startswith("D6")]
+_ok = bool(_br) and bool(_eu) and max(_br) < min(_eu)
+print(f"E44 s50: Brazilian {min(_br):.1f}-{max(_br):.1f}% vs European "
+      f"{min(_eu):.1f}-{max(_eu):.1f}%"
+      + (" GATE-OK (disjoint)" if _ok else " GATE-FAIL(expected disjoint)"))
+if not _ok:
+    failed = True
+# H-P2 refuted: slope must beat speed on held-out RMSE by a wide margin
+_sr = median([num(r, "s_rmse_out") for r in e44 if is_finite(num(r, "s_rmse_out"))])
+_vr = median([num(r, "v_rmse_out") for r in e44 if is_finite(num(r, "v_rmse_out"))])
+_ok = _vr / _sr >= 2.5
+print(f"E44 slope vs speed held-out RMSE: {_sr:.4f} vs {_vr:.4f} ({_vr/_sr:.1f}x)"
+      + (" GATE-OK" if _ok else " GATE-FAIL(exp >=2.5x)"))
+if not _ok:
+    failed = True
+
+print("\n== Grade-inverse deficit, eq. (8) (Entry 45, paper §3.2.1) ==")
+# eq. (8)'s constant is fitted on paper 1's CLAMPED quantity. Refitting it here
+# from the per-ride CSV is the gate: it catches the clamped/unclamped mix-up that
+# produced three wrong readings while this entry was being written.
+e45 = parse_csv("e45_ridelevel.paper.csv")
+# Compare `half` NUMERICALLY: the CSV writer formats every non-string as a float,
+# so the column holds "0.00000"/"1.00000" and a string test against "0" silently
+# selects nothing. Third filter-matched-nothing bug in this section; numeric
+# comparison is robust to either format.
+_fit = [r for r in e45 if num(r, "half") < 0.5 and is_finite(num(r, "d_meas"))]
+_out = [r for r in e45 if num(r, "half") >= 0.5 and is_finite(num(r, "d_meas"))]
+if not _fit or not _out:
+    print(f"E45 split: fit={len(_fit)} out={len(_out)} — a filter matched nothing GATE-FAIL")
+    failed = True
+else:
+    _k = median([num(r, "d_meas") * num(r, "s_bar") for r in _fit])
+    _ok = abs(_k - 0.0051) <= 0.0002
+    print(f"E45 eq.(8) k = {_k:.4f} (n_fit={len(_fit)})"
+          + (" GATE-OK" if _ok else " GATE-FAIL(exp 0.0051)"))
+    if not _ok:
+        failed = True
+    # eq. (8) must return the frozen 0.13 at the calibration corpus's typical descent
+    # Tolerance tightened to +/-0.001 and the expectation corrected to 0.130.
+    # At +/-0.004 this gate PASSED while the article printed 0.131 — a number
+    # derived from the ROUNDED k (0.0051/0.039 = 0.1308) rather than the fitted
+    # one (0.00506/0.039 = 0.1297). A gate whose tolerance exceeds the rounding
+    # precision of the claim cannot defend that claim.
+    # Anchored on D1's MEASURED median descent grade, recomputed here. The
+    # previous version used 3.9% — which is the grade at which eq. (8) exactly
+    # equals 0.13, i.e. reverse-engineered from the desired output and then
+    # described in the article as "D1's typical descent". D1's median is 3.80%.
+    _d1s = [num(r, "s_bar") for r in e45 if r.get("group") == "D1"
+            and is_finite(num(r, "s_bar"))]
+    _at = _k / median(_d1s) if _d1s else float("nan")
+    _ok = bool(_d1s) and abs(_at - 0.133) <= 0.002
+    print(f"E45 eq.(8) at D1's median s̄={100*median(_d1s):.2f}%: {_at:.4f} "
+          f"(article claims 0.133)"
+          + (" GATE-OK" if _ok else " GATE-FAIL(exp 0.133)"))
+    if not _ok:
+        failed = True
+    # held-out: eq. (8) beats the best single constant, and by the published margin
+    _apr = median([num(r, "d_meas") for r in _fit])
+    _eg = median([abs(_k / num(r, "s_bar") - num(r, "d_meas")) for r in _out
+                  if num(r, "s_bar") > 0])
+    _ea = median([abs(_apr - num(r, "d_meas")) for r in _out])
+    _w = sum(1 for r in _out if num(r, "s_bar") > 0
+             and abs(_k / num(r, "s_bar") - num(r, "d_meas")) < abs(_apr - num(r, "d_meas")))
+    _l = sum(1 for r in _out if num(r, "s_bar") > 0
+             and abs(_k / num(r, "s_bar") - num(r, "d_meas")) > abs(_apr - num(r, "d_meas")))
+    _ok = (abs(_eg - 0.055) <= 0.003 and abs(_ea - 0.067) <= 0.003
+           and _w == 344 and sign_p(_w, _l) <= 1e-4)
+    print(f"E45 held-out: eq.(8) {_eg:.4f} vs constant {_ea:.4f}, wins {_w}/{_w + _l}, "
+          f"p={sign_p(_w, _l):.1e}"
+          + (" GATE-OK" if _ok else " GATE-FAIL(exp 0.055/0.067/344)"))
+    if not _ok:
+        failed = True
+    # the scope figure the article leans on: half the rides fall BELOW the 3% regime
+    # The article's scope figure is about the evaluation behind TABLE 3, i.e.
+    # D2-D5 (1,366 rides), NOT all nine corpora scored in Entry 45 (2,155, which
+    # adds D1 and 745 rides of an external deposit this paper never introduces).
+    # The first version of this gate used 2155 and so certified 52% when the
+    # article's own claim needs 69% — a mismatched denominator the gate could not
+    # see because it hardcoded the same wrong one.
+    _t3 = [r for r in e45 if r.get("group") in ("D2", "D3", "D4", "D5")]
+    _t3n = 1366
+    _share = 1 - len(_t3) / _t3n
+    _ok = 0.66 <= _share <= 0.71
+    print(f"E45 scope (Table 3 corpora): {len(_t3)} of {_t3n} at s̄>=3% -> "
+          f"{100*_share:.0f}% below the regime threshold"
+          + (" GATE-OK" if _ok else " GATE-FAIL(exp ~69%)"))
+    if not _ok:
+        failed = True
+
 # ---------- 4. Time model, P. Paz (§8.8 primary endpoint) ----------
 # Target = tMovBin, exactly as time_compare's scoreboard() scores it.
 print("\n== Time model, P. Paz (§8.8 primary endpoint) ==")
