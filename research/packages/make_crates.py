@@ -76,6 +76,12 @@ PRODUCER = {
     "e39_tau_reg.csv": "python3 src/harness/e39_tau_reg.py",
     "e40_roller.csv": "python3 src/harness/e40_roller.py",
     "e42_lump.csv": "python3 src/harness/e42_lump.py",
+    "skc_comparison.csv": "python3 src/harness/skc_compare.py",
+    "skc_invert.csv": "python3 src/harness/skc_invert.py",
+    "skc_descent_occupancy.csv": "python3 src/harness/skc_invert.py",
+    "skc_eps_vs_pedal.csv": "python3 src/harness/skc_eps_vs_pedal.py",
+    "e44_scurve_cells.csv": "python3 src/harness/e44_scurve.py",
+    "e44_scurve_fits.csv": "python3 src/harness/e44_scurve.py",
     "e41_dem_route.csv": "python3 src/harness/e41_dem_route.py",
 }
 
@@ -136,6 +142,12 @@ ENTRIES = {
     41: (["src/harness/e41_dem_route.py"], ["e41_dem_route.csv"], True,
          ["research/article/paper2-dem-deployment.md"]),
     42: (["src/harness/e42_lump.py"], ["e42_lump.csv"], True, []),
+    43: (["src/harness/skc_compare.py", "src/harness/skc_invert.py",
+         "src/harness/skc_eps_vs_pedal.py"],
+        ["skc_comparison.csv", "skc_invert.csv", "skc_descent_occupancy.csv",
+         "skc_eps_vs_pedal.csv"], True, []),
+    44: (["src/harness/e44_scurve.py"],
+         ["e44_scurve_cells.csv", "e44_scurve_fits.csv"], True, []),
 }
 
 # entry 22 reads the per-ride CSVs the other harnesses wrote

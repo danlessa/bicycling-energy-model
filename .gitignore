@@ -35,6 +35,13 @@ data/inputs/activities/strava_jaam/
 # + any manifest/derived files.
 data/inputs/activities/strava_danlessa/
 
+# scikit-cycling `power_regression` (Zenodo 10.5281/zenodo.1202440, CC BY 4.0) —
+# 4 riders, Catalonia + French Alps. Open licence, but the tracks START AT THE
+# RIDERS' HOME ADDRESSES despite the user_N anonymisation, so the raw FIT files
+# and any geometry derived from them are never committed. Cite the DOI; ship
+# aggregates only. Whole dir: fit originals + manifest + derived csv.
+data/inputs/activities/scikit_cycling/
+
 # The censo spreadsheet itself carries activity links / attendance — keep local.
 data/inputs/censo-hidrografico.xlsx
 

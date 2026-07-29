@@ -37,6 +37,11 @@ resolve their inputs and this directory relative to their own location).
 | `e26_portal_profiles.csv` | `python3 src/harness/e26_portal_profiles.py` | 26 (Q2A) |
 | `e26_detour.csv` | `python3 src/harness/e26_detour.py` | 26 (detour secondary) |
 | `e26_osm_cache/` | pulled by the two Entry-26 harnesses (offline on re-run) | 26 (OSM spans) |
+| `skc_comparison.csv` | `python3 src/harness/skc_compare.py` | 43 (D6, four European riders; **GPS**) |
+| `skc_invert.csv` | `python3 src/harness/skc_invert.py` | 43 amendment arm A (D6, regime-consistent aero) |
+| `skc_descent_occupancy.csv` | `python3 src/harness/skc_invert.py` | 43 amendment arm B (descent pedalling, all corpora) |
+| `skc_eps_vs_pedal.csv` | `python3 src/harness/skc_eps_vs_pedal.py` | 43 amendment arm C (pedalling vs deficit) |
+| `e44_scurve_cells.csv`, `e44_scurve_fits.csv` | `python3 src/harness/e44_scurve.py` | 44 (S-curve reopened; occupancy sigmoids) |
 
 `python3 src/harness/bootstrap_ci.py` (Entry 22) reads these CSVs and gates the
 article's published medians against them.

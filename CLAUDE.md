@@ -35,7 +35,10 @@ home of the *derivation* and the side-by-side comparison.
   (441 second-rider rides: implied-mass inversion + frozen-ε transfer;
   `PPAZ_M=<kg>` env), `jaam_inventory.py` + `jaam_compare.py` (219 third-rider
   rides — Entry 14; `JAAM_M`), `danlessa_inventory.py` + `danlessa_compare.py`
-  (the author's full export, Entry 16), `time_compare.py` (the time model
+  (the author's full export, Entry 16), `skc_compare.py` (Entry 43 — **D6**, the
+  first non-Brazilian corpus: four European riders from the open scikit-cycling
+  deposit; self-contained, it walks the corpus dir so there is no inventory step;
+  `SKC_SMOKE=1`, `SKC_M`/`SKC_CDA`/`SKC_CRR`), `time_compare.py` (the time model
   `x*=x+k₊h₊−k₋h₋` — Entry 13), `cda_estimate.py` + `param_fit.py` (independent
   per-rider CdA/C_rr/mass + wind — Entry 15; `param_fit.py`'s `pts_with_geo`
   keeps lat/lon, the one point-builder that is NOT the shared `pts_from_fit`),
@@ -111,10 +114,14 @@ home of the *derivation* and the side-by-side comparison.
   simujaules repo).
 - `data/inputs/` — `sample.gpx` and `flecha_power.csv` committed; everything
   else is **gitignored and private** (`activities/{rwgps,strava,
-  censohidrografico,strava_ppaz,strava_jaam,strava_danlessa}/`, `longoes.xlsx`,
+  censohidrografico,strava_ppaz,strava_jaam,strava_danlessa,scikit_cycling}/`,
+  `longoes.xlsx`,
   `censo-hidrografico.xlsx`, any `*.fit`). `longoes.xlsx` was purged from
   history (2026-07) — never re-add it. `strava_ppaz/`/`strava_jaam/` are
   independent riders' exports shared with consent; never commit any of it.
+  `scikit_cycling/` is the **openly licensed** D6 deposit (CC BY 4.0) — but its
+  tracks start at the riders' home addresses, so it is gitignored like the rest
+  and no derived geometry is published; cite the DOI instead.
 - `data/results/` — harness outputs (gitignored except the README, which maps
   file → producer → journal entry). Every file regenerates with one harness
   command.

@@ -142,6 +142,855 @@ changed. See Entry 11.)*
 
 ---
 
+## 2026-07-29 — Entry 45: what should ε₀ be? — a contest of ride-level summaries
+
+*Prompt (Danilo), before letting any of Entries 43–44 reach the article: "i feel we should have
+a competing hypothesis for eps_0 for summarizing ride-level", then two candidate forms —
+"eg. delta = eps_0 * s_50" and "what about k / s50?"*
+
+### Pre-registration (written before any estimator is fitted)
+
+**Why the question is well posed.** Because $\delta = E_{\mathrm{legs},-}/(\beta h_-)$, summing
+over cells gives
+
+$$\delta_{\mathrm{ride}} \;=\; \frac{\sum_i E_i}{\beta \sum_i h_i}
+\;=\; \frac{\sum_i \delta_i\,h_i}{\sum_i h_i}$$
+
+— the ride-level deficit is **exactly** the drop-weighted mean of the cell-level $\delta(s)$.
+No approximation. That also names Entry 34's error precisely: it evaluated $\delta(\bar s)$,
+the curve *at* the mean grade, when the correct object is the *mean of the curve*. For a
+sigmoid those differ by Jensen's inequality, and they differ most exactly where descents live.
+
+**The target.** $\delta_{\mathrm{meas}} = E_{\mathrm{desc}}/(\beta h_-)$ over every descent cell
+of a ride, on rides whose drop-weighted mean descent grade $\bar s \geq 3\%$ (paper 1's
+real-descent gate). This is the exact ledger quantity, so every estimator predicts the same
+thing. It differs slightly from `eps_cells`' clamped $\varepsilon_{\mathrm{coast}} -
+\varepsilon_{\mathrm{bal}}$; the difference is disclosed rather than hidden.
+
+**The contestants.** All scored identically; nothing may see the held-out half. The shared
+cell-level curve, from the identity above with occupancy substituted for the pedalling share,
+is
+
+$$\delta(s) \;=\; \underbrace{\frac{1}{1 + e^{(s - s_{50})/w}}}_{\mathrm{occ}(s)}
+\;\cdot\; \frac{\hat I_{\mathrm{flat}}\,k_{\mathrm{eff}}}{m\,g\,s\,v}
+\tag{$\ast$}$$
+
+with $s_{50}, w$ the rider's occupancy sigmoid from Entry 44 and $\hat I_{\mathrm{flat}}$ the
+rider's median while-pedalling flat power — **both taken from the fit half only**. C, D and E
+are the three ways of pushing $(\ast)$ to a ride-level number.
+
+| | name | form, written out | input variables | # in | free parameters | # par |
+|---|---|---|---|--:|---|--:|
+| A | **frozen constant** | $\delta = 0.13$ | — | 0 | none (frozen upstream) | 0 |
+| A′ | **pooled constant** | $\delta = \operatorname{med}\{\delta_{\mathrm{meas}}\}_{\text{fit half}}$ | — | 0 | 1 global | **1** |
+| B | **rider constant** | $\delta = \operatorname{med}\{\delta_{\mathrm{meas}}\}_{\text{rider, fit half}}$ | rider identity | 0 | 1 per rider | **9** |
+| B′ | **threshold-linear** | $\delta = k\,s_{50}$ | $s_{50}$ | 1 | 1 global + $s_{50}$ per rider | **10** |
+| B″ | **threshold-inverse** | $\delta = k/s_{50}$ | $s_{50}$ | 1 | 1 global + $s_{50}$ per rider | **10** |
+| **C** | **mean-grade curve** | $\displaystyle \delta_C = \frac{1}{1 + e^{(\bar s - s_{50})/w}} \cdot \frac{\hat I_{\mathrm{flat}}\,k_{\mathrm{eff}}}{m\,g\,\bar s\,\bar v}$ — i.e. $(\ast)$ at the ride's **mean** descent grade | $\bar s,\ \bar v,\ m,\ \hat I_{\mathrm{flat}}$ | 4 | $(s_{50}, w)$ per rider | **18** |
+| D | **dispersion-corrected curve** | $\delta_D = \delta_C + \tfrac{1}{2}\,\delta''(\bar s)\operatorname{Var}(s)$, $\delta''$ a central difference on $(\ast)$, $\operatorname{Var}(s)$ drop-weighted | C's + $\operatorname{Var}(s)$ | 5 | $(s_{50}, w)$ per rider | **18** |
+| F | **encounter fraction** | $\delta = a + b\varphi$ | $\varphi$ (needs the full grade distribution + $s_{50}$) | 1 | 2 global + $s_{50}$ per rider | **11** |
+| G | **grade-inverse** | $\delta = k/\bar s$ | $\bar s$ | **1** | 1 global | **1** |
+| E | **cell integral** | $\displaystyle \delta_E = \frac{\hat I_{\mathrm{flat}}}{\beta\,h_-}\sum_i \frac{t_i}{1 + e^{(s_i - s_{50})/w}}$ — $(\ast)$ integrated **per cell** | $\{t_i, s_i\}$ per cell, $m$, $\hat I_{\mathrm{flat}}$ | per-cell | $(s_{50}, w)$ per rider | **18** |
+
+Two accounting notes, because the parameter counts are what make this a fair contest rather
+than a fit-off. First, **$m$ and $\hat I_{\mathrm{flat}}$ are not new costs** — paper 1's model
+already requires the rider's mass and flat power (the latter sets $v_f$), so C's marginal
+demand over the deployed model is only $\bar s$, $\bar v$ and the rider's $(s_{50}, w)$.
+Second, the per-rider parameters are **inherited from Entry 44, fitted on half 0**, and are
+counted here rather than treated as free: an estimator carrying 18 fitted numbers must beat one
+carrying 1 by enough to justify them.
+
+Here $\bar s = h_-/x_-$ is the drop-weighted mean descent grade, $\bar v$ the time-weighted mean
+descent speed, $\beta = mg/k_{\mathrm{eff}}$, and $t_i, s_i$ the time and grade of cell $i$.
+C and E differ *only* in whether the sigmoid is evaluated once at $\bar s$ or once per cell —
+which is exactly the Jensen question, and why D sits between them as the second-order bridge.
+
+*(Notation expanded 2026-07-29 for legibility at Danilo's request; the forms are unchanged from
+the registration and the code was not touched.)*
+
+**Protocol.** Split-half by chronological ride index, odd/even (deterministic, no RNG); every
+constant, coefficient and per-rider quantity ($s_{50}$, width, $I_{\mathrm{flat}}$,
+$\varepsilon_{0,\mathrm{rider}}$) is taken from the **fit half only**; scoring is median
+$|\delta_{\mathrm{pred}} - \delta_{\mathrm{meas}}|$ on the held-out half, per corpus and pooled.
+$s_{50}$ and the sigmoid width come from Entry 44's fits, which were themselves fitted on
+half 0 — so there is no leak. All nine rider-corpora.
+
+**Preliminary corpus-level evidence, recorded here so the predictions are not retrofitted.**
+Over the eight open-road corpora: $\delta/s_{50}$ spans 3.0×, $\delta\cdot s_{50}$ spans 7.1×,
+$\delta\cdot\bar s$ spans 2.6×; Spearman$(s_{50},\delta) = +0.286$,
+Spearman$(\varphi,\delta) = +0.810$, Spearman$(\bar s,\delta) = -0.857$.
+
+**Predictions.** **G and F are the two to beat, G favoured on parsimony.** B beats A; B′ beats
+A but loses to B; **B″ finishes last of the rider-only forms** (its inverse fights a positive
+$s_{50}$–$\delta$ relationship); C stays broken; D lands between C and F. Registered
+quantitatively: G's held-out median error is below A's on at least 7 of 9 corpora.
+
+**The caveat that governs how any win is read.** $1/s$ sits *inside* the identity, and
+$\varphi$ is a step-function stand-in for the occupancy integral that *defines* $\delta$. So
+strong correlations for G and F are substantially mechanical and are **not** evidence of
+discovery. The only honest test is held-out predictive error against A, which is why the
+contest is scored that way and why no correlation is reported as a result.
+
+*Failure modes.* If A is not beaten, paper 1's constant stands and Entries 43–44 change nothing
+at ride level. If G wins, the paper-1 change is one line — $\varepsilon_d =
+\varepsilon_{\mathrm{coast}} - k/\bar s$, using a statistic the model already computes for
+$\varepsilon_{\mathrm{coast}}$ — and needs its own gates before it ships. If E beats every
+compressed form by a wide margin, ride-level summarisation is the wrong frame and the whole
+refinement belongs at per-edge grain (paper 3).
+
+### Results
+
+`python3 src/harness/e45_ridelevel.py`. 1,039 rides qualify; 525 fit, **514 held out**.
+
+**An unfair baseline, caught and replaced before reporting.** The target is the *unclamped*
+ledger identity, and `eps_cells` **clamps** $\varepsilon_{\mathrm{coast}}$ per cell
+($\min(1, \alpha/\beta s)$ saturates on shallow ground). The two therefore differ by a
+definitional offset: pooled median $\delta_{\mathrm{meas}} = 0.253$ against
+$\varepsilon_0 = 0.13$. Every *fitted* contestant absorbs that offset for free; the frozen
+0.13 cannot. Scoring against A alone would have credited the structured forms for an offset
+rather than for structure — the same scope error as Entry 44's first P3 pass. **A′, the best
+single universal constant fitted on the fit half, is the honest floor**; A is still reported,
+flagged as off-target.
+
+| estimator | pooled held-out median error | beats A′ | # par |
+|---|--:|--:|--:|
+| **E — cell integral** | **0.0540** | 7/9 | 18 |
+| **C — mean-grade curve** | **0.0586** | 8/9 | 18 |
+| F — encounter fraction | 0.0714 | 7/9 | 11 |
+| B — rider constant | 0.0731 | 8/9 | 9 |
+| **G — grade-inverse** | 0.0781 | 7/9 | **1** |
+| A′ — pooled constant | 0.0973 | — | 1 |
+| B′ — threshold-linear | 0.0984 | 5/9 | 10 |
+| A — frozen constant (off-target) | 0.1194 | — | 0 |
+| B″ — threshold-inverse | 0.1300 | 2/9 | 10 |
+| D — dispersion-corrected curve | 0.5938 | 0/9 | 18 |
+
+**Complexity-adjusted comparison** *(added at Danilo's request: "is there a test that compares
+each form to our benchmark taking into account both the error reduction and the extra degree of
+freedom? Maybe χ²_red?").* χ²_red is not usable here — it needs a per-observation σ on
+$\delta_{\mathrm{meas}}$, which we do not have, so any χ² would be an invented denominator.
+Two tools that do apply: **BIC on the fit half** under a Laplace likelihood (the one a
+median/MAE metric implies), and a **paired sign test** on held-out per-ride absolute errors
+against A′. One accounting point: **only fitted parameters enter the penalty.** Input variables
+are covariates, not degrees of freedom — reading a measured $\bar s$ costs data availability,
+not freedom to overfit. So the statistical comparison is G's 1 against C/E's 18, while the
+input counts remain a separate deployment axis.
+
+| | $k$ | fit MAE | ΔBIC vs A′ | held-out | wins vs A′ | $p$ |
+|---|--:|--:|--:|--:|--:|--:|
+| A — frozen constant | 0 | 0.1719 | +335.7 | 0.1194 | 157/514 | <10⁻⁴ |
+| A′ — pooled constant | 1 | 0.1241 | — | 0.0973 | — | — |
+| B — rider constant | 9 | 0.0911 | −274.2 | 0.0731 | 316/514 | <10⁻⁴ |
+| **B′ — threshold-linear** | 10 | 0.1106 | **−64.7** | 0.0984 | **255/514** | **0.89** |
+| B″ — threshold-inverse | 10 | 0.1921 | +514.9 | 0.1300 | 158/514 | <10⁻⁴ |
+| C — mean-grade curve | 18 | 0.0852 | −288.9 | 0.0586 | 303/514 | 0.0001 |
+| D — dispersion-corrected | 18 | 20.21 | +5454 | 0.5938 | 72/514 | <10⁻⁴ |
+| **F — encounter fraction** | 11 | 0.0847 | **−338.7** | 0.0714 | 331/514 | <10⁻⁴ |
+| **G — grade-inverse** | **1** | 0.1031 | −194.4 | 0.0781 | **356/514** | <10⁻⁴ |
+| E — cell integral | 18 | 0.0818 | −330.6 | 0.0540 | 325/514 | <10⁻⁴ |
+
+**The three axes crown three different winners**, and that is the substantive result: raw
+held-out accuracy → **E** (0.0540); complexity-adjusted fit → **F** (ΔBIC −338.7); held-out
+*win rate* → **G**, which beats the pooled constant on 69% of rides, more often than any other
+form despite ranking fifth on median error. G wins often by small margins; C and E win less
+often by larger ones.
+
+**B′ is the methodological lesson of this entry.** BIC *endorses* it decisively
+(ΔBIC = −64.7) because it fits the fit half better (MAE 0.1106 vs 0.1241) — yet its held-out
+win rate is 255 of 514, **$p = 0.89$, a literal coin flip**. Ten parameters bought in-sample
+fit that did not transfer, and BIC's $k\ln n$ penalty was too weak to catch it at $n = 525$.
+This is why the held-out score is primary here and the information criterion is corroboration:
+AIC/BIC are *approximations to cross-validation* for when cross-validation is unaffordable, and
+we can afford it. Where the two disagree, the held-out result wins.
+
+**What the parameter counts buy.** Error reduction against the pooled constant (A′, 0.0973),
+per fitted parameter:
+
+| | reduction vs A′ | # par | verdict |
+|---|--:|--:|---|
+| G — grade-inverse | **−20%** | **1** | the whole gain of a rider constant, for one number |
+| B — rider constant | −25% | 9 | nine numbers to beat G by 5 points |
+| F — encounter fraction | −27% | 11 | |
+| C — mean-grade curve | −40% | 18 | the accuracy buy |
+| E — cell integral | −44% | 18 | +4 points over C for per-cell data |
+| B′ — threshold-linear | +1% | 10 | **ten parameters to do worse than one** |
+| B″ — threshold-inverse | +34% | 10 | |
+
+**G is the parsimony winner by a distance**: one route statistic and one universal constant
+recover four-fifths of what a nine-parameter per-rider table buys. And the two rider-only
+predictive forms are the clearest negative result here — B′ and B″ spend ten fitted numbers to
+land at or below a single pooled constant.
+
+**Registered predictions, scored honestly — four of seven wrong.** ✓ B beats the constant
+(8/9). ✓ B″ finishes last of the rider-only forms (2/9). ✓ G clears its registered 7-of-9
+threshold. ✗ "G and F are the two to beat" — E and C lead; G is fifth. ✗ "B′ beats A" — B′
+**ties** the honest floor (0.0984 vs 0.0973, 5/9), so it adds nothing. ✗ "C stays broken" — C
+is second best. ✗ "D between C and F" — D collapses.
+
+**Both rider-only forms are dead, and structurally so.** $k\,s_{50}$ ties a plain constant and
+$k/s_{50}$ is far worse. A rider parameter *without terrain* adds variance without signal,
+because the deficit is not a property of the rider — it is a property of the **encounter**
+between a rider's threshold and a route's grades. That is the same conclusion $\varphi$ was
+built on, arrived at from the opposite direction.
+
+**C works, which contradicts Entry 34 — and the difference is diagnostic.** Entry 34 fitted a
+logistic *in ε space* and evaluated it at ride-mean grade; that failed. Here C evaluates the
+*physical* curve $\delta(s) = \mathrm{occ}(s)\,I\,k_{\mathrm{eff}}/(mgsv)$ at the same mean
+grade, and it is second best. Most of C's power therefore comes from the physics denominator
+(the $1/s$, the ride's own $\bar v$ and $m$), not from the sigmoid. Entry 34's verdict was
+about the behavioural curve, not about mean-grade evaluation as such.
+
+**E beats C by only 8%.** Per-cell integration buys little over evaluating the physical curve
+at the ride's mean grade — a deployment result: the per-edge machinery is not needed for a
+ride-level number.
+
+**The ladder, by what a caller knows:** profile only → **G, $k/\bar s$**, 20% better than the
+best constant, zero rider parameters. Profile + rider's $I_{\mathrm{flat}}$ and $s_{50}$ →
+**C**, 40% better. Full per-cell profile → **E**, 44% better.
+
+*Caveats.* The target is the unclamped identity and differs from paper 1's published quantity
+by ≈ 0.12 — **none of these numbers can enter paper 1 without re-deriving on paper 1's own
+clamped gap**, with gates. All fitted constants come from the fit half of this same data; nine
+rider-corpora, four from one deposit, two sharing a rider. D's collapse is mathematical, not a
+bug: $\delta \propto 1/s$ has $\delta'' \propto 2/s^3$, so the second-order expansion is
+invalid at gentle grades.
+
+---
+
+## 2026-07-29 — Entry 44: the S-curve, reopened — pinning the magnitude and testing speed against slope
+
+*Prompt (Danilo), after Entry 43's arms established that the deficit spread is behavioural:
+"I feel we need to go back to the S-curve hypothesis. If δ = Effect Magnitude of Pedalling
+during Descent(slope) × Probability of Pedalling During Descent(slope), then maybe we can set
+the effect magnitude as being a function rather than being a constant. Right now, magnitude is
+ε₀ and probability is 1. Probability is purely behavioural. Magnitude is partly behavioural and
+partly constrained… Still, epsilon is unitless, I'm not sure how to relate power measurements
+to eps." Then: "what would be our hypothesis for M and P?"*
+
+### Pre-registration (written before any fit)
+
+**The units bridge — the thing that was blocking the reformulation.** Appendix A's ledger
+identity $\delta = E_{\mathrm{legs},-}/(\beta h_-)$ rewrites, for a descent of length $x_-$
+with mean grade $\bar s = h_-/x_-$ and mean speed $\bar v$ (so $t = x_-/\bar v$), as
+
+$$\delta \;=\; \frac{\bar P_{\mathrm{desc}}\,(x_-/\bar v)}
+{(mg/k_{\mathrm{eff}})\,\bar s\,x_-} \;=\;
+\frac{k_{\mathrm{eff}}\,\bar P_{\mathrm{desc}}}{m\,g\,\bar s\,\bar v}$$
+
+The denominator $m g \bar s \bar v$ is the **gravitational power released**, in watts.
+$\varepsilon$ is unitless because it is a *ratio of two powers* — what the legs add over what
+gravity gives. This makes the frozen constant physically readable: at 80 kg on a 5% descent at
+36 km/h gravity supplies ≈ 390 W, so **$\varepsilon_0 = 0.13$ is ≈ 50 W of descent pedalling**
+(the author's 0.118 ≈ 44 W; user_2's 0.298 ≈ 120 W). The constant was always a wattage in
+disguise.
+
+**The reformulation.** Splitting descent power into occupancy × intensity,
+$\bar P_{\mathrm{desc}} = \mathrm{occ}(\cdot)\,I(\cdot)$:
+
+$$\delta \;=\; \underbrace{\mathrm{occ}(\cdot)}_{\text{behaviour}} \;\times\;
+\underbrace{I(\cdot)}_{\text{behaviour}} \;\times\;
+\underbrace{\frac{k_{\mathrm{eff}}}{m\,g\,s\,v(s)}}_{\text{pure physics}}$$
+
+**H-M (magnitude): $I = P_{\mathrm{flat}}$, independent of grade — zero free parameters.** Entry 43's
+arm-C measurement over nine rider-corpora gives $I/P_{\mathrm{flat}} = 0.96$ [IQR 0.85–1.11], and Entry 34
+independently found intensity "roughly flat in grade and strongly rider-conditional"; H-M names
+what it is conditional on. The behavioural reading is that descent pedalling is close to
+**binary** — coast, or ride normally — which is why the magnitude carries little information
+and the occupancy carries it all. *Falsifier:* $I/P_{\mathrm{flat}}$ drifts across grade bands beyond its
+CI. The pre-declared refinement if it fails is a **gearing ceiling** (53×11 at 100 rpm spins
+out near 55 km/h), which would make $I$ a function of speed, not slope.
+
+**H-P (probability): occupancy is a decreasing sigmoid,
+$\mathrm{occ}(x) = 1/\bigl(1 + e^{(x - x_{50})/w}\bigr)$, with a universal width $w$ and a
+rider-specific midpoint $x_{50}$** — one parameter per rider, and
+the parameter in which the ultra-distance-versus-amateur spectrum of Entry 43 arm B lives.
+
+**H-P2 (the sharp one): the governing variable is SPEED, not slope.** What ends pedalling is
+cadence running out, not gradient as such; slope works only as a proxy correlated with speed.
+The two forms make a discriminating prediction: **on the same gradient, a heavier or more
+aerodynamic rider descends faster and should pedal less.** *Test:* fit $\mathrm{occ}(|s|)$ and $\mathrm{occ}(v)$
+separately, and compare their transfer.
+
+**Why this is worth reopening after Entry 34 failed.** Entry 34's S-curve lost its ride-level
+test because "ride-mean descent grade blurs the cell-level curve" — it evaluated a nonlinear
+curve *at the mean grade*, which is not the mean of the curve. The fix is to integrate per
+cell and aggregate afterwards. Two things have also changed: the magnitude is now pinned to
+$P_{\mathrm{flat}}$ instead of free (H-M), and D6 widens the occupancy range from three riders at 0.15–0.21
+to nine spanning 0.07–0.62, with an Alpine rider supplying the steep tail where the sigmoid
+bends. This is per-edge territory — paper 3's — and §4.4.2 already predicted a grade-resolved
+deficit would only pay at that grain.
+
+**Protocol, fixed here.** 30 m cells (repo standard); pedalling = power ≥ 10 W; moving gate
+0.5 km/h; braking = deceleration > 1.5 m/s² from > 3 m/s (`perride_invert`'s BRAKE_DECEL /
+BRAKE_VMIN). Grade bins (descent, |s|): 0.5–1–2–3–4–5–6–8–10–15–∞ %. Speed bins: 0–10–20–30–
+40–50–60–∞ km/h. Sigmoids fitted by deterministic grid search minimising time-weighted squared
+error on binned occupancy — x₅₀ over 0–20% (step 0.1) or 0–70 km/h (step 0.5), w over
+0.2–8 %/step 0.1 or 1–25 km/h/step 0.5. **Split-half transfer** by chronological ride index,
+odd/even (deterministic, no RNG): fit on one half, score the other. All nine rider-corpora
+(D1, D2, D3, D4, D5, D6×4).
+
+**Predictions.**
+
+- **P1 (H-M).** $I/P_{\mathrm{flat}}$ stays within 0.85–1.15 in every grade bin up to 10%. *Failure:* a
+  systematic drift; the direction matters — falling at high grade means the gearing ceiling and
+  H-M becomes $I = \min(P_{\mathrm{flat}},\ \text{gearing bound})$.
+- **P2 (H-P2).** $\mathrm{occ}(v)$ transfers across riders better than $\mathrm{occ}(|s|)$: lower held-out RMSE with
+  a **common** width, and less rider-to-rider spread in the fitted midpoint once expressed in
+  its own variable. *Failure:* slope wins, and the cadence mechanism is wrong — the sigmoid is
+  then a terrain response, not a physiological one.
+- **P3 (composite).** The cell-grain $\delta(s)$ beats the frozen $\varepsilon_0 = 0.13$ on held-out halves for at
+  least 5 of the 9 rider-corpora, measured as ride-level $|\Delta\delta|$. *Failure:* fewer than 5, and
+  Entry 34's verdict stands — the constant is the correct summary and the S-curve stays a
+  mechanism with no estimator, which is a publishable negative for paper 3.
+- **P4 (behavioural corollary).** Danilo's efficiency explanation predicts *within* a rider,
+  not only between riders: on longer rides the same rider's occupancy should fall. D5's 617
+  rides span short outings to 200 km brevets. Registered as: negative Spearman(ride distance,
+  occupancy) within rider on at least 5 of 9. *Failure:* flat within riders means the
+  between-rider difference is culture or terrain rather than efficiency management, and the
+  Entry-43 mechanism needs restating.
+- **P5 (the sanity check that could sink everything).** If most non-pedalling descent time is
+  **braking** rather than freewheeling, neither slope nor speed is the governing variable —
+  road geometry is — and none of this transfers to a planner holding only a profile.
+  Registered as: braking is under 30% of non-pedalling descent time in the 3–8% band.
+  *Failure:* report it and stop; the sigmoids are then not interpretable as a pedalling choice.
+
+**Not registered / out of scope.** No change to any published paper-1 number. $\varepsilon_0 = 0.13$ stays
+frozen everywhere else. This entry fits occupancy only — it does not refit ε, the priors, or
+the forms.
+
+### Results
+
+`python3 src/harness/e44_scurve.py` → `e44_scurve_cells.csv`, `e44_scurve_fits.csv`.
+All nine rider-corpora, 2,156 rides.
+
+**P5 — PASSES, and it was the one that could have voided the rest.** Hard braking is
+**0.2–3.3%** of non-pedalling descent time in the 3–8% band, across 21,000 minutes of it. That
+time is genuinely freewheeling, so the sigmoid is a pedalling *choice* and not a road-geometry
+artefact, and the result transfers to a planner holding only a profile. *Caveat:* the detector
+is a hard-brake threshold (> 1.5 m/s² from > 3 m/s); gentle feathering would not register, so
+this bounds hard braking, not all braking.
+
+**The headline: $s_{50}$ recovers the rider spectrum as a single parameter.**
+
+| corpus | $s_{50}$ | | corpus | $s_{50}$ |
+|---|--:|---|---|--:|
+| D2 urban | 0.7% | | D6 user_1 | 4.2% |
+| D5 the author | **2.1%** | | D6 user_3 | 4.3% |
+| D1 longões | 2.8% | | D6 user_5 | 4.8% |
+| D4 JAAM | 2.9% | | D6 user_2 | **5.9%** |
+| D3 P. Paz | 3.3% | | | |
+
+The four Brazilian ultra-distance corpora occupy 2.1–3.3% and the four European amateurs
+4.2–5.9% — **disjoint**. Entry 43 arm B's coasting-versus-pedalling spectrum turns out to be
+one fitted number: the grade at which a rider stops pedalling half the time. And H-P's
+structure holds: fixing the width to a common 1.7% costs little in transfer (held-out RMSE
+0.0497 → 0.0668), so the width is universal and the midpoint carries the behaviour.
+
+**P2 — H-P2 REFUTED.** Slope beats speed by **3.1×** on held-out RMSE (0.0497 vs 0.1546), and
+the speed fits are degenerate: widths pinned at the grid ceiling for seven of nine riders,
+midpoints scattered 0–58 km/h. The cadence/spin-out mechanism is wrong — riders decide by
+gradient, not by how fast they are moving. *Disclosed limitation:* speed got 7 bins to slope's
+11, so the contest was not resolution-matched; the gap is large enough that this is unlikely to
+explain it, but a matched-resolution rerun would settle it.
+
+**P1 — H-M fails as registered; magnitude is a real but second-order function.** Like-for-like
+$I/I_{\mathrm{flat}}$ by grade band drifts to **0.62–0.83** at steep grades for user_1, P. Paz, JAAM and the
+author, holds flat at 0.85–0.98 for D1, and *rises* to 1.29 for user_3, the Alpine rider. The
+registered 0.85–1.15 band therefore fails for most riders, but the variation is a factor of
+≈ 0.7–1.0 with a rider-dependent sign, against occupancy's 9× between-rider spread and its
+steep grade dependence. Danilo's instinct that the magnitude should be a function is vindicated
+— it is just the smaller of the two effects.
+
+*Methods bug caught mid-run, disclosed.* The first pass compared descent power *while
+pedalling* against flat power *including coasting*, which conflates magnitude with occupancy
+and inflates the ratio for exactly the riders who coast most — it put D5 at 1.25–1.38 when his
+descent pedalling is the study's lowest. Corrected to a like-for-like while-pedalling
+denominator, D5 reads 0.83–0.96. All P1 numbers above are the corrected ones.
+
+**P3 — SUPPORTED, 7 of 9 on held-out halves.** Median
+$|\delta_{\mathrm{model}} - \delta_{\mathrm{meas}}|$ against
+$|0.13 - \delta_{\mathrm{meas}}|$:
+
+| corpus | n | model | constant | winner |
+|---|--:|--:|--:|---|
+| D6 user_1 | 96 | 0.0496 | 0.0492 | constant (a tie) |
+| D6 user_2 | 170 | 0.0498 | 0.1723 | model |
+| D6 user_3 | 86 | 0.0286 | 0.0774 | model |
+| D6 user_5 | 6 | 0.0791 | 0.0399 | constant (n = 6) |
+| D1 | 22 | 0.0372 | 0.0821 | model |
+| D2 | 34 | 0.0113 | 0.1026 | model |
+| D3 | 208 | 0.0298 | 0.0552 | model |
+| D4 | 103 | 0.0360 | 0.0442 | model |
+| D5 | 302 | 0.0284 | 0.0825 | model |
+
+**This is the result Entry 34 could not get.** A grade-resolved deficit *does* pay — at cell
+grain, integrating per cell and aggregating afterwards, which is precisely the correction
+§4.4.2 predicted would be needed and precisely paper 3's setting. The two non-wins are a dead
+heat (user_1, 0.0496 vs 0.0492) and an underpowered group (user_5, n = 6).
+
+*Second methods bug caught before reporting, disclosed.* The first P3 scoring returned **9/9**
+and was wrong twice over. It ran $\delta$ over *all* descending cells, but $\varepsilon_0 = 0.13$ is defined on
+real descents (≥ 3%) — and on shallow descents riders pedal 54–88% of the time, so $\delta$ there is
+of order 1 and the constant was being judged far outside its declared scope. It also drew
+$I_{\mathrm{flat}}$ from the ride being predicted, leaking ride-specific information the constant baseline
+never gets. Rescoring on ≥ 3% cells with $I_{\mathrm{flat}}$ taken from the fit half only gives the 7/9
+above. **A 9/9 that flatters the new model is exactly the result to distrust.**
+
+**P4 — FAILS, and the failure is the more interesting story.** Within-rider
+Spearman(ride distance, descent occupancy) is negative on only **4 of 9**, and the author's own
+617 rides give ρ = −0.061 — indistinguishable from zero. So the ultra-distance riders' coasting
+is **not** within-ride efficiency management: riders do not coast more as a ride gets longer.
+It reads instead as a stable rider trait — training, equipment, riding culture — which supports
+paper 1 §3.2's "habit" framing over an optimisation framing, and is a cleaner mechanism than
+the one registered.
+
+### What this licenses, and what it does not
+
+The deficit now has a mechanism (occupancy), a shape (a slope sigmoid of universal width), a
+rider parameter ($s_{50}$, which separates the two rider populations without overlap), and a
+demonstrated out-of-sample gain at cell grain. That is a per-edge cost function, i.e. **paper 3
+material**, and it should be developed there rather than retro-fitted into paper 1.
+
+It does **not** license changing anything in paper 1. $\varepsilon_0 = 0.13$ remains the correct ride-level
+summary — Entry 34's verdict stands at that grain and P3 says nothing about it. The nine
+midpoints come from nine rider-corpora, four of which are one deposit and two of which
+(D1 ⊂ D5) share a rider, so $s_{50}$'s population spread is a description of these riders, not an
+estimate for cyclists. And H-M's failure means a deployed per-edge form needs either a
+magnitude taper or an honest statement that it assumes $I \approx I_{\mathrm{flat}}$.
+
+---
+
+## 2026-07-29 — Entry 43: the fifth rider set — the frozen law on four European riders (D6)
+
+*Prompt (Danilo), after an external-review round in which all five reviewers named the narrow
+rider sample as the study's main weakness, and after a survey of open cycling data: "let's
+register a journal entry to incorporate it, and test it." Standing constraints from the same
+conversation: "it's not enough to have more N_riders. We need them to be distributed in a
+variety of settings and contexts" and "we would need power and elevation measurements too."*
+
+### Pre-registration (written before any energy evaluation)
+
+**The question.** Every corpus in paper 1 is ridden by one of three São Paulo riders on one
+recording chain. Does the frozen law — the forms, the two corrections, ε₀ = 0.13, ε_f = 0.20,
+τ = 2 m, c = 3 m/km, all calibrated on D1 and never refitted — transfer to riders who share
+no rider, no country, no terrain regime and no device with the calibration set?
+
+**The corpus (D6).** scikit-cycling `power_regression`, Zenodo
+[10.5281/zenodo.1202440](https://doi.org/10.5281/zenodo.1202440), CC BY 4.0, deposited 2018 by
+Lemaitre & Lemaitre as the data behind a Science & Cycling abstract. It is the only open
+deposit found in a two-agent survey that carries per-sample **latitude/longitude + altitude +
+measured power** at more than single-rider scale. 1,057 `.fit` files, four riders
+(`user_1/2/3/5`; there is no `user_4`), 2012–2015. The corpus never touched this study's model
+selection, so it is a fully held-out test — the cleanest available.
+
+**Reconnaissance (geometry and metadata only; no energies computed).** 1,053 files parse with
+the repo's own loader, 4 fail. FIT `manufacturer` is Garmin and `sport` is cycling on all 1,053
+— no virtual rides to exclude. Under paper 1's blind inclusion filters (powCov > 0.5,
+altCov ≥ 0.99, ≥ 20 km, non-virtual) **745 rides survive**: 194 / 347 / 190 / 14 for
+users 1 / 2 / 3 / 5. Coordinates are present in ~91% of sampled files (the shared
+`pts_from_fit` drops lat/lon by design; `param_fit.pts_with_geo` is the reader that keeps
+them). Decoding the semicircle coordinates puts the corpus in **Western Europe, 40.7–50.7°N**:
+user_2 mostly Catalonia (42°N, 3°E), user_1 and user_5 mostly Burgundy/Franche-Comté (47°N,
+4–5°E), and **user_3 in the French Alps around Grenoble (45°N, 6°E)**.
+
+Two reconnaissance measurements are load-bearing and are recorded here *before* any model runs,
+because two predictions below are derived from them arithmetically:
+
+| quantity | D6 | paper 1 (D1) | GoldenCheetah (1 athlete, for scale) |
+|---|--:|--:|--:|
+| noise rate $c = (\text{raw} - \text{deadband})\,h_+/\mathrm{km}$ | **1.24** [IQR 0.85–1.73] | 3.1 [2.6–3.7] | 6.5 [5.3–7.8] |
+| smoothed climbing rate | 7.56 [5.52–12.01] m/km | — | 6.7 |
+
+Per rider the climbing rate is 7.61 / 6.70 / **17.84** / 7.11 m/km — user_3 is a genuinely
+mountainous rider, and is also the lightest at a published 61 kg.
+
+**Published masses — a first.** The deposit's own analysis code publishes the riders' body
+masses: `{user_1: 86, user_2: 72, user_3: 61, user_5: 72}` kg. Paper 1's implied-mass inversion
+has so far been validated against exactly one known value (the author's ≈ 73 kg, §2.3.3).
+D6 supplies four more spanning 61–86 kg, so the inversion can be tested across a range rather
+than at a point. **The published masses are used only as a validation target — never as an
+input to any scored arm.**
+
+**Gravity — and how it is handled without mutating a shared constant.** `G = 9.7864` is São
+Paulo's local value and is wrong for this corpus. From the International Gravity Formula at the
+ride-count-weighted latitude (≈ 45°N), less a free-air correction at typical ride altitude, D6's
+true value is **g = 9.805** (within-corpus spread ±0.005, i.e. 0.05%, over the 41–50°N range).
+
+*Implementation decision, taken before any energy run.* `G` is a module global in
+`engines.py` that sibling modules bind by value at import, so patching it for one corpus would
+silently desync `regime.py`'s copy — precisely the Entry-27 class of bug. Instead the run uses
+the package's `G` unchanged and exploits the invariance CLAUDE.md already documents: **m̂·g is
+what the data identifies**. Both the rolling part of α and the whole of β carry the product
+mg, so every closed-form energy is *exactly* invariant under (m, g) → (m·g/g′, g′); the forward
+simulation differs only through the inertial term m·dv/ds, which carries m without g and is
+negligible at route scale. The mass inversion therefore runs at the package `G` and the
+**published-mass comparison (P4) rescales** by 9.7864/9.805 = 0.99809. The 0.19% figure also
+converts paper 1 §2.1's *assertion* that away rides move β by under 0.3% into a measurement.
+
+**Protocol.** Two, both registered, exactly as Entry 41 did. **Primary: the frozen-prior blind
+protocol** — Crr 0.008 · CdA 0.40 · ρ 1.13 · k_eff 0.98 · wind 0, τ = 2 m, c = 3 m/km,
+ε₀ = 0.13, ε_f = 0.20, mass inverted per rider from sustained climbs (≥ 3% over ≥ 100 m,
+≥ 200 m of sustained climbing per ride) — because that is the protocol paper 1 published in
+Table 3, and the only one with a directly comparable reference. **Secondary: regime-consistent
+per-ride physics** (Entry 33/35, paper 1 §3.5.2, Table 6), where m̂, Ĉrr and ĈdA_reg come from
+each ride's own power stream. The secondary protocol exists because paper 1 §4.3.4's bundle
+rule says the ε constants are paired to the physics: on riders whose tyres, position and
+loadout are unknown, the frozen priors are a guess, and the ride-consistent α is the honest
+pairing. Nothing is refitted on D6 under either protocol.
+
+**Estimands.** Per rider and pooled: median |Δ%| and median signed Δ%, each with 95% CI
+(mulberry32, seeds 42/43, B = 10⁴, percentile; stratified within rider for the pool), for
+F1–F4 × {ε_d, ε_f} and the forward simulation. Plus the measured deficit gap
+ε_coast − ε_bal on real descents (mean descent grade ≥ 3%), and the implied mass per rider.
+
+**Predictions.**
+
+- **P1 — the law transfers.** Under the primary protocol, F3 with the regime-appropriate ε
+  lands in the 3.5–6.2% band D3–D5 occupy, and within 1 point of the simulation on the pooled
+  column. *Failure:* above 8%, or a gap to the simulation beyond 2 points, means the law does
+  not survive leaving Brazil — which would be the single most important negative result in
+  the study, and would go in the paper as such.
+- **P2 — F4 over-corrects, and by a computable amount.** This corpus's measured noise rate is
+  1.24 m/km but F4 subtracts a frozen 3.0, so it removes 1.76 m/km of *real* ascent. On the
+  median 56.5 km ride that is 99 m wrongly removed against a median true h₊ of ≈ 427 m — 23%
+  of the climb term. Netting the descent side (both h₊ and h₋ shrink, so the refund shrinks
+  too, restoring ε_f of it): ≈ 79 m equivalent, ≈ 63 kJ at β ≈ 800 J/m, against a ride energy
+  of order 1,500 kJ. **Predicted: F4 carries a negative bias 3–6 points below F3's**, growing
+  with distance and shrinking with climbing rate. *Failure:* if F4's bias is not meaningfully
+  more negative than F3's, then the deadband and the scalar are not measuring the same thing
+  and §2.4's linearisation argument needs revisiting.
+- **P3 — the deficit recurs.** The measured gap falls in 0.10–0.19, the band paper 1's
+  Terminology already declares across plausible physics and pairings. *Failure:* a gap outside
+  that band, or of inconsistent sign across the four riders, bounds the deficit's portability
+  to Brazilian riders and must be reported as such.
+- **P4 — the mass inversion validates against known values.** Per rider, m̂ minus the published
+  body mass falls in 7–12 kg (bike + kit + bottles), and the **ordering is preserved**
+  (user_1 > user_2 ≈ user_5 > user_3). The ordering test is the strong one: it is
+  parameter-free. *Failure:* a systematic offset outside that window indicts the elevation
+  chain (the direction is diagnostic — inflated h₊ biases m̂ down), and an ordering violation
+  indicts the inversion itself.
+- **P5 — the regime rule holds.** ε_d beats ε_f on user_3 (Alpine, 17.8 m/km); the flat
+  constant does better on the gentler riders. *Failure:* an inversion here is a real hit on
+  §3.2's rule, though §3.5.1 already documents that the rule is a statement about an
+  (α, ε) pair and can flip when the physics is re-paired — which is exactly why both protocols
+  are registered.
+
+**Stated in advance, so it is not read as a result.** Four riders is not a population. D6
+answers "does the law leave São Paulo" and "does the deficit recur off Brazil"; it does not
+answer "what is ε₀ across cyclists". The riders are all European road cyclists on Garmin
+head units, which is one recording chain and one riding culture, and the corpus is 2012–2015.
+Rides start at the riders' home addresses despite the `user_N` anonymisation, so no derived
+geometry is published and the raw files are gitignored.
+
+**Deviations from the registration will be labelled "exploratory, disclosed".**
+
+### Results
+
+`python3 src/harness/skc_compare.py` → `data/results/skc_comparison.csv`. Selection ran as
+registered: 1,057 files → 4 unparseable, 227 dropped for power coverage, 81 for distance →
+**745 rides**, of which 743 evaluate and **740 clear the physical floor** (3 dropped). Max
+conservation residual 5.76 × 10⁻⁸, inside the 10⁻⁶ invariant.
+
+**Pooled, stratified within rider (n = 740).** Median |Δ%| · median signed Δ%, 95% CIs:
+
+| model | med \|Δ%\| | bias |
+|---|--:|--:|
+| F1 · ε_d (original) | 12.59 [12.1, 13.0] | +12.55 [12.1, 13.0] |
+| F2 · ε_d (split) | 4.28 [4.0, 4.6] | +3.42 [3.0, 4.0] |
+| **F3 · ε_d (split + deadband)** | **3.16 [2.9, 3.5]** | **+1.97 [1.6, 2.3]** |
+| F4 · ε_d (split + scalar c) | 4.04 [3.8, 4.4] | −2.22 [−2.6, −1.9] |
+| F3 · ε_f = 0.20 | 8.45 [8.0, 8.8] | +8.42 [8.0, 8.7] |
+| F4 · ε_f = 0.20 | 3.58 [3.2, 3.9] | +2.58 [2.3, 3.0] |
+| simulation (frozen) | 3.15 [2.9, 3.3] | +1.96 [1.7, 2.4] |
+
+Per rider, F3·ε_d: 5.76 (user_1) · 2.21 (user_2) · 3.83 (user_3) · 2.18 (user_5); the
+simulation 4.63 · 2.05 · 3.80 · 1.52. user_5's 14 rides make its column indicative only.
+
+**P1 — supported, and beyond the registration.** F3·ε_d pools to **3.16% against the
+simulation's 3.15%** — 0.01 points apart, the closest median parity anywhere in the study, on
+740 rides from four riders sharing no rider, country, terrain or device with the calibration
+set. The registered band was 3.5–6.2%; the result lands *below* it, i.e. the law transfers
+better than predicted, which is recorded here as a deviation on the favourable side rather
+than quietly absorbed. The per-ride sign test still favours the simulation (F3·ε_d closer on
+338/740, p = 0.0205) — median parity, not per-ride equivalence, the same split D5 shows.
+
+Two of paper 1's core claims replicate cleanly out of sample: the **climb-aero split** cuts
+error from 12.59% to 4.28% (F2 closer than F1 on 696/737 rides, p < 10⁻⁴), and the **deadband**
+takes it further to 3.16%.
+
+**P2 — confirmed quantitatively.** The registration predicted, from geometry alone and before
+any energy was computed, that F4's frozen c = 3 m/km against this corpus's measured 1.24 would
+push its bias **3–6 points below F3's**. Measured: **−4.19 points** under ε_d (+1.97 → −2.22)
+and −5.85 under ε_f. Both inside the registered window. This is the study's first
+out-of-sample *quantitative* prediction, and it lands: the scalar correction is a property of
+the recording chain, not a universal, exactly as §2.4 warns.
+
+Worth noting how the failure hides: on user_1 the over-correction *improves* apparent accuracy
+(F4 3.54 vs F3 5.76) by cancelling a positive bias, while on user_2 it degrades it (4.72 vs
+2.21). Accuracy alone would have told opposite stories about the same defect on two riders —
+the accuracy-and-bias-together rule earning its keep.
+
+**P3 — split verdict; the registered band fails per rider.** The gap on real descents
+(mean descent grade ≥ 3%):
+
+| rider | n | gap | ε_coast | ε_bal |
+|---|--:|--:|--:|--:|
+| user_1 | 148 | 0.117 [0.11, 0.13] | 0.49 | 0.36 |
+| user_2 | 265 | **0.298** [0.28, 0.31] | 0.66 | 0.37 |
+| user_3 | 162 | **0.080** [0.07, 0.09] | 0.44 | 0.37 |
+| user_5 | 12 | 0.175 [0.15, 0.21] | 0.60 | 0.42 |
+| pooled | 587 | 0.160 [0.14, 0.18] | 0.56 | 0.37 |
+
+The **sign recurs on all four riders** and the pooled 0.160 sits inside the registered
+0.10–0.19. But the per-rider spread is **0.080–0.298**, a 3.7× range far outside it, and two of
+four riders fall outside the band. Per the registered failure mode this **bounds the deficit's
+portability**: what travels is the sign, not the value.
+
+The sub-finding is more interesting than the verdict, and is flagged as **exploratory,
+disclosed** because nothing predicted it: **ε_bal is nearly rider-invariant at 0.36–0.42 while
+ε_coast ranges 0.44–0.66.** On this corpus the gap's spread is driven almost entirely by the
+*geometric ceiling*, not by the behavioural term — the opposite decomposition to the one
+§4.1.3 tells ("the geometry sets the ceiling; the habit sets the discount"). A constant
+*recovery* would describe D6 better than a constant *deficit* does. Whether that survives the
+regime-consistent protocol (where α, hence ε_coast, is re-derived per ride) is the obvious next
+experiment and is NOT claimed here.
+
+**P4 — the inversion validates against four known masses.** Implied system mass minus published
+body mass, after the m·g rescale: user_2 +8.4, user_3 +7.8, user_5 +10.9 — all inside the
+registered 7–12 kg bike-and-kit window — and **user_1 +13.7, outside it**. The ordering is
+**preserved over all five determinate pairs**. (The harness first printed a violation; that was
+a bug in the test, not the data — user_2 and user_5 share a published 72 kg, so their relative
+order is undetermined and a strict list comparison mis-scored the tie. The test is now
+tie-aware; the verdict is unchanged data, corrected reading.) Three-of-four inside the window
+on riders whose bikes are unknown is a real external validation of machinery that had, until
+now, exactly one known value to check against.
+
+**P5 — half supported, half untested.** ε_d beats ε_f decisively on user_3, the Alpine rider
+(3.83 vs 9.00), as registered. But it also wins on the three gentler riders (2.21 vs 7.68;
+5.76 vs 10.39; 2.18 vs 9.88), where the registration expected the flat constant to do better.
+Read against §3.2, the rule's other branch is not so much refuted as **not exercised**: all
+four are open-road riders whose real descents are genuinely coastable (ε_coast 0.44–0.66), and
+none ride urban stop-go, which is the regime ε_f was selected on. D6 tests one branch of the
+regime rule and is silent on the other.
+
+### What this does and does not license
+
+D6 answers the reviewers' question — *does the law leave São Paulo?* — with a clear yes at
+median parity, and it independently replicates the climb-aero split, the deadband, and the
+sign of the coasting deficit on riders who share nothing with the calibration corpus. It does
+**not** deliver a population value for ε₀; if anything it argues the value is less portable
+than paper 1 currently implies, and the ε_bal-invariance above suggests the decomposition
+itself may want revisiting.
+
+**Not yet done:** gates in `bootstrap_ci.py` for these medians. `bootstrap_ci.py` currently
+carries uncommitted edits from the parallel paper-2 line, so the gate section is deliberately
+deferred rather than merged blind — it must land before any of these numbers enter a paper.
+
+### Amendment (registered before running; 2026-07-29, same day)
+
+*Prompt (Danilo), on the P3 spread: "My suspicion is that the dataset comes from seasoned
+amateur road cyclists. They do have a tendency to pedal while descending. Their power strategy
+is not efficiency-maximizing. This does not happens with myself, JAAM and PPaz, which are
+specialists in self-supported, ultra-distance rides, where efficiency is a key concern. Can we
+also test doing the parameter inversion protocol rather than frozen parameters?"*
+
+Two arms, both registered here before either runs. Arm A executes the secondary protocol the
+main registration already declared; Arm B is a **new** test of a rider-behaviour hypothesis and
+is registered fresh.
+
+**Arm A — the regime-consistent protocol on D6.** Per-ride m̂_r and Ĉrr_r from the Entry-33
+segment inversion (importing `perride_invert`'s machinery unchanged — it is import-safe), then
+the Entry-35 regime-consistent aero
+$\hat C_{dA,r}^{\mathrm{reg}} = \bigl(k_{\mathrm{eff}} P_{\mathrm{flat}}/v_{\mathrm{meas}} - \hat C_{rr,r}\,\hat m_r g\bigr) / \bigl(\tfrac{1}{2}\rho\,v_{\mathrm{meas}}^2\bigr)$,
+which closes the flat balance at the *measured* flat speed by construction. Wind stays 0: `perride_invert`'s wind path
+fetches weather at the ride's 0.25°-quantized centroid, and for D6 those centroids derive from
+third-party riders' home addresses, so the fetch is deliberately not used here (it also keeps
+D6 on the same zero-wind footing as every other blind corpus). ε₀ = 0.13 stays frozen; nothing
+about ε is refitted. *Registered expectation:* if D6's high ε_bal (0.36–0.42 vs the Brazilian
+riders' 0.17–0.28) is an artefact of the frozen C_dA = 0.40 being wrong for these riders, the
+regime-consistent α should move ε_coast and ε_bal together and **shrink the per-rider deficit
+spread** from its frozen 0.080–0.298. If the spread survives, the frozen priors were not the
+cause.
+
+**Arm B — is it descent pedalling? A physics-free measurement.** The hypothesis above predicts
+a *behavioural* difference, so it is tested with a quantity that involves no C_dA, no C_rr and
+no α — nothing that could smuggle in a parameter error. On 30 m cells with grade ≤ −3% and
+speed ≥ 0.5 km/h, measured identically on D6 and on D1/D3/D4/D5:
+
+- **descent pedalling occupancy** = Σ dt with power ≥ 10 W ÷ Σ dt, and
+- **descent intensity ratio** = mean descent power ÷ mean flat power (same ride).
+
+Both are read straight off the power stream. *Registered prediction (Danilo's, stated as his):*
+D6's occupancy exceeds the Brazilian riders' at comparable descent grade, because
+ultra-distance self-supported riding selects for coasting and amateur road riding does not.
+*Failure:* if D6 occupancy is equal or lower, the P3 spread is not descent-pedalling behaviour
+and the ε_bal invariance needs a different explanation. Occupancy is grade-dependent
+(Entry 34), so the comparison is reported per descent-grade band, not pooled — a corpus with
+steeper descents would otherwise look like a corpus that coasts more.
+
+Thresholds (10 W, −3%, 0.5 km/h) are fixed here, before the run, and are the values the repo
+already uses elsewhere (`POW_MIN`, the real-descent gate, `VSTOP`).
+
+### Amendment results
+
+`python3 src/harness/skc_invert.py` → `skc_invert.csv` (743 rides) and
+`skc_descent_occupancy.csv` (2,193 rides across all six corpora).
+
+**A methods bug caught between the first and second run, disclosed.** Arm A's first pass fell
+back to a generic 78 kg wherever the strict Entry-33 segment gates found no qualifying climb —
+which was **55% of rides** (mass inverted on only 332/743, Ĉrr on 214). For user_1, whose
+sustained-climb mass is 99.9 kg, that put a 20 kg error on the majority of his rides, and it
+meant Arm A changed the *mass* source at the same time as the *aero* source, making the
+frozen-vs-inverted contrast uninterpretable. Fixed: the fallback is now each rider's own
+sustained-climb anchor, **recomputed at runtime** (never frozen into a literal — an implied
+mass moves with G; Entry 27). A second defect surfaced with it: the per-ride inversion has
+non-physical tails — two rides return a *negative* mass — so `perride_invert`'s physical-range
+filter now runs before the median. At full scale the filter touches 3 of 429 values and the
+anchors reproduce the frozen protocol's masses (99.9 · 80.7 · 68.8 · 83.1 vs 99.9 · 80.6 ·
+68.9 · 83.1), which is what makes the re-run a clean **aero-only** contrast. All numbers below
+are the corrected run.
+
+**Arm A — regime-consistent aero, 743 rides.** Inverted ĈdA_reg medians: 0.396 · 0.385 ·
+0.349 · 0.419. Notably these sit *close to the frozen 0.40*, unlike the Brazilian corpora,
+where §3.4's inversion came out low everywhere (0.26–0.39): **the frozen prior's adequacy is
+itself rider-dependent.** Ĉrr fell back to 0.008 on 71% of rides, so the protocol is best
+described as "regime-consistent aero at anchored mass", not full per-ride inversion.
+
+| model | pooled med \|Δ%\| | bias | (frozen protocol, for contrast) |
+|---|--:|--:|--:|
+| F3 · ε_d | 3.05 [2.7, 3.3] | +0.81 [0.3, 1.2] | 3.16 · +1.97 |
+| F4 · ε_d | 4.34 [4.0, 4.7] | −3.37 [−3.7, −3.1] | 4.04 · −2.22 |
+| F3 · ε_f | 6.71 [6.4, 7.0] | +6.68 [6.4, 7.0] | 8.45 · +8.42 |
+| F4 · ε_f | **2.49 [2.3, 2.7]** | +0.99 [0.5, 1.5] | 3.58 · +2.58 |
+| simulation | **1.59 [1.5, 1.8]** | +0.55 [0.3, 0.7] | 3.15 · +1.96 |
+
+**Parity breaks on D6.** Under the frozen protocol the law and the simulation were 0.01 points
+apart (3.16 vs 3.15). Under the regime-consistent aero the simulation improves by half
+(3.15 → 1.59) while F3·ε_d barely moves (3.16 → 3.05), **opening a 1.46-point gap**. This is
+the opposite of what the same protocol change does on the Brazilian corpora, where Table 6 has
+them pooling to 3.9 vs 4.0 — still parity. The form ranking also shifts (F4·ε_f becomes the
+best closed form at 2.49), which is the (α, ε) bundle rule of §4.3.4 doing exactly what it
+says: the ranking is a property of a (physics, ε-variant) pair, not of the forms.
+
+**Arm B — the descent-pedalling hypothesis is confirmed.** Occupancy (share of descent time
+with power ≥ 10 W), by grade band, 2,193 rides:
+
+| corpus | 3–5% | 5–8% | >8% | P_desc/P_flat |
+|---|--:|--:|--:|--:|
+| D6 user_2 (Catalonia) | 0.716 | 0.491 | 0.157 | **0.624** |
+| D6 user_1 | 0.600 | 0.401 | 0.167 | 0.387 |
+| D6 user_5 | 0.555 | 0.306 | 0.364 | 0.416 |
+| D6 user_3 (Alps) | 0.510 | 0.239 | 0.082 | 0.310 |
+| D1 longões | 0.411 | 0.201 | 0.097 | 0.311 |
+| D3 P. Paz | 0.436 | 0.218 | 0.112 | 0.234 |
+| D4 JAAM | 0.373 | 0.267 | 0.254 | 0.287 |
+| D5 the author | 0.262 | 0.113 | 0.039 | **0.157** |
+| D2 censo (urban) | 0.101 | 0.039 | 0.016 | 0.100 |
+
+Pooled D6 vs the Brazilian corpora, with disjoint 95% CIs in **every** band: 3–5%
+0.654 [0.633, 0.668] vs 0.334 [0.321, 0.344]; 5–8% 0.407 [0.389, 0.426] vs
+0.167 [0.158, 0.176]; >8% 0.137 [0.121, 0.152] vs 0.076 [0.067, 0.082]. **Roughly double the
+pedalling occupancy at every gradient**, including the steep band where gravity most invites
+coasting. The intensity ratio makes the same point in one number: user_2 rides descents at 62%
+of his flat power, the author at 16%.
+
+The metric independently reproduces §3.3's characterisation of JAAM as a rider who pedals his
+descents — he is the highest Brazilian above 8% (0.254) — without that ever being an input.
+P. Paz sits between JAAM and the author, which is consistent with §3.3 calling him a
+"coasting-style descender" *relative to a typical rider*: on the steep band that the ε
+machinery actually uses he is at 0.112, less than half JAAM's. (An earlier draft of this entry
+read his being above the author as a tension with §3.3. It is not: the corpora describe a
+**spectrum**, not two categories, and the author simply sits at its coasting extreme.) Within
+D6 the same gradient appears — the Alpine user_3 is the least pedalling of the four (0.310
+intensity, essentially D1's) — so the measure tracks terrain as well as riding culture.
+
+Ordered by descent intensity the whole study now reads as one continuum: the author 0.157 ·
+P. Paz 0.234 · JAAM 0.287 · user_3 0.310 · D1 0.311 · user_1 0.387 · user_5 0.416 ·
+user_2 0.624 (D2's urban 0.100 is a different regime — stopping, not coasting). The
+ultra-distance self-supported riders occupy the low end and the amateur road cyclists the
+high end, which is the hypothesis this amendment was written to test.
+
+**A mechanism proposed and then withdrawn — note precisely WHICH one.** What is withdrawn
+below is a claim about the *law-versus-simulation gap*, not about the deficit. The claim that
+descent pedalling drives **ε₀ itself** is a different proposition, and arm C tests it directly
+and supports it. The obvious link between the arms is that the
+simulation is fed each ride's own descent regime power while ε_d is a purely geometric refund
+that cannot represent a rider adding power downhill — so the law should lose most on the
+riders who pedal descents hardest. **The per-rider ordering does not support it.** Law-minus-
+simulation gaps are user_1 2.74 · user_2 0.81 · user_5 0.68 · user_3 0.36, while descent
+intensity orders user_2 > user_5 > user_1 > user_3. user_1 has the largest gap and only middling
+pedalling. A more likely reading for him is mass: his anchor is 99.9 kg against a published
+body mass of 86 (the +13.7 kg that already failed P4's window), which inflates β and shows up
+as his +4.51 F3·ε_d bias — the largest over-prediction in the corpus. The weaker claim that
+*does* survive is that F3·ε_d's **bias** orders with descent intensity on three of four riders
+(user_2 −1.30 most pedalling, user_3 +2.06 least), with user_1 the exception and user_1 the
+rider with the known mass anomaly. At n = 4 riders this is a hypothesis for a future corpus,
+not a result.
+
+**P3 under inverted physics — the registered expectation is refuted.** The amendment predicted
+that if the deficit spread came from the frozen C_dA being wrong for these riders, the
+regime-consistent α would shrink it. It does not: 0.120 · 0.306 · 0.095 · 0.178 (range 0.211)
+against the frozen 0.117 · 0.298 · 0.080 · 0.175 (range 0.218) — **unchanged**. The spread is
+not a physics artefact. Given Arm B, rider behaviour is the live explanation, though the
+per-rider mapping above is not clean enough to call it demonstrated.
+
+### Arm C — does descent pedalling predict the deficit? (`skc_eps_vs_pedal.py`)
+
+*Prompt (Danilo): "this reinforces the robustness of the interpretation of ε₀ as being
+generated by descent pedalling."* Tested at **ride** level rather than by eyeballing corpus
+medians, on the 1,038 rides across all six corpora that carry a real descent
+(mean descent grade ≥ 3%): Spearman between the physics-free pedal ratio
+(mean descent power ÷ mean flat power) and the measured deficit ε_coast − ε_bal.
+
+| group | n | pedal ratio | deficit | ρ(pedal, deficit) [95% CI] |
+|---|--:|--:|--:|--:|
+| D6 user_1 | 149 | 0.362 | 0.117 | 0.791 [0.70, 0.86] |
+| D6 user_2 | 267 | 0.590 | 0.297 | **0.907 [0.87, 0.93]** |
+| D6 user_3 | 162 | 0.258 | 0.080 | 0.627 [0.49, 0.74] |
+| D6 user_5 | 12 | 0.416 | 0.175 | 0.629 [0.01, 0.98] |
+| D1 longões | 22 | 0.191 | 0.122 | 0.813 [0.56, 0.95] |
+| D2 censo | 26 | 0.110 | 0.093 | 0.197 [−0.25, 0.60] |
+| D3 P. Paz | 156 | 0.182 | 0.098 | 0.407 [0.25, 0.55] |
+| D4 JAAM | 20 | 0.146 | 0.127 | 0.817 [0.50, 0.94] |
+| D5 the author | 224 | 0.174 | 0.117 | 0.607 [0.50, 0.69] |
+
+**Pooled ρ = 0.726 [0.69, 0.76]; positive in 9 of 9 groups**, median within-group ρ = 0.629.
+The within-rider figure is the load-bearing one: on the days a given rider pedals his descents
+harder, *his own* measured deficit is larger. That holds for every rider in the study.
+
+**The circularity caveat, stated plainly, because it changes what this is worth.** Paper 1
+already derives the deficit's exact ledger identity (§4.4.2, [Appendix A](#appendix-a)):
+δ = E_legs,− / (β h_−) — the deficit **is** descent pedal energy over the scaled drop. Both
+quantities correlated here therefore contain E_legs,−, so a positive ρ is substantially
+*mechanical*, not an independent discovery. (It is not 1.0 — the pedal ratio normalises by
+flat power and descent time rather than by β h_−, which is why ρ runs 0.41–0.91 — but the
+shared term dominates.) **Arm C is a consistency check, not new evidence.**
+
+What the three arms buy together is better than a correlation: a **closed chain**.
+(1) Arm B measures, with no ε and no physics anywhere in it, that the D6 riders pedal descents
+about twice as much as the Brazilian riders — a fact about power streams alone.
+(2) The §4.4.2 identity then *requires* their deficits to differ; this is not an inference.
+(3) P3 measures exactly that difference (0.080–0.306) and shows it survives the
+regime-consistent physics, so it is not a parameter artefact.
+Danilo's reading — "some people coast, others pedal a bit and others pedal a lot, and this
+affects ε₀" — is therefore not merely supported by correlation; it is the identity plus a
+measured population difference. The honest limit is that this **bounds the constant's
+portability**: ε₀ ≈ 0.13 is a property of a riding population, and the ultra-distance
+self-supported riders it was calibrated on sit at the coasting end of the spectrum.
+
+D2 (urban) is the weakest correlation (0.197, CI spanning zero) and should be read as a
+different regime: there the descent energy is disposed of by braking at intersections rather
+than by pedalling, which is the §3.2 mechanism, not this one.
+
+### Notes carried forward
+
+The exploratory ε_bal-invariance noted in the main results **weakens** under this protocol:
+ε_bal spans 0.31–0.43 (it was 0.36–0.42 frozen) against ε_coast's 0.43–0.66. Still the tighter
+of the two, but no longer near-constant, so the "constant recovery rather than constant
+deficit" reading should not be carried further without a dedicated test.
+
+---
+
 ## 2026-07-28 — Entry 42: the lumped ε_d — pricing the hand recipe's proxy
 
 *Prompt (Danilo), on review-v4's finding that §4.1.2's lumped variant is validated nowhere at
