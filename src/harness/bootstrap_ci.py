@@ -734,6 +734,24 @@ for _arm, _ea, _es in (("own", 3.7, -2.7), ("igc5", 3.8, -0.9), ("fab5", 3.4, 2.
     if not _ok:
         failed = True
 
+# per-corpus cells the letter prints: the terrain-dependence caveat (Table 2) and
+# the +0.7 / +20.1 pp bias-shift contrast (abstract, §2.3). No CIs — the letter
+# quotes these as medians only.
+for _corpus, _arm, _ea, _es in (("longoes", "own", 7.5, 1.7),
+                                ("longoes", "igc5", 21.8, 21.8),
+                                ("longoes", "igc5s30", 8.0, 8.0),
+                                ("jaam", "own", 3.4, -2.8),
+                                ("jaam", "igc5", 2.8, -2.1)):
+    _sub = [r for r in _e41_prim if r.get("corpus") == _corpus]
+    _v = col(_sub, f"{_arm}_reg_f3d")
+    _ok = (abs(median([abs(x) for x in _v]) - _ea) <= 0.11
+           and abs(median(_v) - _es) <= 0.11)
+    print(f"E41 {_corpus} {_arm}: {to_fixed(median([abs(x) for x in _v]), 1)} · "
+          f"{to_fixed(median(_v), 1)}"
+          + (" GATE-OK" if _ok else f" GATE-FAIL(exp {_ea}/{_es})"))
+    if not _ok:
+        failed = True
+
 # P5/P6: the portal correction and its over-correction on bridges
 _e41_tch = [r for r in _e41_prim if num(r, "portal_ok") == 1
             and (num(r, "n_spans") or 0) > 0]

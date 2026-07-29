@@ -120,9 +120,9 @@
         "SoftwareSourceCode"
       ],
       "name": "src/harness/build_model_inputs.py",
-      "url": "https://github.com/danlessa/bicycling-energy-model/blob/f4d74eb814a7843c35dcb0a7f040c632d5463043/src/harness/build_model_inputs.py",
+      "url": "https://github.com/danlessa/bicycling-energy-model/blob/0bdb395cf89fa23ec74bfc694d27a85f9cbecb9c/src/harness/build_model_inputs.py",
       "sha256": "cbadebba773dca5794fc9e8ca251ca911361d941d24a4017d4b050a747918e26",
-      "version": "f4d74eb814a7843c35dcb0a7f040c632d5463043",
+      "version": "0bdb395cf89fa23ec74bfc694d27a85f9cbecb9c",
       "programmingLanguage": "Python"
     },
     {
