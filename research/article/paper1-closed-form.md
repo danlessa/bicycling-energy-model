@@ -96,6 +96,8 @@ Two audiences would use it if it were computable, and they impose opposite const
 
 ### 1.2 The proposed law
 
+#### 1.2.1 The three-term shape
+
 We propose an approximation that decomposes the mechanical work of a ride into three terms: (1) a cost per metre of horizontal distance — rolling and aerodynamic resistance — expressed by the rate $\alpha$; (2) a cost per metre of ascent — a gravitational *deposit* — expressed by the rate $\beta$; and (3) a partial *refund* per metre of descent — the deposit withdrawn back as forward progress — expressed by the recovery factor $\varepsilon$. Terms 1 and 2 are widely known: together they are the textbook steady-speed energy integral, resting on physics validated since the equation-of-motion experiments [di Prampero et al. 1979; Martin et al. 1998]. Term 3 is novel. It has been touched only obliquely in nearby literatures — as a per-grade coasting idle limit in a speed-choice model [Bigazzi & Lindsey 2019], and as per-instant regeneration efficiencies or symmetric potential terms in electric-vehicle energy models — but never as a route-level, closed-form recovery factor; [§1.3](#1.3) develops it and [§4.2](#4.2) maps the prior art. The three terms give the shape every form in this study shares, eq. (1),
 
 $$E \;\approx\; \alpha\,x \;+\; \beta\,(h_+ - \varepsilon\,h_-), \tag{1}
@@ -107,6 +109,8 @@ $$\alpha_r = \frac{C_{rr}\,m g}{k_{\mathrm{eff}}}, \qquad \alpha_a = \frac{\tfra
 $$
 
 with $w$ the headwind, zero throughout the frozen protocol (so $\alpha_a$ reduces to the $v_f^2$ form there) and judged per ride in the informed calibration run ([§2.3](#2.3)).
+
+#### 1.2.2 The four forms
 
 We evaluate four forms of this family. They are not independent alternatives but a causal chain of refinements, each step addressing the previous form's main limitation: F1, the shared shape as-is, led to F2 (splitting the flat rate), which led to F3 (smoothing the elevation), which led to F4 (approximating the smoothing when only totals are available). Writing $\tilde h_\pm$ for the deadband-smoothed elevation totals:
 
@@ -128,6 +132,8 @@ All four forms are derived from the route-energy integral in [Appendix A](#appen
 <a id="fig1"></a>
 
 ![**Figure 1.** The law mapped onto a route profile: rolling and air resistance are paid over distance (blue), climbs charge the full gravity premium with aero gated off (vermilion), descents refund the fraction $\varepsilon$ (green). Inset: sub-metre elevation noise inflates $h_+$; micro-relief within the momentum budget is real ascent whose energy requirement the rider's inertia discounts ([§4.4](#4.4)). The deadband filter addresses both — measurement hygiene and, in part, a kinetic-energy accountability mechanism.](figs/fig9-anatomy.svg)
+
+#### 1.2.3 The two corrections
 
 The family's physical ingredients are well validated, but only below the route scale: the underlying power balance against steady-velocity trials on flat ground [Martin et al. 1998], and simulators built on it against speed on real tracks [Dahmen et al. 2011] — never against the route-level energy integral. Two systematic errors that only exist at that integral scale — one born when the closed form lumps aero into a single reference speed, one born when noisy elevation steps are summed into $h_+$ — therefore had no occasion to be noticed, let alone corrected. We propose two corrections; both are calibrated on a single corpus and then frozen ([§2.3](#2.3)).
 
@@ -348,6 +354,8 @@ flowchart LR
 
 ![**Figure 5.** Every analysed ride on one map: the censo's urban knot (green), JAAM's Vale do Paraíba corridor (blue), P. Paz's western open roads (vermilion), and the author's brevets radiating to the coast and mountains (grey). No basemap — the visible geography is the rides themselves. For privacy, the first and last 1.5 km of every ride are not drawn; legend counts are the rides drawn, which differ from [Table 1](#tab1)'s clean corpora in both directions — rides the analysis excluded may be drawn, and analysed rides without enough usable GPS after the trim are not.](figs/fig12-routes-map.png)
 
+#### 2.3.2 Ground truth and inclusion
+
 Ground truth is the raw $\int P\,dt$ per ride, coasting zeros included. Inclusion filters, applied identically everywhere:
 
 - sport = cycling; virtual rides excluded via the FIT manufacturer field;
@@ -357,7 +365,7 @@ Ground truth is the raw $\int P\,dt$ per ride, coasting zeros included. Inclusio
 
 The independent riders' exports were shared with consent and are never published; all analysis code and output schemas are public.
 
-#### 2.3.2 The parameter protocols
+#### 2.3.3 The parameter protocols
 
 **The two parameter protocols.** The calibration corpus is evaluated with *condition-informed per-ride parameters* — literature-anchored values adjusted by the author's judgment of each ride's conditions. Six of the seven fields vary per ride: the *logged* system mass 71–80 kg (loadout — a record, not a guess, and identical in the blind re-run), plus five judged fields — $C_{rr,r}$ 0.004–0.020 (surface), $C_{dA,r}$ 0.32–0.40 (setup), air density $\rho_r$ 1.01–1.22 kg/m³ (weather and altitude), signed head/tailwind $w_r$ −7 to +5 km/h, and the recovery $\varepsilon_r$ 0.10–0.60 (hand-chosen); only $k_{\mathrm{eff}} = 0.98$ is fixed. The judged five are best guesses, not measurements, but better-informed than any single shared set ([§4.3](#4.3) owns this choice; [§3.1](#3.1) re-runs D1 blind as the coherence check). Every other corpus is evaluated *blind* under the frozen literature-typical set of [Terminology](#terminology), wind zero. 
 
@@ -367,7 +375,7 @@ This yields 74.5 kg [IQR (interquartile range) 69.1–78.4] for D3, 101.9 kg [95
 
 **Why priors, not fits.** All other constants take the literature-typical values listed in [Terminology](#terminology) — mid-range published field values for an upright rider on typical asphalt. They are deliberately *not* fitted per rider from the ride data: estimating $C_{rr}$ or $C_dA$ from the same energy measurements the models are scored on would let the parameters absorb modelling error, making the accuracy figures partly self-fulfilling. Shared priors keep the scoreboard falsifiable; [§3.4](#3.4) tests every conclusion's sensitivity to that choice with independently fitted per-rider constants.
 
-#### 2.3.3 Evaluation protocol
+#### 2.3.4 Evaluation protocol
 
 **Protocol.** The comparison statistic is the per-ride signed error $\Delta\%$ ([Terminology](#terminology)); we report medians of $|\Delta\%|$ and of $\Delta\%$ with bootstrap 95% confidence intervals (CIs) and compare models pairwise with exact sign tests. Conventions: CIs are percentile bootstrap ($10^4$ resamples) over rides resampled independently within a corpus; sign tests drop tied rides (e.g. effective $n$ = 436 of 441 and 215 of 219 on the transfer corpora); rides within one rider are not independent, D1 ⊂ D5, and an activity-level join shows 58 of the 62 clean censo rides are the author's own recordings also present in D5 — so cross-corpus agreement should be read as consistency, not as five independent replications. And because each history repeats routes and seasons, the iid resampling likely understates interval width — the brackets read as conditional on the realized route mix.
 
@@ -546,7 +554,9 @@ Second, the **regime rule flips**: with the lower effective $\alpha$, $\varepsil
 
 #### 3.5.2 The residual, closed: the regime-consistent aero
 
-Table 5's shared −4…−5-point bias (both engines, in lockstep) says the missing cost is input-side, and a registered two-arm experiment located it (lab journal, Entry 35). *Braking*, measured as deceleration in excess of the physics coasting decel on non-descent cells, survives its own validity checks only in the strict reading (excess > 0.3 m/s² with the cadence at zero) at **≈ 0.6–0.8% of ride energy on the open corpora and ≈ 1.3–1.4% on the stop-heavier ones** — real, small, not the residual. The residual is the *flats-selection bias* of Table 5's segment-inverted $\hat C_dA$: the well-behaved flats are the fastest, most sheltered riding, so that estimator under-prices the ride's true air losses (its implied flat speed overshoots the measured one by 1–1.5 km/h). The fix needs no segments at all — invert the aero from the ride's flat regime *pair*, $\hat C_{dA,r}^{\mathrm{reg}} = (k_{\mathrm{eff}} P_{\mathrm{flat}}/v_{\mathrm{meas}} - \hat C_{rr,r}\,\hat m_r g)/(\tfrac{1}{2}\rho v_{\mathrm{meas}}^2)$, which closes the flat balance at the *measured* flat speed by construction. Under it — with $\varepsilon_0 = 0.13$ still frozen, nothing about ε re-fitted — the dynamic-ε law and the simulation snap back together:
+Table 5's shared −4…−5-point bias (both engines, in lockstep) says the missing cost is input-side, and a registered two-arm experiment located it (lab journal, Entry 35). *Braking*, measured as deceleration in excess of the physics coasting decel on non-descent cells, survives its own validity checks only in the strict reading (excess > 0.3 m/s² with the cadence at zero) at **≈ 0.6–0.8% of ride energy on the open corpora and ≈ 1.3–1.4% on the stop-heavier ones** — real, small, not the residual.
+
+The residual is the *flats-selection bias* of Table 5's segment-inverted $\hat C_dA$: the well-behaved flats are the fastest, most sheltered riding, so that estimator under-prices the ride's true air losses (its implied flat speed overshoots the measured one by 1–1.5 km/h). The fix needs no segments at all — invert the aero from the ride's flat regime *pair*, $\hat C_{dA,r}^{\mathrm{reg}} = (k_{\mathrm{eff}} P_{\mathrm{flat}}/v_{\mathrm{meas}} - \hat C_{rr,r}\,\hat m_r g)/(\tfrac{1}{2}\rho v_{\mathrm{meas}}^2)$, which closes the flat balance at the *measured* flat speed by construction. Under it — with $\varepsilon_0 = 0.13$ still frozen, nothing about ε re-fitted — the dynamic-ε law and the simulation snap back together:
 
 <a id="tab6"></a>
 

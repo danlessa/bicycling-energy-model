@@ -245,7 +245,7 @@ afraid to filter rides out."*
 ### Pre-registration (written before any full run)
 
 **The question.** Paper 1 validates $E \approx \alpha x + \beta(h_+ - \varepsilon h_-)$ on
-the rides' **own barometric elevation streams**, and excludes DEMs by design (§2.3.3). A
+the rides' **own barometric elevation streams**, and excludes DEMs by design (§2.3.4 after the same-day renumbering). A
 planner has no such stream: it has a polyline and a DEM. What does the elevation-source swap
 cost the law, and what is the cheapest repair that keeps it?
 
@@ -295,7 +295,7 @@ regardless of the amendment. One property of this choice is load-bearing and is 
 so it is not mistaken for circularity: the per-ride constants are inverted ONCE, from the
 ride's own recorded stream, and then held FIXED across all seven arms. Re-inverting them per
 arm would let mass and drag absorb the elevation error and hide exactly what the experiment
-measures — the circularity paper 1 §2.3.2 warns about. The constants are a property of the
+measures — the circularity paper 1 §2.3.3 warns about (renumbered same day). The constants are a property of the
 rider and the bicycle; a planner knows them without knowing the DEM.
 
 **Models.** F1–F4 × {ε_d, ε_f} + the forward simulation, per arm. The CSV stores the closed
@@ -483,7 +483,7 @@ as an independent replication of §2.4's constant, not as a new result.
 | `fab30` | 3.4 [3.2, 4.0] · +1.6 [+0.8, +2.6] | 4.6 [4.1, 4.9] · +2.0 [+1.5, +2.7] |
 
 The pooled column is not five independent replications — D1 ⊂ D5 and most of D2 is the
-author's own recordings re-scored as a generic rider (paper 1 §2.3.3), so paper 1 excludes D2
+author's own recordings re-scored as a generic rider (paper 1 §2.3.4 after renumbering), so paper 1 excludes D2
 from its pool. D3+D4 is the clean transfer column. Because every arm is scored on the
 identical ride set, the *paired* arm-vs-control statistics are unaffected by the overlap;
 only the absolute pooled level inherits it.
