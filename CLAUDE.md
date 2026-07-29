@@ -98,8 +98,7 @@ home of the *derivation* and the side-by-side comparison.
   `make_crates.py` (re-executes `bootstrap_ci.py` and aborts on gate failure).
   RO-Crate envelope at the repo root `ro-crate-metadata.json`.
 - `research/article/` — the papers and pieces: `paper1-closed-form.md` (the
-  IMRAD paper — EN only so far; a pt-BR mirror is planned and the lockstep
-  rule will then apply), `paper2-dem-deployment.md` (scaffold: letter — the
+  IMRAD paper — EN only, no pt-BR mirror planned), `paper2-dem-deployment.md` (scaffold: letter — the
   law on planner/DEM profiles; consumes paper 1 only),
   `paper3-edge-cost.md` (scaffold: the edge-cost discretization paper;
   cites paper 2's scale prescription), the older monoliths `article-draft.md` +
