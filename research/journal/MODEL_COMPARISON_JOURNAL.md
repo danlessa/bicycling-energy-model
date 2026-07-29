@@ -368,6 +368,53 @@ headline.
   (`span_m` per route-km, `dh_plus_removed_igc5`) carries a more positive DEM-minus-own
   residual than the rest by ≥ 1 pp.
 
+**Extension — the portal CORRECTION (Danilo, after the first full run: "there's something
+missing, which is to compute also the effect of including portals"). Registered here before
+the extension run; the first run's results above stand unchanged.** P4 as written said
+"E26 detection flags them; report with and without", and the first run read "with and
+without" as with/without the affected *rides* (the exposure-decile contrast, P4b). That
+leaves the operationally useful question unanswered: what does *correcting* portals buy?
+Every DEM arm therefore gains a corrected twin `<arm>p`. Where the track runs along a mapped
+OSM bridge or tunnel span — Entry 26's detector with every threshold verbatim (25 m
+proximity, 30° heading, 60% coverage, 50 m abutment projection, extent within [0.6, 2.0]×
+deck) — the heights across the span are replaced by a straight deck. Closed forms only; the
+simulation adds nothing to a geometry question and costs the most.
+
+*Two disclosed deviations from Entry 26.* (i) The deck runs between **the arm's own profile
+heights at the projected abutments**, not E26's raster heights at the abutment nodes: it
+needs no extra raster sampling, it cannot introduce a step at the span ends, and each arm is
+corrected in its own elevation units. (ii) The treatment is **offline-only** — a ride joins
+iff every 0.1° OSM tile its bbox needs is already in E26's cache, so the run issues no
+Overpass request and no ride-derived geometry leaves the machine. That restricts the
+treatment to E26's footprint (the old validated-crop area), so D1's brevets are largely
+outside it; rides not covered are reported as such rather than fetched.
+
+**Registered prediction P5.** The correction removes ascent (median Δh₊ < 0 on every arm)
+and moves each DEM arm's bias toward the control, by more on the raw fine survey than on the
+σ = 30 m arm — because smoothing already flattens part of the valley a bridge spans. Failure
+mode: no bias improvement, or h₊ rising, would mean the detector is matching spans the track
+does not cross, and the portal thread would be closed as unusable at route grain rather than
+carried into the letter.
+
+**Registered prediction P6 — the straight deck OVER-corrects (Danilo, before the extension
+run: "I would expect them to mostly overcorrect. Most bridges tend to go up and then down,
+while the portal assumes a straight line between the endpoints").** A road bridge carries a
+vertical curve: the rider climbs onto the crown and descends off it, and that ascent is real
+work. Entry 26's v19 deck is a straight line between abutments, so it erases the crown along
+with the DEM's spurious valley — an over-correction on bridges. Tunnels should behave the
+opposite way: there the DTM climbs over the pierced ridge while the road runs level or dips,
+so a straight line is close to right and the correction is nearly all signal.
+
+*The test needs no model.* For each matched span we accumulate ascent **inside the span
+only**, three ways: from the raw DEM, from the straight deck, and from **the ride's own
+barometric profile** — which is what the rider actually climbed over that structure, and
+therefore the reference the deck is answerable to. Registered: (a) deck − baro < 0 on
+bridges (the deck erases real crown), (b) |deck − baro| < |raw − baro| overall (the
+correction still helps more than it hurts), and (c) the bridge/tunnel split shows the deck
+closer to the barometer on tunnels than on bridges. If (b) fails the deck is a net harm at
+route grain and the letter says so; if (a) holds while (b) does, the honest prescription is
+"correct portals, and expect a small residual under-charge on bridge-rich routes".
+
 **Sanity gates (abort on failure).**
 
 1. **PARITY** — the `own` arm IS paper 1's protocol, so it must reproduce the published
@@ -395,8 +442,183 @@ before any sampling. It is inert — such rides have no IGC elevation at all and
 them — and exists only so the FABDEM fetch does not pull tiles for Roraima, Lombardy and
 Poland.
 
+### Results (first full run, 2026-07-28 — 1,117 rides)
+
+**Integrity.** All five sanity gates green: PARITY (the `own` arm reproduces the published
+per-ride Δ% of `longoes_frozen.csv` and the four `*_comparison.csv` to ≤ 0.02 pp),
+σ-equivalence (1-D profile vs Entry-20 2-D raster smoothing at σ = 10), conservation
+(max relative residual 6.3e-8), re-gridding inertness (Δ route length exactly 0), and the
+synthetic primitives check. Corpus funnel (candidates → sampled → primary): D1 44 → 29 → 22,
+D2 70 → 68 → 60, D3 486 → 398 → 393, D4 223 → 203 → 197, D5 691 → 490 → 445. The wide raster
+is what makes D1 possible at all — on Entries 19–21's validated crop its coverage is 0 of 44.
+The largest single cut is `outside-raster` (170 rides: Roraima, Rio, Lombardy, Poland), then
+Zwift (104) and G1 (36).
+
+**Geometry — what each source does to the profile** (medians over the 1,117):
+
+| arm | h₊ (m) | h₊ / h₊(own) | c(τ=2) m/km [95% CI] | ε_d |
+|---|--:|--:|--:|--:|
+| `own` barometer | 424 | 1.00 | **3.10 [3.01, 3.18]** | 0.439 |
+| `igc5` local 5 m @5 m | 501 | 1.18 | 4.95 [4.89, 5.00] | 0.374 |
+| `igc5s10` +σ=10 m | 443 | 1.04 | 3.74 [3.66, 3.81] | 0.389 |
+| `igc5s30` +σ=30 m | 363 | 0.86 | 2.62 [2.56, 2.68] | 0.424 |
+| `igc30` local 5 m @30 m | 446 | 1.05 | 3.77 [3.69, 3.83] | 0.384 |
+| `fab5` FABDEM @5 m | 1002 | **2.36** | **10.14 [9.86, 10.59]** | 0.322 |
+| `fab30` FABDEM @30 m | 731 | 1.72 | 7.52 [7.12, 7.76] | 0.348 |
+
+The control's own rate lands at **3.10 m/km [3.01, 3.18]** — paper 1 measured 3.1 m/km on 44
+rides; this is the same number on 25× the sample and a different physics protocol. Treat it
+as an independent replication of §2.4's constant, not as a new result.
+
+**The substitution cost** — F3 · ε_d, median |Δ%| [95% CI] · median signed Δ% [95% CI]:
+
+| arm | D3+D4 · 590 | ALL · 1,117 |
+|---|--:|--:|
+| `own` | 3.2 [2.9, 3.4] · −2.0 [−2.4, −1.6] | 3.8 [3.6, 4.1] · −1.7 [−2.2, −1.3] |
+| `igc5` | 3.6 [3.3, 3.9] · −0.9 [−1.5, −0.4] | 4.3 [4.0, 4.6] · +1.0 [+0.3, +1.7] |
+| `igc5s10` | 3.5 [3.3, 3.9] · −1.3 [−1.7, −0.8] | 4.2 [4.0, 4.4] · −0.1 [−0.5, +0.4] |
+| **`igc5s30`** | **3.4 [3.2, 3.8] · −1.9 [−2.2, −1.7]** | **4.0 [3.8, 4.2] · −1.7 [−1.9, −1.3]** |
+| `igc30` | 3.5 [3.2, 3.8] · −1.3 [−1.6, −0.8] | 4.2 [4.0, 4.4] · +0.1 [−0.4, +0.5] |
+| `fab5` | 4.0 [3.4, 4.7] · +3.6 [+2.8, +4.5] | 5.3 [4.6, 6.0] · +4.3 [+3.6, +4.9] |
+| `fab30` | 3.4 [3.2, 4.0] · +1.6 [+0.8, +2.6] | 4.6 [4.1, 4.9] · +2.0 [+1.5, +2.7] |
+
+The pooled column is not five independent replications — D1 ⊂ D5 and most of D2 is the
+author's own recordings re-scored as a generic rider (paper 1 §2.3.3), so paper 1 excludes D2
+from its pool. D3+D4 is the clean transfer column. Because every arm is scored on the
+identical ride set, the *paired* arm-vs-control statistics are unaffected by the overlap;
+only the absolute pooled level inherits it.
+
+Per corpus (med |Δ%| · bias), `own` → `igc5` → `igc5s30`: D1 7.5·+1.7 → 21.8·+21.8 → 8.0·+8.0;
+D2 3.4·+0.3 → 8.1·+7.0 → 5.1·+1.2; D3 3.1·−1.2 → 4.0·+0.6 → 3.6·−1.7; D4 3.4·−2.8 →
+2.8·−2.1 → 3.3·−2.3; D5 4.9·−1.7 → 5.3·+3.1 → 4.7·−1.2.
+
+**P1 — direction confirmed universally, magnitude refuted on the registered pool.** The raw
+fine DEM over-charges on every corpus (bias shift +0.7 to +20.1 pp) and on **940 of 1,117
+rides** paired (median +2.68 pp). But the registered window was +3 to +10 pp on D3+D4, and
+the observed shift there is **+1.1 pp** (−2.0 → −0.9); pooled over all five it is +2.7 pp.
+The prediction was arithmetic from Entry 6's k_DEM = 1.26 — which was measured on *hilly
+longões*, and that is exactly where it lands: D1's shift is +20.1 pp. The transfer riders ride
+graded open roads, where the survey and the barometer nearly agree. **The over-charge is
+terrain-dependent**, which is Entry 21's refined hypothesis (constants are functions of
+(Δx, terrain-roughness regime), not of Δx alone) arriving from the energy side.
+
+**P2 — CONFIRMED, and by more than registered.** At σ = 30 m the law returns to the control:
+med |Δ%| 3.4 vs 3.2 on D3+D4 (**0.2 pp**, registered ≤ 2) and 4.0 vs 3.8 pooled, with bias
+−1.9 vs −2.0 and −1.7 vs −1.7 — the control's own bias reproduced to a tenth of a point.
+Nothing was re-fitted to achieve it: σ is Entry 20's lever, moved from the raster to the
+profile. The letter's headline is therefore not "DEMs are bad" but **"one smoothing scale,
+applied to the sampled profile, buys the barometer's behaviour."**
+
+**P3 — (a) CONFIRMED decisively, (b) REFUTED as stated.** Every DEM source's noise rate sits
+far outside the barometric CI: `igc5` 4.95 [4.89, 5.00] (registered > 4.5), `fab5` 10.14
+[9.86, 10.59] (registered > 6.0). So paper 1's frozen c = 3 m/km is a property of *consumer
+barometric recordings at 5 m resampling*, not of routes. Substituting each arm's own median c
+in F4 rescues the catastrophic case — `fab5`'s bias falls from **+19.2 to +0.9** — but does
+not land within 2 pp of F3's bias on the same arm, and on the low-noise arms it *overshoots*
+negative (`igc5` +2.4 → −2.0; `fab30` +7.4 → −3.9). The mechanism is structural: F4 scales
+climb *and* refund by one factor (1 − c·x/h₊), so at large c it over-corrects the descent
+side, which F3's deadband handles separately. Practical rule: with the profile in hand use
+F3's deadband; F4 with a per-source c is a rescue for totals-only inputs, not a substitute.
+
+**P4 — the artifact tail, confirmed on both operationalizations.** (a) On the 745 anomaly-free
+crops the coarse source improves markedly — `fab5` 5.3 → **3.4** med |Δ%| (−1.9 pp, registered
+≥ 1) and `fab30` 4.6 → 3.6 — while the fine local survey barely moves (`igc5` 4.3 → 3.8,
+−0.5 pp, below the registered threshold). Strikingly, on clean crops FABDEM (3.4) *beats* the
+barometric control (3.7): the anomaly filter removes precisely the rides where a 30 m product
+misreads. (b) Portal exposure, joined from Entry 26 on the 877 rides where that population
+overlaps: the top decile (≥ 71.2 span-metres per route-km) carries a DEM-minus-control
+residual of **+5.39 pp against the rest's +1.50 pp** — a 3.89 pp difference, well past the
+registered ≥ 1 pp. Bridges and tunnels are a real and separable part of the substitution cost.
+
+**The physics protocol earned its amendment.** F3 · ε_d, frozen priors → regime-consistent,
+med |Δ%| (bias): `own` 5.6 (+0.3) → 3.8 (−1.7); `igc5` 6.1 (+3.3) → 4.3 (+1.0); `fab5` 7.8
+(+6.4) → 5.3 (+4.3). Every arm improves by ≈ 1.8 pp of median error, so the source effect is
+read against a much smaller residual. The amendment's stated purpose is visible in the smoke
+that preceded it, where at the frozen priors FABDEM appeared *more accurate than the ride's
+own barometer* purely because its over-charge offset a standing under-prediction.
+
+**Verdict.** The law survives the elevation-source swap far better than the ascent-inflation
+literature would suggest, and the surviving error is prescriptive rather than diffuse. On the
+local 5 m survey the swap costs 0.5 pp of median accuracy and a +2.7 pp bias swing, both
+removed by a σ = 30 m smoothing of the sampled profile. On the free global 30 m product the
+swap costs 1.5 pp and +6.0 pp of bias when the polyline is sampled at 5 m steps; sampling it
+at 30 m halves that, and using FABDEM's own c = 10.1 m/km instead of the frozen 3 turns F4
+from unusable (+19.2% bias) into serviceable (+0.9%). Two scope limits are load-bearing:
+the penalty is terrain-dependent (D1's brevets pay 20 pp where D3/D4 pay 1), and portal-rich
+routes are a separable tail worth its own handling.
+
+### Extension results — the portal correction (2026-07-28, second full run)
+
+**Coverage.** 950 of the 1,117 primary rides have their OSM tiles already cached, and 943 of
+those carry at least one matched span (median 1,350 m of deck over 18 spans per ride). The
+167 uncovered rides are mostly D1's brevets, outside Entry 26's footprint; no Overpass
+request was issued.
+
+**P6 — CONFIRMED on all three parts: the straight deck over-corrects, and it is the bridges.**
+Ascent accumulated *inside* the matched spans, median metres per ride, against the ride's own
+barometer as the truth for what was climbed over the structure (19.5 m):
+
+| source | raw | straight deck | deck − baro [95% CI] | raw − baro [95% CI] |
+|---|--:|--:|--:|--:|
+| `igc5` | 43.6 | 11.4 | **−2.79 [−3.52, −2.08]** | +13.27 [+10.00, +19.67] |
+| `igc5s30` | 24.9 | 7.0 | −5.84 [−7.89, −4.51] | **+0.05 [−0.29, +0.28]** |
+| `fab5` | 33.1 | 7.7 | −6.57 [−7.61, −5.46] | +11.17 [+10.16, +12.55] |
+| `fab30` | 25.0 | 7.3 | −6.78 [−8.04, −5.81] | +4.98 [+4.25, +5.83] |
+
+(a) **deck − baro < 0**, CI clear of zero on every arm: the deck removes more than the DEM
+invented. (b) **|deck − baro| ≪ |raw − baro|** on the raw sources (2.8 against 13.3 on
+`igc5`): the correction still removes about four-fifths of the spurious ascent, so it helps
+far more than it hurts. (c) The **bridge/tunnel split carries the whole effect and matches
+the mechanism exactly**: on bridges `igc5`'s deck − baro is −2.43 [−3.26, −1.68] m against
+tunnels' −0.29 [−0.40, −0.20] — eight times the over-correction, with disjoint CIs. A road
+bridge carries a vertical curve the rider climbs and the straight line erases; a tunnel's
+roadway really is close to a chord under the DTM's ridge, so there the correction is nearly
+all signal. Danilo's prediction, made before the run, is right in sign, in magnitude, and in
+its attribution to bridges.
+
+**The finding that changes the recipe: the two repairs do NOT stack.** On the σ = 30 m arm
+the raw profile's in-span ascent already matches the barometer — **+0.05 m [−0.29, +0.28]**,
+a CI straddling zero. Smoothing has *already* removed the portal artifact, because a valley
+a bridge spans is exactly the kind of sub-30 m feature the Gaussian flattens. Applying the
+deck on top then subtracts a second time, and the energy gets significantly **worse**:
+3.81 (−2.07) → 3.87 (−2.37) med |Δ%|, corrected closer on only 400 of 935 rides,
+p < 10⁻⁴. Correct portals **or** pre-smooth — not both.
+
+**Energy effect** (F3 · ε_d, regime-consistent physics, the 943 touched rides; the control
+reads 3.72 [3.47, 4.03] · −2.10 [−2.48, −1.61] on this subset):
+
+| arm | raw | portal-corrected | corrected closer | p |
+|---|--:|--:|--:|--:|
+| `igc5` | 3.92 · −0.29 | **3.73 · −1.29** | 501/943 | 0.059 |
+| `igc5s10` | 3.92 · −0.95 | 3.81 · −1.62 | 458/942 | 0.42 |
+| `igc5s30` | 3.81 · −2.07 | 3.87 · −2.37 | 400/935 | **< 10⁻⁴ (worse)** |
+| `igc30` | 3.89 · −0.87 | 3.82 · −1.54 | 466/940 | 0.82 |
+| `fab5` | 3.91 · +2.71 | **3.68 · +2.39** | 644/942 | **< 10⁻⁴** |
+| `fab30` | 3.66 · +0.75 | **3.59 · +0.53** | 613/938 | **< 10⁻⁴** |
+
+Read against the control: correcting portals moves the raw fine survey from 3.92 (−0.29) to
+3.73 (−1.29) — onto the barometer on both axes (3.72, −2.10). The per-ride paired test is
+only marginal there (p = 0.059), so the honest statement is that the *bias* moves a full
+point toward the control while the *scatter* gain is within noise. On the coarse global
+source both move significantly. On the smoothed arm it is a net harm.
+
+**Verdict.** The portal correction is worth applying to a raw DEM profile and worth skipping
+after pre-smoothing. Its residual is a known-sign under-charge concentrated on bridges —
+about 2.4 m of erased crown per touched ride on the fine survey — which a future refinement
+could recover by fitting a vertical curve rather than a chord, but which at route grain costs
+under half a percent of ride energy and is dwarfed by the +13 m it removes.
+
+*Deviations, disclosed:* the deck runs between the arm's own profile heights at the projected
+abutments rather than Entry 26's raster heights at the abutment nodes; the treatment is
+offline-only, so it is restricted to Entry 26's cached OSM footprint and D1 is largely absent;
+closed forms only, no simulation. The extension was registered (P5, P6) before its run, after
+the main results above were already in hand — the two runs are reported separately for that
+reason.
+
 Instrument: [`e41_dem_route.py`](../../src/harness/e41_dem_route.py) (`E41_SMOKE=n`); output
-`e41_dem_route.csv`.
+`e41_dem_route.csv` (1,189 rides written, 1,117 in the primary population). The per-arm
+medians, their CIs, the per-source noise rates, the h₊ ratios and the paired substitution
+costs are gated in `bootstrap_ci.py`.
 
 ---
 

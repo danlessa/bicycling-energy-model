@@ -32,6 +32,19 @@ TWO PHYSICS PROTOCOLS per arm (registration amendment, Danilo, before results):
   frz  paper 1's frozen priors.  Kept so the PARITY gate still has a published
        reference, and as the protocol contrast.
 
+PORTAL TREATMENT (Entry-41 extension, Danilo: "compute also the effect of including
+portals").  P4 registered "E26 detection flags them; report with and without" — the first
+run read that as with/without the affected RIDES; this adds the reading it more naturally
+carries, with/without the CORRECTION.  Every DEM arm gains a portal-corrected twin `<arm>p`:
+where the track runs along an OSM bridge/tunnel span (Entry 26's detector, all thresholds
+verbatim), the heights across the span are replaced by a straight deck.  Deviation from
+E26, disclosed: the deck runs between the ARM'S OWN profile heights at the projected
+abutments rather than E26's raster heights at the abutment nodes — it needs no extra raster
+sampling and cannot introduce a step at the span ends.  Closed forms only (no simulation).
+OFFLINE-ONLY: a ride joins the treatment iff every OSM tile its bbox needs is already in
+E26's cache, so the run issues no Overpass request and no ride-derived geometry leaves the
+machine; rides outside that footprint are reported as not-covered rather than fetched.
+
 Models per arm: F1–F4 × {ε_d, ε_f} + the forward simulation.  The CSV stores the
 closed form's COMPONENTS per arm (a_roll, a_aero, X, h±, aero gated/ungated,
 smoothed h±), so every F-variant at any ε and any noise rate c is arithmetic
@@ -62,6 +75,7 @@ MODULE IS IMPORT-SAFE — the driver lives in main().
 from __future__ import annotations
 
 import gzip
+import hashlib
 import json
 import math
 import os
@@ -107,17 +121,54 @@ FABDEM_DIR = os.path.join(SCRATCH, "fabdem")
 FABDEM_VRT = os.path.join(SCRATCH, "fabdem_mosaic.vrt")
 FABDEM_URL = "https://telhas.pedalhidrografi.co/fabdem/{tile}_FABDEM_V1-2.tif"
 
+def _unquote(x: str) -> str:
+    """Strip the surrounding quotes the harness CSVs put on string cells."""
+    return x[1:-1] if len(x) >= 2 and x[0] == '"' and x[-1] == '"' else x
+
+
 # ---- protocol constants (paper 1, frozen — never re-fitted here) ----------
 FROZEN = {"Crr": 0.008, "CdA": 0.40, "rho": 1.13, "keff": 0.98, "wind": 0.0}
 VMAX, VSTART = 38 / 3.6, 15 / 3.6
 CLIMB_THR, DESC_THR, ENGINE_DX, TAU_SMOOTH = 0.02, -0.015, 5, 2
 C_FROZEN = 3.0          # m/km — paper 1's ascent-noise rate, F4's scalar
 EPS_F = 0.20            # the flat ε constant
-# per-corpus mass: D1 logged per ride; D2 the generic prior; D3–D5 the
-# sustained-climb inversion (paper 1 §2.3.2).  m̂·g is the invariant — these
-# move with G and must never be frozen independently of it.
-ANCHOR_M = {"longoes": None, "censo": 78.0, "ppaz": 74.5, "jaam": 101.9,
-            "danlessa": 74.7}
+# Per-corpus mass for the FROZEN protocol: D1 logged per ride, D2 the generic
+# prior (a literal in censo_compare, so a literal here), D3–D5 the sustained-climb
+# inversion (paper 1 §2.3.2).  The inverted ones are RECOVERED from each published
+# comparison CSV, never written down: peFloor = m·g·h̃₊/k_eff is printed per ride, so
+# m = peFloor·k_eff·1000/(g·h̃₊).  This is CLAUDE.md's Entry-27 lesson — m̂·g is the
+# invariant, both move with G, and freezing the paper's ROUNDED value (74.5 / 101.9 /
+# 74.7) is exactly what broke this harness's parity gate the first time: a 0.03% mass
+# error is invisible on a typical ride and 0.23 pp on an outlier.
+_ANCHOR_CSV = {"ppaz": "ppaz_comparison.csv", "jaam": "jaam_comparison.csv",
+               "danlessa": "danlessa_comparison.csv"}
+
+
+def load_anchor_masses() -> dict:
+    out = {"longoes": None, "censo": 78.0}
+    for corpus, fname in _ANCHOR_CSV.items():
+        path = os.path.join(RESULTS, fname)
+        ms = []
+        if os.path.exists(path):
+            with open(path, encoding="utf-8") as fh:
+                head = [_unquote(h) for h in fh.readline().rstrip("\n").split(",")]
+                for line in fh:
+                    r = dict(zip(head, (_unquote(x) for x in
+                                        line.rstrip("\n").split(","))))
+                    try:
+                        pe, hs = float(r["peFloor"]), float(r["hplus_sm"])
+                    except (KeyError, ValueError):
+                        continue
+                    if hs > 0:
+                        ms.append(pe * 1000 * FROZEN["keff"] / (G * hs))
+        if not ms:
+            raise SystemExit(f"cannot recover {corpus}'s mass: run its *_compare.py first")
+        ms.sort()
+        out[corpus] = ms[len(ms) // 2]
+    return out
+
+
+ANCHOR_M = load_anchor_masses()
 PRIMARY_PROTO = "reg"           # the physics the headline is quoted at
 PROTOCOLS = ("frz", "reg")      # frozen priors · regime-consistent per-ride physics
 PROTO_LABEL = {"frz": "frozen priors", "reg": "regime-consistent per-ride"}
@@ -156,11 +207,6 @@ CACHE_BIN = os.path.join(SCRATCH, "e41_profiles_smoke.bin" if SMOKE
 CACHE_META = os.path.join(SCRATCH, "e41_profiles_smoke.meta.json" if SMOKE
                           else "e41_profiles.meta.json")
 CACHE_VERSION = 1
-
-
-def _unquote(x: str) -> str:
-    """Strip the surrounding quotes the harness CSVs put on string cells."""
-    return x[1:-1] if len(x) >= 2 and x[0] == '"' and x[-1] == '"' else x
 
 
 def load_e35() -> dict:
@@ -347,6 +393,138 @@ def ensure_fabdem(tiles: set[str]) -> bool:
     return True
 
 
+# ===== portal (bridge/tunnel) correction — Entry 26's detector, offline =====
+PORTAL_CACHE = os.path.join(SCRATCH, "e41_portal_spans.json")
+_portal_spans: dict = {}
+_E26 = None
+
+
+def e26_module():
+    """Import Entry 26's harness lazily — it pulls numpy, which the rest of this
+    harness does not need."""
+    global _E26
+    if _E26 is None:
+        import e26_portal_profiles as m
+        _E26 = m
+    return _E26
+
+
+def portal_tiles_cached(lats: list[float], lons: list[float]) -> bool:
+    """True iff every 0.1° OSM tile this track needs is already on disk. Computing the
+    same key Entry 26 uses lets us test coverage WITHOUT triggering a fetch."""
+    E = e26_module()
+    d, m = E.TILE_DEG, E.TILE_MARGIN
+    for ti in range(math.floor((min(lats) - m) / d), math.floor((max(lats) + m) / d) + 1):
+        for tj in range(math.floor((min(lons) - m) / d),
+                        math.floor((max(lons) + m) / d) + 1):
+            s_, w_ = ti * d, tj * d
+            key = f"{s_:.4f},{w_:.4f},{s_ + d:.4f},{w_ + d:.4f}"
+            h = hashlib.sha1(key.encode("utf-8")).hexdigest()[:16]
+            if not os.path.exists(os.path.join(E.CACHE_DIR, f"{h}.json")):
+                return False
+    return True
+
+
+def portal_crossings(g: dict) -> list[dict] | None:
+    """Entry-26 span crossings on this ride's 5 m grid, or None when the ride's OSM
+    tiles are not cached. Depends only on the track, so it is cached per ride."""
+    key = f"{g['corpus']}|{g['label']}"
+    if key in _portal_spans:
+        return _portal_spans[key]
+    lats, lons = g["g5"]["lats"], g["g5"]["lons"]
+    if not portal_tiles_cached(lats, lons):
+        _portal_spans[key] = None
+        return None
+    E = e26_module()
+    ways = E.ways_for_bbox(min(lats), max(lats), min(lons), max(lons))
+    cr = E.match_crossings(g["d5"], lons, lats, ways)
+    out = [{"xlo": float(c["xlo"]), "xhi": float(c["xhi"]), "kind": c.get("kind")}
+           for c in cr if c["xhi"] > c["xlo"]]
+    _portal_spans[key] = out
+    return out
+
+
+def load_portal_cache() -> None:
+    global _portal_spans
+    if os.path.exists(PORTAL_CACHE):
+        with open(PORTAL_CACHE, encoding="utf-8") as fh:
+            _portal_spans = {k: v for k, v in json.load(fh).items()}
+
+
+def save_portal_cache() -> None:
+    with open(PORTAL_CACHE, "w", encoding="utf-8") as fh:
+        json.dump(_portal_spans, fh, separators=(",", ":"))
+
+
+def span_ascent(prof: dict, crossings: list[dict], kind: str | None = None) -> float:
+    """Ascent accumulated INSIDE the matched spans only. Run on the ride's own
+    barometric profile this is what the rider actually climbed over the structure —
+    the reference the straight deck is answerable to."""
+    if not crossings:
+        return 0.0
+    xs, h = prof["x"], prof["h"]
+    n = len(xs)
+    dx = (xs[-1] - xs[0]) / (n - 1) if n > 1 else 1.0
+    tot = 0.0
+    for c in crossings:
+        if kind is not None and c.get("kind") != kind:
+            continue
+        i0 = max(1, int(math.ceil((c["xlo"] - xs[0]) / dx)))
+        i1 = min(n - 1, int(math.floor((c["xhi"] - xs[0]) / dx)))
+        for i in range(i0, i1 + 1):
+            d = h[i] - h[i - 1]
+            if d > 0:
+                tot += d
+    return tot
+
+
+def apply_portal_deck(prof: dict, crossings: list[dict]) -> dict:
+    """Straight-deck correction: inside each matched span the profile is replaced by a
+    line between its own heights at the span ends. Endpoint heights are read from the
+    ORIGINAL array, so overlapping spans (dual-carriageway twins) cannot chain."""
+    if not crossings:
+        return prof
+    xs, h0 = prof["x"], prof["h"]
+    h = list(h0)
+    n = len(xs)
+    dx = (xs[-1] - xs[0]) / (n - 1) if n > 1 else 1.0
+
+    def h_at(x: float) -> float:
+        if dx <= 0:
+            return h0[0]
+        t = (x - xs[0]) / dx
+        i = max(0, min(n - 2, int(t)))
+        f = max(0.0, min(1.0, t - i))
+        return h0[i] * (1 - f) + h0[i + 1] * f
+
+    for c in crossings:
+        xlo, xhi = c["xlo"], c["xhi"]
+        span = xhi - xlo
+        if not span > 0:
+            continue
+        hlo, hhi = h_at(xlo), h_at(xhi)
+        i0 = max(0, int(math.ceil((xlo - xs[0]) / dx)))
+        i1 = min(n - 1, int(math.floor((xhi - xs[0]) / dx)))
+        for i in range(i0, i1 + 1):
+            h[i] = hlo + (hhi - hlo) * (xs[i] - xlo) / span
+    return {"x": xs, "h": h}
+
+
+def span_metres(crossings: list[dict]) -> float:
+    """Merged along-track extent the correction touches."""
+    if not crossings:
+        return 0.0
+    iv = sorted((c["xlo"], c["xhi"]) for c in crossings)
+    tot, lo, hi = 0.0, iv[0][0], iv[0][1]
+    for a, b in iv[1:]:
+        if a > hi:
+            tot += hi - lo
+            lo, hi = a, b
+        else:
+            hi = max(hi, b)
+    return tot + (hi - lo)
+
+
 # ===== corpus drivers (paper-1 clean-corpus filters, verbatim) =====
 def iter_corpus(name: str):
     """Yield (rel_path, ride_label, logged_mass_or_None) per candidate ride."""
@@ -473,7 +651,8 @@ def arm_profiles(geo: dict, cols: dict) -> tuple[dict, dict]:
     return profs, valid
 
 
-def eval_arm(prof: dict, p: dict, pw: dict, vf: float) -> dict:
+def eval_arm(prof: dict, p: dict, pw: dict, vf: float,
+             with_sim: bool = True) -> dict:
     """The closed form's components (so any F-variant at any ε and any c is
     arithmetic afterwards) plus the forward simulation, on one arm's profile."""
     profS = {"x": prof["x"], "h": deadband(prof["h"], TAU_SMOOTH)}
@@ -483,10 +662,13 @@ def eval_arm(prof: dict, p: dict, pw: dict, vf: float) -> dict:
     aero_spd = vf + p["wind"]
     a_roll = mg * p["Crr"] / p["keff"]
     a_aero = 0.5 * p["rho"] * p["CdA"] * aero_spd * abs(aero_spd) / p["keff"]
-    c = canonical(prof, pw, p)
-    resid = abs(p["keff"] * c["legE"] - (c["dKE"] + c["Wrr"] + c["Waero"]
-                                         + c["Wgrav"] + c["Wbrake"]))
-    resid /= max(1.0, p["keff"] * c["legE"])
+    if with_sim:
+        c = canonical(prof, pw, p)
+        resid = abs(p["keff"] * c["legE"] - (c["dKE"] + c["Wrr"] + c["Waero"]
+                                             + c["Wgrav"] + c["Wbrake"]))
+        resid /= max(1.0, p["keff"] * c["legE"])
+    else:
+        c, resid = {"legE": float("nan")}, 0.0
     epsG = eps_geom(prof, p, vf)
     n_anom, inj = anomaly_census(prof["h"])
     x_km = a_raw["X"] / 1000
@@ -562,6 +744,7 @@ def main() -> None:
 
     # ---- pass 2: models ----
     print("pass 2 — models", file=sys.stderr)
+    load_portal_cache()
     cons_max = 0.0
     for i, (corpus, g) in enumerate(geos):
         cols = cache_cols(cache, i, g)
@@ -583,7 +766,11 @@ def main() -> None:
                         "rho": FROZEN["rho"], "keff": FROZEN["keff"],
                         "wind": j35["wind"], "vmax": VMAX, "vstart": VSTART}
                        if j35 else dict(phys["frz"]))
+        cross = portal_crossings(g)
         row = {"corpus": corpus, "ride": g["label"], "emp": g["emp"],
+               "portal_ok": int(cross is not None),
+               "n_spans": len(cross) if cross else 0,
+               "span_m": span_metres(cross) if cross else 0.0,
                "km": g["total"] / 1000, "m_frz": m_frz,
                "m_reg": phys["reg"]["m"], "cda_reg": phys["reg"]["CdA"],
                "crr_reg": phys["reg"]["Crr"], "wind_reg": phys["reg"]["wind"],
@@ -622,9 +809,37 @@ def main() -> None:
                 for k in ("beta", "a_roll", "a_aero", "aero_raw", "aero_sm",
                           "hminus_sm"):
                     row[f"{name}_{proto}_{k}"] = a[k]
+                # portal-corrected twin of every DEM arm (closed forms only —
+                # the simulation is the expensive engine and adds nothing here)
+                if name != "own" and cross:
+                    pp = apply_portal_deck(prof, cross)
+                    ap = eval_arm(pp, p, pw, vf, with_sim=False)
+                    if proto == "frz":
+                        row[f"{name}p_hplus"] = ap["hplus"]
+                        row[f"{name}p_cnoise"] = ap["cnoise"]
+                        # ascent INSIDE the spans: raw source, straight deck, and
+                        # what the rider's own barometer recorded there (the truth
+                        # the deck is answerable to — a bridge with a vertical
+                        # curve IS climbed, and a straight deck erases it)
+                        row[f"{name}_span_hplus"] = span_ascent(prof, cross)
+                        row[f"{name}p_span_hplus"] = span_ascent(pp, cross)
+                        for kd in ("bridge", "tunnel"):
+                            row[f"{name}_span_hplus_{kd}"] = span_ascent(prof, cross, kd)
+                            row[f"{name}p_span_hplus_{kd}"] = span_ascent(pp, cross, kd)
+                    row[f"{name}p_{proto}_eps_d"] = ap["eps_d"]
+                    for tag, eps in (("d", ap["eps_d"]), ("f", EPS_F)):
+                        Fp = forms(ap, eps)
+                        for fk in ("f3", "f4"):
+                            row[f"{name}p_{proto}_{fk}{tag}"] = jsdiv(
+                                Fp[fk] - g["emp"], g["emp"]) * 100
         # paper-1 physical floor, at the FROZEN protocol exactly as the
         # *_compare harnesses define it (β·h̃₊/1000 ≤ measured) — so the
         # population stays paper 1's, independent of the physics amendment
+        if cross and profs.get("own"):
+            row["own_span_hplus"] = span_ascent(profs["own"], cross)
+            for kd in ("bridge", "tunnel"):
+                row[f"own_span_hplus_{kd}"] = span_ascent(profs["own"], cross, kd)
+                row[f"n_spans_{kd}"] = sum(1 for c in cross if c.get("kind") == kd)
         own = armdat.get("own")
         row["dataOK"] = int(bool(own) and g["emp"] >= own["beta"] * own["hplus_sm"] / 1000)
         row["g1_track"] = int(g["gap_frac"] <= GAP_FRAC_MAX)
@@ -637,6 +852,7 @@ def main() -> None:
             print(f"  …{i + 1}/{len(geos)} ({to_fixed(time.time() - t0, 0)} s)",
                   file=sys.stderr)
 
+    save_portal_cache()
     write_csv(rows)          # first: the report is long, the CSV must survive it
     report(rows, funnel, cons_max)
     ok = run_gates(rows, geos, cons_max)
@@ -923,6 +1139,82 @@ def report(rows, funnel, cons_max) -> None:
                   f"(its population is the old validated crop) — under-powered, reported as such")
     else:
         print("\nP4b — e26_portal_profiles.csv absent; portal secondary not evaluated")
+
+    # --- the portal correction: what does fixing bridges/tunnels buy? ---
+    cov = [r for r in prim if r.get("portal_ok")]
+    touched = [r for r in cov if (r.get("n_spans") or 0) > 0]
+    print(f"\nPORTAL CORRECTION (Entry-26 detector, offline) — {len(cov)} of {len(prim)} "
+          f"rides have cached OSM coverage; {len(touched)} carry ≥1 matched span "
+          f"(median {f(med_of([r['span_m'] for r in touched]), 0)} m of deck, "
+          f"{f(med_of([r['n_spans'] for r in touched]), 0)} spans)")
+    print("arm".ljust(10) + "raw med|Δ%| (bias)".rjust(22)
+          + "corrected (bias)".rjust(22) + "Δ h₊ (m)".rjust(11)
+          + "closer/n".rjust(12) + "p".rjust(9))
+    for name in DEM_ARMS:
+        kr, kp = f"{name}_{PRIMARY_PROTO}_f3d", f"{name}p_{PRIMARY_PROTO}_f3d"
+        st = [r for r in touched if is_finite(r.get(kr)) and is_finite(r.get(kp))]
+        if not st:
+            continue
+        raw = [r[kr] for r in st]
+        cor = [r[kp] for r in st]
+        dh = med_of([r[f"{name}p_hplus"] - r[f"{name}_hplus"] for r in st
+                     if is_finite(r.get(f"{name}p_hplus"))])
+        w = sum(1 for r in st if abs(r[kp]) < abs(r[kr]))
+        l = sum(1 for r in st if abs(r[kp]) > abs(r[kr]))
+        print(name.ljust(10)
+              + (f"{f(med_of([abs(x) for x in raw]), 2)} "
+                 f"({f(med_of(raw), 2)})").rjust(22)
+              + (f"{f(med_of([abs(x) for x in cor]), 2)} "
+                 f"({f(med_of(cor), 2)})").rjust(22)
+              + f(dh, 1).rjust(11) + f"{w}/{w + l}".rjust(12)
+              + f(sign_p(w, l), 4).rjust(9))
+    # the conditional effect where portals are dense (top exposure decile)
+    if len(touched) >= 40:
+        ex = sorted(touched, key=lambda r: r["span_m"] / max(0.001, r["km"]))
+        top = ex[int(0.9 * (len(ex) - 1)):]
+        print(f"  top exposure decile (n={len(top)}, "
+              f"≥{f(top[0]['span_m'] / max(0.001, top[0]['km']), 1)} deck-m per route-km):")
+        for name in ("igc5", "igc5s30", "fab30"):
+            kr, kp = f"{name}_{PRIMARY_PROTO}_f3d", f"{name}p_{PRIMARY_PROTO}_f3d"
+            st = [r for r in top if is_finite(r.get(kr)) and is_finite(r.get(kp))]
+            if st:
+                print(f"    {name.ljust(9)} raw "
+                      f"{f(med_of([abs(r[kr]) for r in st]), 2)} "
+                      f"({f(med_of([r[kr] for r in st]), 2)}) → corrected "
+                      f"{f(med_of([abs(r[kp]) for r in st]), 2)} "
+                      f"({f(med_of([r[kp] for r in st]), 2)})")
+
+    # --- is the straight deck an OVER-correction? ---
+    tb = [r for r in prim if r.get("portal_ok") and (r.get("n_spans") or 0) > 0
+          and is_finite(r.get("own_span_hplus"))]
+    if tb:
+        print("\nIS THE STRAIGHT DECK AN OVER-CORRECTION? — ascent accumulated INSIDE the "
+              "matched spans (median m/ride).")
+        print("The rider's own barometer is the truth over the structure: a bridge with a "
+              "vertical curve IS climbed.")
+        print("source".ljust(10) + "raw".rjust(9) + "deck".rjust(9)
+              + "baro".rjust(9) + "deck−baro".rjust(12) + "raw−baro".rjust(11))
+        for name in DEM_ARMS:
+            st = [r for r in tb if is_finite(r.get(f"{name}_span_hplus"))]
+            if not st:
+                continue
+            raw = med_of([r[f"{name}_span_hplus"] for r in st])
+            dk = med_of([r[f"{name}p_span_hplus"] for r in st])
+            bo = med_of([r["own_span_hplus"] for r in st])
+            print(name.ljust(10) + f(raw, 1).rjust(9) + f(dk, 1).rjust(9)
+                  + f(bo, 1).rjust(9)
+                  + f(med_of([r[f"{name}p_span_hplus"] - r["own_span_hplus"]
+                              for r in st]), 1).rjust(12)
+                  + f(med_of([r[f"{name}_span_hplus"] - r["own_span_hplus"]
+                              for r in st]), 1).rjust(11))
+        for kd in ("bridge", "tunnel"):
+            st = [r for r in tb if (r.get(f"n_spans_{kd}") or 0) > 0]
+            if not st:
+                continue
+            print(f"  {kd}s only (n={len(st)} rides): "
+                  + " · ".join(
+                      f"{nm} deck−baro {f(med_of([r[f'{nm}p_span_hplus_{kd}'] - r[f'own_span_hplus_{kd}'] for r in st if is_finite(r.get(f'{nm}p_span_hplus_{kd}'))]), 1)} m"
+                      for nm in ("igc5", "fab30")))
 
     # --- G3 secondary ---
     clean = [r for r in prim if r["g3_clean"]]

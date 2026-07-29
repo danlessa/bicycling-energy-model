@@ -134,9 +134,9 @@
         "SoftwareSourceCode"
       ],
       "name": "src/harness/scurve_deficit.py",
-      "url": "https://github.com/danlessa/bicycling-energy-model/blob/6c457b2e82d78522db68912236bf3d3f382c277b/src/harness/scurve_deficit.py",
-      "sha256": "938e7e0ff3251158770d0a4f43f214c6ceff14ab5bef9f5c1b2b1ffa8990cef5",
-      "version": "6c457b2e82d78522db68912236bf3d3f382c277b",
+      "url": "https://github.com/danlessa/bicycling-energy-model/blob/f4d74eb814a7843c35dcb0a7f040c632d5463043/src/harness/scurve_deficit.py",
+      "sha256": "65b043c6c169ff1278b90a843cf696264e4db603ffeecec9d70966040d23e007",
+      "version": "f4d74eb814a7843c35dcb0a7f040c632d5463043",
       "programmingLanguage": "Python"
     },
     {

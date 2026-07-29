@@ -129,9 +129,9 @@
         "SoftwareSourceCode"
       ],
       "name": "src/harness/e35_residual.py",
-      "url": "https://github.com/danlessa/bicycling-energy-model/blob/6c457b2e82d78522db68912236bf3d3f382c277b/src/harness/e35_residual.py",
-      "sha256": "15488475f4efadb602428094c53a6530aafdda274e11348b3b5d0d0e7fb717b2",
-      "version": "6c457b2e82d78522db68912236bf3d3f382c277b",
+      "url": "https://github.com/danlessa/bicycling-energy-model/blob/f4d74eb814a7843c35dcb0a7f040c632d5463043/src/harness/e35_residual.py",
+      "sha256": "cbfd249b8dd9fe21d82acb691e3c39a6c7f2c674de4bc10dd57980be9d95910f",
+      "version": "f4d74eb814a7843c35dcb0a7f040c632d5463043",
       "programmingLanguage": "Python"
     },
     {

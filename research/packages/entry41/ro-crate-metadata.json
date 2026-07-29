@@ -90,6 +90,15 @@
       "conditionsOfAccess": "Available on request from the author, coordinates stripped."
     },
     {
+      "@id": "#data/results/e41_dem_route.csv",
+      "@type": "File",
+      "name": "data/results/e41_dem_route.csv",
+      "description": "Per-ride CSV — gitignored (rows carry ride names/dates tied to private activities); described hash-only, never distributed. Regenerates via `python3 src/harness/e41_dem_route.py`.",
+      "sha256": "e7be30a2cda977602d90265e0f6c7e82511cea7bd57ba57602c0771f28fb0f1e",
+      "contentSize": "3921884",
+      "encodingFormat": "text/csv"
+    },
+    {
       "@id": "#run",
       "@type": "CreateAction",
       "name": "Entry 41 harness run",
@@ -110,6 +119,11 @@
         {
           "@id": "#ride-recordings"
         }
+      ],
+      "result": [
+        {
+          "@id": "#data/results/e41_dem_route.csv"
+        }
       ]
     },
     {
@@ -120,9 +134,9 @@
         "SoftwareSourceCode"
       ],
       "name": "src/harness/e41_dem_route.py",
-      "url": "https://github.com/danlessa/bicycling-energy-model/blob/6c457b2e82d78522db68912236bf3d3f382c277b/src/harness/e41_dem_route.py",
-      "sha256": "88be134504c3ed782dde252213ff2efdd6ebff2d4fb18d2dfd5fefdae162e2c4",
-      "version": "6c457b2e82d78522db68912236bf3d3f382c277b",
+      "url": "https://github.com/danlessa/bicycling-energy-model/blob/f4d74eb814a7843c35dcb0a7f040c632d5463043/src/harness/e41_dem_route.py",
+      "sha256": "2444beacb537c90674c4d711fdebd71c867830fbf8a88f337a3b2513c28bd3bc",
+      "version": "f4d74eb814a7843c35dcb0a7f040c632d5463043",
       "programmingLanguage": "Python"
     },
     {

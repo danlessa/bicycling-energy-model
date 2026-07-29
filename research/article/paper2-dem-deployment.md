@@ -25,7 +25,13 @@
 
 ## Abstract
 
-«TODO after §2»
+**Problem.** A companion paper validates a closed form for the mechanical energy of cycling a route against 1,285 power-metered rides — on each ride's own barometric elevation. A planner has no barometer: it has a polyline and a digital elevation model. We measure what that substitution costs, and prescribe the repairs.
+
+**Method.** We re-evaluate 1,117 rides from five São Paulo corpora, changing one thing: elevation comes from a DEM sampled along the recorded track. Measured power, per-ride physics and every behavioural constant are held, so each ride is its own control. Seven arms cross two sources — a local 5 m survey and the global 30 m FABDEM — with the knobs a planner controls: the polyline sampling step, and pre-smoothing of the profile.
+
+**Results.** The local survey costs half a point of median error (3.8% → 4.3%) and swings the bias from −1.7% to +1.0%; smoothing the sampled profile at σ = 30 m restores the control's bias exactly (4.0%, −1.7%). FABDEM costs three times as much. The ascent-noise rate is a property of the chain, not a constant — 3.10 m/km [3.01, 3.18] for the barometer against 10.14 [9.86, 10.59] for oversampled FABDEM — and carrying the wrong one leaves the totals-only form biased +19%. The penalty is terrain-dependent: +0.7 points on gentle terrain, +20 on mountain brevets.
+
+**Conclusion.** Planning-time DEM energy needs one table: pick the source, smooth the profile, use that chain's own noise rate.
 
 **Keywords:** digital elevation models, elevation gain estimation, route planning, cycling energetics, active transportation, FABDEM, terrain sampling scale, open science
 
@@ -37,22 +43,22 @@
 
 ### 1.1 What is missing at planning time
 
-A companion paper validates a closed form for the mechanical energy of cycling a route against the power-meter energy of 1,285 rides [paper 1]. In the form a planner would use it — paper 1's F3, with air resistance charged only off the climbs and the elevation totals deadband-filtered — it reads
+A companion paper validates a closed form for the mechanical energy of cycling a route against the power-meter energy of 1,285 rides [paper 1]. In the form a planner would use it — paper 1's F3, air resistance charged only off the climbs, elevation totals deadband-filtered — it is eq. (L1),
 
 $$E \;\approx\; \underbrace{\alpha_r\,x}_{\text{rolling}} \;+\; \underbrace{\alpha_a\,x_{\mathrm{flat}}}_{\text{air}} \;+\; \underbrace{\beta\,\big(\tilde h_+ - \varepsilon\,\tilde h_-\big)}_{\text{climb, less the refund}}, \tag{L1}
 $$
 
-with the rates $\alpha_r$, $\alpha_a$, $\beta$ and the recovery factor $\varepsilon$ as paper 1 defines them, and $\tilde h_\pm$ the elevation totals after a $\tau = 2$ m deadband. Every one of those 1,285 evaluations reads the elevation profile the ride *recorded*, from a barometric altimeter on the handlebars; that paper excludes digital elevation models (DEMs) by design (§2.3.3), so that its accuracy figures isolate modelling error.
+with the rates and the recovery factor $\varepsilon$ as paper 1 defines them, and $\tilde h_\pm$ the totals after a $\tau = 2$ m deadband. All 1,285 evaluations read the elevation the ride *recorded*, from a handlebar barometer; that paper excludes digital elevation models (DEMs) by design (§2.3.3), so its accuracy figures isolate modelling error.
 
-Nobody plans a route with a barometer. A planner — a person with a map, a routing website, or a spreadsheet — has a polyline and a DEM. That is the commonest real use of the law and the one paper 1 does not cover, and it is also our own: *Pedal Hidrográfico* judges whether a proposed tour suits its participants using this law in a spreadsheet (paper 1 §4.1), and *quilojaules* implements it over FABDEM elevation and OSRM routing. The failure mode to beat is ascent inflation. Cumulative ascent has no scale-free true value [Rapaport 2011; swisstopo] — finer sampling finds more climbing, without converging — so the deadband $\tau = 2$ m and the noise rate $c \approx 3$ m/km that paper 1 measured on barometric recordings have no reason to be the right filter for a DEM, and the recovery constant $\varepsilon_0 = 0.13$ was itself calibrated at a 30 m sampling scale (paper 1 §4.4.2).
+Nobody plans a route with a barometer. A planner — a person with a map, a routing website, or a spreadsheet — has a polyline and a DEM. That is the commonest real use of the law, the one paper 1 does not cover, and our own: *Pedal Hidrográfico* judges whether a proposed tour suits its participants with this law in a spreadsheet (paper 1 §4.1), and *quilojaules* implements it over FABDEM and OSRM. The failure mode to beat is ascent inflation. Cumulative ascent has no scale-free true value [Rapaport 2011; swisstopo] — finer sampling finds more climbing, without converging — so $\tau$ and the noise rate $c \approx 3$ m/km, both measured on barometric recordings, have no reason to be the right filter for a DEM, and $\varepsilon_0 = 0.13$ was itself calibrated at a 30 m sampling scale (paper 1 §4.4.2).
 
 <a id="1.2"></a>
 
 ### 1.2 What is already known
 
-The per-point vertical accuracy of modern DEMs is excellent and beside the point. FABDEM, the best of the free global products, reports a mean absolute error of 1.12 m in built-up terrain [Hawker et al. 2022] and 1.43 m against independent benchmarks [Bielski et al. 2024]. But per-point accuracy does not transfer to *accumulated* ascent: metre-scale noise, summed signed over thousands of samples, inflates $h_+$ by tens of percent. The one study to measure this directly finds ascent error growing monotonically with grid coarsening — from ≈ 0 at 0.4 m to +48 pp at 51 m against a LiDAR benchmark — and a raw 4 m DEM performing *worse* than the consumer watch it was meant to correct [Sánchez et al. 2024].
+The per-point vertical accuracy of modern DEMs is excellent and beside the point: FABDEM, the best free global product, reports a mean absolute error of 1.12 m in built-up terrain [Hawker et al. 2022] and 1.43 m against independent benchmarks [Bielski et al. 2024]. Per-point accuracy does not transfer to *accumulated* ascent — metre-scale noise, summed signed over thousands of samples, inflates $h_+$ by tens of percent. The one study to measure this directly finds ascent error growing monotonically with grid coarsening, from ≈ 0 at 0.4 m to +48 pp at 51 m against a LiDAR benchmark, with a raw 4 m DEM performing *worse* than the consumer watch it was meant to correct [Sánchez et al. 2024].
 
-Our own lab journal has measured the pieces of the deployment that concerns us. Sampled along the same tracks, a bare-earth 30 m DEM and the local 5 m survey disagree on ascent by ~6% on hilly terrain but by +57% pooled — and +101 to +135% on the flattest corpora — where per-pixel noise reads as rollers [E6, E19]. A static pre-smoothing of the raster restores the coarser-scale behaviour [E20]; the behavioural constants turn out to be functions of the sampling scale *and* the terrain-roughness regime [E21]; and DEMs charge for bridges and tunnels the rider never climbed [E26]. What none of that answers is the planner's question: those entries score a per-edge routing cost rather than the ride-level law, they use one validated raster crop, and they never put the law's accuracy on DEM elevation next to its accuracy on the ride's own stream. This letter measures that difference and turns it into a recipe.
+Our own lab journal has measured the pieces. Along the same tracks, a bare-earth 30 m DEM and the local 5 m survey disagree on ascent by ~6% on hilly terrain but +57% pooled, and +101 to +135% on the flattest corpora, where per-pixel noise reads as rollers [E6, E19]. Pre-smoothing the raster restores coarser-scale behaviour [E20]; the behavioural constants prove to be functions of sampling scale *and* terrain-roughness regime [E21]; and DEMs charge for bridges and tunnels the rider never climbed [E26]. None of that answers the planner's question: those entries score a per-edge routing cost rather than the ride-level law, use one validated raster crop, and never put the law's accuracy on DEM elevation beside its accuracy on the ride's own stream. This letter measures that difference and turns it into a recipe.
 
 <a id="2"></a>
 
@@ -62,59 +68,103 @@ Our own lab journal has measured the pieces of the deployment that concerns us. 
 
 ### 2.1 One substitution, seven elevation sources
 
-We re-evaluate paper 1's corpora with exactly one thing changed: the elevation profile comes from a DEM sampled along the ride's own recorded track instead of from its barometer. Measured power, per-ride regime powers, the physical constants, $\tau$, $c$ and $\varepsilon_0$ are held. Each ride therefore supplies its own control, and the paired difference between an arm and that control is the elevation source and nothing else.
+We re-evaluate paper 1's corpora with one thing changed: elevation comes from a DEM sampled along the ride's own recorded track instead of from its barometer. Measured power, regime powers, the physical constants, $\tau$, $c$ and $\varepsilon_0$ are held, so each ride supplies its own control and the paired difference between an arm and that control is the elevation source alone.
 
-Every arm lives on the same 5 m arc-length grid. Where an arm samples the DEM at a coarser polyline step, its profile is linearly interpolated back onto the 5 m grid; linear interpolation introduces no local extrema, so $h_\pm$, the deadband and $\varepsilon_{\mathrm{coast}}$ all read the coarse geometry while the scoring grid stays fixed. The seven arms cross two sources — the local 5 m aerophotogrammetric survey (IGC-SP 2010) and the free global FABDEM V1-2 at 30 m — with two knobs a planner actually controls: the polyline sampling step (5 m or 30 m) and an optional pre-smoothing of the *profile*, a mask-normalized Gaussian of width $\sigma$ applied along the route,
+Every arm lives on the same 5 m arc-length grid; an arm sampling at a coarser polyline step is linearly interpolated back onto it, which introduces no local extrema, so $h_\pm$, the deadband and $\varepsilon_{\mathrm{coast}}$ read the coarse geometry while the scoring grid stays fixed. The seven arms cross two sources — the local 5 m aerophotogrammetric survey (IGC-SP 2010) and the free global FABDEM V1-2 at 30 m — with the two knobs a planner controls: the polyline sampling step (5 or 30 m) and an optional pre-smoothing of the *profile*, a mask-normalized Gaussian of width $\sigma$ along the route,
 
 $$h^{\sigma}_i \;=\; \frac{\sum_{|j| \le 3\sigma/\Delta} w_j\,h_{i+j}}{\sum_{|j| \le 3\sigma/\Delta} w_j}, \qquad w_j = \exp\!\big(-\tfrac{1}{2}(j\Delta/\sigma)^2\big), \tag{L2}
 $$
 
-the sums running only over samples that exist, so the filter is well behaved at the route's ends. Smoothing the profile rather than the raster is what a planner can do: it holds a polyline, not a 20 GB GeoTIFF. That substitution is validated rather than assumed — against the raster-space smoothing of [E20], on the rides that entry cached, the two agree on $h_+$ to «TODO»% median.
+the sums running only over samples that exist, so the filter behaves at the route's ends. Smoothing the profile rather than the raster is what a planner can do — it holds a polyline, not a 20 GB GeoTIFF — and the substitution is validated rather than assumed: against the raster-space smoothing of [E20] the two agree on $h_+$ to −1.1% median (p90 6.9%).
 
-The quantity the prescription turns on is each source's own ascent-noise rate — paper 1's $c$, measured per source rather than assumed,
+The prescription turns on each source's own ascent-noise rate — paper 1's $c$, measured per source rather than assumed,
 
 $$c_{\mathrm{source}} \;=\; \frac{h_+ - \tilde h_+}{x}, \tag{L3}
 $$
 
-the metres of phantom climb per route-kilometre that the deadband removes. Paper 1 measures $c \approx 3$ m/km on barometric recordings and freezes it; whether that constant survives a change of elevation source is the letter's third question. Finally, the recovery term is recomputed on each substituted profile: it is geometry-dependent by construction (paper 1 eqs. (4)–(5)), so freezing it would hide half of what the elevation source does.
-
-<a id="2.2b"></a>
-
-### 2.2 Physics protocol, populations and quality gates
-
-Accuracy is quoted at **regime-consistent per-ride physics** — each ride's mass, rolling coefficient and drag area inverted from its own flat-regime balance (paper 1 §3.5.2, Table 6) — not at the frozen literature priors. The reason is that at the priors each corpus carries a standing bias of several points, and swapping the elevation source partly cancels or amplifies that bias, so median $|\Delta\%|$ would read the bias rather than the source. The effect is not hypothetical: at the priors the global 30 m DEM appears *more* accurate than the ride's own barometer on our data, purely because its over-charge offsets an under-prediction. Paper 1 §4.3.4's bundle rule makes the same point from theory — only the (cost, refund) pair is identified — and at this $\alpha$ the honest pairing is the dynamic $\varepsilon_d$ on every corpus. Results under the frozen priors are reported alongside as the protocol contrast.
-
-Populations are paper 1's clean corpora intersected with three pre-registered quality gates, applied identically to every arm so that no source is advantaged by its own defects. **G1, track quality:** at most 0.5% of route length may sit inside GPS-fix gaps over 50 m. Where a recording lost GPS, the track is a straight chord and the DEM charges terrain the rider never crossed — and this, not raster error, produces the largest profile artifacts we find (single-step jumps of 300–640 m, all at fix gaps of 220 m to 17 km). A planner's polyline has no such gaps. **G2, raster validity:** at least 99% of a ride's samples must fall in 0.5–3000 m; the wide survey stores voids as extreme magnitudes. **G3, anomaly census:** a one-step $|\Delta h|$ over 10 m across a 5 m step is a 200% grade — a block seam, a void edge, or a patch where the nominal bare-earth model retained a structure. We report the full population and the anomaly-free subset side by side: the first is what a planner gets if it does not inspect its crop, the second what it gets if it does.
+the metres of phantom climb per route-kilometre the deadband removes. Whether paper 1's frozen $c \approx 3$ m/km survives a change of elevation source is the letter's third question. The recovery term is recomputed on each substituted profile: it is geometry-dependent by construction (paper 1 eqs. (4)–(5)), so freezing it would hide half of what the source does.
 
 <a id="2.2"></a>
 
-### 2.2 Results
+### 2.2 Physics protocol, populations and quality gates
 
-«TODO»
+Accuracy is quoted at **regime-consistent per-ride physics** — each ride's mass, rolling coefficient and drag area inverted from its own flat-regime balance (paper 1 §3.5.2, Table 6) — not at the frozen literature priors. At the priors each corpus carries a standing bias of several points, and swapping the elevation source partly cancels or amplifies it, so median $|\Delta\%|$ would read the bias rather than the source. This is not hypothetical: at the priors the global 30 m DEM appears *more* accurate than the ride's own barometer, purely because its over-charge offsets an under-prediction. Paper 1 §4.3.4's bundle rule makes the same point from theory — only the (cost, refund) pair is identified — and at this $\alpha$ the honest pairing is $\varepsilon_d$ everywhere. The frozen-prior results are reported alongside as a protocol contrast. The per-ride constants are inverted once, from the recorded stream, then held fixed across arms; re-inverting per arm would let mass and drag absorb the elevation error.
+
+Populations are paper 1's clean corpora intersected with three pre-registered quality gates, applied identically to every arm so no source is advantaged by its own defects. **G1, track quality:** at most 0.5% of route length inside GPS-fix gaps over 50 m. Where a recording lost GPS the track is a straight chord and the DEM charges terrain never crossed — and this, not raster error, produces the largest artifacts we find (single-step jumps of 300–640 m, all at fix gaps of 220 m to 17 km); a planner's polyline has none. **G2, raster validity:** ≥ 99% of samples in 0.5–3000 m. **G3, anomaly census:** a one-step $|\Delta h|$ over 10 m across a 5 m step is a 200% grade — a block seam, a void edge, or a patch where the bare-earth model kept a structure. We report the full population and the anomaly-free subset side by side: what a planner gets if it does not inspect its crop, and what it gets if it does.
+
+<a id="2.3"></a>
+
+### 2.3 What the swap costs
+
+On 1,117 rides across five corpora (D1 22, D2 60, D3 393, D4 197, D5 445), replacing the barometer with the **local 5 m survey costs the law half a point of median accuracy** — 3.8% → 4.3% — and swings its bias from −1.7% to +1.0% ([Table 1](#tab1)). Smoothing the sampled profile with σ = 30 m removes the swing entirely: 4.0% median error at −1.7% bias, the control's own bias reproduced to a tenth of a point, with nothing re-fitted. The **free global 30 m product costs three times as much**: 5.3% and +4.3% bias when its polyline is sampled at 5 m steps, 4.6% and +2.0% at 30 m steps.
+
+<a id="tab1"></a>
+
+**Table 1.** The elevation-source substitution, F3 with the dynamic $\varepsilon_d$, at regime-consistent per-ride physics. Cells: median $\lvert\Delta\%\rvert$ [95% CI] · median signed $\Delta\%$ [95% CI]. **D3+D4 are the two independent riders — paper 1's out-of-sample pool, and the column to read for transfer.** "Pooled" adds the calibration rider's own corpora and is not five independent replications: D1 ⊂ D5, and most of D2's rides are the same author's recordings re-evaluated as a generic rider (paper 1 §2.3.3). Every arm is scored on the identical ride set, so the *paired* comparison down each column is unaffected by that overlap. Best DEM arm in bold.
+
+| elevation arm | D3+D4 · 590 | pooled · 1,117 |
+|---|--:|--:|
+| `own` — recorded barometer (control) | 3.2 [2.9, 3.4] · −2.0 [−2.4, −1.6] | 3.8 [3.6, 4.1] · −1.7 [−2.2, −1.3] |
+| local 5 m survey @ 5 m | 3.6 [3.3, 3.9] · −0.9 [−1.5, −0.4] | 4.3 [4.0, 4.6] · +1.0 [+0.3, +1.7] |
+| local 5 m survey @ 5 m, σ = 10 m | 3.5 [3.3, 3.9] · −1.3 [−1.7, −0.8] | 4.2 [4.0, 4.4] · −0.1 [−0.5, +0.4] |
+| **local 5 m survey @ 5 m, σ = 30 m** | **3.4 [3.2, 3.8] · −1.9 [−2.2, −1.7]** | **4.0 [3.8, 4.2] · −1.7 [−1.9, −1.3]** |
+| local 5 m survey @ 30 m | 3.5 [3.2, 3.8] · −1.3 [−1.6, −0.8] | 4.2 [4.0, 4.4] · +0.1 [−0.4, +0.5] |
+| FABDEM 30 m @ 5 m | 4.0 [3.4, 4.7] · +3.6 [+2.8, +4.5] | 5.3 [4.6, 6.0] · +4.3 [+3.6, +4.9] |
+| FABDEM 30 m @ 30 m | 3.4 [3.2, 4.0] · +1.6 [+0.8, +2.6] | 4.6 [4.1, 4.9] · +2.0 [+1.5, +2.7] |
+
+The over-charge is real but modest, and **strongly terrain-dependent**. Paired per ride, the raw local survey over-charges on 940 of 1,117 rides by a median +2.7 pp — but that pools a bias shift of +0.7 pp on the gentle-terrain rider against +20.1 pp on the brevet corpus, whose routes climb coastal escarpments where survey micro-relief is real terrain a graded road smooths away. Planning a mountain brevet from a fine DEM is a different proposition from planning an urban loop.
+
+Two further results carry the prescription. **The noise rate is a property of the source, not a constant**: the deadband removes 3.10 m/km [3.01, 3.18] from the barometer's profile — independently reproducing paper 1's 3.1 m/km on twenty-five times the sample — against 4.95 [4.89, 5.00] for the local survey and **10.14 [9.86, 10.59] for FABDEM oversampled at 5 m**, whose ascent total is 2.36× the barometer's. Each source's own rate rescues the totals-only form F4 on the noisiest chain, cutting its bias from +19.2% to +0.9%; it does not make F4 equal to F3, and on low-noise chains it over-corrects, because F4 scales climb and refund by one factor while the deadband treats them separately. And **defects are a separable tail**: on the 745 crops free of elevation anomalies FABDEM's error falls 5.3% → 3.4%, and the top decile of bridge/tunnel exposure carries +5.4 pp of DEM-minus-control residual against +1.5 pp for the rest.
+
+Bridges and tunnels deserve their own treatment, and measuring it exposes a trap. Replacing the DEM's heights across a mapped span with a straight deck [E26] is a real repair on a raw profile: on the 943 rides carrying a matched span it removes +13.3 m [+10.0, +19.7] of the ascent the fine survey invents inside those spans, and moves the arm from 3.92% (−0.29% bias) onto the control's 3.72% (−2.10%) — reaching 3.73% (−1.29%). But the deck **over-corrects**, because a road bridge carries a vertical curve the rider genuinely climbs and a straight line erases it: measured against the ride's own barometer inside the spans, the deck under-charges by −2.79 m [−3.52, −2.08], and the shortfall is eight times larger on bridges (−2.43 m [−3.26, −1.68]) than on tunnels (−0.29 m [−0.40, −0.20]), whose roadway really is close to a chord beneath the DTM's ridge.
+
+The trap is that **the two repairs do not stack**: after σ = 30 m smoothing the profile's in-span ascent already matches the barometer (+0.05 m [−0.29, +0.28]) — the valley a bridge spans is exactly the sub-30 m feature the Gaussian flattens — so applying the deck as well subtracts twice and makes the result significantly worse (400 of 935 rides closer, $p < 10^{-4}$).
 
 <a id="3"></a>
 
 ## 3. The planner's recipe
 
-«TODO»
+[Table 2](#tab2) is the deliverable: pick your row, take its $\sigma$ and its $c$, and expect its band. Every row uses paper 1's law and its frozen behavioural constants unchanged — $\tau = 2$ m, $\varepsilon_0 = 0.13$, the 2% climb gate. Only $\sigma$ and $c$ move, and both are properties of the elevation chain rather than of the rider or the route.
+
+<a id="tab2"></a>
+
+**Table 2.** The prescription. $c$ is each chain's measured ascent-noise rate, eq. (L3); the accuracy band is F3 with $\varepsilon_d$ over 1,117 rides (median $\lvert\Delta\%\rvert$ · signed bias, 95% CIs in [Table 1](#tab1)). Rows are ordered by accuracy.
+
+| elevation chain | sample the polyline at | pre-smooth $\sigma$ | use $c$ = | expect |
+|---|---|---|---|---|
+| ride's own barometer *(reference)* | 5 m | — | 3.1 m/km | 3.8% · −1.7% |
+| local 5 m survey | 5 m | **30 m** | 2.6 m/km | **4.0% · −1.7%** |
+| local 5 m survey | 5 m | 10 m | 3.7 m/km | 4.2% · −0.1% |
+| local 5 m survey | 30 m | — | 3.8 m/km | 4.2% · +0.1% |
+| local 5 m survey | 5 m | — | 5.0 m/km | 4.3% · +1.0% |
+| FABDEM 30 m | 30 m | — | 7.5 m/km | 4.6% · +2.0% |
+| FABDEM 30 m | 5 m | — | 10.1 m/km | 5.3% · +4.3% |
+
+Four rules follow. **One — smooth the profile, not the raster.** A $\sigma = 30$ m Gaussian along the sampled polyline, eq. (L2), buys back the barometer's behaviour on the local survey and needs no raster preprocessing: thirty lines over an array the planner already holds, reproducing raster-space smoothing at the same $\sigma$ to −1.1% of $h_+$. **Two — never move the elevation chain without moving $c$ with it.** Paper 1's $c \approx 3$ m/km measures consumer barometric recordings at 5 m resampling; carrying it onto FABDEM leaves F4 biased +19%. This is the scale half of paper 1 §4.3.4's bundle rule: the behavioural constants travel with their physics *and* their sampling chain.
+
+**Three — do not oversample a coarse DEM.** Sampling FABDEM every 5 m instead of every 30 m more than doubles the ascent total and costs 0.7 pp of accuracy and 2.3 pp of bias, because bilinear interpolation along a diagonal path manufactures sub-cell relief. **Four — inspect the crop.** Screen the sampled profile for one-step rises beyond ~10 m over 5 m: those are seams, void edges, or retained structures, not terrain. On crops that pass, the global product's error falls from 5.3% to 3.4% — *better than the barometer itself*, because the screen removes precisely the rides a 30 m product misreads.
+
+**Five — correct bridges and tunnels, or smooth, but not both.** On a *raw* profile, replacing the heights across a mapped span with a straight deck is worth having: it removes most of the ascent the DEM invents over a spanned valley and puts the fine survey back on the barometer. It slightly over-corrects, by erasing the bridge's own vertical curve — about 2.4 m of real crown per touched ride — so treat it as a repair with a known-sign residual rather than an exact one. And skip it entirely if you pre-smooth: at σ = 30 m the portal artifact is already gone, and correcting again does measurable harm.
+
+Two things are unchanged. A planner sampling a DEM holds the whole profile, so it can use the drop-weighted $\varepsilon_d$ of paper 1 eq. (5) — the software-only estimator that paper's hand recipe cannot reach [E42]. And with a profile in hand, use F3's deadband; F4 with a per-source $c$ is a rescue for totals-only inputs, not a substitute.
 
 <a id="4"></a>
 
 ## 4. Worked example: *Contornar Anhangabaú*
 
-«TODO»
+One of Pedal Hidrográfico's census rides, downtown São Paulo, 36.0 km with 440 m of recorded ascent; the rider's measured pedalling energy was 643 kJ. Evaluated on its own barometric stream the law lands at −1.6%. Sampled from the local 5 m survey the same route reports 602 m of ascent — 37% more — and the estimate rises to +8.7%. Smoothing that profile with $\sigma = 30$ m brings the ascent back to 449 m, the noise rate from 6.2 to 3.5 m/km, the recovery factor from 0.35 back to 0.45, and the estimate to **0.0%**. FABDEM oversampled at 5 m gives 689 m and +8.7%; at 30 m steps, 575 m and +4.5%. The totals-only form tells the same story more sharply: at the frozen $c = 3$ m/km it errs by +13.9% on the survey and +19.8% on FABDEM, and it is each chain's own $c$ — 6.2 and 9.3 m/km for this route — that brings those back into range. A planner following the second row of [Table 2](#tab2) would have quoted 643 kJ for a ride that cost 643 kJ.
 
 <a id="5"></a>
 
 ## 5. Limitations
 
-**The planner's polyline is not the ridden line.** Every arm here samples elevation along a *recorded* GPS track, so the letter isolates the elevation source with the route geometry held fixed. A real planner starts from a router's polyline, which differs from the line eventually ridden; the resulting detour factor is measured separately [E26] and compounds with everything below. In the other direction, the recorded track is what makes the comparison paired and clean, and a planner's polyline carries no GPS dropouts — the defect that this letter's first quality gate exists to remove.
+**The planner's polyline is not the ridden line.** Every arm samples elevation along a *recorded* GPS track, so the letter isolates the elevation source with route geometry held fixed. A real planner starts from a router's polyline, which differs from the line eventually ridden; that detour factor is measured separately [E26] and compounds with everything here.
 
-**No measured power at planning time.** Both engines here read each ride's own power stream, exactly as paper 1's do, so these figures measure the consistency of the energy accounting under an elevation-source change — not blind prediction. Predicting a ride before it happens additionally requires a model of the rider's power; the planner's recipe substitutes the rider's own flat cruising speed for it (paper 1 §4.1), and a pre-registered blind test remains future work (paper 1 §4.4.5).
+**No measured power at planning time.** Both engines read each ride's own power stream, as paper 1's do, so these figures measure the consistency of the energy accounting under an elevation-source change — not blind prediction, which additionally needs a model of the rider's power (paper 1 §4.4.5).
 
-**DEM vintage and surface.** The local survey dates from 2010 and the global product from a 2011–2015 radar epoch; roadworks, new viaducts and quarrying since then are invisible to both. FABDEM's canopy and building removal is imperfect in dense urban canyons, and the wide local survey is not homogeneous — it carries block seams and patches where the nominal bare-earth model retains structures. That is why the quality gates below are part of the recipe and not an afterthought.
+**DEM vintage and surface.** The local survey dates from 2010 and the global product from a 2011–2015 radar epoch; roadworks and new viaducts are invisible to both. FABDEM's building removal is imperfect in dense urban canyons, and the wide local survey is not homogeneous — which is why the quality screen is part of the recipe rather than an afterthought.
 
-**Scope.** One metropolitan region, two rasters, three riders. The σ and $c$ values prescribed here are per-source measurements, not universals; the *method* for obtaining them — measure your source's own noise rate on a handful of tracks — is what transfers. Rides outside the raster footprint are excluded, which removes part of two corpora and is disclosed in the funnel rather than repaired.
+**Scope.** One metropolitan region, two rasters, three riders, and a penalty that varies fifteen-fold across terrain regimes. The σ and $c$ values here are per-source measurements, not universals; what transfers is the *method* — measure your own chain's noise rate on a handful of tracks. Rides outside the raster footprint are excluded and disclosed in the funnel rather than repaired.
 
 ## Data and code availability
 

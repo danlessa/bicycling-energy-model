@@ -129,9 +129,9 @@
         "SoftwareSourceCode"
       ],
       "name": "src/harness/e39_tau_reg.py",
-      "url": "https://github.com/danlessa/bicycling-energy-model/blob/6c457b2e82d78522db68912236bf3d3f382c277b/src/harness/e39_tau_reg.py",
-      "sha256": "9425fb3f36e2f4a585b2527866d0fa40f2e95517df8445f5f4dd115b815b149d",
-      "version": "6c457b2e82d78522db68912236bf3d3f382c277b",
+      "url": "https://github.com/danlessa/bicycling-energy-model/blob/f4d74eb814a7843c35dcb0a7f040c632d5463043/src/harness/e39_tau_reg.py",
+      "sha256": "d870cadbf954e23f70ce9e9075a4b8996ca9fce56758fe1573bad0b49e561148",
+      "version": "f4d74eb814a7843c35dcb0a7f040c632d5463043",
       "programmingLanguage": "Python"
     },
     {

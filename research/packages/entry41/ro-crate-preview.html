@@ -62,7 +62,7 @@ ul { margin:.4rem 0; padding-left:1.2rem; }
   <h1>Entrada 41 — the elevation-source substitution — paper 1&#x27;s law on planner DEM profiles</h1>
   <div class="badges">
     <span>2026-07-28</span>
-    <span>commit 6c457b2e82d7</span>
+    <span>commit f4d74eb814a7</span>
     <span>com execução de harness</span>
   </div>
 </header>
@@ -80,10 +80,21 @@ ul { margin:.4rem 0; padding-left:1.2rem; }
 
 <section>
   <h2>Como foi produzida</h2>
-  <p>Instrumento(s): <code>src/harness/e41_dem_route.py</code> (sha256 <code class='hash'>88be134504c3ed78…</code>, <a href="https://github.com/danlessa/bicycling-energy-model/blob/6c457b2e82d78522db68912236bf3d3f382c277b/src/harness/e41_dem_route.py">fonte no commit</a>).</p>
+  <p>Instrumento(s): <code>src/harness/e41_dem_route.py</code> (sha256 <code class='hash'>2444beacb537c906…</code>, <a href="https://github.com/danlessa/bicycling-energy-model/blob/f4d74eb814a7843c35dcb0a7f040c632d5463043/src/harness/e41_dem_route.py">fonte no commit</a>).</p>
   <p class='muted'>Insumos primários: gravações de pedaladas privadas (FIT com GPS e potência) — fora do repositório e deste pacote; agregados sem coordenadas disponíveis sob pedido.</p>
   <p class="muted">Reconstruir os pacotes:
   <code>python3 research/packages/make_crates.py</code>.</p>
+</section>
+
+<section>
+  <h2>Arquivos de resultado (apenas hash — dados privados)</h2>
+  <p class="muted">CSVs por pedalada ficam fora do repositório (nomes e datas de
+  atividades privadas). Os hashes permitem a um verificador com acesso
+  consentido confirmar que recebeu os mesmos arquivos.</p>
+  <div class="tablewrap"><table>
+    <tr><th>arquivo</th><th>tamanho</th><th>sha256</th><th>regenera via</th></tr>
+    <tr><td><code>data/results/e41_dem_route.csv</code></td><td class='num'>3,921,884 B</td><td><code class='hash'>e7be30a2cda97760…</code></td><td>python3 src/harness/e41_dem_route.py</td></tr>
+  </table></div>
 </section>
 
 <section>

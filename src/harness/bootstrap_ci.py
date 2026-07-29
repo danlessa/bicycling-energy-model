@@ -656,6 +656,143 @@ for _corpus, _w, _n in (("censo", 16, 69), ("jaam", 143, 215)):
     if not _ok:
         failed = True
 
+# ---------- 3i. Elevation-source substitution (Entry 41 / paper 2) ----------
+print("\n== Elevation-source substitution (Entry 41, paper 2) ==")
+e41 = parse_csv("e41_dem_route.csv")
+_e41_prim = [r for r in e41 if num(r, "dataOK") == 1 and num(r, "g1_track") == 1
+             and num(r, "g2_valid") == 1]
+_e41_clean = [r for r in _e41_prim if num(r, "g3_clean") == 1]
+_e41_pool = {"D3+D4": [r for r in _e41_prim if r.get("corpus") in ("ppaz", "jaam")],
+             "pooled": _e41_prim}
+_ok = len(_e41_prim) == 1117 and len(_e41_clean) == 745
+print(f"E41 population: primary n={len(_e41_prim)} · anomaly-free n={len(_e41_clean)}"
+      + (" GATE-OK" if _ok else " GATE-FAIL(exp 1117/745)"))
+if not _ok:
+    failed = True
+
+# F3 · eps_d per elevation arm, at the regime-consistent physics the letter quotes
+for _pool, _arm, _ea, _es, _eci, _ecis in (
+        ("D3+D4", "own", 3.2, -2.0, (2.9, 3.4), (-2.4, -1.6)),
+        ("D3+D4", "igc5", 3.6, -0.9, (3.3, 3.9), (-1.5, -0.4)),
+        ("D3+D4", "igc5s10", 3.5, -1.3, (3.3, 3.9), (-1.7, -0.8)),
+        ("D3+D4", "igc5s30", 3.4, -1.9, (3.2, 3.8), (-2.2, -1.7)),
+        ("D3+D4", "igc30", 3.5, -1.3, (3.2, 3.8), (-1.6, -0.8)),
+        ("D3+D4", "fab5", 4.0, 3.6, (3.4, 4.7), (2.8, 4.5)),
+        ("D3+D4", "fab30", 3.4, 1.6, (3.2, 4.0), (0.8, 2.6)),
+        ("pooled", "own", 3.8, -1.7, (3.6, 4.1), (-2.2, -1.3)),
+        ("pooled", "igc5", 4.3, 1.0, (4.0, 4.6), (0.3, 1.7)),
+        ("pooled", "igc5s10", 4.2, -0.1, (4.0, 4.4), (-0.5, 0.4)),
+        ("pooled", "igc5s30", 4.0, -1.7, (3.8, 4.2), (-1.9, -1.3)),
+        ("pooled", "igc30", 4.2, 0.1, (4.0, 4.4), (-0.4, 0.5)),
+        ("pooled", "fab5", 5.3, 4.3, (4.6, 6.0), (3.6, 4.9)),
+        ("pooled", "fab30", 4.6, 2.0, (4.1, 4.9), (1.5, 2.7))):
+    report(f"E41 {_pool} {_arm}", col(_e41_pool[_pool], f"{_arm}_reg_f3d"),
+           _ea, _es, expect_ci=_eci, expect_ci_signed=_ecis)
+
+# the per-source ascent-noise rate c(tau = 2) — the letter's prescription column.
+# `own` reproduces paper 1 §2.4's 3.1 m/km on 25x the sample.
+for _arm, _ec, _eci in (("own", 3.10, (3.01, 3.18)), ("igc5", 4.95, (4.89, 5.00)),
+                        ("igc5s10", 3.74, (3.66, 3.81)), ("igc5s30", 2.62, (2.56, 2.68)),
+                        ("igc30", 3.77, (3.69, 3.83)), ("fab5", 10.14, (9.86, 10.59)),
+                        ("fab30", 7.52, (7.12, 7.76))):
+    report(f"E41 c(t=2) {_arm}", col(_e41_prim, f"{_arm}_cnoise"), _ec, None,
+           expect_ci=_eci)
+
+# ascent inflation relative to the control
+_e41_own_hp = median(col(_e41_prim, "own_hplus"))
+for _arm, _er in (("igc5", 1.18), ("igc5s10", 1.04), ("igc5s30", 0.86),
+                  ("igc30", 1.05), ("fab5", 2.36), ("fab30", 1.72)):
+    _r = median(col(_e41_prim, f"{_arm}_hplus")) / _e41_own_hp
+    _ok = abs(_r - _er) <= 0.011
+    print(f"E41 h+ ratio {_arm}: {to_fixed(_r, 2)}"
+          + (" GATE-OK" if _ok else f" GATE-FAIL(exp {_er})"))
+    if not _ok:
+        failed = True
+
+# the paired substitution cost per ride (P1's direction endpoint)
+for _arm, _ed, _ew, _en in (("igc5", 2.68, 940, 1117), ("igc5s10", 1.66, 890, 1117),
+                            ("igc5s30", 0.22, 636, 1117), ("igc30", 1.85, 918, 1117),
+                            ("fab5", 5.41, 1025, 1117), ("fab30", 3.21, 961, 1117)):
+    _d = [num(r, f"{_arm}_reg_f3d") - num(r, "own_reg_f3d") for r in _e41_prim
+          if is_finite(num(r, f"{_arm}_reg_f3d")) and is_finite(num(r, "own_reg_f3d"))]
+    _w = sum(1 for x in _d if x > 0)
+    _ok = abs(median(_d) - _ed) <= 0.011 and _w == _ew and len(_d) == _en
+    print(f"E41 paired {_arm}: med {median(_d):+.2f} pp, over-charges on {_w}/{len(_d)}"
+          + (" GATE-OK" if _ok else f" GATE-FAIL(exp {_ed}, {_ew}/{_en})"))
+    if not _ok:
+        failed = True
+
+# P4a: the anomaly-free secondary
+for _arm, _ea, _es in (("own", 3.7, -2.7), ("igc5", 3.8, -0.9), ("fab5", 3.4, 2.2),
+                       ("fab30", 3.6, 0.4)):
+    _v = col(_e41_clean, f"{_arm}_reg_f3d")
+    _ok = (abs(median([abs(x) for x in _v]) - _ea) <= 0.11
+           and abs(median(_v) - _es) <= 0.11)
+    print(f"E41 anomaly-free {_arm}: {to_fixed(median([abs(x) for x in _v]), 1)} · "
+          f"{to_fixed(median(_v), 1)}"
+          + (" GATE-OK" if _ok else f" GATE-FAIL(exp {_ea}/{_es})"))
+    if not _ok:
+        failed = True
+
+# P5/P6: the portal correction and its over-correction on bridges
+_e41_tch = [r for r in _e41_prim if num(r, "portal_ok") == 1
+            and (num(r, "n_spans") or 0) > 0]
+_ok = len(_e41_tch) == 943
+print(f"E41 portal population: {len(_e41_tch)} rides with >=1 matched span"
+      + (" GATE-OK" if _ok else " GATE-FAIL(exp 943)"))
+if not _ok:
+    failed = True
+
+# ascent inside the spans vs the ride's own barometer (the deck's reference).
+# deck-baro < 0 is the registered over-correction; igc5s30's raw-baro CI must
+# straddle zero (smoothing already removed the artifact -> do not stack).
+for _arm, _ed, _edci, _er, _erci in (
+        ("igc5", -2.79, (-3.52, -2.08), 13.27, (10.00, 19.67)),
+        ("igc5s30", -5.84, (-7.89, -4.51), 0.05, (-0.29, 0.28)),
+        ("fab5", -6.57, (-7.61, -5.46), 11.17, (10.16, 12.55)),
+        ("fab30", -6.78, (-8.04, -5.81), 4.98, (4.25, 5.83))):
+    report(f"E41 span deck-baro {_arm}",
+           [num(r, f"{_arm}p_span_hplus") - num(r, "own_span_hplus") for r in _e41_tch
+            if is_finite(num(r, f"{_arm}p_span_hplus"))], None, _ed,
+           expect_ci_signed=_edci)
+    report(f"E41 span raw-baro {_arm}",
+           [num(r, f"{_arm}_span_hplus") - num(r, "own_span_hplus") for r in _e41_tch
+            if is_finite(num(r, f"{_arm}_span_hplus"))], None, _er,
+           expect_ci_signed=_erci)
+
+# the mechanism: bridges over-corrected ~8x more than tunnels (disjoint CIs)
+for _kd, _n, _ed, _eci in (("bridge", 942, -2.43, (-3.26, -1.68)),
+                           ("tunnel", 407, -0.29, (-0.40, -0.20))):
+    _sub = [r for r in _e41_tch if (num(r, f"n_spans_{_kd}") or 0) > 0]
+    _ok = len(_sub) == _n
+    if not _ok:
+        print(f"E41 portal {_kd} n={len(_sub)} GATE-FAIL(exp {_n})")
+        failed = True
+    report(f"E41 span deck-baro {_kd}",
+           [num(r, f"igc5p_span_hplus_{_kd}") - num(r, f"own_span_hplus_{_kd}")
+            for r in _sub], None, _ed, expect_ci_signed=_eci)
+
+# the energy effect, and the registered "do not stack" result
+for _arm, _ea, _es in (("own", 3.72, -2.10), ("igc5", 3.92, -0.29),
+                       ("igc5p", 3.73, -1.29), ("igc5s30", 3.81, -2.07),
+                       ("igc5s30p", 3.87, -2.37), ("fab5", 3.91, 2.71),
+                       ("fab5p", 3.68, 2.39), ("fab30", 3.66, 0.75),
+                       ("fab30p", 3.59, 0.53)):
+    report(f"E41 portal {_arm}", col(_e41_tch, f"{_arm}_reg_f3d"), _ea, _es)
+
+for _arm, _ew, _en in (("igc5", 501, 943), ("igc5s30", 400, 935),
+                       ("fab5", 644, 942), ("fab30", 613, 938)):
+    _kr, _kp = f"{_arm}_reg_f3d", f"{_arm}p_reg_f3d"
+    _st = [r for r in _e41_tch if is_finite(num(r, _kr)) and is_finite(num(r, _kp))]
+    _w = sum(1 for r in _st if abs(num(r, _kp)) < abs(num(r, _kr)))
+    _l = sum(1 for r in _st if abs(num(r, _kp)) > abs(num(r, _kr)))
+    _ok = _w == _ew and _w + _l == _en
+    print(f"E41 portal paired {_arm}: corrected closer on {_w}/{_w + _l}, "
+          f"p={to_fixed(sign_p(_w, _l), 4)}"
+          + (" GATE-OK" if _ok else f" GATE-FAIL(exp {_ew}/{_en})"))
+    if not _ok:
+        failed = True
+
 # ---------- 4. Time model, P. Paz (§8.8 primary endpoint) ----------
 # Target = tMovBin, exactly as time_compare's scoreboard() scores it.
 print("\n== Time model, P. Paz (§8.8 primary endpoint) ==")

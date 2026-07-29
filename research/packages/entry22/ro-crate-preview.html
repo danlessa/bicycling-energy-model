@@ -62,7 +62,7 @@ ul { margin:.4rem 0; padding-left:1.2rem; }
   <h1>Entrada 22 — error bars for the headline medians — the champion &quot;beats&quot; the sim only on the median, so the article now claims parity</h1>
   <div class="badges">
     <span>2026-07-09</span>
-    <span>commit 6c457b2e82d7</span>
+    <span>commit f4d74eb814a7</span>
     <span>com execução de harness</span>
   </div>
 </header>
@@ -80,7 +80,7 @@ ul { margin:.4rem 0; padding-left:1.2rem; }
 
 <section>
   <h2>Como foi produzida</h2>
-  <p>Instrumento(s): <code>src/harness/bootstrap_ci.py</code> (sha256 <code class='hash'>36fc41172d1b3bdf…</code>, <a href="https://github.com/danlessa/bicycling-energy-model/blob/6c457b2e82d78522db68912236bf3d3f382c277b/src/harness/bootstrap_ci.py">fonte no commit</a>).</p>
+  <p>Instrumento(s): <code>src/harness/bootstrap_ci.py</code> (sha256 <code class='hash'>68afd9e4c9f55c19…</code>, <a href="https://github.com/danlessa/bicycling-energy-model/blob/f4d74eb814a7843c35dcb0a7f040c632d5463043/src/harness/bootstrap_ci.py">fonte no commit</a>).</p>
   
   <p class="muted">Reconstruir os pacotes:
   <code>python3 research/packages/make_crates.py</code>.</p>
@@ -283,6 +283,70 @@ E42 jaam: med(ε_lump − ε_d) = -0.110 GATE-OK
 E42 danlessa: med(ε_lump − ε_d) = -0.098 GATE-OK
 E42 paired censo: 16/69 GATE-OK
 E42 paired jaam: 143/215 GATE-OK
+
+== Elevation-source substitution (Entry 41, paper 2) ==
+E41 population: primary n=1117 · anomaly-free n=745 GATE-OK
+E41 D3+D4 own                      n=590  med|Δ%|=  3.17 [2.9, 3.4]  medΔ%=  -1.98 [-2.4, -1.6] GATE-OK
+E41 D3+D4 igc5                     n=590  med|Δ%|=  3.60 [3.3, 3.9]  medΔ%=  -0.93 [-1.5, -0.4] GATE-OK
+E41 D3+D4 igc5s10                  n=590  med|Δ%|=  3.48 [3.3, 3.9]  medΔ%=  -1.34 [-1.7, -0.8] GATE-OK
+E41 D3+D4 igc5s30                  n=590  med|Δ%|=  3.41 [3.2, 3.8]  medΔ%=  -1.94 [-2.2, -1.7] GATE-OK
+E41 D3+D4 igc30                    n=590  med|Δ%|=  3.52 [3.2, 3.8]  medΔ%=  -1.30 [-1.6, -0.8] GATE-OK
+E41 D3+D4 fab5                     n=590  med|Δ%|=  4.01 [3.4, 4.7]  medΔ%=   3.65 [2.8, 4.5] GATE-OK
+E41 D3+D4 fab30                    n=590  med|Δ%|=  3.42 [3.2, 4.0]  medΔ%=   1.57 [0.8, 2.6] GATE-OK
+E41 pooled own                     n=1117  med|Δ%|=  3.79 [3.6, 4.1]  medΔ%=  -1.66 [-2.2, -1.3] GATE-OK
+E41 pooled igc5                    n=1117  med|Δ%|=  4.33 [4.0, 4.6]  medΔ%=   1.03 [0.3, 1.7] GATE-OK
+E41 pooled igc5s10                 n=1117  med|Δ%|=  4.18 [4.0, 4.4]  medΔ%=  -0.07 [-0.5, 0.4] GATE-OK
+E41 pooled igc5s30                 n=1117  med|Δ%|=  3.99 [3.8, 4.2]  medΔ%=  -1.66 [-1.9, -1.3] GATE-OK
+E41 pooled igc30                   n=1117  med|Δ%|=  4.18 [4.0, 4.4]  medΔ%=   0.07 [-0.4, 0.5] GATE-OK
+E41 pooled fab5                    n=1117  med|Δ%|=  5.26 [4.6, 6.0]  medΔ%=   4.35 [3.6, 4.9] GATE-OK
+E41 pooled fab30                   n=1117  med|Δ%|=  4.55 [4.1, 4.9]  medΔ%=   2.05 [1.5, 2.7] GATE-OK
+E41 c(t=2) own                     n=1117  med|Δ%|=  3.10 [3.0, 3.2]  medΔ%=   3.10 [3.0, 3.2] GATE-OK
+E41 c(t=2) igc5                    n=1117  med|Δ%|=  4.95 [4.9, 5.0]  medΔ%=   4.95 [4.9, 5.0] GATE-OK
+E41 c(t=2) igc5s10                 n=1117  med|Δ%|=  3.74 [3.7, 3.8]  medΔ%=   3.74 [3.7, 3.8] GATE-OK
+E41 c(t=2) igc5s30                 n=1117  med|Δ%|=  2.62 [2.6, 2.7]  medΔ%=   2.62 [2.6, 2.7] GATE-OK
+E41 c(t=2) igc30                   n=1117  med|Δ%|=  3.77 [3.7, 3.8]  medΔ%=   3.77 [3.7, 3.8] GATE-OK
+E41 c(t=2) fab5                    n=1117  med|Δ%|= 10.14 [9.9, 10.6]  medΔ%=  10.14 [9.9, 10.6] GATE-OK
+E41 c(t=2) fab30                   n=1117  med|Δ%|=  7.52 [7.1, 7.8]  medΔ%=   7.52 [7.1, 7.8] GATE-OK
+E41 h+ ratio igc5: 1.18 GATE-OK
+E41 h+ ratio igc5s10: 1.04 GATE-OK
+E41 h+ ratio igc5s30: 0.86 GATE-OK
+E41 h+ ratio igc30: 1.05 GATE-OK
+E41 h+ ratio fab5: 2.36 GATE-OK
+E41 h+ ratio fab30: 1.72 GATE-OK
+E41 paired igc5: med +2.68 pp, over-charges on 940/1117 GATE-OK
+E41 paired igc5s10: med +1.66 pp, over-charges on 890/1117 GATE-OK
+E41 paired igc5s30: med +0.22 pp, over-charges on 636/1117 GATE-OK
+E41 paired igc30: med +1.85 pp, over-charges on 918/1117 GATE-OK
+E41 paired fab5: med +5.41 pp, over-charges on 1025/1117 GATE-OK
+E41 paired fab30: med +3.21 pp, over-charges on 961/1117 GATE-OK
+E41 anomaly-free own: 3.7 · -2.7 GATE-OK
+E41 anomaly-free igc5: 3.8 · -0.9 GATE-OK
+E41 anomaly-free fab5: 3.4 · 2.2 GATE-OK
+E41 anomaly-free fab30: 3.6 · 0.4 GATE-OK
+E41 portal population: 943 rides with &gt;=1 matched span GATE-OK
+E41 span deck-baro igc5            n=943  med|Δ%|=  8.26 [7.3, 9.1]  medΔ%=  -2.79 [-3.5, -2.1] GATE-OK
+E41 span raw-baro igc5             n=943  med|Δ%|= 15.87 [11.3, 23.4]  medΔ%=  13.27 [10.0, 19.7] GATE-OK
+E41 span deck-baro igc5s30         n=943  med|Δ%|=  8.53 [7.2, 10.1]  medΔ%=  -5.84 [-7.9, -4.5] GATE-OK
+E41 span raw-baro igc5s30          n=943  med|Δ%|=  7.47 [6.6, 8.5]  medΔ%=   0.05 [-0.3, 0.3] GATE-OK
+E41 span deck-baro fab5            n=943  med|Δ%|=  8.96 [7.8, 10.1]  medΔ%=  -6.57 [-7.6, -5.5] GATE-OK
+E41 span raw-baro fab5             n=943  med|Δ%|= 13.07 [12.3, 14.2]  medΔ%=  11.17 [10.2, 12.5] GATE-OK
+E41 span deck-baro fab30           n=943  med|Δ%|=  9.04 [7.9, 10.2]  medΔ%=  -6.78 [-8.0, -5.8] GATE-OK
+E41 span raw-baro fab30            n=943  med|Δ%|=  8.28 [7.3, 9.4]  medΔ%=   4.98 [4.2, 5.8] GATE-OK
+E41 span deck-baro bridge          n=942  med|Δ%|=  7.79 [6.3, 8.5]  medΔ%=  -2.43 [-3.3, -1.7] GATE-OK
+E41 span deck-baro tunnel          n=407  med|Δ%|=  0.89 [0.7, 1.2]  medΔ%=  -0.29 [-0.4, -0.2] GATE-OK
+E41 portal own                     n=943  med|Δ%|=  3.72 [3.5, 4.0]  medΔ%=  -2.10 [-2.5, -1.6] GATE-OK
+E41 portal igc5                    n=943  med|Δ%|=  3.92 [3.7, 4.1]  medΔ%=  -0.29 [-0.9, 0.2] GATE-OK
+E41 portal igc5p                   n=943  med|Δ%|=  3.73 [3.5, 3.9]  medΔ%=  -1.29 [-1.6, -0.9] GATE-OK
+E41 portal igc5s30                 n=943  med|Δ%|=  3.81 [3.5, 4.0]  medΔ%=  -2.07 [-2.3, -1.7] GATE-OK
+E41 portal igc5s30p                n=943  med|Δ%|=  3.87 [3.6, 4.1]  medΔ%=  -2.37 [-2.8, -2.1] GATE-OK
+E41 portal fab5                    n=943  med|Δ%|=  3.91 [3.4, 4.4]  medΔ%=   2.71 [2.1, 3.3] GATE-OK
+E41 portal fab5p                   n=943  med|Δ%|=  3.68 [3.3, 4.1]  medΔ%=   2.39 [1.8, 3.1] GATE-OK
+E41 portal fab30                   n=943  med|Δ%|=  3.66 [3.3, 4.0]  medΔ%=   0.75 [0.3, 1.3] GATE-OK
+E41 portal fab30p                  n=943  med|Δ%|=  3.59 [3.2, 3.9]  medΔ%=   0.53 [0.1, 1.0] GATE-OK
+E41 portal paired igc5: corrected closer on 501/943, p=0.0589 GATE-OK
+E41 portal paired igc5s30: corrected closer on 400/935, p=0.0000 GATE-OK
+E41 portal paired fab5: corrected closer on 644/942, p=0.0000 GATE-OK
+E41 portal paired fab30: corrected closer on 613/938, p=0.0000 GATE-OK
 
 == Time model, P. Paz (§8.8 primary endpoint) ==
 T1b full (frozen)                  n=441  med|Δ%|=  6.60 [5.9, 7.2]  medΔ%=   3.79 [2.8, 4.7] GATE-OK

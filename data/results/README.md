@@ -23,7 +23,7 @@ resolve their inputs and this directory relative to their own location).
 | `e38_tau.csv` | `python3 src/harness/e38_tau.py` (`E38_SMOKE=1`) | 38 |
 | `e39_tau_reg.csv` | `python3 src/harness/e39_tau_reg.py` (`E39_SMOKE=1`) | 39 |
 | `e40_roller.csv` | `python3 src/harness/e40_roller.py` (`E40_SMOKE=1`) | 40 |
-| `e41_dem_route.csv` | `python3 src/harness/e41_dem_route.py` (`E41_SMOKE=n`; needs the conda python for gdal) | 41 |
+| `e41_dem_route.csv` | `python3 src/harness/e41_dem_route.py` (`E41_SMOKE=n`; needs the conda python for gdal, the IGC-SP wide raster and ~1.3 GB of FABDEM tiles; ~1 h cold, ~45 min off the profile cache) | 41 |
 | `e42_lump.csv` | `python3 src/harness/e42_lump.py` (`E42_SMOKE=1`) | 42 |
 | `cda_estimate.csv`, `param_fit.csv` | `python3 src/harness/cda_estimate.py` / `param_fit.mjs` | 15 |
 | `danlessa_comparison.csv` | `python3 src/harness/danlessa_compare.py` | 16 |

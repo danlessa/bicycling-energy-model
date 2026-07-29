@@ -129,9 +129,9 @@
         "SoftwareSourceCode"
       ],
       "name": "src/harness/e40_roller.py",
-      "url": "https://github.com/danlessa/bicycling-energy-model/blob/6c457b2e82d78522db68912236bf3d3f382c277b/src/harness/e40_roller.py",
-      "sha256": "72ca69f808d3a9d498719ce2a0b6fa12c553265b11367c48cd7335503acafaa3",
-      "version": "6c457b2e82d78522db68912236bf3d3f382c277b",
+      "url": "https://github.com/danlessa/bicycling-energy-model/blob/f4d74eb814a7843c35dcb0a7f040c632d5463043/src/harness/e40_roller.py",
+      "sha256": "f3f66b942965fdb0a508919db70825be0cc54fa1b3399385d59d0f0dca233996",
+      "version": "f4d74eb814a7843c35dcb0a7f040c632d5463043",
       "programmingLanguage": "Python"
     },
     {
