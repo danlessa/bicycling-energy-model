@@ -81,6 +81,9 @@ PRODUCER = {
     "skc_descent_occupancy.csv": "python3 src/harness/skc_invert.py",
     "skc_eps_vs_pedal.csv": "python3 src/harness/skc_eps_vs_pedal.py",
     "e44_scurve_cells.csv": "python3 src/harness/e44_scurve.py",
+    "e45_ridelevel.paper.csv": "E45_TARGET=paper python3 src/harness/e45_ridelevel.py",
+    "e45_ridelevel.ledger.csv": "python3 src/harness/e45_ridelevel.py",
+    "e45_flatseg.csv": "python3 src/harness/e45_flatseg.py",
     "e44_scurve_fits.csv": "python3 src/harness/e44_scurve.py",
     "e41_dem_route.csv": "python3 src/harness/e41_dem_route.py",
 }
@@ -148,6 +151,10 @@ ENTRIES = {
          "skc_eps_vs_pedal.csv"], True, []),
     44: (["src/harness/e44_scurve.py"],
          ["e44_scurve_cells.csv", "e44_scurve_fits.csv"], True, []),
+    45: (["src/harness/e45_ridelevel.py", "src/harness/e45_flatseg.py"],
+         ["e45_ridelevel.paper.csv", "e45_ridelevel.ledger.csv",
+          "e45_flatseg.csv"], True, ["research/article/paper1-closed-form.md"]),
+    46: ([], [], False, []),
 }
 
 # entry 22 reads the per-ride CSVs the other harnesses wrote

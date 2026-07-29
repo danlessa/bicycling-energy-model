@@ -142,6 +142,51 @@ changed. See Entry 11.)*
 
 ---
 
+## 2026-07-29 — Entry 46: implementing the regime switch — pre-registration
+
+*Prompt (Danilo), after Entry 45 established that §3.3's regime rule is stated but never
+enforced: "Are we saying that we should recommend using G only when the mean descent is above
+3%, and use a flat constant for eps elsewhere?" — and, on the plan to correct the article first
+and register the implementation: "ok do it and commit".*
+
+### Pre-registration (written before any run)
+
+**The gap.** Paper 1 §3.3 recommends dynamic $\varepsilon_d$ on mean descent grade $\geq 3\%$
+and flat $\varepsilon_f = 0.20$ otherwise. **No harness implements it.** The `s̄ >= 0.03`
+expressions in `ppaz_compare.py`, `jaam_compare.py`, `danlessa_compare.py` and `time_compare.py`
+select reporting subsets; none switches the estimator. Every published $\varepsilon_d$ column
+applies the dynamic estimator to all rides, including the 52% whose own mean descent grade is
+below 3% — the regime the paper says it should not be used in.
+
+**The experiment.** Add a per-ride switch to the frozen-grid harnesses: use
+$\varepsilon_d = \varepsilon_{\mathrm{coast}} - \varepsilon_0$ when $\bar s \geq 3\%$ and
+$\varepsilon_f = 0.20$ otherwise, as a **new column** beside the existing unswitched ones —
+nothing is overwritten. Then repeat with eq. (8)'s grade-inverse deficit in place of
+$\varepsilon_0$, giving four arms: {constant, grade-inverse} × {unswitched, switched}.
+
+**Estimands.** Per corpus and pooled: median $|\Delta\%|$ and median signed $\Delta\%$ with 95%
+CIs (mulberry32, seeds 42/43, B = 10⁴), plus paired sign tests against the published
+unswitched-constant column.
+
+**Predictions.** P1: switching improves the gentle-terrain corpora (D4, D2) and barely moves
+the open-road ones (D3, D5, D6) — the rule was inferred from exactly that contrast, so this is
+a consistency check, not a discovery. P2: with the switch in place, the grade-inverse deficit
+beats the constant on the open corpora, because it is then only ever evaluated where Entry 45
+found it accurate. P3: unswitched, the grade-inverse deficit is *worse* than the constant,
+because half the rides fall in the band where it under-predicts by 20–70%. **P3 is the one that
+matters** — if it holds, eq. (8) is unusable without the switch, and the article's conditional
+framing is correct rather than merely cautious.
+
+*Failure modes.* If switching changes nothing anywhere, §3.3's rule is decorative and should be
+dropped from the paper rather than implemented. If it changes the headline pooled numbers, this
+becomes a re-baseline with the full propagation checklist and gates, not an addendum.
+
+**Scope.** Nothing published is overwritten until gates exist. `bootstrap_ci.py` is still held
+open by the parallel paper-2 line; Entry 45's constant and this entry's columns both need gate
+sections before any of it reaches a table.
+
+---
+
 ## 2026-07-29 — Entry 45: what should ε₀ be? — a contest of ride-level summaries
 
 *Prompt (Danilo), before letting any of Entries 43–44 reach the article: "i feel we should have
@@ -302,6 +347,81 @@ fit that did not transfer, and BIC's $k\ln n$ penalty was too weak to catch it a
 This is why the held-out score is primary here and the information criterion is corroboration:
 AIC/BIC are *approximations to cross-validation* for when cross-validation is unaffordable, and
 we can afford it. Where the two disagree, the held-out result wins.
+
+### Amendment results — the flat-terrain probe, and two more forms
+
+*Prompt (Danilo): "Can we select 100 random activities, and cherry pick some segments larger so
+that they have a 0.5% mean descent... balanced in terms of cumulative ascent and descent", then
+"let's select the top 100 larger activities".* The point: every ride in the contest sits at
+$\bar s \geq 3\%$, so the choice between an unbounded $k/\bar s$ and a bounded alternative rested
+on a region with **no observations**. `e45_flatseg.py` cuts balanced $\geq 20$ km windows out of
+the 100 longest rides and measures $\delta$ there.
+
+**The first version of the probe was wrong, and the way it was wrong is worth recording.** It
+built cells from raw elevation. On a near-flat window that put $h_-$ at 2.4 m/km against a
+corpus noise rate of 3.1 m/km — the "drop" was altimeter jitter — so
+$\delta = E_{\mathrm{legs}}/(\beta h_-)$ divided real pedal energy by measurement error and
+returned 3.14. Worse, the search was **self-reinforcing**: hunting for the flattest window
+steered it toward exactly the windows where the denominator was most noise. Rebuilt on
+deadband-smoothed elevation ($\tau = 2$ m, the filter F3 already uses), which cleans *both*
+ends — spurious drop out of the denominator, spurious "descent" cells out of the numerator.
+
+**Result, 396 windows.** Against the ledger-target fit $k = 0.0099$:
+
+| target | median $\bar s$ | $h_-$/km | noise/km | measured $\delta$ | G predicts | meas/G |
+|--:|--:|--:|--:|--:|--:|--:|
+| 0.5% | 2.07% | 5.3 | 2.4 | 0.548 | 0.478 | 1.15 |
+| 2.0% | 2.16% | 6.4 | 2.5 | 0.478 | 0.459 | 1.04 |
+| 3.0% | 3.00% | 9.0 | 2.6 | 0.311 | 0.330 | 0.94 |
+
+G tracks to within 6% at 2–3% and 15% near 2%, **entirely out of sample**. The requested 0.5%
+is unreachable: balanced 20 km windows that flat do not exist in these corpora (floor 0.78%).
+
+**A third mixing of the two targets, and the rule that prevents a fourth.** The first reading of
+this table compared measured $\delta$ (the *unclamped* ledger quantity) against $k = 0.0051$
+(the *clamped* paper-target fit). The two differ by 1.9×, and that single mismatch produced a
+spurious "G under-predicts by 4–7×", a retracted "$\delta\bar s$ rises fourfold", and — earlier —
+Entry 44's P3 scope error. The rule, now a comment in the harness: **whichever quantity is
+measured, the constant must be the one fitted to that same quantity.**
+
+**Two candidate forms, both refuted.** G2, the same model with the *force* fixed in newtons
+rather than $k$ dimensionless (so the charge does not scale with mass), scores 0.0592 against
+G's 0.0545 — the charge does appear to scale with mass, mildly. G3, a sigmoid in $\bar s$
+motivated by Danilo's S-curve rationale (bounded, $\delta \to 1$ as terrain flattens), fits
+better (ΔBIC −163 vs −113) but transfers slightly worse (0.0589) — and the flat probe kills its
+premise: measured $\delta$ below 1% is **1.778**, above the 0.5 maximum any $x/(1+x^2)$ form can
+reach. **$\delta$ does diverge as terrain flattens**; G's failing is that it diverges *too
+slowly*, not that it diverges.
+
+**Where G breaks, and why.** $\delta = P_{\mathrm{desc}}/(\beta \bar s \bar v)$ with
+$P_{\mathrm{desc}} = \mathrm{occ}(\bar s)I$, so G's constant is really
+$k = \mathrm{occ}(\bar s)I/(\beta\bar v)$ — constant only while occupancy is small and slowly
+varying. Below the occupancy midpoint both terms push the wrong way (occ climbs toward 1,
+$\bar v$ falls) and $k$ must rise. It does:
+
+| $\bar s$ band | 3–5% | 2–3% | 1.5–2% | 1–1.5% | 0.5–1% |
+|---|--:|--:|--:|--:|--:|
+| implied $k$ | 0.00929 | 0.01020 | 0.01180 | 0.01567 | 0.01695 |
+| vs 0.0099 | 0.94 | 1.03 | 1.19 | 1.58 | 1.71 |
+
+The empirical break is ≈ 2%, and Entry 44's fitted $s_{50}$ (2.1–5.9% across riders) predicts
+exactly that — **the break point is the rider's own occupancy midpoint**, which is why a fixed
+threshold has to sit at the conservative end of that spread.
+
+**A hybrid was tested at Danilo's suggestion and is worse.** Falling back to a constant below
+1% *doubles* the error in the band it was meant to protect (1.525 vs G's 0.779), because
+measured $\delta$ there is 1.778 — seven times A′ and thirteen times A. A constant moves in the
+wrong direction. If a guard is wanted, evaluate G at $\max(\bar s, 1\%)$: it costs nothing
+(0.788 vs 0.779) and avoids a divide-by-zero without pretending the deficit stops growing.
+
+**What this does to the article claim.** §3.3's regime rule (dynamic $\varepsilon_d$ on mean
+descent grade ≥ 3%, flat $\varepsilon_f$ otherwise) is a **recommendation that no harness
+implements** — the `s̄ >= 0.03` filters in the `*_compare.py` files are reporting slices, not
+gates, and Table 3 applies $\varepsilon_d$ to every ride including the **52%** below 3%. The
+article text was corrected accordingly: the cross-reference now points at §3.3 rather than a
+section invented the same day, the scope condition is labelled unenforced, and the claim is
+shrunk to *where the dynamic estimator applies at all, its deficit should be grade-inverse*.
+Implementing the switch is registered as Entry 46.
 
 **What the parameter counts buy.** Error reduction against the pooled constant (A′, 0.0973),
 per fitted parameter:

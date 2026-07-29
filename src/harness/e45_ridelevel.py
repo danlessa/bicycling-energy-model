@@ -168,6 +168,25 @@ def main() -> None:
                        if fits[r["group"]][0] > 0])          # B'  delta = k * s50
     k_bsec = med_of([r["d_meas"] * fits[r["group"]][0] for r in fit])   # B'' delta = k / s50
     k_g = med_of([r["d_meas"] * r["s_bar"] for r in fit])               # G   delta = k / s_bar
+    # G2: the same model in ENERGY coordinates. beta*delta*h_minus = (beta*k)*x_minus,
+    # so the deficit is a constant force c [N] over the descending distance rather
+    # than a fraction of the drop. G fixes k (dimensionless -> the charge scales
+    # with mass); G2 fixes c (newtons -> it does not). Physically a residual pedal
+    # force should not care much about rider mass, so G2 is the better-motivated
+    # parameterisation and this decides between them.
+    c_g2 = med_of([r["d_meas"] * r["s_bar"] * r["m"] * GRAV / KEFF for r in fit])
+    # G3: Danilo's S-curve rationale. k/s_bar has no upper bound, but the physical
+    # limits are known at BOTH ends: as s_bar -> 0 measured recovery -> 0 while
+    # eps_coast -> 1, so delta -> 1; as s_bar grows riders coast and delta -> 0.
+    # A sigmoid in mean grade has exactly those limits and cannot diverge.
+    # Two global parameters, no rider parameter. Grid-searched on the fit half.
+    best3 = (float("nan"), float("nan"), float("inf"))
+    for a3 in [0.005 + i * 0.0005 for i in range(0, 121)]:      # midpoint 0.5-6.5%
+        for b3 in [0.002 + i * 0.0005 for i in range(0, 60)]:   # width 0.2-3.2%
+            e = sum(abs(sigmoid(r["s_bar"], a3, b3) - r["d_meas"]) for r in fit)
+            if e < best3[2]:
+                best3 = (a3, b3, e)
+    a_g3, b_g3, _ = best3
     # F: least squares a + b*phi on the fit half
     n = len(fit)
     mx = sum(r["phi"] for r in fit) / n
@@ -221,6 +240,11 @@ def main() -> None:
             return a_f + b_f * r["phi"]
         if name == "G":
             return k_g / r["s_bar"] if r["s_bar"] > 0 else float("nan")
+        if name == "G3":
+            return sigmoid(r["s_bar"], a_g3, b_g3)
+        if name == "G2":
+            beta = r["m"] * GRAV / KEFF
+            return c_g2 / (beta * r["s_bar"]) if r["s_bar"] > 0 else float("nan")
         if name == "E":
             beta = r["m"] * GRAV / KEFF
             tot = 0.0
@@ -233,10 +257,10 @@ def main() -> None:
             return tot / (beta * r["h_minus"])
         return float("nan")
 
-    NAMES = ["A", "A'", "B", "B'", "B''", "C", "D", "F", "G", "E"]
+    NAMES = ["A", "A'", "B", "B'", "B''", "C", "D", "F", "G", "G2", "G3", "E"]
     LABEL = {"A": "A  0.13 (off-target)", "A'": "A' best constant", "B": "B  rider constant",
              "B'": "B' k*s50", "B''": "B\" k/s50", "C": "C  delta(s_bar)",
-             "D": "D  + Jensen", "F": "F  a+b*phi", "G": "G  k/s_bar",
+             "D": "D  + Jensen", "F": "F  a+b*phi", "G": "G  k/s_bar", "G2": "G2 force c/(b*s)", "G3": "G3 sigmoid(s_bar)",
              "E": "E  cell integral"}
 
     print("\nHELD-OUT median |delta_pred - delta_meas|  (lower is better; "
@@ -274,7 +298,7 @@ def main() -> None:
     # fitted quantities can overfit, so only they belong in a BIC penalty.
     # Reading a measured s_bar costs data availability, not degrees of freedom.
     NPAR = {"A": 0, "A'": 1, "B": 9, "B'": 10, "B''": 10,
-            "C": 18, "D": 18, "F": 11, "G": 1, "E": 18}
+            "C": 18, "D": 18, "F": 11, "G": 1, "G2": 1, "G3": 2, "E": 18}
     print("\ncomplexity-adjusted: BIC on the FIT half (Laplace likelihood, which is the")
     print("one the median/MAE metric implies), and a paired sign test on the HELD-OUT half.")
     print("\n" + "estimator".ljust(20) + "k".rjust(4) + "fit MAE".rjust(10)

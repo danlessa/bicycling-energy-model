@@ -42,6 +42,8 @@ resolve their inputs and this directory relative to their own location).
 | `skc_descent_occupancy.csv` | `python3 src/harness/skc_invert.py` | 43 amendment arm B (descent pedalling, all corpora) |
 | `skc_eps_vs_pedal.csv` | `python3 src/harness/skc_eps_vs_pedal.py` | 43 amendment arm C (pedalling vs deficit) |
 | `e44_scurve_cells.csv`, `e44_scurve_fits.csv` | `python3 src/harness/e44_scurve.py` | 44 (S-curve reopened; occupancy sigmoids) |
+| `e45_ridelevel.ledger.csv`, `e45_ridelevel.paper.csv` | `E45_TARGET={ledger,paper} python3 src/harness/e45_ridelevel.py` | 45 (ride-level form contest) |
+| `e45_flatseg.csv` | `python3 src/harness/e45_flatseg.py` | 45 amendment (flat-terrain probe) |
 
 `python3 src/harness/bootstrap_ci.py` (Entry 22) reads these CSVs and gates the
 article's published medians against them.
