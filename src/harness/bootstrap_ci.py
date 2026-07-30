@@ -1269,6 +1269,17 @@ for (_calib, _arm), (_en, _ech, _emed) in _e47_exp.items():
     if not _ok:
         failed = True
 
+# dBIC = 128.8, quoted in section 3.2.2 as the in-sample arm's margin for eps_2
+# over the frozen constant. Recomputed, not transcribed.
+_pk_ag_all = _e47_pack("ag", False)
+_, _res_ag_all = _e47_contest(_pk_ag_all)
+_dbic = _res_ag_all["eps0_frozen"]["bic"] - _res_ag_all["eps2"]["bic"]
+_ok = abs(_dbic - 128.8) <= 0.5
+print(f"  in-sample dBIC, eps2 over frozen eps0: {to_fixed(_dbic, 1)}"
+      + (" GATE-OK" if _ok else " GATE-FAIL(exp 128.8)"))
+if not _ok:
+    failed = True
+
 # The population must equal Entry 45's, ride for ride, or sigma has drifted.
 _n_all = len(_e47_pack("ag", True)) + len(_e47_pack("ag", False))
 _ok = _n_all == 1038
@@ -1354,6 +1365,50 @@ print(f"  sub-3% bias reversal: P_a,g eps_d {to_fixed(_ag[1], 2)} / eps_f {to_fi
 if not _ok:
     failed = True
 
+
+# Numbers §3.2.2 prints that were NOT gated when first written (found while
+# auditing state 0's exit for A1 — Entry 32's lesson restated: the un-gated
+# numbers are where the rot is). Three additions:
+#   the P_f,r switch pair 5.51 -> 4.12, the applied eps_d median 0.544 below the
+#   gate, and (in section 3l) the dBIC = 128.8 the article quotes.
+
+
+def _e46_arm_medians(pfx: str) -> dict:
+    """Median |D%| per arm over ALL rides, recomputed from the per-ride table."""
+    out: dict = {}
+    for arm in ("const_unsw", "const_sw"):
+        vals = []
+        for r in _e47r:
+            try:
+                e0, e1 = float(r[pfx + "_E0"]), float(r[pfx + "_E1"])
+                emp, sb = float(r["emp"]), float(r[pfx + "_sbar_cells"])
+                ec = float(r[pfx + "_eps_coast"])
+            except (KeyError, ValueError):
+                continue
+            if not (emp > 0 and sb > 0):
+                continue
+            eps = 0.20 if (arm == "const_sw" and sb < 0.03) else ec - 0.13
+            vals.append(abs(100.0 * ((e0 + (e1 - e0) * eps) / 1000 - emp) / emp))
+        out[arm] = median(vals)
+    return out
+
+
+_fr_arms = _e46_arm_medians("fr")
+_ok = (abs(_fr_arms["const_unsw"] - 5.51) <= 0.02
+       and abs(_fr_arms["const_sw"] - 4.12) <= 0.02)
+print(f"  P_f,r switch pair: {to_fixed(_fr_arms['const_unsw'], 2)} -> "
+      f"{to_fixed(_fr_arms['const_sw'], 2)}"
+      + (" GATE-OK" if _ok else " GATE-FAIL(exp 5.51 -> 4.12)"))
+if not _ok:
+    failed = True
+
+_eps_lo = median([float(r["const_unsw_eps"]) for r in _e46
+                  if r.get("real") == "false" and is_finite(float(r["const_unsw_eps"]))])
+_ok = abs(_eps_lo - 0.544) <= 0.002
+print(f"  median eps_d APPLIED below the 3% gate: {to_fixed(_eps_lo, 3)} (vs eps_f = 0.20)"
+      + (" GATE-OK" if _ok else " GATE-FAIL(exp 0.544)"))
+if not _ok:
+    failed = True
 
 # ---------------------------------------------------------------- 3n. Entry 48
 sec("3n")

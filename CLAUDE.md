@@ -118,7 +118,13 @@ home of the *derivation* and the side-by-side comparison.
   `ascent-error-literature.md`, `censo-model-verification.md`,
   `VERIFICATION_NOTES.md`.
 - `research/scripts/` — `make_claims_explorer.py` (claims.ttl → the interactive
-  explorer page).
+  explorer page), `check_paper_stats.py` (cross-checks the article's inline
+  `<!--@ id=… scope=… gate=… -->` markers against `bootstrap_ci.py`'s sections:
+  the value must actually be asserted in the gate section it names, scopes must
+  be one of calibration/in-sample/out-of-sample/external/derived, ids unique.
+  Exits non-zero. It caught a misplaced gate block on its first run — cheap, and
+  the marker's `scope=` is what stops a summariser promoting a calibration
+  figure to a headline).
 - `research/packages/` — per-entry evidence RO-Crates; regenerate via
   `make_crates.py` (re-executes `bootstrap_ci.py` and aborts on gate failure).
   RO-Crate envelope at the repo root `ro-crate-metadata.json`.
