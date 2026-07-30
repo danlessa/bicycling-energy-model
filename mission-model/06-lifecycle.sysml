@@ -207,6 +207,33 @@ package MissionLifecycle {
          * which is the one thing the repo exists to provide. The recommended
          * trade is therefore exact values, no dates, surrogate IDs.
          *
+         * ON PUBLISHING A CENTROID. The proposal was one number per track. I would
+         * argue against it at per-ride grain, on this project's own precedent.
+         *
+         * A per-ride centroid is endpoint-derived geometry wearing a disguise.
+         * For a loop starting at home it sits near the home; over 441 rides of
+         * one rider the density peak IS the home, recoverable by anyone who
+         * plots them. This is the exact failure Entry 26 caught mid-experiment —
+         * crop bboxes derived from ride endpoints, which invert back to those
+         * endpoints — and the same reason D6's tracks are gitignored despite an
+         * open licence. Quantisation does not save it: coarsening to ~10 km
+         * still leaves a peak once there are hundreds of samples, because the
+         * signal is in the repetition, not the resolution.
+         *
+         * And it buys nothing the repo exists for. NO published statistic in
+         * A1-A3 depends on where a ride happened; location enters only through
+         * the wind estimate, whose OUTPUT (wind_ms) is already in O without its
+         * input. By the repo's own rule — ship what reproduces the results and
+         * nothing else — per-ride centroids are excluded on reproducibility
+         * grounds before privacy is even considered.
+         *
+         * What a reader legitimately needs is geographic CONTEXT: is this São
+         * Paulo or the Alps, and what terrain does that imply? That is served
+         * completely by one coarse centroid per rider or per corpus — a fact the
+         * articles already state in prose. So: one per corpus, never one per
+         * ride. The distinction costs the reader nothing and removes the vector
+         * entirely.
+         *
          * CONSENT IS A SEPARATE QUESTION FROM ANONYMITY, and is the open action.
          * D6 is CC BY 4.0, so derived aggregates are publishable outright.
          * D1 and D5 are the author's own. But D3 and D4 were shared by
@@ -216,6 +243,14 @@ package MissionLifecycle {
          * has a human on the other end of it.
          */
         attribute identifyingFields : String default "ride, date, file — measured across every result CSV, not assumed";
+        attribute tracksExcluded : String default
+            "already satisfied by construction: the O layer carries NO coordinates. "
+            + "Verified column by column — `x` is distance-along-route in metres "
+            + "(the engine convention), geoCov/geo_span are coverage fractions. "
+            + "Rename or document `x` in the release: to an outside auditor "
+            + "scanning for coordinates it reads like a longitude.";
+        attribute centroidPolicy : String default
+            "ONE coarse centroid per rider/corpus, never per ride";
         attribute substitution : String default "file dropped; ride -> surrogate; date -> per-rider monotonic rank";
         attribute costsReproducibility : Boolean default false;
         attribute residualRisk : String default "aggregate rows are a weak fingerprint; removing dates is what makes it weak";

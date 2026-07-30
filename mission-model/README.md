@@ -199,6 +199,28 @@ touching dates are the chronological split-halves (Entries 44, 47, 49), which
 sort by date and take `half = index % 2` — they consume the *order*, never the
 value. A rank preserves them exactly.
 
+**Tracks are excluded by construction, already.** The O layer carries no
+coordinates — verified column by column: `x` is distance-along-route in metres
+(the engine's convention), `geoCov`/`geo_span` are coverage fractions. One
+release chore falls out of that: rename or document `x`, because to an outside
+auditor scanning for coordinates it reads like a longitude.
+
+**On publishing a centroid — one per *corpus*, never one per ride.** A per-ride
+centroid is endpoint-derived geometry in disguise: for a loop starting at home it
+sits near the home, and over 441 rides of one rider the density peak *is* the
+home. That is the exact failure Entry 26 caught mid-experiment (crop bboxes
+derived from ride endpoints, which invert back to those endpoints), and the same
+reason D6's tracks stay gitignored despite an open licence. Quantisation doesn't
+save it — the signal is in the repetition, not the resolution.
+
+It also buys nothing: no published statistic in A1–A3 depends on where a ride
+happened. Location enters only through the wind estimate, whose *output*
+(`wind_ms`) is already in O without its input. So per-ride centroids fail the
+repo's own rule — ship what reproduces the results and nothing else — before
+privacy is even considered. What a reader legitimately needs is geographic
+context (São Paulo or the Alps?), and one coarse centroid per corpus serves that
+completely, as the articles already do in prose.
+
 Residual risk, stated plainly: per-ride distance-and-ascent rows are still a weak
 fingerprint against a public activity profile. Removing the calendar value takes
 this from near-certain matching to weak — a date *plus* a distance identifies a
