@@ -22,6 +22,7 @@ decision — not financial subsidy.)
 | `05-deliverables.sysml` | The four articles, their enablement chain, and why A4 is deferred |
 | `06-lifecycle.sysml` | Life-cycle stages, the freeze tension, and the A1→A2→A3 roadmap |
 | `07-sub-missions.sysml` | One sub-mission per critical-path article, each with what it must *not* claim |
+| `08-publication-roadmap.sysml` | Ordered, checkable steps to publication for A1, A2, A3 and J |
 
 Read in order; each imports the one before.
 
@@ -315,6 +316,50 @@ practical argument for decomposing the monolith. And the sub-missions get
 derivation, SM-2 needs a planner to try it on their own raster, SM-3 needs
 someone to route with it. The evidence available inside this repository thins out
 along exactly the axis the mission travels.
+
+## Publication roadmaps
+
+`08-publication-roadmap.sysml` holds ordered steps with a checkable *done-when*
+and an explicit blocker for each. Summary:
+
+**A1** — science settled; everything left is editorial or infrastructural.
+`A1.1` the three framing fixes · `A1.2` minor review items · `A1.3` propagation +
+full battery + archive as-published · `A1.4` **build the release infrastructure**
+(filtering, anonymisation transform, gate script) · `A1.5` release, and retire the
+monolith unpublished.
+
+**A2** — evidence already done and gated (Entry 41, 1,188 rides); what remains is
+writing. `A2.1` finish the ~4pp letter · `A2.2` review · `A2.3` repo, reusing A1's
+tooling · `A2.4` release citing A1's DOI.
+
+**A3** — a scaffold whose first step is a *decision*: does the discretisation
+claim rest on Entries 19–21, 23, 25, 26, or need its own registered experiment?
+`A3.1` that decision · `A3.2` register/run/gate if needed · `A3.3` **measure the
+divergence** · `A3.4` draft → review → repo → release citing A2.
+
+**J** — after A3, scope open. `J.1` scoping, exiting only on the structural answer
+to hostile reading · `J.2` assemble the surface so the claims graph's
+`disputes`/`corrects` edges render as *adjacency* · `J.3` add the missing
+article-claim → entry direction · `J.4` front-matter tally computed, not asserted
+· `J.5` release with a **concept DOI and dated versions**, since J keeps growing —
+that's the honest shape of an append-only log, not a compromise.
+
+Three things the roadmaps make visible:
+
+1. **Costs are front-loaded, not even.** A1 pays once for filtering, anonymisation
+   and the gate; A2, A3 and J inherit them. Reading the three articles as
+   comparable efforts overestimates A2/A3 and underestimates A1.
+2. **Parallelism is available and underused.** `A1.4`, `A2.1`, `A3.1` and `A3.3`
+   are all unblocked right now and none competes with `A1.1`'s editorial pass.
+   `A1.4` especially should start early — it's where the unknown-unknowns are,
+   since nobody has yet filtered this repo down to one article's reproduction set.
+3. **The mission's own measurement is `A3.3`** — how often energy-optimal routing
+   actually diverges from distance-optimal — not any article's argument. It is one
+   step in one roadmap, currently unblocked and unstarted.
+
+And the honest scheduling note: the whole chain queues behind two editorial
+decisions in `A1.1`. That isn't a criticism of the science; it's a reason to treat
+`A1.1` as a decision to be *made* rather than work to be done.
 
 ## Conventions
 

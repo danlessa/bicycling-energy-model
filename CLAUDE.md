@@ -148,7 +148,7 @@ home of the *derivation* and the side-by-side comparison.
   file → producer → journal entry). Every file regenerates with one harness
   command.
 - `mission-model/` — the repo's **mission** in SysML v2 / Mission Engineering
-  terms (`00-mission` → `07-sub-missions`, read in order): the effect chain,
+  terms (`00-mission` → `08-publication-roadmap`, read in order): the effect chain,
   the four stakeholder classes, capabilities vs the systems delivering them, and
   MOPs vs MOEs. Plain text, compiled by nothing (no-build rule). Descriptive, not
   aspirational — it records that `MOE-5` (adoption in practice) is uninstrumented
