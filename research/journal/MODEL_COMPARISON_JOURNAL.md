@@ -162,6 +162,7 @@ counted from its CSV rather than asserted, is [`research/data-graph.ttl`](../dat
 
 | entry | $I = (D, P)$ | $T$ | $O$ (rows) | $S$ |
 |--:|---|---|---|---|
+| 50 | $(D_3..D_6, P_{a,g} \cdot P_{f,r})$ | $F_{\mathrm{base}}$ under perturbation of $(m, C_dA, C_{rr}, \lambda)$ | `e50_sensitivity.csv` | does ε earn its density in paper 1? |
 | 49 | $(D_3..D_6, P_{a,g} \cdot P_{f,r})$ via $O_{47}$ | $F_3^{\delta_5}$, affine in $\varepsilon_{\mathrm{coast}}$, global and per rider | `e49_affine.csv` — second-order | does the coasting limit need rescaling? |
 | 48 | the published per-ride $O$ of Entries 1/31/9/12/14/16 | TOST, difference of medians, paired bootstrap | `e48_equiv.csv` (one row per comparison) — second-order | parity sentences upgraded or not |
 | 47 | $(D_1 \cup D_2, P_{a,g})$ and $(D_1 \cup D_2, P_{a,g} \cdot P_{f,r})$ | F3 $\times$ {$\varepsilon_0,\varepsilon_2,\varepsilon_3$}, selected by BIC | `e47_formselect.csv` (2,141 rows; contests on 48 and 990) | **$\varepsilon_0$ retained**; nothing published moved |
@@ -214,6 +215,108 @@ counted from its CSV rather than asserted, is [`research/data-graph.ttl`](../dat
 
 Entries with no $O$ are reviews, registrations, imported notes or refactors — they change
 what the other rows *mean* without producing a per-ride table of their own.
+
+---
+
+---
+
+## 2026-07-30 — Entry 50: is ε worth its density? — a variance decomposition of F_base's error over (m, C_dA, C_rr, ε)
+
+**Lineage** — $I$: $(D_3..D_6, P_{a,g} \cdot P_{f,r}(m, C_{rr}, C_dA))$ · $T$: $F_{\mathrm{base}}$ under parameter perturbation · $O$: `e50_sensitivity.csv` · $S$: whether the ε research belongs in paper 1 or in a letter of its own
+
+*Prompt (Danilo): "Estimate the parameters sensitivity on first and second order on O
+prediction error… where the parameters of interest are (m, CdA, Crr, eps), where T is to be
+F_base, and eps comes from it. If the sensitivity towards eps is less than 40% parametric
+uncertainty, then I would argue us to be content with F_base on the article, and push the
+entire research on eps forms towards a new article (or letter)." On the threshold's reading:
+"[ε's share of total variance] is what i want."*
+
+### Pre-registration (written before any perturbation was run)
+
+**The question is editorial, and the instrument is physical.** Paper 1 spends a large share of
+its density on the deficit — its derivation, its ledger identity, four contested forms, three
+journal entries of contest. That expenditure is justified only if ε is a *material lever on
+prediction error*. If it is not, the article is paying density for a theoretical result whose
+practical claim is small, and both halves would be better served apart: a shorter empirical
+paper 1, and a letter that gets to be properly theoretical.
+
+**Operationalising ε inside $F_{\mathrm{base}}$.** The simulation has no ε — its descent
+behaviour is set by `RegimePowers.descent`, the measured descent power. But that is precisely
+what ε encodes: the ledger identity is $\delta = E_{\mathrm{legs},-}/(\beta h_-)$, descent pedal
+energy over the scaled drop. So the analogue is a **multiplier $\lambda$ on descent power**,
+with ε *derived* from the resulting ledger. Perturbing $\lambda$ perturbs exactly the physical
+quantity ε summarises, and keeps the whole analysis inside one engine rather than comparing
+across two.
+
+**Design — local quadratic per ride, global check on a subsample.** A full Sobol design over
+2,039 rides is millions of simulations and is not affordable. Instead: per ride, a gradient and
+Hessian of the prediction error by finite differences over $(m, C_dA, C_{rr}, \lambda)$ —
+about 15 evaluations each, which is first AND second order, and whose off-diagonal Hessian
+terms are where the $(\alpha, \varepsilon)$ pairing and the $\rho C_dA$ degeneracy live. Variance
+shares follow from the local expansion against the registered input ranges. Then a genuine
+Sobol run on a stratified subsample (≈ 200 rides across the seven riders) to confirm the local
+expansion is not misleading; if the two disagree, the Sobol result wins and the local one is
+reported as refuted.
+
+**Input ranges, empirical rather than invented** — the 5th/median/95th percentiles of the
+per-ride inversions actually observed on D3–D5, plus ε's measured across-rider spread:
+
+| parameter | 5th | median | 95th |
+|---|--:|--:|--:|
+| $m$ (kg) | 66.5 | 74.7 | 101.9 |
+| $C_dA$ | 0.149 | 0.358 | 0.526 |
+| $C_{rr}$ | 0.0069 | 0.0080 | 0.0112 |
+| ε (via $\lambda$) | 0.08 | — | 0.30 |
+
+**A caveat that must be stated before the run, because it is the result's main weakness:** a
+variance decomposition ranks parameters partly by *how wide their assumed ranges are*. These
+ranges are empirical, which is the right choice for a deployment question, but $C_dA$'s spans a
+factor of 3.5 and will plausibly dominate for that reason alone. The entry therefore also
+reports the decomposition under an alternative parameterisation (±1 SD rather than 5–95
+percentile) and the verdict must hold under both, or it is a statement about the ranges rather
+than about the model.
+
+**Decision rule, registered.** $S_T(\varepsilon) < 0.40$ — ε's **total-order index as a share
+of total prediction-error variance**. With four parameters an equal split is 0.25 each, so this
+asks ε to be *more influential than average*, not merely present.
+
+- **If ε clears 0.40**: it is a first-class lever, its research earns its place, paper 1 keeps it.
+- **If ε falls below 0.40**: paper 1 keeps the frozen $\varepsilon_0 = 0.13$ as a calibrated
+  constant with a forward reference, and the *forms contest and the deficit derivation* move to
+  a letter. Note the surgical line: the closed form still needs an ε to be computed at all, so
+  what moves is the theory, not the parameter.
+
+**A second question that may settle it more directly.** Under $P_{f,r}$, does the dynamic
+$\varepsilon_d$ beat a flat $\varepsilon_f$ **at all**? §3.3.2 already reports P. Paz's 34%
+descent-term margin collapsing to a tie under his fitted constants, and Entry 46 found
+$\varepsilon_f$ winning outright below 3% under honest physics (3.37 against 5.90). If the
+dynamic estimator's advantage over a constant is ≈ 0 under the parameter class the article
+increasingly favours, then the coasting-limit apparatus has no *predictive* claim left in paper
+1 regardless of what the variance decomposition says.
+
+**Predictions.**
+
+- **P1**: $C_dA$ dominates, and largely because its empirical range is widest — testable, since
+  the ±1 SD parameterisation should shrink its share more than the others'.
+- **P2**: $S_T(\varepsilon) < 0.40$, so the decision rule fires toward the letter. Stated with a
+  declared bias: three entries already point this way (Entry 45's 0.17 pp margin, Entry 46's
+  finding that the ε choice and the parameter class trade against each other, Entry 49's
+  unidentified affine form), and Danilo holds this hypothesis. **That makes the refuting outcome
+  the one to state clearly: if $S_T(\varepsilon) \geq 0.40$, or if the ε–$C_dA$ Hessian cross
+  term is large enough that ε cannot be separated from the physics at all, the ε research stays
+  in paper 1 and this entry has argued against its own author.**
+- **P3**: the largest off-diagonal Hessian term is ε–$C_dA$, the pairing Entry 46 found
+  reversing verdicts. If so, "ε's share" is partly ill-defined and the entry must say so rather
+  than report a clean number.
+
+*Failure modes.* If the local expansion and the subsample Sobol disagree, the local result is
+withdrawn. If the verdict flips between the two range parameterisations, no verdict is issued —
+the answer would be a statement about assumed uncertainty, not about the model.
+
+**What this entry does NOT decide.** Whether the ε decomposition is a scientific contribution.
+Low predictive sensitivity would argue for *separating* it from the empirical paper, not for
+devaluing it — every external reviewer named the coasting-limit/deficit decomposition the
+paper's most novel theoretical result. A letter is a promotion of that work, not a demotion.
 
 ---
 
