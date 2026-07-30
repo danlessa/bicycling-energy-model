@@ -220,9 +220,9 @@ what the other rows *mean* without producing a per-ride table of their own.
 
 ---
 
-## 2026-07-30 — Entry 50: is ε worth its density? — a variance decomposition of F_base's error over (m, C_dA, C_rr, ε)
+## 2026-07-30 — Entry 50: is ε worth its density? — a variance decomposition of F1–F4's error over (m, C_dA, C_rr, ε)
 
-**Lineage** — $I$: $(D_3..D_6, P_{a,g} \cdot P_{f,r}(m, C_{rr}, C_dA))$ · $T$: $F_{\mathrm{base}}$ under parameter perturbation · $O$: `e50_sensitivity.csv` · $S$: whether the ε research belongs in paper 1 or in a letter of its own
+**Lineage** — $I$: $(D_3..D_6, P_{a,g} \cdot P_{f,r}(m, C_{rr}, C_dA))$ · $T$: $F_1$–$F_4$ under parameter perturbation · $O$: `e50_sensitivity.csv` · $S$: whether the ε research belongs in paper 1 or in a letter of its own
 
 *Prompt (Danilo): "Estimate the parameters sensitivity on first and second order on O
 prediction error… where the parameters of interest are (m, CdA, Crr, eps), where T is to be
@@ -240,23 +240,39 @@ prediction error*. If it is not, the article is paying density for a theoretical
 practical claim is small, and both halves would be better served apart: a shorter empirical
 paper 1, and a letter that gets to be properly theoretical.
 
-**Operationalising ε inside $F_{\mathrm{base}}$.** The simulation has no ε — its descent
-behaviour is set by `RegimePowers.descent`, the measured descent power. But that is precisely
-what ε encodes: the ledger identity is $\delta = E_{\mathrm{legs},-}/(\beta h_-)$, descent pedal
-energy over the scaled drop. So the analogue is a **multiplier $\lambda$ on descent power**,
-with ε *derived* from the resulting ledger. Perturbing $\lambda$ perturbs exactly the physical
-quantity ε summarises, and keeps the whole analysis inside one engine rather than comparing
-across two.
+**The transformer is $F_1$–$F_4$, not $F_{\mathrm{base}}$** (Danilo's correction, before the
+run). That is the better design and it removes two compromises the first draft needed.
 
-**Design — local quadratic per ride, global check on a subsample.** A full Sobol design over
-2,039 rides is millions of simulations and is not affordable. Instead: per ride, a gradient and
-Hessian of the prediction error by finite differences over $(m, C_dA, C_{rr}, \lambda)$ —
-about 15 evaluations each, which is first AND second order, and whose off-diagonal Hessian
-terms are where the $(\alpha, \varepsilon)$ pairing and the $\rho C_dA$ degeneracy live. Variance
-shares follow from the local expansion against the registered input ranges. Then a genuine
-Sobol run on a stratified subsample (≈ 200 rides across the seven riders) to confirm the local
-expansion is not misleading; if the two disagree, the Sobol result wins and the local one is
-reported as refuted.
+*ε becomes a real parameter.* The simulation has no ε, which forced an awkward proxy — a
+multiplier on descent power, with ε derived from the resulting ledger. The closed forms take ε
+directly, so it is perturbed as itself and no proxy has to be defended.
+
+*A full Sobol becomes affordable.* $F_{\mathrm{base}}$ is a forward integration per ride, which
+made anything beyond a local expansion unaffordable. The closed forms reduce, per ride and per
+form, to a handful of **precomputed geometry aggregates** — $x$, $x_{\mathrm{flat}}$, $h_+$,
+$h_-$ (each form with its own: F1 charges aero on all $x$, F2–F4 on $x_{\mathrm{flat}}$, F3 on
+the deadband-smoothed profile, F4 on the scalar-corrected one). After that precomputation
+$E(\theta)$ is closed-form arithmetic plus one bisection for $v_f$, so a genuine Sobol design
+runs over every ride rather than a subsample. The local-quadratic compromise is withdrawn.
+
+*The one nonlinearity, which is also the interaction channel.* $E$ is **exactly linear in ε**
+(established in Entry 47: $\varepsilon$ enters only through $-\beta\varepsilon h_-$), and linear
+in $m$ and $C_{rr}$ through $\alpha_r$ and $\beta$. The coupling comes through $v_f$: the flat
+reference speed is solved from the flat power against $(m, C_{rr}, C_dA)$, and it then re-enters
+$\alpha_a$ quadratically. So every interaction term in this analysis has one physical origin, and
+the second-order result is a statement about **how much the aero term's speed anchor entangles
+the parameters** — which is exactly the $(\alpha, \varepsilon)$ pairing the paper already
+describes qualitatively.
+
+**Four forms is a new dimension, and an informative one.** ε's *share* is not a property of the
+data alone; it depends on how much OTHER error the form has left. F1 carries the uncorrected
+climb-aero overcharge and F2–F4 progressively remove error, so the same absolute ε effect
+occupies a growing share as the model improves. Reporting all four gives a
+sensitivity-versus-model-quality curve, and it guards against the trap of reading a large share
+as importance when it is really the residue of a good model.
+
+**The decision rule is applied to $F_3$** — the proposed law, the one that ships, the one the
+tables lead with. F1, F2 and F4 are reported for context and for the curve; they do not vote.
 
 **Input ranges, empirical rather than invented** — the 5th/median/95th percentiles of the
 per-ride inversions actually observed on D3–D5, plus ε's measured across-rider spread:
@@ -266,7 +282,7 @@ per-ride inversions actually observed on D3–D5, plus ε's measured across-ride
 | $m$ (kg) | 66.5 | 74.7 | 101.9 |
 | $C_dA$ | 0.149 | 0.358 | 0.526 |
 | $C_{rr}$ | 0.0069 | 0.0080 | 0.0112 |
-| ε (via $\lambda$) | 0.08 | — | 0.30 |
+| ε | 0.08 | — | 0.30 |
 
 **A caveat that must be stated before the run, because it is the result's main weakness:** a
 variance decomposition ranks parameters partly by *how wide their assumed ranges are*. These
@@ -298,11 +314,20 @@ It also raises the stakes on P3: if ε and $C_dA$ cannot be separated, ε's "sha
 and **no threshold can be applied cleanly in either direction** — which would be a more
 interesting result than either verdict.
 
-- **If ε exceeds 0.50**: it is the dominant lever, its research earns its place, paper 1 keeps it.
-- **If ε falls at or below 0.50**: paper 1 keeps the frozen $\varepsilon_0 = 0.13$ as a calibrated
-  constant with a forward reference, and the *forms contest and the deficit derivation* move to
-  a letter. Note the surgical line: the closed form still needs an ε to be computed at all, so
-  what moves is the theory, not the parameter.
+**The consequence, in Danilo's later and simpler words: "If the effect is dominant, we include
+on this paper, else, it is a future direction of research."**
+
+- **If ε exceeds 0.50**: it is the dominant lever and the deficit work stays in paper 1.
+- **If ε falls at or below 0.50**: it becomes a **future direction of research** — not a
+  commitment to write a letter, and not a judgement that the work is wrong. Paper 1 keeps the
+  frozen $\varepsilon_0 = 0.13$ as a calibrated constant, and the *forms contest and the deficit
+  derivation* leave it. The surgical line matters: the closed form still needs an ε to be
+  computed at all, so what leaves is the theory, not the parameter.
+
+*(This supersedes the prompt's original phrasing, "be content with $F_{\mathrm{base}}$ on the
+article". That phrase is ambiguous in this project's notation — $F_{\mathrm{base}}$ is the
+forward simulation, while the sense intended was closer to "the incumbent form, unrefined". The
+later wording carries no such ambiguity and is the operative one.)*
 
 **A second question that may settle it more directly.** Under $P_{f,r}$, does the dynamic
 $\varepsilon_d$ beat a flat $\varepsilon_f$ **at all**? §3.3.2 already reports P. Paz's 34%
@@ -332,9 +357,12 @@ withdrawn. If the verdict flips between the two range parameterisations, no verd
 the answer would be a statement about assumed uncertainty, not about the model.
 
 **What this entry does NOT decide.** Whether the ε decomposition is a scientific contribution.
-Low predictive sensitivity would argue for *separating* it from the empirical paper, not for
+Low predictive sensitivity argues for *deferring* it out of an empirical paper, not for
 devaluing it — every external reviewer named the coasting-limit/deficit decomposition the
-paper's most novel theoretical result. A letter is a promotion of that work, not a demotion.
+paper's most novel theoretical result, and a low variance share would be evidence about its
+predictive leverage only. "Future direction of research" is therefore the honest label: the
+question of what form the deficit takes stays open and interesting, and stops being paper 1's
+burden to carry.
 
 ---
 
