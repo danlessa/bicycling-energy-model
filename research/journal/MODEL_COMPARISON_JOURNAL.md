@@ -334,6 +334,22 @@ on this paper, else, it is a future direction of research."**
   regime-specific rather than universal. This entry should report the best flat constant per
   corpus alongside the sensitivity result, since the fallback branch needs it.
 
+  **And it reaches further downstream than paper 1.** Danilo: *"flat constant is all we need for
+  Article 2 and Article 3 after all."* For A2 that is simply true — the DEM paper measures what
+  an elevation-source swap costs, and the ε it carries is a passenger. For A3 it is stronger
+  than a simplification: **the grade-local ε is precisely what creates the problems A3 exists to
+  solve.** A per-edge cost built on $\varepsilon(s) = \mathrm{clamp}_{01}(\min(1,(\alpha/\beta)/s) -
+  \varepsilon_0)$ is where the clamping question, the scale-dependence and the dead-clamp finding
+  of Entry 18 all live. With a flat ε the per-edge cost collapses to
+  $\alpha\,\Delta x + \beta(\Delta h_+ - \varepsilon_f \Delta h_-)$ — linear in edge geometry,
+  scale-free in ε, and additive along a path without qualification. A large part of A3's stated
+  difficulty would simply not arise.
+
+  That cuts both ways and the entry should say so. The deployed Simujaules router uses the
+  grade-local form today, so adopting a flat constant is a change to a **deployed cost
+  function**, not only to a manuscript — and the fair comparison then owed is flat-vs-grade-local
+  *at the edge scale*, which is A3's own experiment and not this one's.
+
 *(This supersedes the prompt's original phrasing, "be content with $F_{\mathrm{base}}$ on the
 article". That phrase is ambiguous in this project's notation — $F_{\mathrm{base}}$ is the
 forward simulation, while the sense intended was closer to "the incumbent form, unrefined". The
