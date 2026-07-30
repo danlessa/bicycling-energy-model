@@ -251,12 +251,15 @@ embarrassing and fixable by publishing again; an anonymisation failure cannot be
 withdrawn, and the contributor whose home it exposes wasn't the one who chose to
 publish.
 
-**Open action, and it has a human on the other end.** Consent is a separate
-question from anonymity. D6 is CC BY 4.0 — derived aggregates are publishable
-outright. D1 and D5 are the author's own. But D3 and D4 were shared by
-independent riders *for analysis*; publishing derived per-ride rows is a new use
-however anonymised, and should be asked rather than assumed. That request gates
-A1's release and is worth raising early.
+**Consent — resolved.** D6 is CC BY 4.0, so derived aggregates are publishable
+outright; D1 and D5 are the author's own; and the D3/D4 riders have agreed,
+**conditional on the tracks being anonymised**.
+
+That condition changes what the gate *is*. It is no longer only a privacy control
+the project imposes on itself — it is the term on which permission was granted.
+Failing half A wouldn't be a lapse against policy; it would publish two people's
+data outside the consent they gave. So the gate **cannot be waived by the
+project**, because the project isn't the party whose agreement it encodes.
 
 ## The sub-missions
 

@@ -235,13 +235,17 @@ package MissionLifecycle {
          * ride. The distinction costs the reader nothing and removes the vector
          * entirely.
          *
-         * CONSENT IS A SEPARATE QUESTION FROM ANONYMITY, and is the open action.
-         * D6 is CC BY 4.0, so derived aggregates are publishable outright.
-         * D1 and D5 are the author's own. But D3 and D4 were shared by
-         * independent riders for ANALYSIS; publishing per-ride derived rows is a
-         * new use, however anonymised, and should be asked rather than assumed.
-         * That request is the thing to raise early — it gates A1's release and
-         * has a human on the other end of it.
+         * CONSENT — RESOLVED (2026-07-30). D6 is CC BY 4.0, so derived
+         * aggregates are publishable outright; D1 and D5 are the author's own;
+         * and the D3 and D4 riders have agreed, CONDITIONAL ON THE TRACKS BEING
+         * ANONYMISED.
+         *
+         * That condition changes what the anonymisation gate is. It is no longer
+         * only a privacy control the project imposes on itself — it is the term
+         * on which permission was granted. Failing it would not be a lapse
+         * against policy; it would publish two people's data outside the consent
+         * they gave. The gate therefore cannot be waived by the project alone,
+         * because the project is not the party whose agreement it encodes.
          */
         attribute identifyingFields : String default "ride, date, file — measured across every result CSV, not assumed";
         attribute tracksExcluded : String default
@@ -255,7 +259,9 @@ package MissionLifecycle {
         attribute substitution : String default "file dropped; ride -> surrogate; date -> per-rider monotonic rank";
         attribute costsReproducibility : Boolean default false;
         attribute residualRisk : String default "aggregate rows are a weak fingerprint; removing dates is what makes it weak";
-        attribute openAction : String default "renewed consent from the D3 and D4 riders for publishing derived per-ride rows";
+        attribute consentStatus : String default
+            "RESOLVED — D6 CC BY 4.0; D1/D5 the author's own; D3/D4 riders agree "
+            + "CONDITIONAL on anonymisation";
     }
 
     part def AnonymisationGate {
@@ -307,6 +313,11 @@ package MissionLifecycle {
         attribute halfB : String default "everything published still reproduces, split-halves identical";
         attribute form : String default "an executable script that exits non-zero; output archived with the release";
         attribute onAmbiguity : String default "half A wins and the release waits — an anonymisation failure cannot be withdrawn";
+        attribute status : String default
+            "NOT WAIVABLE by the project: half A is the condition on which the "
+            + "D3/D4 riders granted consent, so waiving it would publish their "
+            + "data outside the permission given. The party who could waive it "
+            + "is not the party running the release.";
     }
 
     part anonymisationGate : AnonymisationGate;
