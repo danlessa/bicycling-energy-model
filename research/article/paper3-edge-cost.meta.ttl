@@ -1,0 +1,42 @@
+# paper3-edge-cost.meta.ttl — claim annotations for paper3-edge-cost.md
+#
+# Each published statistic in the article carries an invisible anchor at the
+# number, <!--@c-<id>-->, and is described here as a schema:Claim keyed to that
+# id. The metadata lives OUT of the prose for four reasons:
+#
+#   1. it is a first-class .ttl, so it inherits the repo's existing rule that
+#      every Turtle file is validated with rdflib after editing;
+#   2. it composes directly with claims.ttl and data-graph.ttl — the three can
+#      be loaded into one graph and queried together;
+#   3. human drafters editing prose cannot corrupt it. Inline blocks lived in
+#      HTML comments, where a reflowed paragraph or a stray double hyphen closes
+#      the comment early and silently eats the annotation;
+#   4. it survives a format change. The human draft may not stay markdown; an
+#      inline HTML comment does not follow it to LaTeX or a word processor, a
+#      sidecar keyed by id does. If the anchors are lost in such a move, the
+#      claims are still fully described here and can be re-anchored — which is
+#      why every claim carries schema:text.
+#
+# Validate: python3 -c "import rdflib; rdflib.Graph().parse('research/article/paper3-edge-cost.meta.ttl')"
+# Checked by research/scripts/check_paper_stats.py
+
+@prefix schema:  <http://schema.org/> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix cito:    <http://purl.org/spar/cito/> .
+@prefix prov:    <http://www.w3.org/ns/prov#> .
+@prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix pc:      <https://danlessa.github.io/bicycling-energy-model/paper-claims#> .
+@prefix dg:      <https://danlessa.github.io/bicycling-energy-model/data-graph#> .
+@prefix claims:  <https://danlessa.github.io/bicycling-energy-model/claims#> .
+
+<#c-a3.discretisation.fidelity> a schema:Claim ;
+  schema:text "The per-edge cost agrees with the route-level integral within a stated bound" ;
+  dcterms:type "planned" ;
+  prov:wasDerivedFrom claims:assert33 ;
+  rdfs:comment "A3's core claim. Whether it rests on Entries 19-21, 23, 25, 26 or needs its own registered experiment is the open scope decision (roadmap A3.1)" .
+
+<#c-a3.divergence> a schema:Claim ;
+  schema:text "How often, on a real network, the energy-optimal path departs from the distance-optimal one, and by how much" ;
+  dcterms:type "planned" ;
+  cito:citesAsEvidence dg:o_e26_detour, dg:o_e26_grid ;
+  rdfs:comment "THE mission-level measurement. Objective MO-6 - energy as the planning currency because energy-optimal routing is accessible routing - is philosophical until this exists. Entry 26's ladder and detour data are seed evidence gathered for a different purpose. Note the distance comparison is settled analytically by beta/alpha (69 at the 50 W reference, above 120 as speed falls); only the FREQUENCY on a real network is empirical" .

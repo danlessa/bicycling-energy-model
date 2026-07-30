@@ -1,30 +1,5 @@
-<!-- CLAIM ANNOTATIONS. Each published statistic carries an invisible anchor
-     of the form @c-<id> at the number, and an invisible `turtle` comment block
-     below its paragraph describing it. Both are HTML comments, so they render
-     as nothing in every viewer and cost the reader exactly zero — which means
-     this convention survives into the reader-facing draft unchanged, with no
-     extraction step.
-
-     The blocks are RDF in this project's existing vocabulary (schema:Claim,
-     CiTO, PROV-O, Dublin Core), so paper claims COMPOSE with claims.ttl and
-     data-graph.ttl rather than forming a parallel vocabulary: a claim cites the
-     output that evidences it and the journal assertion it descends from, which
-     is the article-claim -> entry traceability direction the journal
-     deliverable (J.3) otherwise lacks.
-
-     Constraint: no double-hyphen inside a block, since it would close the
-     comment early. Checked by research/scripts/check_paper_stats.py. -->
-
-<!--turtle
-@prefix schema:  <http://schema.org/> .
-@prefix dcterms: <http://purl.org/dc/terms/> .
-@prefix cito:    <http://purl.org/spar/cito/> .
-@prefix prov:    <http://www.w3.org/ns/prov#> .
-@prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#> .
-@prefix pc:      <https://danlessa.github.io/bicycling-energy-model/paper-claims#> .
-@prefix dg:      <https://danlessa.github.io/bicycling-energy-model/data-graph#> .
-@prefix claims:  <https://danlessa.github.io/bicycling-energy-model/claims#> .
--->
+<!-- Claim annotations for this article live in paper3-edge-cost.meta.ttl, keyed to the
+     invisible @c-<id> anchors in the text below. See that file for the rationale. -->
 
 <!--
   paper3-edge-cost.md — SCAFFOLD (not a draft). Third paper of the series.
@@ -73,19 +48,6 @@ ride. The realisation is deployed in an open-source energy-field router
 
 <!-- The two claims A3 must eventually carry. Neither has a value yet. -->
 
-<!--turtle
-<#c-a3.discretisation.fidelity> a schema:Claim ;
-  schema:text "The per-edge cost agrees with the route-level integral within a stated bound" ;
-  dcterms:type "planned" ;
-  prov:wasDerivedFrom claims:assert33 ;
-  rdfs:comment "A3's core claim. Whether it rests on Entries 19-21, 23, 25, 26 or needs its own registered experiment is the open scope decision (roadmap A3.1)" .
-
-<#c-a3.divergence> a schema:Claim ;
-  schema:text "How often, on a real network, the energy-optimal path departs from the distance-optimal one, and by how much" ;
-  dcterms:type "planned" ;
-  cito:citesAsEvidence dg:o_e26_detour, dg:o_e26_grid ;
-  rdfs:comment "THE mission-level measurement. Objective MO-6 - energy as the planning currency because energy-optimal routing is accessible routing - is philosophical until this exists. Entry 26's ladder and detour data are seed evidence gathered for a different purpose. Note the distance comparison is settled analytically by beta/alpha (69 at the 50 W reference, above 120 as speed falls); only the FREQUENCY on a real network is empirical" .
--->
 
 ## 1. Introduction
 

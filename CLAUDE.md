@@ -118,20 +118,19 @@ home of the *derivation* and the side-by-side comparison.
   `ascent-error-literature.md`, `censo-model-verification.md`,
   `VERIFICATION_NOTES.md`.
 - `research/scripts/` — `make_claims_explorer.py` (claims.ttl → the interactive
-  explorer page), `check_paper_stats.py` (cross-checks the articles' claim
-  annotations against `bootstrap_ci.py`'s sections. Each published statistic
-  carries an invisible anchor `<!--@c-<id>-->` at the number and an invisible
-  `<!--turtle … -->` block below its paragraph, written in the project's
-  existing RDF vocabulary so paper claims compose with `claims.ttl` and
-  `data-graph.ttl` — a claim cites the output evidencing it and the journal
-  assertion it descends from. Both forms are HTML comments and render as
-  nothing. Constraint: no `--` inside a block, it would close the comment. The
-  check asserts:
-  the value must actually be asserted in the gate section it names, scopes must
-  be one of calibration/in-sample/out-of-sample/external/derived, ids unique.
-  Exits non-zero. It caught a misplaced gate block on its first run — cheap, and
-  the marker's `scope=` is what stops a summariser promoting a calibration
-  figure to a headline).
+  explorer page), `check_paper_stats.py` (cross-checks each article's claim
+  annotations against `bootstrap_ci.py`. A published statistic carries an
+  invisible anchor `<!--@c-<id>-->` at the number in the `.md`; its metadata
+  lives in a **sidecar `<paper>.meta.ttl`** — kept out of prose humans are about
+  to rewrite, rdflib-validated like every other `.ttl`, and it survives the draft
+  moving to a format where an HTML comment would not. Written in the existing
+  vocabulary so the sidecars, `claims.ttl` and `data-graph.ttl` load as one
+  graph: a claim does `cito:citesAsEvidence dg:o_…` and `prov:wasDerivedFrom
+  claims:assert…`, which is the article-claim → entry direction the journal
+  deliverable needs. The check asserts anchors ↔ claims both ways, that
+  `pc:value` is genuinely asserted in the gate section `pc:gateSection` names,
+  and that `dcterms:type` is a known scope — `planned` claims are reported, not
+  failed. Exits non-zero.)
 - `research/packages/` — per-entry evidence RO-Crates; regenerate via
   `make_crates.py` (re-executes `bootstrap_ci.py` and aborts on gate failure).
   RO-Crate envelope at the repo root `ro-crate-metadata.json`.

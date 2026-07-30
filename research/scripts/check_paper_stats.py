@@ -5,10 +5,12 @@ Every published statistic carries an invisible anchor at the number:
 
     reads **5.6% [5.2, 6.2]**<!--@c-pool34.f3d.med-->
 
-and an invisible `<!--turtle ... -->` block below its paragraph, in the project's
-existing RDF vocabulary (schema:Claim, CiTO, PROV-O, Dublin Core) so paper claims
-COMPOSE with research/notes/claims.ttl and research/data-graph.ttl instead of
-forming a parallel vocabulary. A claim can cite the output that evidences it
+and is described in a SIDECAR, <paper>.meta.ttl, in the project's existing RDF
+vocabulary (schema:Claim, CiTO, PROV-O, Dublin Core) so paper claims COMPOSE with
+research/notes/claims.ttl and research/data-graph.ttl instead of forming a
+parallel vocabulary. The sidecar keeps the metadata out of prose that humans are
+about to rewrite, inherits the repo's rule that every .ttl is rdflib-validated,
+and survives the draft moving to a format where an HTML comment would not. A claim can cite the output that evidences it
 (cito:citesAsEvidence dg:o_ppaz) and the journal assertion it descends from
 (prov:wasDerivedFrom claims:assert12), which is the article-claim -> entry
 traceability direction the journal deliverable (J.3) otherwise lacks.
@@ -60,11 +62,11 @@ def gate_sections(src: str) -> dict[str, str]:
 
 def check(path: str, sections: dict[str, str]) -> tuple[int, int, int]:
     text = open(path, encoding="utf-8").read()
-    blocks = re.findall(r"<!--turtle\n(.*?)\n-->", text, re.S)
-    if not blocks:
+    sidecar = path[:-3] + ".meta.ttl"
+    if not os.path.exists(sidecar):
         return 0, 0, 0
     graph = rdflib.Graph()
-    graph.parse(data="\n".join(blocks), format="turtle")
+    graph.parse(sidecar, format="turtle")
 
     anchors = set(re.findall(r"<!--@c-([\w.]+)-->", text))
     claims = {str(s).split("#c-")[-1]: s for s in graph.subjects(RDF.type, SCHEMA.Claim)}

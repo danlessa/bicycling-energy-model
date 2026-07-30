@@ -1,0 +1,92 @@
+# paper1-closed-form.meta.ttl — claim annotations for paper1-closed-form.md
+#
+# Each published statistic in the article carries an invisible anchor at the
+# number, <!--@c-<id>-->, and is described here as a schema:Claim keyed to that
+# id. The metadata lives OUT of the prose for four reasons:
+#
+#   1. it is a first-class .ttl, so it inherits the repo's existing rule that
+#      every Turtle file is validated with rdflib after editing;
+#   2. it composes directly with claims.ttl and data-graph.ttl — the three can
+#      be loaded into one graph and queried together;
+#   3. human drafters editing prose cannot corrupt it. Inline blocks lived in
+#      HTML comments, where a reflowed paragraph or a stray double hyphen closes
+#      the comment early and silently eats the annotation;
+#   4. it survives a format change. The human draft may not stay markdown; an
+#      inline HTML comment does not follow it to LaTeX or a word processor, a
+#      sidecar keyed by id does. If the anchors are lost in such a move, the
+#      claims are still fully described here and can be re-anchored — which is
+#      why every claim carries schema:text.
+#
+# Validate: python3 -c "import rdflib; rdflib.Graph().parse('research/article/paper1-closed-form.meta.ttl')"
+# Checked by research/scripts/check_paper_stats.py
+
+@prefix schema:  <http://schema.org/> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix cito:    <http://purl.org/spar/cito/> .
+@prefix prov:    <http://www.w3.org/ns/prov#> .
+@prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix pc:      <https://danlessa.github.io/bicycling-energy-model/paper-claims#> .
+@prefix dg:      <https://danlessa.github.io/bicycling-energy-model/data-graph#> .
+@prefix claims:  <https://danlessa.github.io/bicycling-energy-model/claims#> .
+
+<#c-d6.f3d.med> a schema:Claim ;
+  schema:text "D6 F3 eps_d median |D%| 3.16 against the simulation's 3.15, on 740 clean rides" ;
+  dcterms:type "external" ;
+  pc:value 3.16 ;
+  pc:gateSection "3j" ;
+  cito:citesAsEvidence dg:o_skc ;
+  prov:wasDerivedFrom claims:assert43 ;
+  rdfs:comment "The only corpus sharing no rider, country, terrain, device or model-selection history" .
+
+<#c-e46.ag.switched.med> a schema:Claim ;
+  schema:text "Applying section 3.3's regime switch under frozen priors moves the pooled median 5.08 -> 5.62" ;
+  dcterms:type "in-sample" ;
+  pc:value 5.62 ;
+  pc:gateSection "3m" ;
+  cito:citesAsEvidence dg:o_e46 ;
+  prov:wasDerivedFrom claims:assert46 ;
+  rdfs:comment "The switch makes the FROZEN grid worse; under per-ride inverted physics it makes it better. The bias column adjudicates" .
+
+<#c-e46.eps_applied.sub3> a schema:Claim ;
+  schema:text "Median eps_d actually applied below the 3% gate is 0.544, against eps_f = 0.20" ;
+  dcterms:type "in-sample" ;
+  pc:value 0.544 ;
+  pc:gateSection "3m" ;
+  cito:citesAsEvidence dg:o_e46 ;
+  prov:wasDerivedFrom claims:assert46 ;
+  rdfs:comment "Why the frozen sub-threshold cells are accurate BY CANCELLATION rather than by fit" .
+
+<#c-e47.insample.dbic> a schema:Claim ;
+  schema:text "On the in-sample D3-D6 arm, eps_2 beats frozen eps_0 by dBIC 128.8" ;
+  dcterms:type "in-sample" ;
+  pc:value 128.8 ;
+  pc:gateSection "3l" ;
+  cito:citesAsEvidence dg:o_e47 ;
+  prov:wasDerivedFrom claims:assert47 ;
+  rdfs:comment "Decisive on BIC and worth 0.17 pp of median error; the two criteria disagree in size, never in direction" .
+
+<#c-d1.f3.informed.med> a schema:Claim ;
+  schema:text "F3 median |D%| 3.5 [2.0, 5.6] on D1 under condition-informed per-ride parameters" ;
+  dcterms:type "calibration" ;
+  pc:value 3.5 ;
+  pc:gateSection "1" ;
+  cito:citesAsEvidence dg:o_model_comparison ;
+  rdfs:comment "The CALIBRATION ceiling, not a transfer result: every tunable was fixed on this corpus and the informed run additionally hand-chose a per-ride epsilon" .
+
+<#c-pool34.f3d.med> a schema:Claim ;
+  schema:text "F3 eps_d median |D%| 5.6 [5.2, 6.2] on the D3+D4 transfer pool, n = 660" ;
+  dcterms:type "out-of-sample" ;
+  pc:value 5.6 ;
+  pc:gateSection "3c" ;
+  cito:citesAsEvidence dg:o_ppaz, dg:o_jaam ;
+  prov:wasDerivedFrom claims:assert12 ;
+  rdfs:comment "THE headline transfer figure. Neither corpus took part in any model selection" .
+
+<#c-pool34.tost> a schema:Claim ;
+  schema:text "TOST 90% CI of the median difference, law minus simulation: [-0.90, -0.33] pp, inside the +/-1.0 margin" ;
+  dcterms:type "out-of-sample" ;
+  pc:value -0.63 ;
+  pc:gateSection "3n" ;
+  cito:citesAsEvidence dg:o_e48 ;
+  prov:wasDerivedFrom claims:assert48 ;
+  rdfs:comment "Formal equivalence, not a failure to reject; the interval sits on the side where the law is better" .

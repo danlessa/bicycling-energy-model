@@ -1,0 +1,57 @@
+# paper2-dem-deployment.meta.ttl — claim annotations for paper2-dem-deployment.md
+#
+# Each published statistic in the article carries an invisible anchor at the
+# number, <!--@c-<id>-->, and is described here as a schema:Claim keyed to that
+# id. The metadata lives OUT of the prose for four reasons:
+#
+#   1. it is a first-class .ttl, so it inherits the repo's existing rule that
+#      every Turtle file is validated with rdflib after editing;
+#   2. it composes directly with claims.ttl and data-graph.ttl — the three can
+#      be loaded into one graph and queried together;
+#   3. human drafters editing prose cannot corrupt it. Inline blocks lived in
+#      HTML comments, where a reflowed paragraph or a stray double hyphen closes
+#      the comment early and silently eats the annotation;
+#   4. it survives a format change. The human draft may not stay markdown; an
+#      inline HTML comment does not follow it to LaTeX or a word processor, a
+#      sidecar keyed by id does. If the anchors are lost in such a move, the
+#      claims are still fully described here and can be re-anchored — which is
+#      why every claim carries schema:text.
+#
+# Validate: python3 -c "import rdflib; rdflib.Graph().parse('research/article/paper2-dem-deployment.meta.ttl')"
+# Checked by research/scripts/check_paper_stats.py
+
+@prefix schema:  <http://schema.org/> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix cito:    <http://purl.org/spar/cito/> .
+@prefix prov:    <http://www.w3.org/ns/prov#> .
+@prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix pc:      <https://danlessa.github.io/bicycling-energy-model/paper-claims#> .
+@prefix dg:      <https://danlessa.github.io/bicycling-energy-model/data-graph#> .
+@prefix claims:  <https://danlessa.github.io/bicycling-energy-model/claims#> .
+
+<#c-a2.swap.cost> a schema:Claim ;
+  schema:text "Substituting a planner-grade DEM for the ride's own elevation stream costs about half a point of median error" ;
+  dcterms:type "out-of-sample" ;
+  pc:value 4.3 ;
+  pc:gateSection "3i" ;
+  cito:citesAsEvidence dg:o_e41 ;
+  prov:wasDerivedFrom claims:assert41 ;
+  rdfs:comment "The cost of the substitution that makes the law usable from a map - SM-2's whole question" .
+
+<#c-a2.smoothing.prescription> a schema:Claim ;
+  schema:text "Smoothing the sampled profile at sigma = 30 m restores the control's bias" ;
+  dcterms:type "out-of-sample" ;
+  pc:value 30 ;
+  pc:gateSection "3i" ;
+  cito:citesAsEvidence dg:o_e41 ;
+  prov:wasDerivedFrom claims:assert41 ;
+  rdfs:comment "THE deliverable of A2: a prescription stated a priori, not a per-raster tuning - if it were tuned the elevation source would be a hidden free parameter" .
+
+<#c-a2.noise.rate> a schema:Claim ;
+  schema:text "Ascent-noise rate of the recording chain, 3.10 m/km" ;
+  dcterms:type "out-of-sample" ;
+  pc:value 3.10 ;
+  pc:gateSection "3i" ;
+  cito:citesAsEvidence dg:o_e41 ;
+  prov:wasDerivedFrom claims:assert41 ;
+  rdfs:comment "A property of the chain rather than a universal constant - which is why F4's scalar c does not transfer" .

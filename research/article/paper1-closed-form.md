@@ -1,30 +1,5 @@
-<!-- CLAIM ANNOTATIONS. Each published statistic carries an invisible anchor
-     of the form @c-<id> at the number, and an invisible `turtle` comment block
-     below its paragraph describing it. Both are HTML comments, so they render
-     as nothing in every viewer and cost the reader exactly zero — which means
-     this convention survives into the reader-facing draft unchanged, with no
-     extraction step.
-
-     The blocks are RDF in this project's existing vocabulary (schema:Claim,
-     CiTO, PROV-O, Dublin Core), so paper claims COMPOSE with claims.ttl and
-     data-graph.ttl rather than forming a parallel vocabulary: a claim cites the
-     output that evidences it and the journal assertion it descends from, which
-     is the article-claim -> entry traceability direction the journal
-     deliverable (J.3) otherwise lacks.
-
-     Constraint: no double-hyphen inside a block, since it would close the
-     comment early. Checked by research/scripts/check_paper_stats.py. -->
-
-<!--turtle
-@prefix schema:  <http://schema.org/> .
-@prefix dcterms: <http://purl.org/dc/terms/> .
-@prefix cito:    <http://purl.org/spar/cito/> .
-@prefix prov:    <http://www.w3.org/ns/prov#> .
-@prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#> .
-@prefix pc:      <https://danlessa.github.io/bicycling-energy-model/paper-claims#> .
-@prefix dg:      <https://danlessa.github.io/bicycling-energy-model/data-graph#> .
-@prefix claims:  <https://danlessa.github.io/bicycling-energy-model/claims#> .
--->
+<!-- Claim annotations for this article live in paper1-closed-form.meta.ttl, keyed to the
+     invisible @c-<id> anchors in the text below. See that file for the rationale. -->
 
 <!-- DRAFT v2 — IMRAD paper, revised after the six-lens adversarial review
      (2026-07-27) and the author's preliminary feedback. Single-language draft
@@ -68,16 +43,6 @@ Descent recovery has a geometry (the coasting limit) and a habit (the deficit), 
 6. **A regime rule for the descent term** — dynamic $\varepsilon_d$ on open terrain, flat $\varepsilon_f$ in stop-go — together with its scope condition: only the (cost, refund) *pair* is identified by ride energies, so the rule holds per physics protocol and inverts if the law is re-paired without re-calibration ([§3.5](#3.5), [§4.3](#4.3)).
 7. **External validation on an open deposit.** The frozen law carried to four European riders (Catalonia, Burgundy, the French Alps) who share no rider, country, terrain regime, recording device or model-selection history with the calibration set — and reaching its closest parity there, 3.16%<!--@c-d6.f3d.med--> against the simulation's 3.15% on 740 rides.
 
-<!--turtle
-<#c-d6.f3d.med> a schema:Claim ;
-  schema:text "D6 F3 eps_d median |D%| 3.16 against the simulation's 3.15, on 740 clean rides" ;
-  dcterms:type "external" ;
-  pc:value 3.16 ;
-  pc:gateSection "3j" ;
-  cito:citesAsEvidence dg:o_skc ;
-  prov:wasDerivedFrom claims:assert43 ;
-  rdfs:comment "The only corpus sharing no rider, country, terrain, device or model-selection history" .
--->
  The same corpus shows F4's scalar $c$ failing where the *form* does not, which is the sharpest evidence that $c$ belongs to the elevation source rather than to cycling ([Table 1](#tab1), [Table 3](#tab3)).
 8. **A frozen-constants transfer methodology with a dual calibration protocol**: constants calibrated once and carried blind to independent riders and to 14× scale; an informed-vs-blind pair of calibration runs that prices per-ride condition knowledge; every published number re-derived by a gate battery, with per-entry research packages ([§2.3](#2.3)).
 9. **Fully automatic per-ride physics**: a segment-based mass inversion validated against logged and known masses, plus a regime-consistent aero estimator that restores the law's pairing with no human judgment — pooled 3.9% [3.6, 4.1], behavioural constants still frozen, physics read per ride so partially in-sample ([§3.5](#3.5), [Tables 5](#tab5)–[6](#tab6)).
@@ -536,28 +501,8 @@ with $\bar s$ the ride's drop-weighted mean descent grade as a fraction. **Eq. (
 
 **The restriction is a stated scope condition, not an enforced one:** the evaluation behind [Table 3](#tab3) applies $\varepsilon_d$ to every ride in a corpus, including the **69%** whose own mean descent grade falls below 3% (940 of Table 3's 1,366 rides), because no per-ride switch is implemented. Eq. (8) is therefore conditional on the rule being applied, and adopting it would require implementing the switch and re-running the grid — which would move Table 3's $\varepsilon_d$ column. We have since measured what implementing it does, and the result complicates the rule rather than confirming it. Applied per ride to the frozen grid, the switch moves the pooled median the *wrong* way, 5.08 to 5.62<!--@c-e46.ag.switched.med-->; applied under per-ride inverted physics it moves it the right way, 5.51 to 4.12. Same rides, same rule, reversed by the parameter class.
 
-<!--turtle
-<#c-e46.ag.switched.med> a schema:Claim ;
-  schema:text "Applying section 3.3's regime switch under frozen priors moves the pooled median 5.08 -> 5.62" ;
-  dcterms:type "in-sample" ;
-  pc:value 5.62 ;
-  pc:gateSection "3m" ;
-  cito:citesAsEvidence dg:o_e46 ;
-  prov:wasDerivedFrom claims:assert46 ;
-  rdfs:comment "The switch makes the FROZEN grid worse; under per-ride inverted physics it makes it better. The bias column adjudicates" .
--->
  The bias column adjudicates: on the 1,103 sub-threshold rides $\varepsilon_d$ is near-unbiased under the frozen priors (+0.28) and badly biased under honest physics (−4.64), while $\varepsilon_f = 0.20$ is the mirror image (+5.90 and +0.11). Below 3% the coasting limit clamps, so the applied $\varepsilon_d$ has median 0.544<!--@c-e46.eps_applied.sub3--> against $\varepsilon_f$'s 0.20, and that large refund cancels the over-prediction of the frozen $C_dA = 0.40$ — well above the 0.26–0.32 these riders invert to.
 
-<!--turtle
-<#c-e46.eps_applied.sub3> a schema:Claim ;
-  schema:text "Median eps_d actually applied below the 3% gate is 0.544, against eps_f = 0.20" ;
-  dcterms:type "in-sample" ;
-  pc:value 0.544 ;
-  pc:gateSection "3m" ;
-  cito:citesAsEvidence dg:o_e46 ;
-  prov:wasDerivedFrom claims:assert46 ;
-  rdfs:comment "Why the frozen sub-threshold cells are accurate BY CANCELLATION rather than by fit" .
--->
  **[§3.3](#3.3)'s rule is therefore right, and the frozen grid's sub-threshold $\varepsilon_d$ cells are accurate by cancellation rather than by fit**, which is why the switch must be adopted together with per-ride physics rather than bolted onto the frozen grid (lab journal, Entry 46). We report the form and its scope; we do not restate the corpus medians under it. The restriction is not cosmetic: $k/\bar s$ diverges as the terrain flattens, exceeding 1 below $\bar s = k \approx 0.5\%$, where a "deficit" larger than the whole refund is meaningless. Outside the regime the flat $\varepsilon_f = 0.20$ applies, exactly as before. The divergence is the identity's, not an artefact of fitting: gravity releases power in proportion to $\bar s$, so as descents flatten any residual pedalling becomes an ever-larger *share* of an ever-smaller release. At the energy level the term stays finite — the refund $\beta(\varepsilon_{\mathrm{coast}} - k/\bar s)h_-$ equals $\beta(\varepsilon_{\mathrm{coast}}\bar s - k)x_-$, which tends to $-\beta k x_-$ — but the *fraction* does not, and $\varepsilon$ is a fraction.
 
 $\varepsilon_2$, eq. (8), carries **one universal constant and no rider parameter**, and cuts the held-out median error from 0.067 to 0.055, winning on 344 of 513 rides ($p < 10^{-4}$). Its interpretation is that $\varepsilon_0 = 0.13$ was never a universal number but the grade-inverse form *evaluated at the calibration corpus's terrain*: at D1's median descent grade of 3.8% eq. (8) returns 0.133, close to the frozen constant, and on steeper ground it predicts a smaller deficit. The $1/\bar s$ is not fitted structure but the identity's own: gravity releases more power on steep ground, so a given wattage of residual pedalling refunds a smaller *share* of it.
@@ -566,16 +511,6 @@ The claim this licenses is narrower than "replace $\varepsilon_0$". Under [§3.3
 
 A pre-registered selection on the calibration side does not displace the constant. All four forms were fitted on D1 ∪ D2 — the 48 rides with $\bar s \geq 3\%$ — and compared by BIC under a Laplace likelihood, twice: once under the frozen priors and once under per-ride inverted physics. Both arms return $\varepsilon_0$; it and $\varepsilon_2$ are separated by at most 1.8 BIC in either direction, and the fewest-parameter form takes the tie. On D3–D6 the same contest selects $\varepsilon_2$ decisively ($\Delta$BIC 128.8
 
-<!--turtle
-<#c-e47.insample.dbic> a schema:Claim ;
-  schema:text "On the in-sample D3-D6 arm, eps_2 beats frozen eps_0 by dBIC 128.8" ;
-  dcterms:type "in-sample" ;
-  pc:value 128.8 ;
-  pc:gateSection "3l" ;
-  cito:citesAsEvidence dg:o_e47 ;
-  prov:wasDerivedFrom claims:assert47 ;
-  rdfs:comment "Decisive on BIC and worth 0.17 pp of median error; the two criteria disagree in size, never in direction" .
--->
 <!--@c-e47.insample.dbic-->). The disagreement is one of statistical power, not of direction — 48 calibration rides cannot resolve what 990 evaluation rides can — and it is why the arm licensed to build the tables is the calibration one (lab journal, Entry 47).
 
 Two cautions follow, both about which metric is being read. Eq. (8)'s advantage is measured on the *deficit*; carried into *energy* error it is small and sign-dependent — on D3–D6 $\varepsilon_2$ improves the median absolute error by 0.17 pp under the frozen priors and is 0.10 pp **worse** than $\varepsilon_0$ under inverted physics, because BIC scores the mean absolute residual while every statistic reported here is a median. And $\delta$ must be fitted on the deficit: refitting it against energy residuals returns $c = 0.044$ and $k = 0.0020$, two to three times below the published values, because a $\delta$ free to move in energy space absorbs the law's positive bias instead of measuring descent pedalling. Fitted on the deficit, an independent implementation returns $c = 0.134$ and $k = 0.0052$ against the published 0.13 and 0.0051.
@@ -622,39 +557,10 @@ The grid — and [Figure 8](#fig8), its one-glance version — matches the regim
 
 Across the frozen transfer and scale corpora (D3–D5, [Table 3](#tab3)) the law holds at **3.5–6.2% median error** when the [§3.2](#3.2) regime rule picks the $\varepsilon$ variant; the frozen urban test sits at 6.4–7.7% (its flat constant being in-sample there), and the calibration corpus itself at 3.5% informed to 8.2% blind ([Table 2](#tab2)).
 
-<!--turtle
-<#c-d1.f3.informed.med> a schema:Claim ;
-  schema:text "F3 median |D%| 3.5 [2.0, 5.6] on D1 under condition-informed per-ride parameters" ;
-  dcterms:type "calibration" ;
-  pc:value 3.5 ;
-  pc:gateSection "1" ;
-  cito:citesAsEvidence dg:o_model_comparison ;
-  rdfs:comment "The CALIBRATION ceiling, not a transfer result: every tunable was fixed on this corpus and the informed run additionally hand-chose a per-ride epsilon" .
--->
  Pooled over the transfer riders alone (D3+D4, $n = 660$; stratified bootstrap, rides resampled within each corpus), F3 with $\varepsilon_d$ reads **5.6%<!--@c-pool34.f3d.med--> [5.2, 6.2]** against the simulation's 6.3% [5.8, 6.8] (signed: +1.1 [+0.4, +1.7] vs +1.3 [+0.6, +2.0]) — the genuinely out-of-sample number.
 
-<!--turtle
-<#c-pool34.f3d.med> a schema:Claim ;
-  schema:text "F3 eps_d median |D%| 5.6 [5.2, 6.2] on the D3+D4 transfer pool, n = 660" ;
-  dcterms:type "out-of-sample" ;
-  pc:value 5.6 ;
-  pc:gateSection "3c" ;
-  cito:citesAsEvidence dg:o_ppaz, dg:o_jaam ;
-  prov:wasDerivedFrom claims:assert12 ;
-  rdfs:comment "THE headline transfer figure. Neither corpus took part in any model selection" .
--->
  The two engines are **formally equivalent within $\pm 1.0$ pp** (TOST, 90% CI of the median difference [−0.90, −0.33]<!--@c-pool34.tost-->; Entry 48), and the interval lies wholly on the side favouring the closed form.
 
-<!--turtle
-<#c-pool34.tost> a schema:Claim ;
-  schema:text "TOST 90% CI of the median difference, law minus simulation: [-0.90, -0.33] pp, inside the +/-1.0 margin" ;
-  dcterms:type "out-of-sample" ;
-  pc:value -0.63 ;
-  pc:gateSection "3n" ;
-  cito:citesAsEvidence dg:o_e48 ;
-  prov:wasDerivedFrom claims:assert48 ;
-  rdfs:comment "Formal equivalence, not a failure to reject; the interval sits on the side where the law is better" .
--->
  The D3–D5 pool is equivalent on the same margin ([−0.55, −0.07], $n = 1{,}281$). Adding D5 (the calibration rider's own history, in-sample for the machinery) gives the full-pool 5.9% [5.5, 6.2] vs 6.2% [5.9, 6.6]. Per-ride allegiance splits across corpora — the law significantly closer on D3 (280/441, $p < 10^{-4}$), the simulation on D5 (351/621, $p = 0.0013$) — so the pooled tie is median parity, not per-ride equivalence.
 
 **D6 is the test that shares nothing.** Its four riders have no country, terrain regime, recording device or model-selection history in common with the calibration corpus, and on its 740 rides F3 with $\varepsilon_d$ reads **3.2%** against the simulation's **3.2%** — 3.16 versus 3.15 before rounding, the closest parity anywhere in this study, with both biases near +2. Two of its columns are diagnostic rather than confirmatory. F3 with $\varepsilon_f$ collapses to 8.5%, as the [§3.2](#3.2) regime rule predicts for open-road riders on real descents. And F4 degrades to 4.0% with a $-2.2$ bias, because the scalar $c = 3$ m/km is calibrated for this study's recording chain and D6's is cleaner (1.2 m/km): the form is not failing, the *transferred constant* is, which is the sharpest available demonstration that $c$ is a property of the elevation source rather than of cycling ([§2.4](#2.4)).
