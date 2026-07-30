@@ -88,7 +88,8 @@ package MissionLifecycle {
             "DOI minted; HTML deployed; CITATION.cff updated; the propagation "
             + "checklist run across every number-bearing surface; the gate "
             + "battery output archived AS PUBLISHED; and a REPRODUCTION REPO "
-            + "published alongside (see ReproductionRepo below)";
+            + "published alongside, which cannot be published until the "
+            + "ANONYMISATION GATE passes (blocking — see AnonymisationGate)";
     }
 
     part sUtilization : Stage {
@@ -256,6 +257,59 @@ package MissionLifecycle {
         attribute residualRisk : String default "aggregate rows are a weak fingerprint; removing dates is what makes it weak";
         attribute openAction : String default "renewed consent from the D3 and D4 riders for publishing derived per-ride rows";
     }
+
+    part def AnonymisationGate {
+        doc
+        /*
+         * BLOCKING GATE on publishing a per-article reproduction repo. Nothing
+         * is pushed until it passes, and it runs against the RELEASE ARTEFACT
+         * rather than the working repository — the whole point is to catch what
+         * survived the filtering, so checking the source proves nothing.
+         *
+         * IT HAS TWO HALVES AND THEY CHECK EACH OTHER. Either alone is trivially
+         * satisfiable in the wrong direction: ship nothing and the repo is
+         * perfectly anonymous and useless; ship everything and it reproduces
+         * perfectly and exposes contributors. The gate is the CONJUNCTION, and
+         * that is what makes it hard to game.
+         *
+         *   A. NOTHING IDENTIFYING SURVIVES
+         *      - no `ride` names, no `date` values, no `file` paths anywhere
+         *      - surrogate IDs present, assigned in chronological order
+         *      - no coordinate columns — tested BY VALUE, not only by name: any
+         *        float column whose range sits inside [-90, 90] paired with one
+         *        inside [-180, 180] is flagged for a human, because the next
+         *        leak will not be called `lat`
+         *      - no *.fit, *.gpx, nothing under any activities path
+         *      - at most ONE centroid per corpus; zero per ride
+         *
+         *   B. EVERYTHING PUBLISHED STILL REPRODUCES
+         *      - the repo, run end to end from its own contents, re-derives
+         *        every statistic the article prints, to the published precision
+         *      - the chronological split-halves come out identical, which is the
+         *        sharp test that the date-to-rank substitution was order-
+         *        preserving rather than merely date-free
+         *
+         * The gate is a SCRIPT, not a checklist — same discipline as the rest of
+         * the project: it exits non-zero, it is run before every publish, and
+         * its output is archived with the release. A checklist here would be the
+         * one manual step in a repository whose entire culture is that manual
+         * verification is what fails.
+         *
+         * Note which failure is worse. A reproduction failure is embarrassing
+         * and fixable by publishing again. An anonymisation failure cannot be
+         * withdrawn — a copied repository is permanent, and the contributor
+         * whose home it exposes was not the one who chose to publish. So on any
+         * ambiguity half A wins, and the release waits.
+         */
+        attribute blocking : Boolean default true;
+        attribute runsAgainst : String default "the release artefact, never the working repo";
+        attribute halfA : String default "nothing identifying survives — names, dates, paths, coordinates by VALUE, tracks, per-ride centroids";
+        attribute halfB : String default "everything published still reproduces, split-halves identical";
+        attribute form : String default "an executable script that exits non-zero; output archived with the release";
+        attribute onAmbiguity : String default "half A wins and the release waits — an anonymisation failure cannot be withdrawn";
+    }
+
+    part anonymisationGate : AnonymisationGate;
 
     part reproductionRepo : ReproductionRepo;
     part anonymisation : AnonymisationDesign;

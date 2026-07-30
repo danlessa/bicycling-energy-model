@@ -228,6 +228,29 @@ ride, a distance alone mostly doesn't. Perturbing values would reduce it further
 and break exact reproduction, which is the one thing the repo exists for. So:
 exact values, no dates, surrogate IDs.
 
+**Anonymisation is a blocking gate on publishing each repo** — an executable
+script, run against the *release artefact* rather than the working repo (checking
+the source proves nothing about what survived filtering), exiting non-zero,
+output archived with the release.
+
+It has two halves that check each other, because either alone is trivially
+satisfiable in the wrong direction — ship nothing and it's anonymous and useless;
+ship everything and it reproduces and exposes people:
+
+- **A — nothing identifying survives.** No names, dates or paths; surrogate IDs in
+  chronological order; no coordinate columns *tested by value, not just by name*
+  (any float column ranging inside ±90 paired with one inside ±180 gets flagged,
+  because the next leak won't be called `lat`); no `.fit`/`.gpx`; at most one
+  centroid per corpus, zero per ride.
+- **B — everything published still reproduces**, to the published precision, with
+  the chronological split-halves coming out identical — the sharp test that the
+  date→rank substitution preserved *order* and not merely removed dates.
+
+On any ambiguity, **A wins and the release waits**. A reproduction failure is
+embarrassing and fixable by publishing again; an anonymisation failure cannot be
+withdrawn, and the contributor whose home it exposes wasn't the one who chose to
+publish.
+
 **Open action, and it has a human on the other end.** Consent is a separate
 question from anonymity. D6 is CC BY 4.0 — derived aggregates are publishable
 outright. D1 and D5 are the author's own. But D3 and D4 were shared by
