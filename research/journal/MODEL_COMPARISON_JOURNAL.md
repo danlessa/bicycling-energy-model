@@ -452,6 +452,101 @@ predictive leverage only. "Future direction of research" is therefore the honest
 question of what form the deficit takes stays open and interesting, and stops being paper 1's
 burden to carry.
 
+### Results (run 2026-07-30, `e50_sensitivity.py`, N = 4096 Saltelli; 2,028 rides, seven riders)
+
+**The registered rule fires toward future research, under both registered parameterisations.**
+
+| box | $S_T(m)$ | $S_T(C_dA)$ | $S_T(C_{rr})$ | $S_T(\varepsilon)$ | verdict |
+|---|--:|--:|--:|--:|---|
+| empirical 5th–95th | 0.460 | 0.553 | 0.139 | **0.070** | future research |
+| ±1 SD (robustness) | 0.354 | 0.680 | 0.107 | **0.129** | future research |
+
+Median $\lvert\Delta\%\rvert$ averaged over the box falls F1 22.2 → F2 16.1 → F3 12.1 → F4 11.3,
+so the two corrections do their work across the whole parameter space and not only at the fitted
+point.
+
+**Verdicts on the registered predictions.**
+
+*P1 — refuted in its mechanism.* $C_dA$ does lead, but not because its range is widest: narrowing
+from the 5th–95th box to ±1 SD **raised** its share (0.553 → 0.680) where P1 predicted a fall.
+Its dominance is structural, not an artefact of the range.
+
+*P2 — holds decisively.* $S_T(\varepsilon) = 0.070$, an order of magnitude below the 0.50 bar and
+below every physical parameter including $C_{rr}$.
+
+*P3 — refuted, and this is the useful part.* The largest pairwise interaction on F3 is **$m \times
+C_dA$ (0.149)**, not ε–$C_dA$. Under the measured-precision box the largest is **$C_dA \times
+C_{rr}$ (0.346)** — the two components of the flat term, entangled with each other because both
+feed $\alpha$. ε's own interactions are small (ε–$C_dA$ 0.084). So the worry that ε might be
+inseparable from the physics, which would have made its "share" ill-defined, does not
+materialise: **ε is cleanly separable, and separably small.**
+
+### The conditional that could have rescued ε, and why it does not
+
+Narrowing the physics box raises ε's share mechanically, so the verdict is only meaningful at a
+box reflecting how well the physics is *actually* known. Sweeping it:
+
+| physics box | $S_T(\varepsilon)$ |
+|---|--:|
+| 5th–95th (registered) | 0.072 |
+| ±25% | 0.146 |
+| ±10% | 0.404 |
+| ±5% | **0.718** |
+
+So ε would dominate **if** per-ride inversion pinned the physics to about ±5%. It does not.
+Measured within-rider coefficients of variation of the per-ride inversions — a rider's true
+constants being roughly stable, so this bounds how well one ride's inversion determines them —
+are **m ±9%, $C_dA$ ±39%, $C_{rr}$ ±48%**. Under that measured box, $S_T(\varepsilon) = 0.135$.
+The rescue requires a precision the inversion does not deliver, and the paper's own §3.5.1 spread
+(0.26–0.39 for $\hat C_dA$) says the same thing.
+
+### An attempted ε box that had to be rejected, and why
+
+Danilo proposed deriving ε's box from data rather than assuming it: fit the best $m$, $C_dA$,
+$C_{rr}$, regress F1–F4 against measured energy, and take 2σ of the ε that absorbs the residual.
+Run as stated — **per ride** — it gives an ε box of 0.00–0.92 and $S_T(\varepsilon) = 0.713$,
+i.e. the opposite verdict. It is circular, and the diagnostic that shows it is decisive:
+
+Solving for the ε* that makes F3 exact on each ride, only **71%** land in the physical interval
+[0, 1]. **22%** need ε\* < 0 (the model *under*-predicts; no descent refund can fix it) and **7%**
+need ε\* > 1 (more refund than the descent contains). **For 29% of rides no physical ε reconciles
+model and measurement at all**, so the residual is not ε-shaped and a box fitted to it measures
+total misspecification expressed in ε units. Using it as ε's prior guarantees ε dominates by
+construction.
+
+*The per-rider version of the same idea works, and converges on what was registered.* Fitting ε
+per rider rather than per ride gives medians spanning **0.080–0.297** across the nine groups —
+essentially the registered 0.08–0.30 box, arrived at independently. The registered prior is
+therefore not an assumption but a measurement.
+
+### Why the refutation is robust rather than convenient
+
+The ε box is the **across-rider** spread while the physics boxes are **within-rider** precision.
+That asymmetry inflates ε's apparent importance — which is the conservative direction for this
+test, since the entry is trying to refute ε. As Danilo put it, it "gives a bias against refuting,
+which strengthens the case if refuted". ε is refuted anyway, at 0.070 under the registered box
+and 0.135 under the measured one. It is also the right frame on its own terms: paper 1 ships a
+*universal* ε, so the uncertainty a deployer faces is precisely the across-rider spread.
+
+### Decision
+
+**$S_T(\varepsilon) = 0.070$ on F3, against a registered bar of 0.50. The deficit work becomes a
+future direction of research.** Paper 1 ships a flat ε; the coasting limit, the deficit
+derivation and the four-form contest leave it, surviving as a citation in the discussion. Entry
+51 determines the replacement constant.
+
+The number the letter would need to justify itself is now measurable: across the whole plausible
+parameter space, ε accounts for **7% of prediction-error variance**, against 55% for $C_dA$ and
+46% for mass. A theory of ε is a theory of the seventh part of the error — which is a fine thing
+to write, and not a thing paper 1 should be organised around.
+
+**What the entry also found, which paper 1 may want.** The flat term's two components are far
+more entangled with each other ($C_dA \times C_{rr} = 0.346$ at measured precision) than either
+is with ε. The paper currently describes an $(\alpha, \varepsilon)$ pairing; the stronger pairing
+in the data is inside $\alpha$ itself.
+
+---
+
 ---
 
 ## 2026-07-30 — Entry 49: the affine deficit $\delta_5 = \varepsilon_{\mathrm{coast}} k_1 + k_2$ — global vs per rider
