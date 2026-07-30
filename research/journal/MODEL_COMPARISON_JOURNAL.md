@@ -320,7 +320,7 @@ increasingly favours, then the coasting-limit apparatus has no *predictive* clai
   declared bias: three entries already point this way (Entry 45's 0.17 pp margin, Entry 46's
   finding that the ε choice and the parameter class trade against each other, Entry 49's
   unidentified affine form), and Danilo holds this hypothesis. **That makes the refuting outcome
-  the one to state clearly: if $S_T(\varepsilon) \geq 0.40$, or if the ε–$C_dA$ Hessian cross
+  the one to state clearly: if $S_T(\varepsilon) > 0.50$, or if the ε–$C_dA$ Hessian cross
   term is large enough that ε cannot be separated from the physics at all, the ε research stays
   in paper 1 and this entry has argued against its own author.**
 - **P3**: the largest off-diagonal Hessian term is ε–$C_dA$, the pairing Entry 46 found
