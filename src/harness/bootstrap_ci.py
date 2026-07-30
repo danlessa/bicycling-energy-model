@@ -977,6 +977,56 @@ else:
     if not _ok:
         failed = True
 
+# ---------- 3k. D6 in Tables 5-6, and the D3-D6 pools (Entry 43) ----------
+print("\n== D6 in Tables 5-6 + the D3-D6 pools ==")
+_ski = parse_csv("skc_invert.csv")
+_D6R = ["user_1", "user_2", "user_3", "user_5"]
+_skist = [[r for r in _ski if r.get("rider") == u] for u in _D6R]
+if not all(_skist):
+    print("E43 skc_invert strata: EMPTY GATE-FAIL")
+    failed = True
+else:
+    # Table 5 = Entry-33 segment CdA (the _t5 columns); Table 6 = regime-consistent.
+    for _lab, _c, _ea, _eci in (
+            ("E43 T5/D6 F3·ε_d", "f3_d_t5", 4.3, (3.8, 4.5)),
+            ("E43 T5/D6 F3·ε_f", "f3_f_t5", 5.4, (5.0, 6.0)),
+            ("E43 T5/D6 F4·ε_f", "f4_f_t5", 4.6, (4.2, 5.0)),
+            ("E43 T5/D6 simulation", "canon_d_t5", 4.2, (3.9, 4.4)),
+            ("E43 T6/D6 F3·ε_d", "f3_d", 3.0, (2.7, 3.3)),
+            ("E43 T6/D6 F3·ε_f", "f3_f", 6.7, (6.4, 7.0)),
+            ("E43 T6/D6 F4·ε_f", "f4_f", 2.5, (2.3, 2.7)),
+            ("E43 T6/D6 simulation", "canon_d", 1.6, (1.5, 1.8))):
+        strat_report(_lab, [col(s_, _c) for s_ in _skist], _ea, _eci)
+
+# The D3-D6 pools: SEVEN rider strata, because for D3-D5 one corpus is one rider
+# and D6 contributes four. Mixing conventions (three corpus strata plus D6 as a
+# fourth) would understate D6's within-corpus variance.
+_d6c = [r for r in d6 if r.get("dataOK", "true") == "true"]
+_d6cst = [[r for r in _d6c if r.get("rider") == u] for u in _D6R]
+_br3 = [[r for r in pp if r.get("dataOK", "true") == "true"],
+        [r for r in jm if r.get("dataOK", "true") == "true"],
+        [r for r in dl if r.get("dataOK", "true") == "true"]]
+_pri = parse_csv("perride_invert.csv")
+_brP = [[r for r in _pri if r.get("corpus") == c] for c in ("ppaz", "jaam", "danlessa")]
+_brE = [[r for r in e35 if r.get("corpus") == c] for c in ("ppaz", "jaam", "danlessa")]
+for _tab, _br, _d6s, _rows in (
+        ("T3", _br3, _d6cst, [("F3·ε_d", "sm_geom", "f3_d", 4.9, (4.7, 5.1)),
+                              ("F4·ε_d", "pm_geom", "f4_d", 5.3, (5.0, 5.6)),
+                              ("F3·ε_f", "sm_0.20", "f3_f", 8.0, (7.6, 8.3)),
+                              ("F4·ε_f", "pm_0.20", "f4_f", 5.3, (5.1, 5.6)),
+                              ("simulation", "canon_d", "canon_d", 4.8, (4.6, 5.1))]),
+        ("T5", _brP, _skist, [("F3·ε_d", "f3_d", "f3_d_t5", 5.5, (5.2, 5.7)),
+                              ("F3·ε_f", "f3_f", "f3_f_t5", 4.4, (4.1, 4.7)),
+                              ("F4·ε_f", "f4_f", "f4_f_t5", 5.2, (5.0, 5.5)),
+                              ("simulation", "canon_d", "canon_d_t5", 5.5, (5.2, 5.7))]),
+        ("T6", _brE, _skist, [("F3·ε_d", "f3_d_reg", "f3_d", 3.5, (3.4, 3.6)),
+                              ("F3·ε_f", "f3_f_reg", "f3_f", 5.7, (5.4, 5.9)),
+                              ("F4·ε_f", "f4_f_reg", "f4_f", 3.7, (3.5, 3.9)),
+                              ("simulation", "canon_reg", "canon_d", 2.7, (2.6, 2.9))])):
+    for _lab, _cbr, _cd6, _ea, _eci in _rows:
+        _strata = [col(x, _cbr) for x in _br] + [col(x, _cd6) for x in _d6s]
+        strat_report(f"E43 {_tab} D3-D6 {_lab}", _strata, _ea, _eci)
+
 # ---------- 4. Time model, P. Paz (§8.8 primary endpoint) ----------
 # Target = tMovBin, exactly as time_compare's scoreboard() scores it.
 print("\n== Time model, P. Paz (§8.8 primary endpoint) ==")

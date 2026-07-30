@@ -358,13 +358,20 @@ def main() -> None:
         sc = score(pts, prof, p)
         if sc is None:
             continue
+        # SECOND protocol, for paper 1's Table 5: the same per-ride m̂ and Ĉrr but
+        # the Entry-33 segment CdA rather than the Entry-35 regime-consistent one.
+        # Table 5 and Table 6 differ in exactly this, so D6 needs both to appear
+        # in both. Columns are suffixed _t5; the unsuffixed ones remain Table 6's.
+        p_t5 = {**p, "CdA": inv["cda33"]}
+        sc_t5 = score(pts, prof, p_t5)
         row = {"rider": rider, "ride": os.path.basename(path)[:-4],
                "dist_km": prof["x"][-1] / 1000, "m_hat": inv["m_hat"],
                "m_src": inv["m_src"], "crr_hat": inv["crr_hat"],
                "crr_src": inv["crr_src"], "cda33": inv["cda33"],
                "cda_reg": cda_reg, "cda_reg_src": cda_reg_src,
                "v_meas_kmh": v_meas * 3.6 if is_finite(v_meas) else float("nan"),
-               **sc}
+               **sc,
+               **({f"{k}_t5": v for k, v in sc_t5.items()} if sc_t5 else {})}
         eb = eps_cells(pts, p)
         if eb and eb.get("Hd", 0) >= 1 and eb.get("sbar", 0) >= 0.03:
             row["eps_bal"] = eb["epsBal"]
