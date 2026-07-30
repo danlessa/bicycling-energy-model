@@ -162,7 +162,7 @@ counted from its CSV rather than asserted, is [`research/data-graph.ttl`](../dat
 
 | entry | $I = (D, P)$ | $T$ | $O$ (rows) | $S$ |
 |--:|---|---|---|---|
-| 49 | $(D_3..D_6, P_{a,g} \cdot P_{f,p}(m))$ via $O_{47}$ | $F_3^{\delta_5}$, affine in $\varepsilon_{\mathrm{coast}}$, global and per rider | `e49_affine.csv` — second-order | does the coasting limit need rescaling? |
+| 49 | $(D_3..D_6, P_{a,g} \cdot P_{f,r})$ via $O_{47}$ | $F_3^{\delta_5}$, affine in $\varepsilon_{\mathrm{coast}}$, global and per rider | `e49_affine.csv` — second-order | does the coasting limit need rescaling? |
 | 48 | the published per-ride $O$ of Entries 1/31/9/12/14/16 | TOST, difference of medians, paired bootstrap | `e48_equiv.csv` (one row per comparison) — second-order | parity sentences upgraded or not |
 | 47 | $(D_1 \cup D_2, P_{a,g})$ and $(D_1 \cup D_2, P_{a,g} \cdot P_{f,r})$ | F3 $\times$ {$\varepsilon_0,\varepsilon_2,\varepsilon_3$}, selected by BIC | `e47_formselect.csv` (2,141 rows; contests on 48 and 990) | **$\varepsilon_0$ retained**; nothing published moved |
 | 46 | $(D_1..D_6, P_{a,g})$ and $(\cdot P_{f,r})$ | regime switch, 4 arms | `e46_switch.csv` (2,141) — a **second-order** $O = T(O_{47})$ | §3.3 vindicated; the frozen sub-3% cells cancel |
@@ -219,7 +219,7 @@ what the other rows *mean* without producing a per-ride table of their own.
 
 ## 2026-07-30 — Entry 49: the affine deficit $\delta_5 = \varepsilon_{\mathrm{coast}} k_1 + k_2$ — global vs per rider
 
-**Lineage** — $I$: $(D_3..D_6, P_{a,g} \cdot P_{f,p}(m))$ via $O_{47}$ · $T$: $F_3^{\delta_5}$, fitted globally and per rider · $O$: `e49_affine.csv` ($O_{49} = T(O_{47})$) · $S$: whether the coasting limit needs rescaling, and whether that rescaling is a rider property
+**Lineage** — $I$: $(D_3..D_6, P_{a,g} \cdot P_{f,r}(m, C_{rr}, C_dA))$ via $O_{47}$, with $(\cdot P_{f,p}(m))$ as a disclosed secondary · $T$: $F_3^{\delta_5}$, fitted globally and per rider · $O$: `e49_affine.csv` ($O_{49} = T(O_{47})$) · $S$: whether the coasting limit needs rescaling, and whether that rescaling is a rider property
 
 *Prompt (Danilo): "assume $\delta_5 = \varepsilon_{\mathrm{coast}} k_1 + k_2$, where $k_1$ and
 $k_2$ can be fitted both globally or per rider. Test it against D3/D4/D5/D6 when fitting
@@ -285,6 +285,26 @@ nothing and does not enter the paper.
 **Not registered.** No change to any published column. Whatever this finds, paper 1's shipped
 deficit stays $\varepsilon_0$ until a *calibration-side* selection says otherwise — that was
 Entry 47's protocol and this entry does not reopen it.
+
+### Amendment (2026-07-30, before the P_{f,r} run, after the P_{a,g} one)
+
+*Danilo: "The intended analysis is to be D3 to D6 over $P_{f,r}$."*
+
+The registration above wrote the input as $(D_3..D_6, P_{a,g} \cdot P_{f,p}(m))$ — the frozen
+priors. That was my reading of the request, and it was wrong: the intended parameter class is
+**$P_{f,r}$, the per-ride inverted regime-consistent physics**. The primary arm is re-run under
+it and is what the verdicts below are scored on.
+
+Two disclosures, because the ordering matters:
+
+1. **The $P_{a,g}$ arm was run and seen first.** It is reported below as a labelled secondary
+   rather than deleted — discarding a result I have already looked at would be the worse
+   choice, and the two together are informative precisely because Entry 46 found the parameter
+   class capable of reversing a verdict about $\varepsilon$.
+2. **Predictions P1–P3 were registered before either arm was fitted** and are not restated or
+   adjusted now. The $P_{f,r}$ arm is therefore a clean test of them in the sense that matters
+   (no prediction was written after seeing data), while carrying the caveat that a *related*
+   arm had been seen.
 
 ---
 
