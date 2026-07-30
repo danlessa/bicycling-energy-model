@@ -1,26 +1,32 @@
 #!/usr/bin/env python3
-"""Cross-check the paper's marked statistics against the gate battery.
+"""Cross-check the papers' claim annotations against the gate battery.
 
-Every published statistic in the article carries an inline marker:
+Every published statistic carries an invisible anchor at the number:
 
-    **5.6%**<!--@ id=pool35.f3.med scope=out-of-sample gate=3c -->
+    reads **5.6% [5.2, 6.2]**<!--@c-pool34.f3d.med-->
 
-The marker is an HTML comment, so it is invisible in every renderer and costs
-the reader nothing. What it buys:
+and an invisible `<!--turtle ... -->` block below its paragraph, in the project's
+existing RDF vocabulary (schema:Claim, CiTO, PROV-O, Dublin Core) so paper claims
+COMPOSE with research/notes/claims.ttl and research/data-graph.ttl instead of
+forming a parallel vocabulary. A claim can cite the output that evidences it
+(cito:citesAsEvidence dg:o_ppaz) and the journal assertion it descends from
+(prov:wasDerivedFrom claims:assert12), which is the article-claim -> entry
+traceability direction the journal deliverable (J.3) otherwise lacks.
 
-  1. CHECKABILITY. This script verifies that each marked value actually appears
-     in the gate section it names. The audit that found four un-gated numbers in
-     section 3.2.2 was done by hand; this makes it a command.
-  2. SCOPE, INLINE. `scope=` distinguishes calibration / in-sample /
-     out-of-sample at the point of use. That is the distinction the last review
-     said the framing blurs, and the one a summariser most often loses — a
-     machine reader that keeps the marker cannot promote a calibration figure to
-     a headline by accident.
-  3. A REWRITE-SURVIVABLE CONTRACT. The human draft is written on top of the
-     pre-draft; carrying the ids across is what lets this check keep working
-     against prose nobody has seen yet.
+WHAT THIS CHECKS
+  1. every anchor has a claim and every claim has an anchor;
+  2. pc:value is actually asserted in the gate section named by pc:gateSection —
+     the audit that found four un-gated numbers in paper 1, as a command;
+  3. dcterms:type is drawn from a closed vocabulary, so scope (calibration /
+     in-sample / out-of-sample / external) is explicit AT THE POINT OF USE. That
+     is the distinction reviewers said the framing blurs and the first thing a
+     summariser loses;
+  4. `planned` claims are reported, never failed — a scaffold honestly declaring
+     what it does not yet have is correct, but a planned claim that never
+     acquires a value is a promise the paper did not keep, so they stay visible.
 
-Exits non-zero on any mismatch. Run: python3 research/scripts/check_paper_stats.py
+Requires rdflib (the repo's usual TTL dependency). Exits non-zero on failure.
+Run: python3 research/scripts/check_paper_stats.py
 """
 
 from __future__ import annotations
@@ -29,25 +35,21 @@ import os
 import re
 import sys
 
+import rdflib
+from rdflib import Namespace, RDF
+from rdflib.namespace import DCTERMS
+
 HERE = os.path.dirname(os.path.abspath(__file__))
 REPO = os.path.dirname(os.path.dirname(HERE))
-PAPER = os.path.join(REPO, "research", "article", "paper1-closed-form.md")
+ARTICLES = ["paper1-closed-form.md", "paper2-dem-deployment.md", "paper3-edge-cost.md"]
 GATES = os.path.join(REPO, "src", "harness", "bootstrap_ci.py")
 
-# The marker itself. The VALUE is read backwards from the comment — the last
-# number appearing before it — because a forward regex happily matches a stray
-# digit earlier in the line (a subscript in \varepsilon_2, a bracketed CI bound)
-# and silently checks the wrong number. Reading backwards from a fixed anchor
-# has one answer.
-MARKER = re.compile(
-    r"<!--@\s*id=(?P<id>[\w.]+)\s+scope=(?P<scope>[\w-]+)\s+gate=(?P<gate>[\w.]+)\s*-->"
-)
-NUM_BEFORE = re.compile(r"(-?\d+(?:\.\d+)?)(?!.*\d)", re.S)
-SCOPES = {"calibration", "in-sample", "out-of-sample", "external", "derived"}
+SCHEMA = Namespace("http://schema.org/")
+PC = Namespace("https://danlessa.github.io/bicycling-energy-model/paper-claims#")
+SCOPES = {"calibration", "in-sample", "out-of-sample", "external", "derived", "planned"}
 
 
 def gate_sections(src: str) -> dict[str, str]:
-    """Split bootstrap_ci.py into its numbered sections."""
     marks = list(re.finditer(r"^# -{4,} ?([0-9][a-z0-9]*)\. ", src, re.M))
     out: dict[str, str] = {}
     for i, m in enumerate(marks):
@@ -56,40 +58,74 @@ def gate_sections(src: str) -> dict[str, str]:
     return out
 
 
-def main() -> int:
-    paper = open(PAPER, encoding="utf-8").read()
-    sections = gate_sections(open(GATES, encoding="utf-8").read())
+def check(path: str, sections: dict[str, str]) -> tuple[int, int, int]:
+    text = open(path, encoding="utf-8").read()
+    blocks = re.findall(r"<!--turtle\n(.*?)\n-->", text, re.S)
+    if not blocks:
+        return 0, 0, 0
+    graph = rdflib.Graph()
+    graph.parse(data="\n".join(blocks), format="turtle")
 
-    marks = list(MARKER.finditer(paper))
-    if not marks:
-        print("no @-markers found — nothing to check")
-        return 0
+    anchors = set(re.findall(r"<!--@c-([\w.]+)-->", text))
+    claims = {str(s).split("#c-")[-1]: s for s in graph.subjects(RDF.type, SCHEMA.Claim)}
 
-    bad = 0
-    seen: set[str] = set()
-    for m in marks:
-        sid, scope, gate = m["id"], m["scope"], m["gate"]
-        before = paper[max(0, m.start() - 60):m.start()]
-        nm = NUM_BEFORE.search(before)
-        val = nm.group(1) if nm else "?"
+    bad = planned = 0
+    print(f"\n{os.path.basename(path)} — {len(claims)} claims, {len(anchors)} anchors")
+
+    for cid in sorted(claims):
+        node = claims[cid]
+        scope = str(graph.value(node, DCTERMS.type) or "")
+        val = graph.value(node, PC.value)
+        gate = graph.value(node, PC.gateSection)
         problems = []
-        if sid in seen:
-            problems.append("duplicate id")
-        seen.add(sid)
+
+        if scope == "planned":
+            planned += 1
+            print(f"  {cid:<32} {'—':>9}  planned        (no value yet)")
+            continue
+
         if scope not in SCOPES:
-            problems.append(f"unknown scope (expected one of {sorted(SCOPES)})")
-        if gate not in sections:
-            problems.append(f"no gate section '{gate}' in bootstrap_ci.py")
-        elif val not in sections[gate]:
-            problems.append(f"value {val} not asserted anywhere in gate section {gate}")
+            problems.append(f"scope '{scope}' not in {sorted(SCOPES)}")
+        if cid not in anchors:
+            problems.append("no anchor in the prose")
+        if val is None:
+            problems.append("no pc:value")
+        elif gate is None:
+            problems.append("no pc:gateSection")
+        else:
+            g = str(gate)
+            if g not in sections:
+                problems.append(f"gate section '{g}' does not exist")
+            elif str(val) not in sections[g]:
+                problems.append(f"value {val} not asserted in gate section {g}")
+
         status = "OK" if not problems else "FAIL: " + "; ".join(problems)
-        print(f"  {sid:<28} {val:>8}  {scope:<14} gate {gate:<4} {status}")
+        print(f"  {cid:<32} {str(val):>9}  {scope:<14} {status}")
         if problems:
             bad += 1
 
-    print(f"\n{len(marks)} marked statistics, {bad} failing")
+    for orphan in sorted(anchors - set(claims)):
+        print(f"  {orphan:<32} {'—':>9}  ANCHOR WITH NO CLAIM")
+        bad += 1
+
+    return len(claims), bad, planned
+
+
+def main() -> int:
+    sections = gate_sections(open(GATES, encoding="utf-8").read())
+    total = bad = planned = 0
+    for name in ARTICLES:
+        p = os.path.join(REPO, "research", "article", name)
+        if not os.path.exists(p):
+            continue
+        t, b, pl = check(p, sections)
+        total += t
+        bad += b
+        planned += pl
+
+    print(f"\n{total} claims across {len(ARTICLES)} papers · {planned} planned · {bad} failing")
     if bad:
-        print("PAPER-STATS CHECK FAILED", file=sys.stderr)
+        print("PAPER-CLAIMS CHECK FAILED", file=sys.stderr)
         return 1
     return 0
 

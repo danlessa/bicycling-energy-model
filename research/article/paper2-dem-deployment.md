@@ -1,3 +1,31 @@
+<!-- CLAIM ANNOTATIONS. Each published statistic carries an invisible anchor
+     of the form @c-<id> at the number, and an invisible `turtle` comment block
+     below its paragraph describing it. Both are HTML comments, so they render
+     as nothing in every viewer and cost the reader exactly zero — which means
+     this convention survives into the reader-facing draft unchanged, with no
+     extraction step.
+
+     The blocks are RDF in this project's existing vocabulary (schema:Claim,
+     CiTO, PROV-O, Dublin Core), so paper claims COMPOSE with claims.ttl and
+     data-graph.ttl rather than forming a parallel vocabulary: a claim cites the
+     output that evidences it and the journal assertion it descends from, which
+     is the article-claim -> entry traceability direction the journal
+     deliverable (J.3) otherwise lacks.
+
+     Constraint: no double-hyphen inside a block, since it would close the
+     comment early. Checked by research/scripts/check_paper_stats.py. -->
+
+<!--turtle
+@prefix schema:  <http://schema.org/> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix cito:    <http://purl.org/spar/cito/> .
+@prefix prov:    <http://www.w3.org/ns/prov#> .
+@prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix pc:      <https://danlessa.github.io/bicycling-energy-model/paper-claims#> .
+@prefix dg:      <https://danlessa.github.io/bicycling-energy-model/data-graph#> .
+@prefix claims:  <https://danlessa.github.io/bicycling-energy-model/claims#> .
+-->
+
 <!--
   paper2-dem-deployment.md — DRAFT. Second paper of the series; format target:
   LETTER / application note (~4 pages), not a full article.
@@ -29,13 +57,50 @@
 
 **Method.** We re-evaluate 1,117 rides from five São Paulo corpora, changing one thing: elevation comes from a DEM sampled along the recorded track. Measured power, per-ride physics and every behavioural constant are held, so each ride is its own control. Seven arms cross two sources — a local 5 m survey and the global 30 m FABDEM — with the knobs a planner controls: the polyline sampling step, and pre-smoothing of the profile.
 
-**Results.** The local survey costs half a point of median error (3.8% → 4.3%) and swings the bias from −1.7% to +1.0%; smoothing the sampled profile at σ = 30 m restores the control's bias exactly (4.0%, −1.7%). FABDEM costs three times as much. The ascent-noise rate is a property of the chain, not a constant — 3.10 m/km [3.01, 3.18] for the barometer against 10.14 [9.86, 10.59] for oversampled FABDEM — and carrying the wrong one leaves the totals-only form biased +19%. The penalty is terrain-dependent: the bias shift runs +0.7 points on gentle terrain against +20 on mountain brevets.
+**Results.** The local survey costs half a point of median error (3.8% → 4.3%)<!--@c-a2.swap.cost--> and swings the bias from −1.
+
+<!--turtle
+<#c-a2.swap.cost> a schema:Claim ;
+  schema:text "Substituting a planner-grade DEM for the ride's own elevation stream costs about half a point of median error" ;
+  dcterms:type "out-of-sample" ;
+  pc:value 4.3 ;
+  pc:gateSection "3i" ;
+  cito:citesAsEvidence dg:o_e41 ;
+  prov:wasDerivedFrom claims:assert41 ;
+  rdfs:comment "The cost of the substitution that makes the law usable from a map - SM-2's whole question" .
+-->
+7% to +1.0%; smoothing the sampled profile at σ = 30 m restores the control's bias exactly (4.0%, −1.7%)<!--@c-a2.smoothing.prescription-->
+
+<!--turtle
+<#c-a2.smoothing.prescription> a schema:Claim ;
+  schema:text "Smoothing the sampled profile at sigma = 30 m restores the control's bias" ;
+  dcterms:type "out-of-sample" ;
+  pc:value 30 ;
+  pc:gateSection "3i" ;
+  cito:citesAsEvidence dg:o_e41 ;
+  prov:wasDerivedFrom claims:assert41 ;
+  rdfs:comment "THE deliverable of A2: a prescription stated a priori, not a per-raster tuning - if it were tuned the elevation source would be a hidden free parameter" .
+-->
+. FABDEM costs three times as much. The ascent-noise rate is a property of the chain, not a constant — 3.10<!--@c-a2.noise.rate--> m/km
+
+<!--turtle
+<#c-a2.noise.rate> a schema:Claim ;
+  schema:text "Ascent-noise rate of the recording chain, 3.10 m/km" ;
+  dcterms:type "out-of-sample" ;
+  pc:value 3.10 ;
+  pc:gateSection "3i" ;
+  cito:citesAsEvidence dg:o_e41 ;
+  prov:wasDerivedFrom claims:assert41 ;
+  rdfs:comment "A property of the chain rather than a universal constant - which is why F4's scalar c does not transfer" .
+-->
+ [3.01, 3.18] for the barometer against 10.14 [9.86, 10.59] for oversampled FABDEM — and carrying the wrong one leaves the totals-only form biased +19%. The penalty is terrain-dependent: the bias shift runs +0.7 points on gentle terrain against +20 on mountain brevets.
 
 **Conclusion.** Planning-time DEM energy needs one table: pick the source, smooth the profile, use that chain's own noise rate.
 
 **Keywords:** digital elevation models, elevation gain estimation, route planning, cycling energetics, active transportation, FABDEM, terrain sampling scale, open science
 
 <a id="1"></a>
+
 
 ## 1. The gap between a validated law and a usable one
 

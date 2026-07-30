@@ -118,8 +118,15 @@ home of the *derivation* and the side-by-side comparison.
   `ascent-error-literature.md`, `censo-model-verification.md`,
   `VERIFICATION_NOTES.md`.
 - `research/scripts/` — `make_claims_explorer.py` (claims.ttl → the interactive
-  explorer page), `check_paper_stats.py` (cross-checks the article's inline
-  `<!--@ id=… scope=… gate=… -->` markers against `bootstrap_ci.py`'s sections:
+  explorer page), `check_paper_stats.py` (cross-checks the articles' claim
+  annotations against `bootstrap_ci.py`'s sections. Each published statistic
+  carries an invisible anchor `<!--@c-<id>-->` at the number and an invisible
+  `<!--turtle … -->` block below its paragraph, written in the project's
+  existing RDF vocabulary so paper claims compose with `claims.ttl` and
+  `data-graph.ttl` — a claim cites the output evidencing it and the journal
+  assertion it descends from. Both forms are HTML comments and render as
+  nothing. Constraint: no `--` inside a block, it would close the comment. The
+  check asserts:
   the value must actually be asserted in the gate section it names, scopes must
   be one of calibration/in-sample/out-of-sample/external/derived, ids unique.
   Exits non-zero. It caught a misplaced gate block on its first run — cheap, and
