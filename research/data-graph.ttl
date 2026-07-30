@@ -7,10 +7,16 @@
 #                     P being a base plus overrides joined by `·`
 #   F                 a transformer: the model (F1-F4, F_base) or an estimator
 #   O = F(I) | σ      an output: PER RIDE, one row per ride, σ the inclusion
-#                     rule.  |O| <= |D| — the transformer preserves ride grain
-#                     but NOT population.  Every :cardinality below is COUNTED
-#                     from the CSV, never asserted; every one that is smaller
-#                     than its corpus is a σ at work.
+#                     rule.  The transformer preserves ride grain but NOT
+#                     population.  Every :cardinality below is COUNTED from the
+#                     CSV, never asserted.
+#
+# CAUTION on |O| vs |D|: `|O| <= |D|` holds only against the RAW deposit. Paper
+# 1's Table 1 reports each corpus at its CLEAN count, which is already
+# post-selection — so a CSV can be WIDER than its own published |D| (censo 69
+# rows for 62; D5 636 for 621) without any inequality being violated. The full
+# D5 funnel is 3,219 export files -> 636 scored -> 621 clean = the published
+# |D|. Compare an output against the stage it was actually drawn from.
 #   T(O)              a statistic: the medians, CIs and figures the article and
 #                     journal actually print, and what bootstrap_ci.py re-derives.
 #
@@ -252,7 +258,7 @@
     prov:wasGeneratedBy :h_censo ; :input :i_d2_frozen ;
     :transformer :F1, :F2, :F3, :F4, :F_base ; :cardinality 69 ;
     :selection "parse + power; the published statistics filter further to dataOK = true (62 clean)" ;
-    rdfs:comment "|O| 69 vs 62 clean vs |D| 62: the CSV is WIDER than the published population. Reading 69 as the corpus is precisely the error this graph exists to prevent." .
+    rdfs:comment "69 scored rows, 62 of them dataOK — and Table 1's |D| = 62 IS that clean count, so the published corpus size is itself post-selection. The 7 extra rows are flagged, not lost: they carry results and are excluded by the statistic, not the harness." .
 
 :h_ppaz a prov:Activity ; p-plan:correspondsToStep "src/harness/ppaz_compare.py" ; prov:used :i_d3_frozen_m .
 :o_ppaz a :Output ; dcterms:identifier "ppaz_comparison.csv" ;
@@ -271,7 +277,7 @@
     prov:wasGeneratedBy :h_danlessa ; :input :i_d5_frozen_m ;
     :transformer :F1, :F2, :F3, :F4, :F_base ; :cardinality 636 ;
     :selection "parse + power; published population is the 621 with dataOK" ;
-    rdfs:comment "|O| 636 > |D| 621 clean — same widening as D2." .
+    rdfs:comment "Funnel: 3,219 export files -> inventory (sport=ride + power) -> 636 scored -> 621 clean, which is Table 1's |D|. The 15 flagged rides differ from the clean ones on TWO axes at once — median cadence coverage 0.76 vs 1.00 AND median smoothed ascent 19.9 vs 8.3 m/km — so the harness comment calling them power dropouts is incomplete: the floor is largest exactly where the climbing is." .
 
 :h_skc a prov:Activity ; p-plan:correspondsToStep "src/harness/skc_compare.py" ; prov:used :i_d6_frozen_m .
 :o_skc a :Output ; dcterms:identifier "skc_comparison.csv" ;
@@ -460,3 +466,6 @@
 :entry38 a :Statistic ; rdfs:label "Entries 38–40 — the deadband thread: τ*, the deconfounded sweep, roller recycling" ;
     prov:wasDerivedFrom :o_e38, :o_e39, :o_e40 ; :gatedBy :gate .
 :verification a :Statistic ; rdfs:label "VERIFICATION_NOTES" ; prov:wasDerivedFrom :o_verify .
+
+:dataOK a :Estimator ; rdfs:label "the dataOK plausibility flag: emp >= β·h₊(smoothed)" ;
+    rdfs:comment "Measured pedalling energy must clear the gravitational potential energy of the climbing — the measurement-side counterpart of the engine invariant legE >= mg·h₊/k_eff. It fires on incomplete power streams AND on climb-heavy rides where the floor is largest; it is not a pure dropout filter. Note the floor uses the SMOOTHED ascent while the CSV's hplus column is RAW — reading the raw column against the floor overstates the miss." .
