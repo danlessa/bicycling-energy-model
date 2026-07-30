@@ -1263,6 +1263,75 @@ if not _ok:
     failed = True
 
 
+# ---------------------------------------------------------------- 3n. Entry 48
+# TOST equivalence. Gates every registered row's d, 90% CI and verdict, AND the
+# population parity that makes them comparable to the published brackets: each
+# comparison's n and its med_law/med_sim against the medians the paper prints.
+# A drifted population would silently change d without changing any verdict.
+print("\n== TOST equivalence (Entry 48, margin ±1.0 pp, seed 44) ==")
+
+_e48 = parse_csv("e48_equiv.csv")
+# comparison -> (n, med_law, med_sim, d, lo, hi, verdict)
+_E48_EXP = {
+    "D1 informed · F3": (44, 3.54, 5.15, -1.61, -3.34, 0.33, "inconclusive"),
+    "D1 blind · F3": (44, 8.17, 8.37, -0.20, -2.14, 1.70, "inconclusive"),
+    "D1 blind · F4": (44, 7.63, 8.37, -0.74, -2.17, 2.72, "inconclusive"),
+    "D2 frozen · F3": (62, 7.71, 6.63, 1.08, -0.04, 2.18, "inconclusive"),
+    "D2 frozen · F4": (62, 6.45, 6.63, -0.19, -1.98, 1.59, "inconclusive"),
+    "D3 · F3": (441, 5.76, 6.76, -1.00, -1.56, -0.63, "inconclusive"),
+    "D4 · F3": (219, 5.49, 5.44, 0.04, -0.61, 0.43, "equivalent"),
+    "D5 · F3": (621, 6.18, 6.14, 0.04, -0.33, 0.47, "equivalent"),
+    "POOL D3+D4 · F3": (660, 5.63, 6.26, -0.63, -0.90, -0.33, "equivalent"),
+    "POOL D3-D5 · F3": (1281, 5.90, 6.23, -0.32, -0.55, -0.07, "equivalent"),
+}
+_seen48 = 0
+for _r in _e48:
+    _c = _r["comparison"]
+    if _c not in _E48_EXP:
+        print(f"  UNREGISTERED ROW {_c} GATE-FAIL")
+        failed = True
+        continue
+    _seen48 += 1
+    _n, _ml, _ms, _d, _lo, _hi, _v = _E48_EXP[_c]
+    _gn = int(_r["n"])
+    _g = [float(_r[k]) for k in ("med_law", "med_sim", "d", "ci90_lo", "ci90_hi")]
+    _ok = (_gn == _n and _r["verdict"] == _v
+           and abs(_g[0] - _ml) <= 0.01 and abs(_g[1] - _ms) <= 0.01
+           and abs(_g[2] - _d) <= 0.01
+           and abs(_g[3] - _lo) <= 0.01 and abs(_g[4] - _hi) <= 0.01
+           and int(_r["unpaired_dropped"]) == 0)
+    # the verdict must also FOLLOW from the CI, not merely be recorded
+    _derived = ("equivalent" if _g[3] >= -1.0 and _g[4] <= 1.0
+                else "fail-high" if _g[3] > 1.0
+                else "fail-low" if _g[4] < -1.0 else "inconclusive")
+    if _derived != _r["verdict"]:
+        _ok = False
+    print(f"  {_c:<20} n={_gn:>5} d={to_fixed(_g[2], 2):>6} "
+          f"[{to_fixed(_g[3], 2)}, {to_fixed(_g[4], 2)}] {_r['verdict']:<13}"
+          + (" GATE-OK" if _ok else f" GATE-FAIL(exp {_d} [{_lo}, {_hi}] {_v})"))
+    if not _ok:
+        failed = True
+
+_ok = _seen48 == len(_E48_EXP)
+print(f"  registered rows present: {_seen48}/{len(_E48_EXP)}"
+      + (" GATE-OK" if _ok else " GATE-FAIL"))
+if not _ok:
+    failed = True
+
+# The finding: no row is outside the margin, and every inconclusive row except
+# D2 is inconclusive on the side where the LAW IS BETTER (d < 0). If that ever
+# flips, the reading in Entry 48 and section 3.1 is wrong.
+_bad = [r for r in _e48 if str(r["verdict"]).startswith("fail")]
+_inc_worse = [r["comparison"] for r in _e48
+              if r["verdict"] == "inconclusive" and float(r["d"]) > 0]
+_ok = not _bad and _inc_worse == ["D2 frozen · F3"]
+print(f"  none outside margin ({len(_bad)}); inconclusive-on-the-worse-side: "
+      f"{_inc_worse or 'none'}"
+      + (" GATE-OK" if _ok else " GATE-FAIL(exp only D2 frozen · F3)"))
+if not _ok:
+    failed = True
+
+
 if failed:
     print("\nONE OR MORE GATES FAILED", file=sys.stderr)
     sys.exit(1)

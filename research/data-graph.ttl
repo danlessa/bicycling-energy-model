@@ -511,3 +511,20 @@
 :entry46 a :Statistic ; rdfs:label "Entry 46 — the regime switch, implemented" ;
     prov:wasDerivedFrom :o_e46 ; :gatedBy :gate ;
     rdfs:comment "The two parameter classes REVERSE the verdict: under frozen priors switching worsens the pooled median (5.08 -> 5.62), under per-ride inverted physics it improves it (5.51 -> 4.12). The bias column adjudicates — below 3%, eps_d is near-unbiased under frozen priors (+0.28) and badly biased under honest physics (-4.64), while eps_f = 0.20 is the reverse (+5.90, +0.11). So eps_d on flat rides ABSORBS the frozen CdA = 0.40 prior rather than measuring recovery: the median applied eps_d there is 0.544 against eps_f's 0.20. Section 3.3's rule is right; the frozen grid's sub-3% cells are accurate by cancellation. Registered P3 fails: unswitched, grade-inverse is better overall (4.83 vs 5.08), not worse." .
+
+# --- Entry 48: formal equivalence (TOST) ----------------------------------
+
+:F_tost a :Estimator ; rdfs:label "TOST on the difference of medians" ;
+    rdfs:comment "Paired stratified bootstrap: BOTH engines' median |D%| from the SAME resample, so the interval carries the correlation between two engines that share every input. Differencing two independently-computed CIs would badly overstate the width. Equivalence iff the 90% CI of d falls inside ±1.0 pp — two one-sided tests at 0.05 each IS that containment, which is why the interval is 90% and not 95%. Seed 44: 42 and 43 carry the published |D%| and signed CIs, and reusing one would silently correlate this interval with those." .
+
+:o_e48 a :Output ; dcterms:identifier "e48_equiv.csv" ;
+    p-plan:correspondsToStep "src/harness/e48_equiv.py" ;
+    :transformer :F_tost ; :cardinality 10 ;
+    prov:wasDerivedFrom :o_model_comparison, :o_longoes_frozen, :o_censo,
+        :o_ppaz, :o_jaam, :o_danlessa ;
+    :selection "the ten registered comparisons; each population is EXACTLY the one behind the published bracket, with zero rides dropped for lacking a partner — a paired test needs both columns finite on the same ride, while the published medians filter each column independently" ;
+    rdfs:comment "Grain is the COMPARISON, not the ride — one of the few outputs whose dimension is deliberately not D's. A second-order output: derived from the published per-ride outputs rather than from a corpus." .
+
+:entry48 a :Statistic ; rdfs:label "Entry 48 — formal equivalence (TOST) for the parity claims" ;
+    prov:wasDerivedFrom :o_e48 ; :gatedBy :gate ;
+    rdfs:comment "Four equivalent, six inconclusive, none outside the margin. Both pooled rows are formally equivalent within ±1.0 pp (D3+D4 [-0.90,-0.33], D3-D5 [-0.55,-0.07]), upgrading the headline transfer claim from a failure-to-reject. D1 is inconclusive at n = 44 on both protocols, as registered. Five of six inconclusive verdicts are inconclusive on the side where the LAW BEATS the simulation — D3's CI [-1.56,-0.63] is wholly negative — so reading 'inconclusive' as a weakness of the law is backwards. The exception is D2 · F3, whose interval [-0.04,+2.18] allows the law being 2.2 pp WORSE on urban stop-go riding; that parity sentence was softened rather than defended." .

@@ -295,6 +295,63 @@ Phase D (error-distribution disclosure — quantiles, skew, tail counts) is **ga
 explicit go** and is not started; if it happens it is registered as a dated amendment here
 before running.
 
+### Results (run 2026-07-30, `e48_equiv.py`, B = 10⁴, seed 44; deterministic on re-run)
+
+| comparison | n | med law | med sim | $d$ | 90% CI | verdict |
+|---|--:|--:|--:|--:|:--|---|
+| D1 informed · F3 | 44 | 3.54 | 5.15 | −1.61 | [−3.34, +0.33] | inconclusive |
+| D1 blind · F3 | 44 | 8.17 | 8.37 | −0.20 | [−2.14, +1.70] | inconclusive |
+| D1 blind · F4 | 44 | 7.63 | 8.37 | −0.74 | [−2.17, +2.72] | inconclusive |
+| D2 frozen · F3 | 62 | 7.71 | 6.63 | **+1.08** | [−0.04, +2.18] | inconclusive |
+| D2 frozen · F4 | 62 | 6.45 | 6.63 | −0.19 | [−1.98, +1.59] | inconclusive |
+| D3 · F3 | 441 | 5.76 | 6.76 | −1.00 | [−1.56, −0.63] | inconclusive |
+| D4 · F3 | 219 | 5.49 | 5.44 | +0.04 | [−0.61, +0.43] | **equivalent** |
+| D5 · F3 | 621 | 6.18 | 6.14 | +0.04 | [−0.33, +0.47] | **equivalent** |
+| POOL D3+D4 · F3 | 660 | 5.63 | 6.26 | −0.63 | [−0.90, −0.33] | **equivalent** |
+| POOL D3−D5 · F3 | 1,281 | 5.90 | 6.23 | −0.32 | [−0.55, −0.07] | **equivalent** |
+
+Four equivalent, six inconclusive, **none outside the margin**. Every median reproduces its
+published value (3.54 vs 3.5, 5.63 vs 5.6, 5.90 vs 5.9, …) and **no ride was dropped for
+being unpaired** in any comparison — the populations behind the TOST are exactly the
+populations behind the published brackets.
+
+**P1 holds.** Both pooled rows are formally equivalent: D3+D4 at [−0.90, −0.33] and D3–D5 at
+[−0.55, −0.07], each wholly inside ±1.0. The paper's headline transfer claim is now an
+equivalence result rather than a failure to reject.
+
+**P2 holds.** D1 is inconclusive on both protocols, informed [−3.34, +0.33] and blind
+[−2.14, +1.70]. At $n = 44$ the interval is two to three times the margin, exactly as
+registered. "Equivalence is not formally tested" becomes "a registered equivalence test is
+inconclusive at this $n$" — the same fact carrying a measurement.
+
+**P3 had no prediction; the pattern it produced is the interesting part.** *Every*
+inconclusive verdict except one is inconclusive on the side where the **closed form is
+better than the simulation**. D3 is the clearest: its CI [−1.56, −0.63] is wholly negative,
+so the law does not merely match the simulation there, it beats it — possibly by more than
+the margin, which is why equivalence cannot be declared. Reading "inconclusive" as a weakness
+of the law would be exactly backwards in five of six cases.
+
+**The exception is D2 · F3, and it should be said plainly.** Its interval [−0.04, +2.18]
+allows the closed form being up to 2.2 pp *worse* than the simulation on the urban corpus.
+The point estimate, +1.08, is already outside the margin. The sign test the paper currently
+quotes there ($p = 0.37$) is not evidence of parity, and the TOST declines to supply the
+equivalence the sentence implies. D2's parity language is softened accordingly — the
+registered failure mode was written for pooled rows, but its principle (weaken, do not
+defend) applies here on its own terms. F4 on the same corpus is unremarkable
+([−1.98, +1.59], straddling zero), so this is specific to F3 on urban stop-go riding, where
+[§3.2.3](#3.2.3) already documents that $\varepsilon_{\mathrm{coast}}$ over-credits recovery.
+
+**Deviation from the plan, disclosed.** The implementation plan listed Table 6's
+regime-consistent rows (3.9 vs 4.0) among the registered comparisons; the registration above
+dropped them, and this run does not include them. The reason is that Table 6's protocol
+inverts physics from the scored ride itself, so a law-vs-simulation parity claim there is a
+different kind of claim — partially in-sample per ride — and mixing it into a set otherwise
+made of frozen-transfer comparisons would make one margin do two jobs. Left for a later entry.
+
+**Phase D (error-distribution disclosure) remains gated** and unstarted.
+
+---
+
 ---
 
 ## 2026-07-30 — Entry 47: which deficit form? — pre-registration of the two selections, in I/T/O/S

@@ -807,6 +807,40 @@ The entry also caused and fixed a defect of its own: a smoke flag that
 overwrote a canonical results file, silently reducing it from 1,409 rides to
 204 until it was regenerated.
 
+### Entry 48 — Parity, finally tested rather than assumed
+**Data:** the ten registered law-vs-simulation comparisons behind the paper's
+parity sentences.
+
+An external review pressed a fair point: "no detectable difference" is an
+absence of evidence, not evidence of equivalence. So the claims were put to a
+formal equivalence test — TOST at a margin of ±1.0 percentage point, registered
+before any interval was computed, because a margin chosen after peeking is
+worth nothing.
+
+The margin's stated justification had to be corrected during registration: the
+plan claimed 1.0 pp sat at or below every published confidence half-width, which
+is true of the 44-ride rows and false of the pooled ones, whose intervals are
+tighter than the margin. The honest grounds are operational — below a
+percentage point, nothing a planner decides changes.
+
+Four comparisons came back formally equivalent, six inconclusive, none outside
+the margin. The headline transfer pools passed, upgrading the paper's central
+claim from a failure to reject into an equivalence result. The 44-ride
+calibration corpus was inconclusive exactly as predicted — the same sentence as
+before, now carrying a measurement instead of an apology.
+
+The pattern in the inconclusive verdicts is the part worth keeping: five of six
+fail to reach equivalence on the side where the *closed form beats the
+simulation*. On P. Paz's 441 rides the interval lies entirely below zero — the
+law does not merely match the simulation, it wins, possibly by more than the
+margin, which is why equivalence cannot be declared. Reading "inconclusive" as
+weakness would be backwards.
+
+The exception earned a correction to the paper. On the urban corpus the
+interval allows the closed form being over two points *worse*, and its point
+estimate already sits outside the margin. That sentence had claimed parity on
+the strength of a non-significant sign test. It now says what the data support.
+
 ---
 
 ## Recurring terms, once

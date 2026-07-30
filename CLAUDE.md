@@ -47,7 +47,10 @@ home of the *derivation* and the side-by-side comparison.
   (Entry 19), `goal_calibration.py` + `goal_smooth_rasters.py` (Entry 20;
   `GOAL_SMOKE=1`), `scale_trio.py` (Entry 21; `SCALE_SMOKE=1`; carries the
   Entry-20 anchor constants — refresh them whenever Entry 20 re-runs),
-  `e46_switch.py` (Entry 46 — §3.3's regime switch, four arms
+  `e48_equiv.py` (Entry 48 — TOST equivalence on the difference of
+  medians under paired stratified resampling, margin ±1.0 pp, **seed 44**;
+  `E48_SMOKE=1`. Seeds 42/43 are the published |Δ%| and signed CIs — never
+  reuse one here), `e46_switch.py` (Entry 46 — §3.3's regime switch, four arms
   {constant, grade-inverse} × {unswitched, switched}, scored under both parameter
   classes. A **second-order** harness: it reads `e47_formselect.csv`'s per-ride
   E(ε=0)/E(ε=1) pair rather than re-parsing tracks, which is exact because
