@@ -162,6 +162,7 @@ counted from its CSV rather than asserted, is [`research/data-graph.ttl`](../dat
 
 | entry | $I = (D, P)$ | $T$ | $O$ (rows) | $S$ |
 |--:|---|---|---|---|
+| 49 | $(D_3..D_6, P_{a,g} \cdot P_{f,p}(m))$ via $O_{47}$ | $F_3^{\delta_5}$, affine in $\varepsilon_{\mathrm{coast}}$, global and per rider | `e49_affine.csv` — second-order | does the coasting limit need rescaling? |
 | 48 | the published per-ride $O$ of Entries 1/31/9/12/14/16 | TOST, difference of medians, paired bootstrap | `e48_equiv.csv` (one row per comparison) — second-order | parity sentences upgraded or not |
 | 47 | $(D_1 \cup D_2, P_{a,g})$ and $(D_1 \cup D_2, P_{a,g} \cdot P_{f,r})$ | F3 $\times$ {$\varepsilon_0,\varepsilon_2,\varepsilon_3$}, selected by BIC | `e47_formselect.csv` (2,141 rows; contests on 48 and 990) | **$\varepsilon_0$ retained**; nothing published moved |
 | 46 | $(D_1..D_6, P_{a,g})$ and $(\cdot P_{f,r})$ | regime switch, 4 arms | `e46_switch.csv` (2,141) — a **second-order** $O = T(O_{47})$ | §3.3 vindicated; the frozen sub-3% cells cancel |
@@ -213,6 +214,77 @@ counted from its CSV rather than asserted, is [`research/data-graph.ttl`](../dat
 
 Entries with no $O$ are reviews, registrations, imported notes or refactors — they change
 what the other rows *mean* without producing a per-ride table of their own.
+
+---
+
+## 2026-07-30 — Entry 49: the affine deficit $\delta_5 = \varepsilon_{\mathrm{coast}} k_1 + k_2$ — global vs per rider
+
+**Lineage** — $I$: $(D_3..D_6, P_{a,g} \cdot P_{f,p}(m))$ via $O_{47}$ · $T$: $F_3^{\delta_5}$, fitted globally and per rider · $O$: `e49_affine.csv` ($O_{49} = T(O_{47})$) · $S$: whether the coasting limit needs rescaling, and whether that rescaling is a rider property
+
+*Prompt (Danilo): "assume $\delta_5 = \varepsilon_{\mathrm{coast}} k_1 + k_2$, where $k_1$ and
+$k_2$ can be fitted both globally or per rider. Test it against D3/D4/D5/D6 when fitting
+globally and per rider."*
+
+*Label kept as given. The published family runs $\varepsilon_0$–$\varepsilon_3$, so this leaves
+a gap at 4; renaming it would have made the journal disagree with the request that created it.*
+
+### Pre-registration (written before the form was fitted)
+
+**What the form is, algebraically.** Since $\varepsilon_d = \varepsilon_{\mathrm{coast}} - \delta$,
+
+$$\delta_5 = k_1\varepsilon_{\mathrm{coast}} + k_2 \quad\Longrightarrow\quad
+\varepsilon_d = (1 - k_1)\,\varepsilon_{\mathrm{coast}} - k_2 \tag{9}$$
+
+so $\delta_5$ is **an affine rescaling of the coasting limit**: $k_1$ shrinks it, $k_2$ offsets
+it. Two consequences fix what the test can and cannot show. First, $\delta_5$ **nests** the
+refitted constant — at $k_1 = 0$ it *is* $\varepsilon_0$ with a free value — so it can never be
+worse in sample, and the only interesting question is whether $k_1$ differs from zero by enough
+to pay for its parameter. Second, it does **not** nest $\varepsilon_2 = k/\bar s$: the
+grade-inverse form is not affine in $\varepsilon_{\mathrm{coast}}$, so the two are genuine rivals
+rather than nested alternatives.
+
+**Population.** D3–D6 only, as asked — the evaluation corpora, seven riders (D3, D4, D5, and
+D6's four counted individually). $\sigma$: parse + power + $\bar s \geq 3\%$, matching Entries
+45 and 47 so the numbers are comparable; $\lvert O \rvert$ is expected to be **990**, the count
+Entry 47 established. A secondary run on all rides regardless of $\bar s$ is reported
+separately and labelled, because Entry 46 showed the sub-3% regime behaves differently.
+
+**Two fits, as asked.** *Global*: one $(k_1, k_2)$ for all seven riders — 2 free parameters.
+*Per rider*: one pair each — 14 free parameters. Baselines: $\varepsilon_0$ frozen at 0.13
+(0 parameters), $\varepsilon_0$ refitted (1), $\varepsilon_2 = k/\bar s$ (1).
+
+**Instrument.** As Entry 47, so the entries are comparable: BIC under a Laplace likelihood on
+the signed $\Delta\%$ energy residuals, parameters by LAD on that same quantity, deterministic
+refining grid, $\Delta$BIC < 2 to the fewest parameters. Every form is *also* fitted in deficit
+space against the clamped $\varepsilon_{\mathrm{coast}} - \varepsilon_{\mathrm{bal}}$ and
+reported beside it — Entry 47 found the two spaces disagree by a factor of 2.5–3, and a form
+fitted on energy absorbs bias rather than measuring pedalling. **Held-out is the deciding
+statistic here, not BIC**: with 14 parameters the per-rider arm is in-sample by construction,
+so it is scored on chronological split-halves (fit on one half of a rider's rides, score the
+other, both ways) exactly as Entries 44 and 47 did.
+
+**Predictions.**
+
+- **P1** — $k_1 > 0$. The coasting limit over-credits recovery: it clamps to 1 on gentle
+  descents, and gentle descents are where riders pedal ([§3.2.3](#3.2.3) sees this on urban
+  rides; Entry 46 sees the same over-refund on sub-3% rides under honest physics). If so, the
+  geometry needs *shrinking*, and $k_1$ measures by how much.
+- **P2** — the global arm beats $\varepsilon_0$ on BIC, since it nests the refitted constant and
+  P1 says the extra parameter buys something real.
+- **P3** — the per-rider arm wins in sample and **fails to beat the global arm out of sample**.
+  Seven riders cannot support 14 parameters, and Entry 47 already dropped $\varepsilon_1$ (the
+  rider constant) for this reason. If P3 is wrong — if per-rider transfers — that is the
+  interesting result, because it would make the deficit a rider property rather than a
+  route one, which is the opposite of what $\varepsilon_0$'s universality assumes.
+
+*Failure modes.* If $k_1 \approx 0$ within its CI, $\delta_5$ collapses to a refitted constant
+and should be reported as such, not dressed up as a new form. If the global arm's held-out
+error is no better than $\varepsilon_2$'s, the affine form is a more complicated way to buy
+nothing and does not enter the paper.
+
+**Not registered.** No change to any published column. Whatever this finds, paper 1's shipped
+deficit stays $\varepsilon_0$ until a *calibration-side* selection says otherwise — that was
+Entry 47's protocol and this entry does not reopen it.
 
 ---
 
