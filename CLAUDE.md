@@ -240,7 +240,15 @@ were retired in the 2026-07 re-baseline; git history has them):
   conservation residual (must stay ≤ 1e-6); then `censo_compare.py`,
   `eps_hypothesis.py`, `eps_sp_test.py`, `ppaz_compare.py`, `time_compare.py`,
   and **`python3 src/harness/bootstrap_ci.py`** — the gate battery for every
-  published median; exits non-zero on failure. `SANITY=1 regime_compare.py`
+  published median; exits non-zero on failure. **A full run costs 10–15 minutes and
+  ALL of it is the ~40 bootstrap CIs** (every median, count and ordering gate
+  together takes 2 s), so it is run only when the maintainer asks for it. Two
+  levers for iteration, both of which print a NON-AUTHORITATIVE banner:
+  `GATES=3o,3n` computes intervals only in the named sections — elsewhere the CI
+  checks report `CI-SKIP` while the median gates still run and still fail — and
+  `GATE_B=200` lowers the resample count everywhere. `GATES=<your section>` is
+  ~2 s. Sections are never skipped wholesale: later ones reuse CSVs parsed by
+  earlier ones, so only the expensive part is skipped. `SANITY=1 regime_compare.py`
   runs the synthetic gates; the DEM chain (`igc_resolution_test`,
   `goal_calibration`, `scale_trio`) carries its own sanity-gate blocks — read
   the per-gate lines, not just the exit code (two documented-benign failures:

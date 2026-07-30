@@ -92,10 +92,41 @@ def median(xs: list[float]) -> float:
     return s[(n - 1) // 2] if n % 2 else (s[n // 2 - 1] + s[n // 2]) / 2
 
 
-B = 10000
+# ---- run-cost controls -----------------------------------------------------
+# The battery's cost is ~40 boot_ci/boot_ci_strat calls at B = 10^4 over corpora
+# of 1,400+ rides; every other check is milliseconds. Two levers, both of which
+# make a run NON-AUTHORITATIVE and say so loudly:
+#
+#   GATE_B=200    lower the resample count everywhere (fast, CIs approximate)
+#   GATES=3o,3n   compute CIs only in these sections; elsewhere they are skipped
+#                 and their CI gates report SKIP instead of pass/fail.
+#
+# Sections are NOT skipped wholesale: later ones reuse CSVs parsed by earlier
+# ones, so skipping a section outright breaks the run. Only the expensive part
+# is skipped; every median, count and ordering gate still runs everywhere.
+B = int(os.environ.get("GATE_B", "10000"))
+_WANT = {t.strip() for t in os.environ.get("GATES", "").split(",") if t.strip()}
+_CUR = ""
+if B != 10000 or _WANT:
+    print("!! NON-AUTHORITATIVE RUN"
+          + (f" — B = {B} (published CIs need 10^4)" if B != 10000 else "")
+          + (f" — CIs only for sections {sorted(_WANT)}" if _WANT else "")
+          + "\n!! Do not read these intervals as the published ones.\n")
+
+
+def sec(tag: str) -> None:
+    """Mark the section now executing, for the GATES filter."""
+    global _CUR
+    _CUR = tag
+
+
+def _ci_wanted() -> bool:
+    return not _WANT or _CUR in _WANT
 
 
 def boot_ci(values: list[float], seed: int) -> tuple[float, float]:
+    if not _ci_wanted():
+        return float("nan"), float("nan")
     rand = rng(seed)
     n = len(values)
     stats = []
@@ -125,10 +156,25 @@ def report(label: str, deltas: list[float], expect_abs: float | None = None,
     if expect_abs is not None or expect_ci is not None or expect_ci_signed is not None:
         ok = (expect_abs is None or abs(m_abs - expect_abs) <= 0.11) and (
             expect_signed is None or abs(m_sgn - expect_signed) <= 0.11)
+        _skipped = False
         if expect_ci is not None:
-            ok = ok and abs(a_lo - expect_ci[0]) <= 0.06 and abs(a_hi - expect_ci[1]) <= 0.06
+            if is_finite(a_lo):
+                ok = ok and abs(a_lo - expect_ci[0]) <= 0.06 and abs(a_hi - expect_ci[1]) <= 0.06
+            else:
+                _skipped = True
         if expect_ci_signed is not None:
-            ok = ok and abs(s_lo - expect_ci_signed[0]) <= 0.06 and abs(s_hi - expect_ci_signed[1]) <= 0.06
+            if is_finite(s_lo):
+                ok = ok and abs(s_lo - expect_ci_signed[0]) <= 0.06 and abs(s_hi - expect_ci_signed[1]) <= 0.06
+            else:
+                _skipped = True
+        if _skipped:
+            # the medians were still gated; only the interval was not computed
+            print(f"{label.ljust(34)} n={str(len(deltas)).rjust(3)}  "
+                  f"med|Δ%|={to_fixed(m_abs, 2).rjust(6)}  medΔ%={to_fixed(m_sgn, 2).rjust(7)}"
+                  + ("  GATE-OK(medians) CI-SKIP" if ok else "  GATE-FAIL(medians) CI-SKIP"))
+            if not ok:
+                failed = True
+            return
         gate = " GATE-OK" if ok else (
             f" GATE-FAIL(exp {expect_abs}/{'null' if expect_signed is None else expect_signed}"
             f"{'' if expect_ci is None else ' ci' + str(expect_ci)}"
@@ -180,6 +226,13 @@ def strat_signed_gate(label: str, strata_cols: list[list[float]], es: float,
     global failed
     pooled = [x for v in strata_cols for x in v]
     ms = median(pooled)
+    if not _ci_wanted():
+        _ok = abs(ms - es) <= 0.11
+        print(f"{label}: medΔ%={to_fixed(ms, 2)}"
+              + ("  GATE-OK(median) CI-SKIP" if _ok else "  GATE-FAIL(median) CI-SKIP"))
+        if not _ok:
+            failed = True
+        return
     rand = rng(43)
     stats = []
     for _ in range(B):
@@ -207,6 +260,7 @@ def col(rows: list[dict], c: str) -> list[float]:
 
 
 # ---------- 1. Longões scoreboard (44 rides), §8.1 ----------
+sec("1")
 print("== Longões (44 power rides), §8.1 scoreboard ==")
 lg = parse_csv("model_comparison.csv")
 LG = [
@@ -224,6 +278,7 @@ for label, c, ea, es, eci in LG:
 paired("PAIRED champion (cfS) vs canonical", lg, "cfS_vs_emp", "canon_vs_emp")
 
 # ---------- 1b. Longões FROZEN protocol (Entry 31 / paper Table 2) ----------
+sec("1b")
 print("\n== Longões FROZEN protocol (44 rides), Entry 31 ==")
 lf = parse_csv("longoes_frozen.csv")
 LF = [
@@ -247,6 +302,7 @@ paired("PAIRED frozen form 3 vs canonical", lf, "f3_d", "canon_d")
 paired("PAIRED frozen form 4 vs canonical", lf, "f4_d", "canon_d")
 
 # ---------- 2. Censo sweep (62 clean rides), §8.4 ----------
+sec("2")
 print("\n== Censo (clean urban rides), §8.4 sweep ==")
 cz = [r for r in parse_csv("censo_comparison.csv") if r.get("dataOK") == "true"]
 if len(cz) != 62:
@@ -271,6 +327,7 @@ paired("PAIRED frozen sm_geom vs canonical", cz, "sm_geom", "canon_d")
 paired("PAIRED frozen pm_geom vs canonical", cz, "pm_geom", "canon_d")
 
 # ---------- 3. P. Paz (441) and JAAM (219), §8.6 ----------
+sec("3")
 print("\n== P. Paz (441 rides), §8.6 ==")
 pp = parse_csv("ppaz_comparison.csv")
 report("poor-man · ε=geom", col(pp, "pm_geom"), 4.9, 0.6, expect_ci=(4.4, 5.8))
@@ -309,6 +366,7 @@ if not _ok:
     failed = True
 
 # ---------- 3b. Author-full D5 (621 rides), paper §3.4 ----------
+sec("3b")
 print("\n== Author-full (621 rides), paper §3.4 ==")
 dl = [r for r in parse_csv("danlessa_comparison.csv") if r.get("dataOK", "true") == "true"]
 if len(dl) != 621:
@@ -321,6 +379,7 @@ report("poor-man · ε=0.20", col(dl, "pm_0.20"), 6.9, 3.8, expect_ci=(6.2, 7.5)
 report("canonical", col(dl, "canon_d"), 6.1, None, expect_ci=(5.5, 6.7))
 
 # ---------- 3b2. Paired sign tests + descent statistics (paper §3.3-3.4) ----------
+sec("3b2")
 print("\n== Paired tests and descent statistics (paper §3.3-3.4) ==")
 paired("PAIRED D3 sm_geom vs canonical", pp, "sm_geom", "canon_d")
 paired("PAIRED D5 sm_geom vs canonical", dl, "sm_geom", "canon_d")
@@ -359,6 +418,7 @@ descent_rms(jm, "D4 descents (assumed)", 21, (0.090, 0.085))
 descent_rms(dl, "D5 descents (in-sample)", 221, (0.092, 0.126))
 
 # ---------- 3c. Pooled D3-D5 (paper Table 3; stratified bootstrap) ----------
+sec("3c")
 print("\n== Pooled D3–D5 (1,281 rides), paper Table 3 ==")
 
 
@@ -371,6 +431,8 @@ def strat_report(label: str, strata: list[list[float]], expect_abs: float,
     m = median(pooled_abs)
 
     def ci(vals_per_stratum: list[list[float]], seed: int) -> tuple[float, float]:
+        if not _ci_wanted():
+            return float("nan"), float("nan")
         rand = rng(seed)
         stats = []
         for _ in range(B):
@@ -383,6 +445,13 @@ def strat_report(label: str, strata: list[list[float]], expect_abs: float,
         return stats[math.floor(0.025 * B)], stats[math.ceil(0.975 * B) - 1]
 
     lo, hi = ci([[abs(x) for x in s] for s in strata], 42)
+    if not is_finite(lo):
+        _ok = abs(m - expect_abs) <= 0.11
+        print(f"{label.ljust(34)} n={len(pooled_abs)}  med|Δ%|={to_fixed(m, 2)}"
+              + ("  GATE-OK(median) CI-SKIP" if _ok else "  GATE-FAIL(median) CI-SKIP"))
+        if not _ok:
+            failed = True
+        return
     ok = (abs(m - expect_abs) <= 0.11
           and abs(lo - expect_ci[0]) <= 0.06 and abs(hi - expect_ci[1]) <= 0.06)
     print(f"{label.ljust(34)} n={len(pooled_abs)}  med|Δ%|={to_fixed(m, 2)} "
@@ -421,6 +490,9 @@ for _lab, _col, _ea, _eci, _es, _ecis in (
     strat_report(_lab, _strata_cols, _ea, _eci)
     _pooled_signed = [x for v in _strata_cols for x in v]
     _ms = median(_pooled_signed)
+    if not _ci_wanted():
+        print(f"{_lab} signed: medΔ%={to_fixed(_ms, 2)}  CI-SKIP")
+        continue
     _rand = rng(43)
     _stats = []
     for _ in range(B):
@@ -439,6 +511,7 @@ for _lab, _col, _ea, _eci, _es, _ecis in (
         failed = True
 
 # ---------- 3d. Per-ride inverted physics (Entry 33 / paper Table 5) ----------
+sec("3d")
 print("\n== Per-ride inverted physics (Entry 33, Table 5) ==")
 pi = parse_csv("perride_invert.csv")
 PI = {
@@ -495,6 +568,7 @@ print(f"E33 D1 m̂−m_logged: bias {to_fixed(median(_me), 1)}, |err| "
 if not _ok:
     failed = True
 # ---------- 3e. Regime-consistent aero (Entry 35 / paper Table 6) ----------
+sec("3e")
 print("\n== Regime-consistent aero (Entry 35, Table 6) ==")
 e35 = parse_csv("e35_residual.csv")
 T6 = {
@@ -537,6 +611,7 @@ for _corpus, _exp in (("longoes", 0.64), ("censo", 1.36), ("ppaz", 0.72),
         failed = True
 
 # ---------- 3f. eps0 per dataset (Entry 36) ----------
+sec("3f")
 print("\n== ε₀ per dataset (Entry 36) ==")
 e36 = parse_csv("e36_eps0.csv")
 for _corpus, _bal, _bias in (("longoes", 0.113, 0.127), ("censo", 0.070, 0.099),
@@ -583,6 +658,7 @@ for _corpus, _em in PI_M.items():
         failed = True
 
 # ---------- 3g. Deadband-suspension thread (Entries 38-40 / paper §4.4) ----------
+sec("3g")
 print("\n== Deadband thread (E39 τ* + E40 roller), §4.4 ==")
 e39 = parse_csv("e39_tau_reg.csv")
 _j39 = [r for r in e39 if r.get("corpus") == "jaam"]
@@ -633,6 +709,7 @@ for _corpus, _erho, _eres in (("longoes", 0.444, 0.48), ("censo", 0.125, 0.44),
         failed = True
 
 # ---------- 3h. Lumped-eps proxy (Entry 42) ----------
+sec("3h")
 print("\n== Lumped ε proxy (Entry 42) ==")
 e42 = parse_csv("e42_lump.csv")
 for _corpus, _de in (("longoes", -0.079), ("censo", -0.112), ("ppaz", -0.083),
@@ -657,6 +734,7 @@ for _corpus, _w, _n in (("censo", 16, 69), ("jaam", 143, 215)):
         failed = True
 
 # ---------- 3i. Elevation-source substitution (Entry 41 / paper 2) ----------
+sec("3i")
 print("\n== Elevation-source substitution (Entry 41, paper 2) ==")
 e41 = parse_csv("e41_dem_route.csv")
 _e41_prim = [r for r in e41 if num(r, "dataOK") == 1 and num(r, "g1_track") == 1
@@ -812,6 +890,7 @@ for _arm, _ew, _en in (("igc5", 501, 943), ("igc5s30", 400, 935),
         failed = True
 
 # ---------- 3j. D6 + the deficit's form (Entries 43-45, paper §1.3.2/§3.2) ----------
+sec("3j")
 print("\n== D6 European corpus (Entry 43) ==")
 d6 = parse_csv("skc_comparison.csv")
 _d6ok = [r for r in d6 if r.get("dataOK", "true") == "true"]
@@ -988,6 +1067,7 @@ else:
         failed = True
 
 # ---------- 3k. D6 in Tables 5-6, and the D3-D6 pools (Entry 43) ----------
+sec("3k")
 print("\n== D6 in Tables 5-6 + the D3-D6 pools ==")
 _ski = parse_csv("skc_invert.csv")
 _D6R = ["user_1", "user_2", "user_3", "user_5"]
@@ -1038,6 +1118,7 @@ for _tab, _br, _d6s, _rows in (
         strat_report(f"E43 {_tab} D3-D6 {_lab}", _strata, _ea, _eci)
 
 # ---------- 4. Time model, P. Paz (§8.8 primary endpoint) ----------
+sec("4")
 # Target = tMovBin, exactly as time_compare's scoreboard() scores it.
 print("\n== Time model, P. Paz (§8.8 primary endpoint) ==")
 tm = [r for r in parse_csv("time_comparison.csv") if r.get("corpus") == "ppaz"]
@@ -1061,6 +1142,7 @@ if not _ok:
     failed = True
 
 # ---------------------------------------------------------------- 3l. Entry 47
+sec("3l")
 # Deficit-form selection. The contest is RE-DERIVED here from the per-ride CSV
 # rather than compared against transcribed numbers: the gate refits all four
 # forms and re-applies the DeltaBIC < 2 -> fewest-parameters rule, so a change in
@@ -1212,6 +1294,7 @@ if not _ok:
 
 
 # ---------------------------------------------------------------- 3m. Entry 46
+sec("3m")
 # The regime switch. Two things are gated: the four arm medians as published in
 # the journal, and — the finding — that the sub-3% verdict REVERSES between
 # parameter classes, with the near-unbiased choice being the opposite one in
@@ -1273,6 +1356,7 @@ if not _ok:
 
 
 # ---------------------------------------------------------------- 3n. Entry 48
+sec("3n")
 # TOST equivalence. Gates every registered row's d, 90% CI and verdict, AND the
 # population parity that makes them comparable to the published brackets: each
 # comparison's n and its med_law/med_sim against the medians the paper prints.
@@ -1342,6 +1426,7 @@ if not _ok:
 
 
 # ---------------------------------------------------------------- 3o. Entry 49
+sec("3o")
 # The affine deficit. Gates the fitted k1 and, more importantly, the ORDERING
 # claims the journal entry rests on — that under P_f,r the zero-parameter frozen
 # constant beats both one-parameter rivals and the two-parameter affine form on
