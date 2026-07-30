@@ -22,8 +22,7 @@ decision — not financial subsidy.)
 | `05-deliverables.sysml` | The four articles, their enablement chain, and why A4 is deferred |
 | `06-lifecycle.sysml` | Life-cycle stages, the freeze tension, and the A1→A2→A3 roadmap |
 | `07-sub-missions.sysml` | One sub-mission per critical-path article, each with what it must *not* claim |
-| `08-publication-roadmap.sysml` | The publication state machine (0–6) with a verification and a validation gate per state |
-| `09-authorship-and-assistance.sysml` | Where machine assistance is used, where it stops, and who the artefacts are written for |
+| `08-publication-roadmap.sysml` | The publication state machine (0–6), a verification + validation gate per state, and the governance section: assistance, credit, readership |
 
 Read in order; each imports the one before.
 
@@ -356,6 +355,8 @@ run and gated (1,188 rides), so its research is effectively done and only the
 decision is missing.
 
 ## Assistance and authorship
+
+*(In `08`'s governance section — the scope is indexed by the states, so it lives with them.)*
 
 Policy: LLM assistance belongs to the **research phase** and to **deploying the
 research infrastructure**. Once content and results are frozen, the draft is

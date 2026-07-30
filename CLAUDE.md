@@ -148,13 +148,13 @@ home of the *derivation* and the side-by-side comparison.
   file → producer → journal entry). Every file regenerates with one harness
   command.
 - `mission-model/` — the repo's **mission** in SysML v2 / Mission Engineering
-  terms (`00-mission` → `08-publication-roadmap`, read in order): the effect chain,
+  terms (`00-mission` → `08-publication-roadmap`, read in order; 08 ends with the assistance/credit governance section): the effect chain,
   the four stakeholder classes, capabilities vs the systems delivering them, and
   MOPs vs MOEs. Plain text, compiled by nothing (no-build rule). Descriptive, not
   aspirational — it records that `MOE-5` (adoption in practice) is uninstrumented
   and that `cDeploy` is the thinnest capability. `05-deliverables` holds the article chain A1→A2→A3 (A4, the time dual, deferred on evidential grounds — Entry 13's descent bridge fails) and names A3 as the mission's binding constraint. Changes on a *paper* landing or a
   stakeholder shift, never on a re-baselined number.
-- **Assistance policy** (mission-model/09): LLM assistance is for the **research
+- **Assistance policy** (`mission-model/08`, governance section): LLM assistance is for the **research
   phase** and for **deploying research infrastructure**. Once an article's content
   and results are frozen, the draft is written and diagrammed **entirely by
   humans** — the last machine-produced artefact in an article's chain is the
