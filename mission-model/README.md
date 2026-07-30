@@ -375,13 +375,32 @@ an abstract oversells has no gate. That also explains the review's major finding
 *framing* is exactly the category with no gate, and exactly what the policy
 reserves for people.
 
-On machines as readers: they're modelled as a **channel**, not a stakeholder — a
-machine has no interest of its own, the interest belongs to the human downstream
-asking it a question. But the consequence is real and sharpens an existing gate:
-**retrieval serves fragments**, so a machine reader is the one most likely to meet
-a withdrawn claim without its correction. That turns `JScopingGate`'s adjacency
-requirement from a preference into a hard one — if adjacency is editorial,
-retrieval breaks it; if structural, retrieval carries it.
+**Machine readers are stakeholders — members of the general public (D).** My
+first pass called them a channel, on the grounds that a machine has no interests
+of its own; that test doesn't survive contact with the rest of the model, since
+(D) isn't defined by interiority either. It's defined *structurally* — by what it
+does (receives, understands, redistributes) and needs (plain language, privacy).
+A machine reader occupies exactly that position.
+
+Membership is **partial**, and the split is the useful part: machine members
+inherit (D)'s *reading* needs but not its *moral claim* — the reciprocity comes
+from three riders donating histories to people. Privacy runs the other way and
+binds machine access hardest, since ingestion at scale is where re-identification
+would be attempted.
+
+Two consequences. **State 2's (D) gate becomes partly testable** rather than
+polled: I'd flagged (D) as the class with no obvious representative, and a gate
+nobody can pass gets skipped. Hand the frozen draft to a model cold and check the
+summary keeps the scope conditions and doesn't promote the calibration figure over
+the out-of-sample one. That doesn't discharge the gate — a faithful machine
+summary shows the text is unambiguous, not that a person found it useful — but it
+measures precisely what the project most needs, that compression doesn't strip the
+caveats.
+
+And **retrieval serves fragments**, so a machine member of (D) is the reader most
+likely to meet a withdrawn claim without its correction — turning `JScopingGate`'s
+adjacency requirement from a preference into a hard one. Editorial adjacency
+breaks under retrieval; structural adjacency carries.
 
 ## Conventions
 

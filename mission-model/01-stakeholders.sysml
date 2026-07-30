@@ -95,6 +95,20 @@ package MissionStakeholders {
             + "assurance that donated ride data stays private.";
         attribute needsPlainLanguage : Boolean default true;
         attribute needsPrivacy : Boolean default true;
+        attribute includesMachineReaders : Boolean default true;
+        doc
+        /*
+         * (D) INCLUDES MACHINE READERS (Danilo, 2026-07-30). The class is defined
+         * by structural position — receiving, understanding, redistributing —
+         * not by interiority, and a model answering someone's question about
+         * cycling energy occupies that position. Membership is partial: machine
+         * members inherit the READING needs (intelligible, unambiguous,
+         * self-describing) but not the moral claim, which is owed to the people
+         * whose donated histories created it. The privacy need runs the other
+         * way and binds machine access hardest, since ingestion at scale is
+         * where re-identification would be attempted. See
+         * PublicationRoadmap::MachineReadership.
+         */
     }
 
     // ------------------------------------------- (E) the author and collective

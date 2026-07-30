@@ -408,13 +408,45 @@ package PublicationRoadmap {
          * useful to a machine reader than to a human one, and none of it was
          * built with a machine reader in mind.
          *
-         * Modelling note: a machine is not a STAKEHOLDER here. It has no
-         * interest of its own; the interest belongs to the human downstream of
-         * it — a student, a planner, an advocate who asks a model about cycling
-         * energy and gets an answer grounded in this work rather than
-         * hallucinated around it. So machines are modelled as a CHANNEL with
-         * distinct requirements, and the stakeholders stay the five already
-         * named.
+         * MODELLING NOTE, corrected (Danilo): a machine reader IS a
+         * stakeholder, as part of the general public (D).
+         *
+         * My first pass modelled it as a channel on the grounds that a machine
+         * has no interests of its own. That test does not survive contact with
+         * the rest of the model: (D) is not defined by interiority either. It is
+         * defined STRUCTURALLY — by what it does (receives, understands,
+         * redistributes) and what it needs (plain language, privacy). A machine
+         * reader occupies exactly that position: it receives the work and
+         * carries it to other readers. Judged by position rather than by
+         * inner life, it is a member of the public, and the model was applying
+         * two different membership tests to two members of the same class.
+         *
+         * MEMBERSHIP IS PARTIAL, AND THE SPLIT IS THE USEFUL PART. A machine
+         * inherits (D)'s READING needs — the result must be intelligible,
+         * unambiguous and self-describing to it — but not (D)'s MORAL CLAIM. The
+         * reciprocity that (D) holds comes from three riders donating their
+         * histories to people; that debt is owed to humans. Privacy runs the
+         * other way and binds machine access hardest: a corpus ingested at scale
+         * is exactly where re-identification would be attempted, so (D)'s
+         * privacy need CONSTRAINS the machine member rather than being owed to
+         * it.
+         *
+         * THE CONSEQUENCE I HAD MISSED. State 2's validation gate asks each
+         * stakeholder class to confirm the draft serves its use, and I flagged
+         * (D) as the class with no obvious representative — a gate with nobody
+         * to pass it gets skipped. If machines are part of (D), that gate
+         * becomes partly TESTABLE rather than polled: hand the frozen draft to a
+         * model cold and check whether what comes back is faithful — the scope
+         * conditions intact, the calibration figure not mistaken for the
+         * out-of-sample one, the limitations surviving compression. A human
+         * member of the public can only be asked whether they followed it. A
+         * machine member can be measured, repeatedly, against the same draft.
+         *
+         * That does not discharge the gate — a faithful machine summary is
+         * evidence the text is unambiguous, not that a person found it useful —
+         * but it converts an unpassable gate into a partly instrumented one, and
+         * it tests the property the project most needs (that compression does
+         * not strip the caveats) rather than the one it can most easily poll.
          *
          * THE CONSEQUENCE THAT MATTERS, and it sharpens an existing gate. A
          * retrieval system surfaces FRAGMENTS by default. A machine reader is
@@ -427,8 +459,15 @@ package PublicationRoadmap {
          * and they only work if a fragment cannot be served without them.
          */
         attribute audience : String default "journal, repositories, claims graph, lineage DAG, RO-Crates";
-        attribute isStakeholder : Boolean default false;
-        attribute modelledAs : String default "a channel with distinct requirements; the interest belongs to the human downstream";
+        attribute isStakeholder : Boolean default true;
+        attribute modelledAs : String default
+            "a member of the general public (D), by structural position — "
+            + "inheriting D's reading needs, not D's moral claim; D's privacy "
+            + "need constrains this member rather than being owed to it";
+        attribute testableGate : String default
+            "state 2's (D) validation becomes partly measurable: give the frozen "
+            + "draft to a model cold and check the summary keeps the scope "
+            + "conditions and does not promote the calibration figure";
         attribute sharpens : String default
             "JScopingGate — retrieval serves fragments, so a withdrawal must be "
             + "structurally inseparable from its correction, not editorially adjacent";
