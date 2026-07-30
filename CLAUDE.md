@@ -113,7 +113,10 @@ home of the *derivation* and the side-by-side comparison.
   is *counted from its CSV*, never asserted, because `|O| ≤ |D|` and reading a
   corpus size as a result population is the error it exists to catch; validate
   with `rdflib`),
-  `literature-context.md`, `simujaules-literature-context.md`,
+  `paper1-adversarial-review.md` (the 2026-07-30 multi-agent adversarial pass:
+  6 major + 13 minor findings, each tagged ✅ independently verified or ⚠️ not —
+  **none applied yet**; M2, the unreported D6 reversal in Table 6, is the one to
+  fix first), `literature-context.md`, `simujaules-literature-context.md`,
   `crr-cda-typical-values.md`, `dem-elevation-comparison.md`,
   `ascent-error-literature.md`, `censo-model-verification.md`,
   `VERIFICATION_NOTES.md`.
