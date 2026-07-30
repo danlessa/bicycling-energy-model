@@ -44,6 +44,7 @@ resolve their inputs and this directory relative to their own location).
 | `e44_scurve_cells.csv`, `e44_scurve_fits.csv` | `python3 src/harness/e44_scurve.py` | 44 (S-curve reopened; occupancy sigmoids) |
 | `e45_ridelevel.ledger.csv`, `e45_ridelevel.paper.csv` | `E45_TARGET={ledger,paper} python3 src/harness/e45_ridelevel.py` | 45 (ride-level form contest) |
 | `e45_flatseg.csv` | `python3 src/harness/e45_flatseg.py` | 45 amendment (flat-terrain probe) |
+| `e51_flatconst.csv` | `python3 src/harness/e51_flatconst.py` | 51 (replacement flat ε, train/test on D3–D6 under P_f,r) |
 | `e50_sensitivity.csv` | `python3 src/harness/e50_sensitivity.py` (`E50_SMOKE=1`) | 50 (Sobol variance decomposition of F1–F4 error over m, CdA, Crr, ε) |
 | `e49_affine.csv` | `python3 src/harness/e49_affine.py` (`E49_SMOKE=1`) | 49 (affine deficit k₁·ε_coast + k₂; four scopes: P_f,r and P_a,g × gated/all) |
 | `e48_equiv.csv` | `python3 src/harness/e48_equiv.py` (`E48_SMOKE=1`) | 48 (TOST equivalence, margin ±1.0 pp, seed 44) |

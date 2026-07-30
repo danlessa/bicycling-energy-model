@@ -276,6 +276,57 @@ price, and that price belongs in paper 1's discussion whatever Entry 50 conclude
 **Not registered.** Any change to the deployed router. The per-edge question is A3's
 (Entry 50's note), and a route-level constant does not settle an edge-level cost.
 
+### Results (run 2026-07-30, `e51_flatconst.py`; 2,028 rides, train 1,016 / test 1,012)
+
+**Fitted on train: $\varepsilon = 0.2278$** (median-optimal); the LAD optimum is 0.3031. The
+registered identifiability check passes — the test half's own optimum is 0.2479, within the
+test-half CI of the train fit, so the constant is identified at this sample size.
+
+**Test-half performance, F3 under $P_{f,r}$:**
+
+| estimator | med $\lvert\Delta\%\rvert$ | signed |
+|---|--:|--:|
+| **fitted flat 0.228** | **4.17 [3.89, 4.53]** | +1.76 [+1.22, +2.22] |
+| incumbent $\varepsilon_f = 0.20$ | 4.27 [3.98, 4.64] | +2.58 |
+| Entry 49's 0.344 | 4.36 [4.14, 4.72] | −1.44 |
+| dynamic $\varepsilon_d$ | 5.49 [5.12, 5.85] | −2.81 |
+| $\varepsilon = 0$ | 9.01 [8.30, 9.75] | +8.68 |
+
+**P3 is refuted in the good direction, and this is the entry's finding.** It was registered as
+the question of what the fallback *costs*. It costs nothing: **the flat constant beats the
+dynamic estimator by 1.32 pp** (4.17 against 5.49), paired on the same held-out rides, flat
+closer on 560 of 1,006, $p = 0.0004$. Its bias is also smaller (+1.76 against −2.81). Dropping
+the geometry from paper 1 is not a concession — under honest per-ride physics it is an
+improvement.
+
+That also corrects a number I had been quoting while planning the refactor. The "flat costs
+1.6 pp" figure (pooled 5.9 against 7.5) is from the **frozen** protocol, where the dynamic
+estimator's over-refund cancels the frozen $C_dA$'s over-prediction (Entry 46). Under $P_{f,r}$
+the cancellation is gone and the ordering reverses. The two facts are consistent and were
+already in the journal; carrying the frozen number into a per-ride argument was my error.
+
+**P1 partially refuted.** It predicted the fitted constant would land near Entry 49's 0.344 and
+well above 0.20. It lands at **0.228** — nearer the incumbent. The discrepancy is scope, not
+disagreement: Entry 49 fitted on **real descents only** ($\bar s \geq 3\%$), where the descent
+term carries most of its weight; this entry fits over **all** rides, which is what a flat
+constant is for. Both are right about their own population, and the paper should quote the
+all-rides value.
+
+**P2 holds.** Per-corpus optima span **0.186 (D5) to 0.445 (D6-user_1)**, a factor of 2.4, so
+one number is a compromise rather than a universal. But the compromise is cheap: under the
+pooled fit the test medians are D3 3.24, D4 2.93, D5 5.04, D6-user_2 3.37, D6-user_3 5.32, with
+only D6-user_1 poor at 7.78 — the rider whose own optimum is furthest from the pool, and the one
+whose implied mass Entry 43 flagged as outside its registered window.
+
+**And the descent term is unambiguously real.** $\varepsilon = 0$ costs 4.8 pp and +8.7 pp of
+bias. The term is load-bearing; only its *functional form* is not.
+
+**Consequence.** Paper 1 ships **$\varepsilon = 0.23$** (all rides, per-ride physics), not 0.20
+and not 0.344. The $\varepsilon_d$ rows can now be dropped from the article's tables without
+loss — they are worse on held-out data than the constant that replaces them.
+
+---
+
 ---
 
 ## 2026-07-30 — Entry 50: is ε worth its density? — a variance decomposition of F1–F4's error over (m, C_dA, C_rr, ε)
