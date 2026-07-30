@@ -297,24 +297,24 @@ package MissionDeliverables {
     // ---------------------------------------------------- dependency structure
 
     part def Enablement {
-        attribute from : String;
-        attribute to : String;
+        attribute src : String;
+        attribute dst : String;
         attribute nature : String;
     }
 
     part d1to2 : Enablement {
-        attribute redefines from default "A1";
-        attribute redefines to default "A2";
+        attribute redefines src default "A1";
+        attribute redefines dst default "A2";
         attribute redefines nature default "hard — A2 evaluates A1's law; without it there is nothing to substitute into";
     }
     part d2to3 : Enablement {
-        attribute redefines from default "A2";
-        attribute redefines to default "A3";
+        attribute redefines src default "A2";
+        attribute redefines dst default "A3";
         attribute redefines nature default "hard — A3 cites A2's scale prescription; the discretisation question is raised BY A2";
     }
     part d1to4 : Enablement {
-        attribute redefines from default "A1";
-        attribute redefines to default "A4";
+        attribute redefines src default "A1";
+        attribute redefines dst default "A4";
         attribute redefines nature default "soft — A4 reuses A1's geometry terms but nothing downstream waits on A4";
     }
 

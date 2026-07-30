@@ -154,6 +154,14 @@ home of the *derivation* and the side-by-side comparison.
   aspirational — it records that `MOE-5` (adoption in practice) is uninstrumented
   and that `cDeploy` is the thinnest capability. `05-deliverables` holds the article chain A1→A2→A3 (A4, the time dual, deferred on evidential grounds — Entry 13's descent bridge fails) and names A3 as the mission's binding constraint. Changes on a *paper* landing or a
   stakeholder shift, never on a re-baselined number.
+- **Assistance policy** (mission-model/09): LLM assistance is for the **research
+  phase** and for **deploying research infrastructure**. Once an article's content
+  and results are frozen, the draft is written and diagrammed **entirely by
+  humans** — the last machine-produced artefact in an article's chain is the
+  pre-draft body handed over at that freeze. The principle: assisted where the
+  output is machine-checkable, human where it is a claim on a reader's attention.
+  The exception is the journal, the repos and their graphs, where machines are an
+  expected primary reader.
 - `README.md` — user-facing overview.
 
 ## The two models
