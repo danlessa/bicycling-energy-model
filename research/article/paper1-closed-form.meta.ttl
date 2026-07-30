@@ -59,16 +59,6 @@
   rdfs:comment "Why the frozen sub-threshold cells are accurate BY CANCELLATION rather than by fit" ;
   pc:preRegistered true .
 
-<#c-e47.insample.dbic> a schema:Claim ;
-  schema:text "On the in-sample D3-D6 arm, eps_2 beats frozen eps_0 by dBIC 128.8" ;
-  dcterms:type "in-sample" ;
-  pc:value 128.8 ;
-  pc:gateSection "3l" ;
-  cito:citesAsEvidence dg:o_e47 ;
-  prov:wasDerivedFrom claims:assert47 ;
-  rdfs:comment "Decisive on BIC and worth 0.17 pp of median error; the two criteria disagree in size, never in direction" ;
-  pc:preRegistered true .
-
 <#c-d1.f3.informed.med> a schema:Claim ;
   schema:text "F3 median |D%| 3.5 [2.0, 5.6] on D1 under condition-informed per-ride parameters" ;
   dcterms:type "calibration" ;
@@ -187,3 +177,13 @@
   pc:value 4.0 ;
   pc:gateSection "3e" ;
   cito:citesAsEvidence dg:o_perride_invert .
+
+
+<#c-e50.eps.share> a schema:Claim ;
+  schema:text "eps accounts for 0.070 of F3 prediction-error variance (total-order Sobol index), against 0.553 for CdA" ;
+  dcterms:type "derived" ;
+  pc:value 0.070 ;
+  pc:gateSection "3p" ;
+  cito:citesAsEvidence dg:o_e50 ;
+  pc:preRegistered true ;
+  rdfs:comment "The measurement that moved the deficit theory out of paper 1 and into section 4.4.2 as future work" .

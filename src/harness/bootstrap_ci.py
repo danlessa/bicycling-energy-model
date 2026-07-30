@@ -1581,6 +1581,31 @@ if not _ok:
     failed = True
 
 
+# ---------------------------------------------------------------- 3p. Entry 50
+# Sensitivity decomposition. Gates the shares section 3.2 prints, and the ORDERING
+# the section's argument rests on: eps below every physical parameter, and the
+# CdA-Crr pair the largest interaction. Read from the per-form CSV, not restated.
+print("\n== Sensitivity decomposition (Entry 50, paper section 3.2) ==")
+
+_e50 = [r for r in parse_csv("e50_sensitivity.csv") if r["scope"].startswith("empirical")]
+_g = {(r["form"], r["param"]): float(r["ST"]) for r in _e50}
+_exp50 = {("F3", "eps"): 0.070, ("F3", "CdA"): 0.553, ("F3", "m"): 0.460, ("F3", "Crr"): 0.139}
+for (f, prm), ev in _exp50.items():
+    _v = _g.get((f, prm), float("nan"))
+    _ok = is_finite(_v) and abs(_v - ev) <= 0.005
+    print(f"  S_T({prm:<4}) on {f} = {to_fixed(_v, 3)}"
+          + (" GATE-OK" if _ok else f" GATE-FAIL(exp {ev})"))
+    if not _ok:
+        failed = True
+
+# the ordering is the argument: eps must sit below every physical parameter
+_ok = all(_g[("F3", "eps")] < _g[("F3", q)] for q in ("m", "CdA", "Crr"))
+print("  eps ranks below m, CdA and Crr on F3"
+      + (" GATE-OK" if _ok else " GATE-FAIL"))
+if not _ok:
+    failed = True
+
+
 if failed:
     print("\nONE OR MORE GATES FAILED", file=sys.stderr)
     sys.exit(1)
