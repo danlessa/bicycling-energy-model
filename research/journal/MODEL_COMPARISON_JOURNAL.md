@@ -162,6 +162,7 @@ counted from its CSV rather than asserted, is [`research/data-graph.ttl`](../dat
 
 | entry | $I = (D, P)$ | $T$ | $O$ (rows) | $S$ |
 |--:|---|---|---|---|
+| 48 | the published per-ride $O$ of Entries 1/31/9/12/14/16 | TOST, difference of medians, paired bootstrap | `e48_equiv.csv` (one row per comparison) — second-order | parity sentences upgraded or not |
 | 47 | $(D_1 \cup D_2, P_{a,g})$ and $(D_1 \cup D_2, P_{a,g} \cdot P_{f,r})$ | F3 $\times$ {$\varepsilon_0,\varepsilon_2,\varepsilon_3$}, selected by BIC | `e47_formselect.csv` (2,141 rows; contests on 48 and 990) | **$\varepsilon_0$ retained**; nothing published moved |
 | 46 | $(D_1..D_6, P_{a,g})$ and $(\cdot P_{f,r})$ | regime switch, 4 arms | `e46_switch.csv` (2,141) — a **second-order** $O = T(O_{47})$ | §3.3 vindicated; the frozen sub-3% cells cancel |
 | 45 | $(D_1..D_6, P_{a,g})$ | ride-level deficit contest | `e45_ridelevel.csv` (1,039), `e45_ridelevel.paper.csv` (1,038), `e45_flatseg.csv` (396 segments) | **eq. (8)**, $k$ = 0.0051 |
@@ -212,6 +213,87 @@ counted from its CSV rather than asserted, is [`research/data-graph.ttl`](../dat
 
 Entries with no $O$ are reviews, registrations, imported notes or refactors — they change
 what the other rows *mean* without producing a per-ride table of their own.
+
+---
+
+## 2026-07-30 — Entry 48: formal equivalence testing (TOST) for the parity claims — pre-registration
+
+**Lineage** — $I$: the published per-ride $O$ of Entries 1/31/9/12/14/16/33 · $T$: TOST on the difference of medians under paired resampling · $O$: `e48_equiv.csv` (one row per registered comparison; $O_{48} = T(O_{\text{published}})$) · $S$: upgrades, or fails to upgrade, paper 1's parity sentences
+
+*Origin: an external review round (2026-07-29) pressed that "no detectable difference" is not
+evidence of equivalence. Plan in [`research/article/paper1-equivalence.PLAN.md`](../article/paper1-equivalence.PLAN.md),
+drafted as Entry 43, renumbered to 44 and then 45 as those numbers were taken by the D6
+registration and the S-curve refit; 45–47 have since been used too, so this is **Entry 48**.*
+
+### Pre-registration (written before any equivalence CI was computed)
+
+**The question.** Paper 1 repeatedly says the closed form and the simulation are
+"statistically indistinguishable", with a non-significant paired sign test as the evidence.
+That is an absence of evidence, not evidence of absence. Can those claims be upgraded to
+formal equivalence within a stated margin — and where they cannot, is the failure to upgrade
+itself reportable?
+
+**The method.** TOST by bootstrap. For each comparison, resample rides (within corpus;
+stratified for pools, matching the published pooled-CI convention exactly), compute **both**
+models' median $\lvert\Delta\%\rvert$ on the *same* resample, and take
+$d = \mathrm{med}\lvert\Delta\%\rvert_{\text{law}} - \mathrm{med}\lvert\Delta\%\rvert_{\text{sim}}$.
+Equivalence at $\alpha = 0.05$ is declared iff the **90% percentile CI of $d$ lies entirely
+inside $[-\delta, +\delta]$** — two one-sided tests at 0.05 each are exactly the 90% CI being
+contained, which is why the interval is 90% and not 95%. B = 10⁴, mulberry32, **seed 44**
+(42 and 43 are taken by the published $\lvert\Delta\%\rvert$ and signed CIs; reusing one would
+silently correlate this interval with those).
+
+The estimand is the **difference of medians**, not the median of per-ride differences. The
+paper's sentences compare two published medians, so that is the quantity under test; the
+other estimand is a different claim and is not registered.
+
+**The margin: $\delta = 1.0$ percentage point on median $\lvert\Delta\%\rvert$**, one value
+for every comparison, no per-corpus margins.
+
+*The plan's stated grounds were checked and are partly wrong; the corrected justification
+is registered instead.* The plan asserted that 1.0 pp "is at or below every CI half-width the
+paper publishes for these medians". That holds for the $n = 44$ rows (half-widths 1.4–3.7 pp)
+but **fails for the pooled rows**, whose published half-widths are 0.4–0.6 pp — narrower than
+the margin. Recording the corrected grounds:
+
+1. *Operational.* On medians of 3.5–8.4%, a 1.0 pp difference does not change any decision a
+   planner makes between evaluating the law per edge and running the simulation. That is the
+   sense in which the two would be interchangeable.
+2. *Smaller than the protocol effect.* The informed→blind shift is +4.6 pp on F3 and +3.2 pp
+   on the simulation ([§3.1](#3.1)). A margin at 1.0 pp is well inside the effect of parameter
+   *judgment*, so passing TOST at this margin is a weaker claim than "the protocol does not
+   matter" — deliberately conservative.
+3. *It straddles the published precision.* 1.0 pp sits above the pooled rows' half-widths and
+   below the $n = 44$ rows'. That asymmetry is not a defect; it is precisely what makes P1 and
+   P2 below the predictions they are, and it is why the margin is registered now, before any
+   $d$ is computed.
+
+**The registered comparisons.** F3 with $\varepsilon_d$ against the simulation, on: D1
+informed (`model_comparison.csv`, `cfS_vs_emp` vs `canon_vs_emp`), D1 blind
+(`longoes_frozen.csv`, `f3_d` vs `canon_d`), D2 frozen, D3, D4, D5 (`sm_geom` vs `canon_d` in
+each corpus CSV), the D3+D4 transfer pool and the D3–D5 pool (both stratified). F4 against the
+simulation only where the paper makes an F4 parity claim — D1 blind and D2 (`pm_geom`).
+Everything else is exploratory and labelled so. D2's $\varepsilon_f$ rows are in-sample
+(the constant was selected on D2) and any D2 verdict carries that caveat verbatim.
+
+**Predictions.**
+
+- **P1** — the large-$n$ pooled rows pass TOST at $\delta = 1.0$.
+- **P2** — D1, informed and blind ($n = 44$), is **inconclusive**: the CI is wider than the
+  margin. This is the honest expected outcome, and it converts the paper's existing
+  "equivalence is not formally tested" into "a registered equivalence test is inconclusive at
+  this $n$" — the same fact with a measurement attached, which is strictly more informative.
+- **P3** — the mid-size per-corpus rows (D2, D3, D4, D5): no prediction. Whichever way they
+  land is reported.
+
+*Failure mode.* If a pooled row **fails** — its CI lying outside the margin on one side — the
+paper's parity language for that row is **weakened**, not defended. Stated here so that the
+response to a bad result is fixed before the result exists.
+
+**Not registered.** No new physics, no refits, no per-ride difference estimands. The plan's
+Phase D (error-distribution disclosure — quantiles, skew, tail counts) is **gated on Danilo's
+explicit go** and is not started; if it happens it is registered as a dated amendment here
+before running.
 
 ---
 
