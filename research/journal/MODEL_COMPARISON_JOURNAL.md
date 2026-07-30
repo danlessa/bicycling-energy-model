@@ -142,6 +142,107 @@ changed. See Entry 11.)*
 
 ---
 
+## 2026-07-30 — Entry 47: which deficit form? — pre-registration of the two selections, in I/F/O/T
+
+*Prompt (Danilo), proposing the protocol and asking for feedback before any work began:
+"1. Test all forms on D1 and calibrate against it. That's the 'best calibration-dataset arm',
+or $\varepsilon_{d,\mathrm{train}}$; 2. Use the champion form on D1 for building tables 3–6;
+3. Find the champion form for D3–D6 and add as a separate column. That would be the 'best
+in-sample configuration arm'. Or $\varepsilon_{d,\mathrm{all}}$. My prediction is that
+$\varepsilon_{d,\mathrm{train}}$ gives either $\varepsilon_0$ or $\varepsilon_2$." Then, on the
+instrument: "Should we use BIC instead? What do you think about it?"; on widening the
+calibration side to D1 ∪ D2: "Agreed"; and on the rider-constant form: "drop it".*
+
+### The notation this entry is written in
+
+Landed with this entry in paper 1's Terminology and its four table captions. An **input**
+$I = (D, P)$ pairs a corpus with a parameter class ($P_{a,g}$ assumed-global, $P_{a,r}$
+assumed-per-ride, $P_{f,r}$ fitted-per-ride, $P_{f,p}$ fitted-per-person), overrides joined by
+$\cdot$. A **transformer** $F$ is a model — $F_1$–$F_4$, or $F_{\mathrm{base}}$ for the forward
+simulation, which is a *peer* of the closed forms and not the reference. An **output**
+$O = F(I)\,|\,\sigma$ is per-ride, with $\sigma$ the inclusion rule. A **statistic** $T(O)$ is
+what a table prints.
+
+The load-bearing part is $\lvert O \rvert \leq \lvert D \rvert$: a transformer preserves ride
+grain but **not** population. Entry 46's own scope figure is the worked example — 52% was
+computed over $\lvert D \rvert = 2{,}155$ for a claim whose $O$ covered Table 3's corpora only
+($1{,}366$, giving 69%), and the gate written for it hardcoded the same wrong denominator, so
+it certified the error instead of catching it. `research/data-graph.ttl` now carries the whole
+lineage as a DAG with every $\lvert O \rvert$ **counted from its CSV** rather than asserted.
+
+### Pre-registration (written before any calibration-side result was inspected)
+
+I have deliberately not looked at any D1 ∪ D2 contest output. Entry 45's numbers are on the
+*evaluation* side (D3–D6) and on the ledger target; the calibration side is untouched.
+
+**The question.** Paper 1's deficit $\delta$ is currently the frozen constant $\varepsilon_0 =
+0.13$, chosen on D1 in Entry 8 and never contested against a *form*. Entry 45 showed the
+grade-inverse $\varepsilon_2 = k/\bar s$ beats it out of sample at $\bar s \geq 3\%$. That
+result was found on the evaluation corpora, so it cannot select the form the paper ships.
+
+**Two selections, run separately.**
+
+1. $\varepsilon_d(P_{a,g})$ — $\operatorname{argmin}_\delta \mathrm{BIC}$ over
+   $F_3^{\delta}(D_1 \cup D_2,\ P_{a,g})$. The frozen-protocol arm: this is the one whose
+   champion may build Tables 3–6, because it never touches D3–D6.
+2. $\varepsilon_d(P_{f,r})$ — $\operatorname{argmin}_\delta \mathrm{BIC}$ over
+   $F_3^{\delta}(D_1 \cup D_2,\ P_{a,g} \cdot P_{f,r}(m, C_{rr}, C_dA))$. The per-ride-physics
+   arm, so the form choice can be checked against a different parameter class rather than
+   confounded with the frozen priors.
+
+$\sigma$ for both: parse + power + $\bar s \geq 3\%$, which is $\varepsilon_2$'s tested domain
+and the regime §3.3 nominates. Registered $\lvert O \rvert$: **48**, counted from
+Entry 45's population before registration — D1 contributes 22 and D2 contributes 26. Note what
+that costs: the $\bar s \geq 3\%$ gate halves the calibration corpus ($\lvert D_1 \rvert = 44
+\to \lvert O \rvert = 22$), which is the whole reason BIC and not a held-out split is the
+primary instrument here.
+
+**Contestants.** $\varepsilon_0$ (frozen constant, 0 free parameters at the registered value, 1
+if refitted on this population), $\varepsilon_2$ ($k/\bar s$, 1 parameter), $\varepsilon_3$
+($a + b\varphi$, 2 parameters). $\varepsilon_1$ (rider constant) is **dropped**: with two
+riders on the calibration side it is a two-parameter restatement of the corpus label.
+
+**Instrument.** BIC primary, under a Laplace likelihood on the signed $\Delta\%$ residuals —
+Laplace because every published statistic here is a median, and BIC because $\lvert O \rvert
+\approx 48$ makes a held-out split too weak to separate one- from two-parameter forms.
+$\Delta\mathrm{BIC} < 2$ is **not** a win: the fewest-parameter form takes it, which makes
+$\varepsilon_0$ the default champion and puts the burden on the alternatives. Held-out error
+(split-half, chronological odd/even, as Entry 44) is reported as an explicitly **underpowered
+secondary** — reported because it is the quantity a reader expects, labelled because at this
+$n$ it cannot decide.
+
+**The target must match the constant.** Both selections score the *clamped* deficit
+$\varepsilon_{\mathrm{coast}} - \varepsilon_{\mathrm{bal}}$ — paper 1's published quantity —
+and every contestant is fitted to that same quantity. The unclamped ledger identity is a
+different number (pooled median 0.253 against 0.13; $k = 0.0099$ against 0.0051) and mixing the
+two produced four wrong readings across Entries 43–45. This is now a comment in the harness.
+
+**Estimands.** Per contestant: BIC, $\Delta$BIC against the winner, free-parameter count, fitted
+parameter values with 95% CIs, median $\lvert\Delta\%\rvert$ and median signed $\Delta\%$ (95%
+CIs, mulberry32 seeds 42/43, B = 10⁴), and the split-half held-out median.
+
+**Then, and only then**, $\varepsilon_{d,\mathrm{all}}$: the same contest re-run on D3–D6 and
+reported as a **separate, explicitly labelled in-sample column**. It answers "what would the
+best-configured law have been?" and is never the paper's headline — the Table 3 pool stays the
+frozen-transfer number.
+
+**Predictions.** P1 (Danilo's): $\varepsilon_d(P_{a,g})$ selects $\varepsilon_0$ or
+$\varepsilon_2$, not $\varepsilon_3$. P2: the two selections agree on the champion — if the form
+choice flips with the parameter class, the form is absorbing parameter error and no arm should
+ship. P3: $\varepsilon_{d,\mathrm{all}}$ selects $\varepsilon_2$, since Entry 45 already found
+it superior there; a disagreement between P1 and P3 is the interesting outcome and would say
+the calibration side is too small to see what 1,038 evaluation rides can.
+
+*Failure modes.* If $\Delta$BIC among all three is under 2, the honest outcome is "48 rides
+cannot choose a form", $\varepsilon_0$ stays by parsimony, and the paper says so. If
+$\varepsilon_2$ wins the calibration arm, Tables 3–6 are re-baselined under the full
+propagation checklist — not patched.
+
+**Scope.** Nothing published moves until `bootstrap_ci.py` carries a gate section for whatever
+this selects.
+
+---
+
 ## 2026-07-29 — Entry 46: implementing the regime switch — pre-registration
 
 *Prompt (Danilo), after Entry 45 established that §3.3's regime rule is stated but never
@@ -185,6 +286,10 @@ becomes a re-baseline with the full propagation checklist and gates, not an adde
 **Scope.** Nothing published is overwritten until gates exist. `bootstrap_ci.py` is still held
 open by the parallel paper-2 line; Entry 45's constant and this entry's columns both need gate
 sections before any of it reaches a table.
+
+*(Correction, Entry 47: "`bootstrap_ci.py` is still held open by the parallel paper-2 line" was
+wrong when written — the battery had already landed in `e827330`. Entries 43–45 were gated in
+§3j/§3k the same day. The registration's substance stands; only the blocker did not exist.)*
 
 ---
 

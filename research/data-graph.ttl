@@ -1,0 +1,462 @@
+# data-graph.ttl — the evaluation lineage of every published output.
+#
+# One node per artefact in the I/F/O/T notation defined in paper 1's
+# Terminology and used in its table captions:
+#
+#   I = (D, P)        an input: a corpus D crossed with a parameter class P,
+#                     P being a base plus overrides joined by `·`
+#   F                 a transformer: the model (F1-F4, F_base) or an estimator
+#   O = F(I) | σ      an output: PER RIDE, one row per ride, σ the inclusion
+#                     rule.  |O| <= |D| — the transformer preserves ride grain
+#                     but NOT population.  Every :cardinality below is COUNTED
+#                     from the CSV, never asserted; every one that is smaller
+#                     than its corpus is a σ at work.
+#   T(O)              a statistic: the medians, CIs and figures the article and
+#                     journal actually print, and what bootstrap_ci.py re-derives.
+#
+# Why the graph exists: the notation's whole job is to keep a population from
+# being read as its superset. The one published error it was designed around
+# was exactly an |O| vs |D| confusion — a scope claim whose denominator was all
+# 2,155 ride-evaluations when its O covered Table 3's corpora only (1,366).
+# Reading a denominator off this graph is therefore a check, not a courtesy.
+#
+# Direction: every edge points BACKWARD to what a thing was made from
+# (prov:wasDerivedFrom / prov:wasGeneratedBy / prov:used), so the graph is a DAG
+# rooted at the corpora and read leaf-first from any published number.
+#
+# Stack: widely-used vocabularies — PROV-O (entities, activities, derivation),
+# P-Plan (the harness as a plan), Dublin Core, schema.org. The five terms in the
+# local namespace (:Dataset :ParameterClass :Transformer :Output :Statistic and
+# their properties) are the I/F/O/T notation itself, which has no standard
+# equivalent; everything else is reused.
+#
+# Sibling graph: research/notes/claims.ttl holds the claims-questions-evidence
+# layer. This file is its data-lineage complement — claims.ttl says what was
+# argued, this says what it was computed from.
+#
+# Validate: python3 -c "import rdflib; g=rdflib.Graph().parse('research/data-graph.ttl'); print(len(g))"
+
+@prefix :        <https://danlessa.github.io/bicycling-energy-model/data-graph#> .
+@prefix claims:  <https://danlessa.github.io/bicycling-energy-model/claims#> .
+@prefix prov:    <http://www.w3.org/ns/prov#> .
+@prefix p-plan:  <http://purl.org/net/p-plan#> .
+@prefix schema:  <http://schema.org/> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix owl:     <http://www.w3.org/2002/07/owl#> .
+@prefix xsd:     <http://www.w3.org/2001/XMLSchema#> .
+
+<https://danlessa.github.io/bicycling-energy-model/data-graph>
+    a prov:Bundle, schema:Dataset ;
+    dcterms:title "Evaluation lineage (I/F/O/T) for the bicycling energy model" ;
+    dcterms:creator "Danilo Lessa Bernardineli" ;
+    dcterms:modified "2026-07-30"^^xsd:date ;
+    dcterms:description "Corpora, parameter classes, transformers, per-ride outputs and the published statistics derived from them." ;
+    rdfs:seeAlso <https://danlessa.github.io/bicycling-energy-model/claims> .
+
+# ---------------------------------------------------------------------------
+# The notation itself
+# ---------------------------------------------------------------------------
+
+:Dataset        a owl:Class ; rdfs:subClassOf prov:Entity ;
+    rdfs:label "D — corpus" ;
+    rdfs:comment "A body of rides. Cardinality is the CLEAN ride count; an output built from it is almost always smaller." .
+
+:ParameterClass a owl:Class ; rdfs:subClassOf prov:Entity ;
+    rdfs:label "P — parameter class" ;
+    rdfs:comment "How the physical constants were obtained: assumed (a) or fitted (f), globally (g), per ride (r) or per person (p)." .
+
+:Transformer    a owl:Class ; rdfs:subClassOf p-plan:Plan ;
+    rdfs:label "F — transformer" ;
+    rdfs:comment "A model form or an estimator: consumes an I, emits one row per surviving ride." .
+
+:Model          a owl:Class ; rdfs:subClassOf :Transformer ;
+    rdfs:comment "A transformer that predicts ride energy: F1-F4 and F_base." .
+
+:Estimator      a owl:Class ; rdfs:subClassOf :Transformer ;
+    rdfs:comment "A transformer that measures a quantity from telemetry rather than predicting energy." .
+
+:Input          a owl:Class ; rdfs:subClassOf prov:Entity ;
+    rdfs:label "I = (D, P)" .
+
+:Output         a owl:Class ; rdfs:subClassOf prov:Entity ;
+    rdfs:label "O = F(I) | σ" ;
+    rdfs:comment "Per-ride result table. ALWAYS carries :cardinality and :selection: the pair is what distinguishes O from D." .
+
+:Statistic      a owl:Class ; rdfs:subClassOf prov:Entity ;
+    rdfs:label "T(O)" ;
+    rdfs:comment "A published aggregate — table cell, figure, headline median — with its bootstrap interval." .
+
+:dataset        a owl:ObjectProperty ; rdfs:domain :Input ; rdfs:range :Dataset .
+:parameters     a owl:ObjectProperty ; rdfs:domain :Input ; rdfs:range :ParameterClass .
+:override       a owl:ObjectProperty ; rdfs:domain :Input ;
+    rdfs:comment "The `·` operator: a parameter replaced relative to the base class." .
+:transformer    a owl:ObjectProperty ; rdfs:domain :Output ; rdfs:range :Transformer .
+:input          a owl:ObjectProperty ; rdfs:domain :Output ; rdfs:range :Input .
+:selection      a owl:DatatypeProperty ; rdfs:domain :Output ;
+    rdfs:label "σ — inclusion rule" .
+:cardinality    a owl:DatatypeProperty ;
+    rdfs:comment "|D| or |O|. On an Output this is COUNTED from the emitted CSV." .
+:gatedBy        a owl:ObjectProperty ;
+    rdfs:comment "The bootstrap_ci.py section that re-derives this statistic and fails the build if it moved." .
+:epsilonForm    a owl:ObjectProperty ; rdfs:domain :Model .
+
+# ---------------------------------------------------------------------------
+# D — the corpora  (clean counts: paper 1, Table 1)
+# ---------------------------------------------------------------------------
+
+:D1 a :Dataset ; rdfs:label "D1 longões" ; :cardinality 44 ;
+    dcterms:description "Long brevet-style rides, open terrain, the author. Calibration + primary comparison." ;
+    schema:spatialCoverage "São Paulo metropolitan region and beyond" .
+
+:D2 a :Dataset ; rdfs:label "D2 censo" ; :cardinality 62 ;
+    dcterms:description "Urban stop-go group rides, generic rider assumed. Out-of-domain regime test." ;
+    rdfs:comment "58 of its 62 rides are also in D5, re-evaluated as a generic rider — which is why D2 is excluded from the D3–D5 pool." ;
+    schema:spatialCoverage "São Paulo" .
+
+:D3 a :Dataset ; rdfs:label "D3 P. Paz" ; :cardinality 441 ;
+    dcterms:description "Independent rider's full history, fast open-road. Frozen-constant transfer." ;
+    dcterms:accessRights "private — shared with consent, never committed" .
+
+:D4 a :Dataset ; rdfs:label "D4 JAAM" ; :cardinality 219 ;
+    dcterms:description "Independent rider's full history, gentle terrain, strong descent-pedaller." ;
+    dcterms:accessRights "private — shared with consent, never committed" .
+
+:D5 a :Dataset ; rdfs:label "D5 author-full" ; :cardinality 621 ;
+    dcterms:description "The author's complete history; superset of D1. Large-sample in-sample validation." .
+
+:D6 a :Dataset ; rdfs:label "D6 scikit-cycling" ; :cardinality 740 ;
+    dcterms:description "Four European riders (Catalonia, Burgundy, French Alps) from an open deposit. External transfer: no shared rider, country, terrain, device or model-selection history." ;
+    dcterms:license "CC BY 4.0" ;
+    dcterms:accessRights "openly licensed, but gitignored here: tracks start at the riders' home addresses, so no derived geometry is published — cite the deposit DOI" ;
+    schema:spatialCoverage "Western Europe" .
+
+:D_pool_35 a :Dataset ; rdfs:label "D3–D5 pool" ;
+    prov:wasDerivedFrom :D3, :D4, :D5 ;
+    rdfs:comment "The paper's headline pool. D2 excluded (overlaps D5); D6 deliberately excluded." .
+
+:D_pool_36 a :Dataset ; rdfs:label "D3–D6 pool" ;
+    prov:wasDerivedFrom :D3, :D4, :D5, :D6 ;
+    rdfs:comment "Reported BESIDE the headline pool, never replacing it: adding D6 lowers the pooled error only because D6 is the best-performing corpus, so the gain measures the corpus mix, not the law." .
+
+# Auxiliary (non-ride) inputs — the DEM/routing thread
+:DEM_IGC   a :Dataset ; rdfs:label "IGC-SP 5 m raster" ; dcterms:description "The elevation source Simujaules deploys." .
+:DEM_FABDEM a :Dataset ; rdfs:label "FABDEM 30 m" .
+:OSM       a :Dataset ; rdfs:label "OpenStreetMap / Overpass" ;
+    rdfs:comment "Request geometry sent to Overpass never derives from ride endpoints." .
+
+# ---------------------------------------------------------------------------
+# P — the parameter classes
+# ---------------------------------------------------------------------------
+
+:P_ag a :ParameterClass ; rdfs:label "P_{a,g} assumed-global" ;
+    dcterms:description "The frozen protocol: one literature-typical set for every ride and every corpus — Crr 0.008, CdA 0.40, ρ 1.13, k_eff 0.98, wind 0, m 78 kg." .
+
+:P_ar a :ParameterClass ; rdfs:label "P_{a,r} assumed-per-ride" ;
+    dcterms:description "Condition-informed judgment: logged mass, judged Crr / CdA / density / wind, hand-chosen ε. The calibration arm only." .
+
+:P_fr a :ParameterClass ; rdfs:label "P_{f,r} fitted-per-ride" ;
+    dcterms:description "Constants inverted from the scored ride's own segments — partially in-sample by construction." .
+
+:P_fp a :ParameterClass ; rdfs:label "P_{f,p} fitted-per-person" ;
+    dcterms:description "One value per rider, inverted from that rider's own sustained climbs, then frozen across their rides." .
+
+# Overrides carried by the `·` operator
+:ov_m       a prov:Entity ; rdfs:label "m — implied total mass" ;
+    rdfs:comment "Inverted from the sustained-climb energy balance. NEVER frozen as a harness literal: m·g is the identified product, so it moves with G (the Entry-27 lesson)." .
+:ov_crr     a prov:Entity ; rdfs:label "C_rr" .
+:ov_cda     a prov:Entity ; rdfs:label "C_dA" .
+:ov_cda_reg a prov:Entity ; rdfs:label "C_dA^reg — regime-consistent aero" ;
+    rdfs:comment "On D2 its median 0.62 is a stop-go TOTAL-LOSS coefficient, not drag: read that column as a regime signature." .
+:ov_eps     a prov:Entity ; rdfs:label "ε" .
+
+# ---------------------------------------------------------------------------
+# F — the transformers
+# ---------------------------------------------------------------------------
+
+:eps_coast a prov:Entity ; rdfs:label "ε_coast(s) = min(1, (α/β)/s)" ; rdfs:comment "The coasting limit: what ε would be if the rider never pedalled downhill." .
+:eps0 a prov:Entity ; rdfs:label "ε₀ — frozen constant deficit (0.13)" ; :epsilonFamily "deficit" .
+:eps1 a prov:Entity ; rdfs:label "ε₁ — rider constant deficit" ; rdfs:comment "Dropped before Entry 47's contest." .
+:eps2 a prov:Entity ; rdfs:label "ε₂ — grade-inverse deficit k/s̄, k = 0.0051 (eq. 8)" ;
+    rdfs:comment "Domain-limited: k/s̄ exceeds 1 below s̄ ≈ 0.51%, and it was only TESTED at s̄ ≥ 3%." .
+:eps3 a prov:Entity ; rdfs:label "ε₃ — encounter-fraction deficit a + bφ" .
+:eps_f a prov:Entity ; rdfs:label "ε_f — flat constant 0.20" ; rdfs:comment "Selected on D2: its D2 cells are in-sample and starred." .
+:eps_d a prov:Entity ; rdfs:label "ε_d — dynamic, geometry-derived: ε_coast(s) − δ" .
+
+:F_base a :Model ; rdfs:label "F_base — forward-dynamics simulation" ;
+    dcterms:description "Distance-marching force balance with per-regime pedal power and a safe-speed brake cap. A PEER of F1–F4 in every table, not the reference: all forms are scored against measured leg energy." ;
+    rdfs:comment "Conserves energy by construction (semi-implicit KE update); the conservation residual is asserted ≤ 1e-6 on every compare.py run." .
+
+:F1 a :Model ; rdfs:label "F1" .
+:F2 a :Model ; rdfs:label "F2" .
+:F3 a :Model ; rdfs:label "F3 — E ≈ α·x + β·(h₊ − ε·h₋)" ;
+    rdfs:comment "The champion closed form; the paper's headline parity is F3·ε_d against F_base." .
+:F4 a :Model ; rdfs:label "F4 — F3 with the scalar c" ;
+    rdfs:comment "c is non-transferable: it belongs to the elevation source, not to cycling (sharpest evidence on D6)." .
+
+:F_v2edge a :Model ; rdfs:label "v2Edge — the per-edge realisation Simujaules deploys" ;
+    rdfs:comment "Grade-local ε(s), aero gated off climbs, k_s scaling β only, dead max(0,·) clamp. Mirrored in three places (Python r1d_v2_edge, the applet, energy-worker.js) — a change lands in all." .
+
+:F_invert   a :Estimator ; rdfs:label "per-ride/per-person physics inversion (m̂, Ĉrr, ĈdA)" .
+:F_epsmeas  a :Estimator ; rdfs:label "ε from the measured descent balance" ;
+    rdfs:comment "Uses the MEASURED flat speed, never flat_eq_speed — otherwise a parameter mismatch inflates α and lies about ε." .
+:F_occupancy a :Estimator ; rdfs:label "descent pedalling occupancy / intensity" .
+:F_time     a :Model ; rdfs:label "time model x* = x + k₊h₊ − k₋h₋" ;
+    rdfs:comment "Not part of paper 1 — its own piece." .
+
+# ---------------------------------------------------------------------------
+# I — the inputs actually evaluated
+# ---------------------------------------------------------------------------
+
+:i_d1_informed a :Input ; rdfs:label "(D₁, P_{a,r})" ; :dataset :D1 ; :parameters :P_ar .
+:i_d1_frozen   a :Input ; rdfs:label "(D₁, P_{a,g})" ; :dataset :D1 ; :parameters :P_ag .
+:i_d2_frozen   a :Input ; rdfs:label "(D₂, P_{a,g})" ; :dataset :D2 ; :parameters :P_ag .
+:i_d3_frozen_m a :Input ; rdfs:label "(D₃, P_{a,g} · P_{f,p}(m))" ; :dataset :D3 ; :parameters :P_ag ; :override :ov_m .
+:i_d4_frozen_m a :Input ; rdfs:label "(D₄, P_{a,g} · P_{f,p}(m))" ; :dataset :D4 ; :parameters :P_ag ; :override :ov_m .
+:i_d5_frozen_m a :Input ; rdfs:label "(D₅, P_{a,g} · P_{f,p}(m))" ; :dataset :D5 ; :parameters :P_ag ; :override :ov_m .
+:i_d6_frozen_m a :Input ; rdfs:label "(D₆, P_{a,g} · P_{f,p}(m))" ; :dataset :D6 ; :parameters :P_ag ; :override :ov_m ;
+    rdfs:comment "D6's masses are PUBLISHED, so the inversion is graded against four known values rather than assumed. The published values are used for grading only, never fed back." .
+:i_d34_fitted  a :Input ; rdfs:label "(D₃∪D₄, P_{a,g} · P_{f,p}(m, C_rr, C_dA))" ; :dataset :D3, :D4 ;
+    :parameters :P_ag ; :override :ov_m, :ov_crr, :ov_cda .
+:i_all_perride a :Input ; rdfs:label "(D₁..D₅, P_{a,g} · P_{f,r}(m, C_rr, C_dA))" ;
+    :dataset :D1, :D2, :D3, :D4, :D5 ; :parameters :P_ag ; :override :ov_m, :ov_crr, :ov_cda .
+:i_all_reg     a :Input ; rdfs:label "(D₁..D₅, P_{a,g} · P_{f,r}(m, C_rr, C_dA^reg))" ;
+    :dataset :D1, :D2, :D3, :D4, :D5 ; :parameters :P_ag ; :override :ov_m, :ov_crr, :ov_cda_reg .
+:i_d6_perride  a :Input ; rdfs:label "(D₆, P_{a,g} · P_{f,r}(m, C_rr, C_dA))" ; :dataset :D6 ;
+    :parameters :P_ag ; :override :ov_m, :ov_crr, :ov_cda .
+:i_dem         a :Input ; rdfs:label "(D₁..D₅ routes, DEM profiles)" ; :dataset :D5, :DEM_IGC, :DEM_FABDEM .
+
+# ---------------------------------------------------------------------------
+# The harness runs (activities) and O — the per-ride outputs
+#
+# Every :cardinality is the row count of the emitted CSV as of 2026-07-30.
+# Outputs live in data/results/ and are gitignored: rows carry ride names,
+# dates and per-ride energies tied to private activities.
+# ---------------------------------------------------------------------------
+
+:h_compare a prov:Activity ; p-plan:correspondsToStep "src/harness/compare.py" ; prov:used :i_d1_informed .
+:o_model_comparison a :Output ; dcterms:identifier "model_comparison.csv" ;
+    prov:wasGeneratedBy :h_compare ; :input :i_d1_informed ;
+    :transformer :F1, :F2, :F3, :F4, :F_base ; :cardinality 44 ;
+    :selection "the 44 power-metered longões" ;
+    rdfs:comment "Also asserts the conservation residual ≤ 1e-6." .
+
+:h_longoes_frozen a prov:Activity ; p-plan:correspondsToStep "src/harness/longoes_frozen.py" ; prov:used :i_d1_frozen .
+:o_longoes_frozen a :Output ; dcterms:identifier "longoes_frozen.csv" ;
+    prov:wasGeneratedBy :h_longoes_frozen ; :input :i_d1_frozen ;
+    :transformer :F1, :F2, :F3, :F4, :F_base ; :cardinality 44 ;
+    :selection "the same 44 rides as :o_model_comparison — the blind half of Table 2, so the informed→blind shift reads straight down" .
+
+:h_censo a prov:Activity ; p-plan:correspondsToStep "src/harness/censo_compare.py" ; prov:used :i_d2_frozen .
+:o_censo a :Output ; dcterms:identifier "censo_comparison.csv" ;
+    prov:wasGeneratedBy :h_censo ; :input :i_d2_frozen ;
+    :transformer :F1, :F2, :F3, :F4, :F_base ; :cardinality 69 ;
+    :selection "parse + power; the published statistics filter further to dataOK = true (62 clean)" ;
+    rdfs:comment "|O| 69 vs 62 clean vs |D| 62: the CSV is WIDER than the published population. Reading 69 as the corpus is precisely the error this graph exists to prevent." .
+
+:h_ppaz a prov:Activity ; p-plan:correspondsToStep "src/harness/ppaz_compare.py" ; prov:used :i_d3_frozen_m .
+:o_ppaz a :Output ; dcterms:identifier "ppaz_comparison.csv" ;
+    prov:wasGeneratedBy :h_ppaz ; :input :i_d3_frozen_m ;
+    :transformer :F1, :F2, :F3, :F4, :F_base ; :cardinality 441 ;
+    :selection "parse + power + per-corpus filters (§2.3)" ;
+    rdfs:comment "Sensitivity runs suffix their own CSV (bem.env_suffix: PPAZ_M70, PPAZ_M78, the fitted triple) so a sweep can never overwrite the canonical file." .
+
+:h_jaam a prov:Activity ; p-plan:correspondsToStep "src/harness/jaam_compare.py" ; prov:used :i_d4_frozen_m .
+:o_jaam a :Output ; dcterms:identifier "jaam_comparison.csv" ;
+    prov:wasGeneratedBy :h_jaam ; :input :i_d4_frozen_m ;
+    :transformer :F1, :F2, :F3, :F4, :F_base ; :cardinality 219 ; :selection "parse + power + per-corpus filters (§2.3)" .
+
+:h_danlessa a prov:Activity ; p-plan:correspondsToStep "src/harness/danlessa_compare.py" ; prov:used :i_d5_frozen_m .
+:o_danlessa a :Output ; dcterms:identifier "danlessa_comparison.csv" ;
+    prov:wasGeneratedBy :h_danlessa ; :input :i_d5_frozen_m ;
+    :transformer :F1, :F2, :F3, :F4, :F_base ; :cardinality 636 ;
+    :selection "parse + power; published population is the 621 with dataOK" ;
+    rdfs:comment "|O| 636 > |D| 621 clean — same widening as D2." .
+
+:h_skc a prov:Activity ; p-plan:correspondsToStep "src/harness/skc_compare.py" ; prov:used :i_d6_frozen_m .
+:o_skc a :Output ; dcterms:identifier "skc_comparison.csv" ;
+    prov:wasGeneratedBy :h_skc ; :input :i_d6_frozen_m ;
+    :transformer :F1, :F2, :F3, :F4, :F_base ; :cardinality 743 ;
+    :selection "parse + power + ≥ 3 km + non-virtual (Zwift, FIT manufacturer 260, excluded)" ;
+    rdfs:comment "1,053 parseable → 743 emitted → 740 published clean. Three separate populations behind one corpus label." .
+
+:h_skc_invert a prov:Activity ; p-plan:correspondsToStep "src/harness/skc_invert.py" ; prov:used :i_d6_perride .
+:o_skc_invert a :Output ; dcterms:identifier "skc_invert.csv" ;
+    prov:wasGeneratedBy :h_skc_invert ; :input :i_d6_perride ;
+    :transformer :F_invert, :F3 ; :cardinality 743 ;
+    :selection "as :o_skc — arm A, regime-consistent physics" ;
+    rdfs:comment "Wind is deliberately 0: the weather fetch would key on centroids derived from third-party riders' home addresses." .
+:o_skc_occupancy a :Output ; dcterms:identifier "skc_descent_occupancy.csv" ;
+    prov:wasGeneratedBy :h_skc_invert ; :transformer :F_occupancy ; :cardinality 2193 ;
+    :dataset :D1, :D2, :D3, :D4, :D5, :D6 ;
+    :selection "every corpus, physics-free — arm B" ;
+    rdfs:comment "2,193 rows across all corpora INCLUDING the D1⊂D5 and D2∩D5 overlaps: this is a count of evaluations, never of riders or of unique rides." .
+
+:h_skc_eps a prov:Activity ; p-plan:correspondsToStep "src/harness/skc_eps_vs_pedal.py" .
+:o_skc_eps a :Output ; dcterms:identifier "skc_eps_vs_pedal.csv" ;
+    prov:wasGeneratedBy :h_skc_eps ; :transformer :F_occupancy, :F_epsmeas ; :cardinality 1038 ;
+    :selection "rides with s̄ ≥ 3% — arm C, Spearman(pedal ratio, deficit) at ride level" .
+
+:h_invert a prov:Activity ; p-plan:correspondsToStep "src/harness/perride_invert.py" ; prov:used :i_all_perride .
+:o_perride_invert a :Output ; dcterms:identifier "perride_invert.csv" ;
+    prov:wasGeneratedBy :h_invert ; :input :i_all_perride, :i_all_reg ;
+    :transformer :F_invert, :F1, :F2, :F3, :F4, :F_base ; :cardinality 1409 ;
+    :selection "parse + power + ≥ 3 km" ;
+    rdfs:comment "Import-safe: the Entry-43 arm A imports it. Feeds BOTH Table 5 (ĈdA) and Table 6 (ĈdA^reg) — one O, two statistics." .
+
+:h_eps_hyp a prov:Activity ; p-plan:correspondsToStep "src/harness/eps_hypothesis.py" .
+:o_eps_hypothesis a :Output ; dcterms:identifier "eps_hypothesis.csv" ;
+    prov:wasGeneratedBy :h_eps_hyp ; :input :i_d1_frozen ; :transformer :F_epsmeas ; :cardinality 44 .
+
+:h_eps_sp a prov:Activity ; p-plan:correspondsToStep "src/harness/eps_sp_test.py" .
+:o_eps_sp a :Output ; dcterms:identifier "eps_sp.csv" ;
+    prov:wasGeneratedBy :h_eps_sp ; :input :i_d2_frozen ; :transformer :F_epsmeas ; :cardinality 59 .
+
+:h_time a prov:Activity ; p-plan:correspondsToStep "src/harness/time_compare.py" .
+:o_time a :Output ; dcterms:identifier "time_comparison.csv" ;
+    prov:wasGeneratedBy :h_time ; :transformer :F_time ; :cardinality 542 ;
+    :dataset :D1, :D3 ; :selection "corpus column splits it; the published endpoint is the ppaz subset" ;
+    rdfs:comment "Its implied masses must be refreshed whenever G or the inversion changes." .
+
+:h_cda a prov:Activity ; p-plan:correspondsToStep "src/harness/cda_estimate.py" .
+:o_cda a :Output ; dcterms:identifier "cda_estimate.csv" ; prov:wasGeneratedBy :h_cda ;
+    :transformer :F_invert ; :cardinality 3 ; :selection "per rider, not per ride — one of the few outputs whose grain is P, not D" .
+:o_param_fit a :Output ; dcterms:identifier "param_fit.csv" ; :transformer :F_invert ; :cardinality 4 ;
+    p-plan:correspondsToStep "src/harness/param_fit.py" ;
+    rdfs:comment "Its pts_with_geo keeps lat/lon — the one point-builder that is NOT the shared pts_from_fit." .
+
+:h_sweep a prov:Activity ; p-plan:correspondsToStep "src/harness/param_sweep.py" .
+:o_param_sweep a :Output ; dcterms:identifier "param_sweep.csv" ; prov:wasGeneratedBy :h_sweep ;
+    :dataset :D2, :D3, :D4, :D5 ; :transformer :F3 ; :cardinality 432 ;
+    :selection "pre-registered CdA × Crr × ρ grid — grain is (corpus × combination), NOT per ride" ;
+    rdfs:comment "Exact order-statistic CIs, a gate-checked deviation from the bootstrap convention. Self-gates m̂ and all 16 anchor medians on every full run." .
+:o_param_sweep_canon a :Output ; dcterms:identifier "param_sweep_canon.csv" ; prov:wasGeneratedBy :h_sweep ;
+    :transformer :F_base ; :cardinality 48 ; :selection "Tier B — the simulation under the same sweep" .
+
+:o_regime a :Output ; dcterms:identifier "regime_comparison.csv" ; :transformer :F_v2edge ; :cardinality 1402 ;
+    p-plan:correspondsToStep "src/harness/regime_compare.py" ;
+    :selection "SANITY=1 adds synthetic gates" ;
+    rdfs:comment "Hosts r1d_v2_edge, the deployed-v2Edge Python reference. Import-safe: igc/goal/scale all import it." .
+
+:o_scurve a :Output ; dcterms:identifier "scurve_deficit.csv" ; :transformer :F_occupancy ; :cardinality 1287 ;
+    p-plan:correspondsToStep "src/harness/scurve_deficit.py" .
+:o_e35 a :Output ; dcterms:identifier "e35_residual.csv" ; :transformer :F3, :F_base ; :cardinality 1409 ;
+    p-plan:correspondsToStep "src/harness/e35_residual.py" ; :selection "as :o_perride_invert" .
+:o_e36 a :Output ; dcterms:identifier "e36_eps0.csv" ; :transformer :F_epsmeas ; :cardinality 1400 ;
+    p-plan:correspondsToStep "src/harness/e36_eps0.py" ; :selection "ε₀ per dataset, regressed two ways against the frozen 0.13" .
+:o_e38 a :Output ; dcterms:identifier "e38_tau.csv" ; :cardinality 1409 ; p-plan:correspondsToStep "src/harness/e38_tau.py" .
+:o_e39 a :Output ; dcterms:identifier "e39_tau_reg.csv" ; :cardinality 1409 ; p-plan:correspondsToStep "src/harness/e39_tau_reg.py" ;
+    :selection "the deconfounded τ-sweep; τ = 2 m parity gates vs the Entry-35 regime column" .
+:o_e40 a :Output ; dcterms:identifier "e40_roller.csv" ; :cardinality 1409 ; p-plan:correspondsToStep "src/harness/e40_roller.py" .
+:o_e41 a :Output ; dcterms:identifier "e41_dem_route.csv" ; :input :i_dem ; :cardinality 1188 ;
+    p-plan:correspondsToStep "src/harness/e41_dem_route.py" ;
+    :selection "rides with usable DEM profiles; ~1 h cold, needs gdal + FABDEM tiles" .
+:o_e42 a :Output ; dcterms:identifier "e42_lump.csv" ; :transformer :F3 ; :cardinality 1378 ;
+    p-plan:correspondsToStep "src/harness/e42_lump.py" ; :selection "prices the hand recipe's lumped ε_d proxy" .
+
+:h_e44 a prov:Activity ; p-plan:correspondsToStep "src/harness/e44_scurve.py" .
+:o_e44_cells a :Output ; dcterms:identifier "e44_scurve_cells.csv" ; prov:wasGeneratedBy :h_e44 ;
+    :transformer :F_occupancy ; :cardinality 153 ;
+    :selection "grade × speed bins — grain is the CELL, not the ride: an O whose dimension is deliberately NOT D's" .
+:o_e44_fits a :Output ; dcterms:identifier "e44_scurve_fits.csv" ; prov:wasGeneratedBy :h_e44 ;
+    :transformer :F_occupancy ; :cardinality 9 ;
+    :selection "one sigmoid fit per rider-half (deterministic grid search, split-half by chronological odd/even index)" .
+
+:h_e45 a prov:Activity ; p-plan:correspondsToStep "src/harness/e45_ridelevel.py" .
+:o_e45_paper a :Output ; dcterms:identifier "e45_ridelevel.paper.csv" ; prov:wasGeneratedBy :h_e45 ;
+    :transformer :F_epsmeas ; :cardinality 1038 ;
+    :epsilonForm :eps0, :eps2, :eps3 ;
+    :selection "E45_TARGET=paper — the CLAMPED deficit ε_coast − ε_bal, s̄ ≥ 3%" ;
+    rdfs:comment "The clamped/unclamped split is the single most error-prone thing in this repo: paper 1's published deficit is clamped (pooled median 0.13, k = 0.0051), the exact ledger identity is unclamped (0.253, k = 0.0099). Whichever quantity is measured, the constant MUST be fitted to that same quantity. Four wrong readings came from mixing them." .
+:o_e45_ledger a :Output ; dcterms:identifier "e45_ridelevel.csv" ; prov:wasGeneratedBy :h_e45 ;
+    :transformer :F_epsmeas ; :cardinality 1039 ;
+    :selection "E45_TARGET=ledger — the UNCLAMPED ledger identity δ = E_legs,− / (β h₋)" .
+:o_e45_flatseg a :Output ; dcterms:identifier "e45_flatseg.csv" ; :cardinality 396 ;
+    p-plan:correspondsToStep "src/harness/e45_flatseg.py" ;
+    :selection "balanced ≥ 20 km segments from the longest activities — grain is the SEGMENT, not the ride" ;
+    rdfs:comment "Built on DEADBAND-SMOOTHED cells. The first version selected on raw h₋/km and was measuring altimeter noise: its target (2.4 m/km) sat below the corpus noise rate (3.1 m/km), so the search was self-reinforcing. Retracted and rebuilt." .
+
+# The DEM/deployment thread (paper 2's inputs)
+:o_igc a :Output ; dcterms:identifier "igc_resolution_test.csv" ; :input :i_dem ; :cardinality 922 ;
+    p-plan:correspondsToStep "src/harness/igc_resolution_test.py" ; :transformer :F_v2edge .
+:o_goal a :Output ; dcterms:identifier "goal_calibration.csv" ; :cardinality 864 ;
+    p-plan:correspondsToStep "src/harness/goal_calibration.py" ;
+    rdfs:comment "Re-runs its whole analysis twice to prove determinism; FAST=1 skips the ×2 proof — never for a number that ships. One documented-benign gate failure: large-σ h₊ monotonicity on one ride." .
+:o_scale a :Output ; dcterms:identifier "scale_trio.csv" ; :cardinality 922 ;
+    p-plan:correspondsToStep "src/harness/scale_trio.py" ;
+    rdfs:comment "Carries the Entry-20 anchor constants — refresh whenever Entry 20 re-runs. One documented-benign gate failure: the exactly-zero degenerate grid corner." .
+:o_e26_grid a :Output ; dcterms:identifier "e26_grid.csv" ; :input :i_dem ; :cardinality 86 ; :transformer :F_v2edge .
+:o_e26_portals a :Output ; dcterms:identifier "e26_portal_profiles.csv" ; :dataset :OSM ; :cardinality 922 .
+:o_e26_detour a :Output ; dcterms:identifier "e26_detour.csv" ; :dataset :OSM ; :cardinality 321 ;
+    rdfs:comment "Holds G_JS = 9.81 on purpose: it mirrors the cost bundle sampsimu deployed pre-v63, and a cross-engine ratio must hold the engine's own constant." .
+:o_verify a :Output ; dcterms:identifier "longoes_verify.csv" ; :cardinality 406 ; p-plan:correspondsToStep "src/harness/verify.py" .
+
+# ---------------------------------------------------------------------------
+# T — the published statistics
+# ---------------------------------------------------------------------------
+
+:gate a prov:Activity ; p-plan:correspondsToStep "src/harness/bootstrap_ci.py" ;
+    dcterms:description "The gate battery: recomputes every published median AND its 95% band from the O's, and exits non-zero on failure. B = 10⁴, seeds 42/43, stratified within corpus/rider." ;
+    rdfs:comment "A gate is only as good as its denominator: the §3j scope gate originally hardcoded the same wrong 2,155 the prose used, so it certified the error instead of catching it. Gates now recompute denominators from the CSV." .
+
+:tab2 a :Statistic ; rdfs:label "Table 2 — calibration scoreboard" ;
+    prov:wasDerivedFrom :o_model_comparison, :o_longoes_frozen ; prov:wasGeneratedBy :gate ; :gatedBy :gate .
+:tab3 a :Statistic ; rdfs:label "Table 3 — frozen constants on every non-calibration corpus" ;
+    prov:wasDerivedFrom :o_censo, :o_ppaz, :o_jaam, :o_danlessa, :o_skc ; :gatedBy :gate ;
+    rdfs:comment "Column n is |O|, not |D|. Its D3–D5 pool is 1,366 evaluations — the denominator that the 52%-vs-69% scope error got wrong by substituting 2,155." .
+:tab4 a :Statistic ; rdfs:label "Table 4 — fitted versus assumed physics" ;
+    prov:wasDerivedFrom :o_ppaz, :o_jaam ; :input :i_d34_fitted ; :gatedBy :gate .
+:tab5 a :Statistic ; rdfs:label "Table 5 — per-ride inverted physics" ;
+    prov:wasDerivedFrom :o_perride_invert, :o_skc_invert ; :gatedBy :gate ;
+    rdfs:comment "Its populations differ from Table 3 on an UNCHANGED |D| — the caption states each |O| for exactly that reason." .
+:tab6 a :Statistic ; rdfs:label "Table 6 — regime-consistent aero" ;
+    prov:wasDerivedFrom :o_perride_invert, :o_skc_invert ; :gatedBy :gate .
+:fig5 a :Statistic ; rdfs:label "Figure 5 — every São Paulo route on one map" ;
+    prov:wasDerivedFrom :o_model_comparison, :o_censo, :o_ppaz, :o_jaam, :o_danlessa ;
+    rdfs:comment "D6 deliberately absent (home addresses). First and last 1.5 km of every ride withheld, so its legend counts match no table's |O|." .
+:eq8 a :Statistic ; rdfs:label "Equation (8) — the grade-inverse deficit k/s̄" ;
+    prov:wasDerivedFrom :o_e45_paper ; :epsilonForm :eps2 ; :gatedBy :gate ;
+    rdfs:comment "k is refitted from the CSV by the gate, never hardcoded — an earlier double-rounding shipped 0.131 at a reverse-engineered s̄ = 3.9% labelled as D1's typical descent (real median 3.80% → 0.133)." .
+:headline a :Statistic ; rdfs:label "The headline parity: F3·ε_d 3.16% vs F_base 3.15% on D6's 740 rides" ;
+    prov:wasDerivedFrom :o_skc ; :gatedBy :gate .
+
+# Journal entries that a published output answers to. The prose in
+# research/journal/MODEL_COMPARISON_JOURNAL.md remains authoritative.
+:entry22 a :Statistic ; rdfs:label "Entry 22 — error bars for the headline medians" ; prov:wasGeneratedBy :gate .
+:entry29 a :Statistic ; rdfs:label "Entry 29–30 — the physical-constants sensitivity sweep" ;
+    prov:wasDerivedFrom :o_param_sweep, :o_param_sweep_canon .
+:entry31 a :Statistic ; rdfs:label "Entry 31 — the D1 protocol correction, frozen re-run" ; prov:wasDerivedFrom :o_longoes_frozen .
+:entry33 a :Statistic ; rdfs:label "Entry 33 — per-ride physics inversion" ; prov:wasDerivedFrom :o_perride_invert .
+:entry34 a :Statistic ; rdfs:label "Entry 34 — the S-curve deficit" ; prov:wasDerivedFrom :o_scurve .
+:entry35 a :Statistic ; rdfs:label "Entry 35 — the honest-physics residual" ; prov:wasDerivedFrom :o_e35 .
+:entry36 a :Statistic ; rdfs:label "Entry 36 — ε₀ per dataset" ; prov:wasDerivedFrom :o_e36 .
+:entry41 a :Statistic ; rdfs:label "Entry 41 — the law on planner DEM profiles" ; prov:wasDerivedFrom :o_e41 .
+:entry42 a :Statistic ; rdfs:label "Entry 42 — the lumped ε_d" ; prov:wasDerivedFrom :o_e42 .
+:entry43 a :Statistic ; rdfs:label "Entry 43 — the fifth rider set (D6) and its three amendment arms" ;
+    prov:wasDerivedFrom :o_skc, :o_skc_invert, :o_skc_occupancy, :o_skc_eps .
+:entry44 a :Statistic ; rdfs:label "Entry 44 — the S-curve reopened" ; prov:wasDerivedFrom :o_e44_cells, :o_e44_fits .
+:entry45 a :Statistic ; rdfs:label "Entry 45 — the ride-level form contest" ;
+    prov:wasDerivedFrom :o_e45_paper, :o_e45_ledger, :o_e45_flatseg .
+
+:entry8  a :Statistic ; rdfs:label "Entry 8 — a closed form for ε from route geometry" ; prov:wasDerivedFrom :o_eps_hypothesis .
+:entry10 a :Statistic ; rdfs:label "Entry 10 — is São Paulo's ε braking-driven? (no — it's a constant)" ; prov:wasDerivedFrom :o_eps_sp .
+:entry13 a :Statistic ; rdfs:label "Entry 13 — the time model: ascent half holds, descent bridge does not" ;
+    prov:wasDerivedFrom :o_time ; :gatedBy :gate ;
+    rdfs:comment "Gated in the battery but deliberately OUT of paper 1 — the time model is its own piece." .
+:entry15 a :Statistic ; rdfs:label "Entry 15 — independently estimating CdA, C_rr, mass and wind" ;
+    prov:wasDerivedFrom :o_cda, :o_param_fit .
+:entry17 a :Statistic ; rdfs:label "Entries 17–18 — the regime-decomposed closed form; v2Edge never clamps" ;
+    prov:wasDerivedFrom :o_regime .
+:entry19 a :Statistic ; rdfs:label "Entry 19 — v2Edge on the deployed IGC-SP 5 m raster vs a 30 m resample" ;
+    prov:wasDerivedFrom :o_igc .
+:entry20 a :Statistic ; rdfs:label "Entry 20 — can the deployed pipeline hit ±5% error / ±2% bias?" ;
+    prov:wasDerivedFrom :o_goal ;
+    rdfs:comment "Its anchor constants are carried by scale_trio.py — a re-run of this entry obliges a refresh there." .
+:entry21 a :Statistic ; rdfs:label "Entry 21 — the resolution gap is a parameter problem, not a DEM problem" ;
+    prov:wasDerivedFrom :o_scale, :o_igc, :o_goal ;
+    rdfs:comment "Its scale prescription is what paper 3 cites through paper 2." .
+:entry26 a :Statistic ; rdfs:label "Entry 26 — the direction ladder on real ride endpoints, and portals" ;
+    prov:wasDerivedFrom :o_e26_grid, :o_e26_portals, :o_e26_detour .
+:entry38 a :Statistic ; rdfs:label "Entries 38–40 — the deadband thread: τ*, the deconfounded sweep, roller recycling" ;
+    prov:wasDerivedFrom :o_e38, :o_e39, :o_e40 ; :gatedBy :gate .
+:verification a :Statistic ; rdfs:label "VERIFICATION_NOTES" ; prov:wasDerivedFrom :o_verify .

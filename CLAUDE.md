@@ -91,6 +91,12 @@ home of the *derivation* and the side-by-side comparison.
   Claim/Question, CiTO, PROV-O/P-Plan, Dublin Core; validate with `rdflib`
   after editing), `claims-explorer.html` (generated — regenerate via
   `research/scripts/make_claims_explorer.py`, never hand-edit),
+  `data-graph.ttl` (the **evaluation-lineage DAG** in the I/F/O/T notation:
+  corpora D, parameter classes P, transformers F, per-ride outputs O and the
+  published statistics T derived from them — every `:cardinality` on an output
+  is *counted from its CSV*, never asserted, because `|O| ≤ |D|` and reading a
+  corpus size as a result population is the error it exists to catch; validate
+  with `rdflib`),
   `literature-context.md`, `simujaules-literature-context.md`,
   `crr-cda-typical-values.md`, `dem-elevation-comparison.md`,
   `ascent-error-literature.md`, `censo-model-verification.md`,
