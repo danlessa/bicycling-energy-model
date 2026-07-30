@@ -47,7 +47,12 @@ home of the *derivation* and the side-by-side comparison.
   (Entry 19), `goal_calibration.py` + `goal_smooth_rasters.py` (Entry 20;
   `GOAL_SMOKE=1`), `scale_trio.py` (Entry 21; `SCALE_SMOKE=1`; carries the
   Entry-20 anchor constants — refresh them whenever Entry 20 re-runs),
-  `e47_formselect.py` (Entry 47 — deficit-form selection by BIC under a Laplace
+  `e46_switch.py` (Entry 46 — §3.3's regime switch, four arms
+  {constant, grade-inverse} × {unswitched, switched}, scored under both parameter
+  classes. A **second-order** harness: it reads `e47_formselect.csv`'s per-ride
+  E(ε=0)/E(ε=1) pair rather than re-parsing tracks, which is exact because
+  `approximate` is linear in ε — so Entries 46 and 47 share a population by
+  construction), `e47_formselect.py` (Entry 47 — deficit-form selection by BIC under a Laplace
   likelihood, on D1∪D2 under two parameter arms, plus the labelled in-sample
   D3–D6 arm; `E47_SMOKE=1`. Hosts `invert_physics`, extracted from
   `perride_invert.run_ride` so the per-ride inversion has exactly one copy),

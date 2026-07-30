@@ -1202,6 +1202,67 @@ if not _ok:
     failed = True
 
 
+# ---------------------------------------------------------------- 3m. Entry 46
+# The regime switch. Two things are gated: the four arm medians as published in
+# the journal, and — the finding — that the sub-3% verdict REVERSES between
+# parameter classes, with the near-unbiased choice being the opposite one in
+# each. If that reversal ever disappears, the reading of section 3.3 changes and
+# the journal entry is wrong. Recomputed from the per-ride CSVs, not transcribed.
+print("\n== Regime switch (Entry 46, journal only — no published column moves) ==")
+
+_e46 = parse_csv("e46_switch.csv")
+_ARMS46 = ("const_unsw", "const_sw", "grade_unsw", "grade_sw")
+_n46 = len(_e46)
+_lo46 = sum(1 for r in _e46 if r.get("real") == "false")
+_ok = _n46 == 2141 and _lo46 == 1103
+print(f"  population: {_n46} rides, {_lo46} below the 3% gate"
+      + (" GATE-OK" if _ok else " GATE-FAIL(exp 2141/1103)"))
+if not _ok:
+    failed = True
+
+_exp46 = {"const_unsw": 5.08, "const_sw": 5.62, "grade_unsw": 4.83, "grade_sw": 5.57}
+for _a in _ARMS46:
+    _m = median([abs(float(r[_a])) for r in _e46 if is_finite(float(r[_a]))])
+    _ok = abs(_m - _exp46[_a]) <= 0.02
+    print(f"    {_a:<12} med |D%| {to_fixed(_m, 2)}"
+          + (" GATE-OK" if _ok else f" GATE-FAIL(exp {_exp46[_a]})"))
+    if not _ok:
+        failed = True
+
+# The reversal, recomputed from Entry 47's per-ride table under BOTH classes.
+_e47r = parse_csv("e47_formselect.csv")
+
+
+def _e46_cells(pfx: str) -> tuple[float, float, float, float]:
+    """(eps_d acc, eps_d bias, eps_f acc, eps_f bias) on the sub-3% rides."""
+    dd, df = [], []
+    for r in _e47r:
+        try:
+            e0, e1 = float(r[pfx + "_E0"]), float(r[pfx + "_E1"])
+            emp, sb = float(r["emp"]), float(r[pfx + "_sbar_cells"])
+            ec = float(r[pfx + "_eps_coast"])
+        except (KeyError, ValueError):
+            continue
+        if not (emp > 0 and 0 < sb < 0.03):
+            continue
+        for eps, acc in ((ec - 0.13, dd), (0.20, df)):
+            acc.append(100.0 * ((e0 + (e1 - e0) * eps) / 1000 - emp) / emp)
+    return (median([abs(v) for v in dd]), median(dd),
+            median([abs(v) for v in df]), median(df))
+
+
+_ag = _e46_cells("ag")
+_fr = _e46_cells("fr")
+# frozen priors: eps_d is the near-unbiased one; inverted physics: eps_f is.
+_ok = (abs(_ag[1]) < 1.0 and _ag[3] > 4.0        # ag: eps_d unbiased, eps_f badly biased
+       and _fr[1] < -3.0 and abs(_fr[3]) < 1.0)  # fr: the other way round
+print(f"  sub-3% bias reversal: P_a,g eps_d {to_fixed(_ag[1], 2)} / eps_f {to_fixed(_ag[3], 2)}"
+      f"  ·  P_f,r eps_d {to_fixed(_fr[1], 2)} / eps_f {to_fixed(_fr[3], 2)}"
+      + (" GATE-OK" if _ok else " GATE-FAIL(exp +0.28/+5.90 and -4.64/+0.11)"))
+if not _ok:
+    failed = True
+
+
 if failed:
     print("\nONE OR MORE GATES FAILED", file=sys.stderr)
     sys.exit(1)

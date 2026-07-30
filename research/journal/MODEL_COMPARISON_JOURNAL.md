@@ -163,7 +163,7 @@ counted from its CSV rather than asserted, is [`research/data-graph.ttl`](../dat
 | entry | $I = (D, P)$ | $T$ | $O$ (rows) | $S$ |
 |--:|---|---|---|---|
 | 47 | $(D_1 \cup D_2, P_{a,g})$ and $(D_1 \cup D_2, P_{a,g} \cdot P_{f,r})$ | F3 $\times$ {$\varepsilon_0,\varepsilon_2,\varepsilon_3$}, selected by BIC | `e47_formselect.csv` (2,141 rows; contests on 48 and 990) | **$\varepsilon_0$ retained**; nothing published moved |
-| 46 | $(D_1..D_6, P_{a,g})$ | regime switch | not yet built | registration only |
+| 46 | $(D_1..D_6, P_{a,g})$ and $(\cdot P_{f,r})$ | regime switch, 4 arms | `e46_switch.csv` (2,141) — a **second-order** $O = T(O_{47})$ | §3.3 vindicated; the frozen sub-3% cells cancel |
 | 45 | $(D_1..D_6, P_{a,g})$ | ride-level deficit contest | `e45_ridelevel.csv` (1,039), `e45_ridelevel.paper.csv` (1,038), `e45_flatseg.csv` (396 segments) | **eq. (8)**, $k$ = 0.0051 |
 | 44 | $(D_1..D_6, P_{f,r})$ | occupancy sigmoid, split-half | `e44_scurve_cells.csv` (153 cells), `e44_scurve_fits.csv` (9 rider-halves) | $s_{50}$ separates the populations |
 | 43 | $(D_6, P_{a,g} \cdot P_{f,p}(m))$ | F1–F4, $F_\mathrm{base}$; inversion; occupancy | `skc_comparison.csv` (743), `skc_invert.csv` (743), `skc_descent_occupancy.csv` (2,193), `skc_eps_vs_pedal.csv` (1,038) | **Table 1, Table 3, Tables 5–6**; 3.16 vs 3.15 |
@@ -413,7 +413,7 @@ against the pre-refactor output (identical but for the filename).
 
 ## 2026-07-29 — Entry 46: implementing the regime switch — pre-registration
 
-**Lineage** — $I$: $(D_1..D_6, P_{a,g})$ · $T$: regime switch · $O$: not yet built · $S$: registration only
+**Lineage** — $I$: $(D_1..D_6, P_{a,g})$ **and** $(D_1..D_6, P_{a,g} \cdot P_{f,r})$ · $T$: regime switch, 4 arms · $O$: `e46_switch.csv` (2,141; $O_{46} = T(O_{47})$) · $S$: the rule is right, the frozen grid's sub-3% cells are a cancellation
 
 *Prompt (Danilo), after Entry 45 established that §3.3's regime rule is stated but never
 enforced: "Are we saying that we should recommend using G only when the mean descent is above
@@ -460,6 +460,70 @@ sections before any of it reaches a table.
 *(Correction, Entry 47: "`bootstrap_ci.py` is still held open by the parallel paper-2 line" was
 wrong when written — the battery had already landed in `e827330`. Entries 43–45 were gated in
 §3j/§3k the same day. The registration's substance stands; only the blocker did not exist.)*
+
+### Results (run 2026-07-30, `e46_switch.py`; 2,141 rides, 1,103 below the gate)
+
+Built as four columns beside the existing ones, nothing overwritten:
+$\varepsilon_d$ or eq. (8)'s $k/\bar s$, each unswitched or switched to
+$\varepsilon_f = 0.20$ below $\bar s = 3\%$. Scored under **both** parameter classes.
+
+**The two parameter classes reverse the answer.** Under the frozen priors
+$P_{a,g}$ — the class every published column uses — switching makes things *worse*:
+pooled median $\lvert\Delta\%\rvert$ 5.08 → 5.62. Under per-ride inverted physics
+$P_{f,r}$ it makes them *better*: 5.51 → 4.12. Same rides, same rule, opposite verdict.
+
+**The bias column says which is real.** On the 1,103 rides below the gate:
+
+| $P$ | $\varepsilon$ applied | med $\lvert\Delta\%\rvert$ | signed |
+|---|---|--:|--:|
+| $P_{a,g}$ | $\varepsilon_d$ | 5.56 | **+0.28** |
+| $P_{a,g}$ | $\varepsilon_f = 0.20$ | 6.99 | +5.90 |
+| $P_{f,r}$ | $\varepsilon_d$ | 5.90 | −4.64 |
+| $P_{f,r}$ | $\varepsilon_f = 0.20$ | 3.37 | **+0.11** |
+
+Under each class exactly one choice is near-unbiased, and they are *opposite* choices.
+The mechanism is visible in the numbers: below 3% the coasting limit clamps, so the
+median $\varepsilon_{\mathrm{coast}}$ is 0.674 and the applied $\varepsilon_d$ is
+**0.544** — against $\varepsilon_f$'s 0.20. That is a very large refund. With the
+frozen $C_dA = 0.40$ (well above the 0.26–0.32 these riders actually invert to) the law
+over-predicts, and a 0.544 refund cancels it to +0.28. Give the law honest physics and
+the over-prediction goes away — whereupon the same refund over-shoots to −4.64, and the
+modest $\varepsilon_f = 0.20$ lands at +0.11.
+
+**So §3.3's rule is right, and the frozen grid's sub-3% cells are a cancellation.**
+$\varepsilon_d$ on flat rides is not measuring recovery; it is absorbing the frozen
+aero prior. This is the same disease Entry 47 found one step away — a $\delta$ fitted on
+energy absorbing bias instead of measuring pedalling — and it is exactly what the
+project's accuracy-**and**-bias reporting rule exists to catch. A lone accuracy column
+would have read the frozen arm's 5.56 as evidence the estimator works below 3%.
+
+**Verdicts against the registration.**
+
+*P1 — partially, and for the wrong reason.* Switching improves the gentle corpora as
+predicted (D2 8.24 → 5.71, D4 5.23 → 3.44) but does **not** merely "barely move" the open
+ones: D3 worsens 5.64 → 8.27 and D5 6.35 → 7.84. Those corpora are 64–65% sub-gate rides,
+so the switch acts on most of their mass, and it removes the cancellation that was
+flattering them.
+
+*P2 — mixed, and too small to call.* With the switch, grade-inverse beats the constant on
+D5 (0.04 pp), D6-user_2 (0.07) and D6-user_3 (1.36), and loses on D3 (0.10) and
+D6-user_1 (0.06). Four of five margins are under 0.15 pp.
+
+*P3 — fails as stated.* Unswitched, grade-inverse is **better** than the constant overall
+(4.83 vs 5.08), not worse. It is worse only inside the sub-3% band, and by 0.12 pp
+(5.68 vs 5.56) rather than the 20–70% the registration anticipated. That gap was a
+*deficit-space* under-prediction; carried into energy it nearly vanishes — the same
+metric slippage Entry 47 documented. At and above 3% grade-inverse leads 3.99 to 4.34,
+consistent with Entry 45. **Eq. (8) is therefore not "unusable without the switch"**, and
+the article's conditional framing is cautious rather than forced.
+
+**Consequence.** No published number changes: every published column is unswitched and
+stays. What changes is what the frozen grid's sub-3% $\varepsilon_d$ cells *mean* — they
+are accurate by cancellation, not by fit. Implementing the switch is therefore correct
+but must be done together with honest per-ride physics; bolting it onto the frozen grid
+alone would trade a cancelled bias for an exposed one and make the published medians
+worse. Recorded in paper 1 [§3.3](#3.3); the switch itself stays unimplemented in the
+published harnesses, now for a stated reason rather than by omission.
 
 ---
 

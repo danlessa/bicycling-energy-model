@@ -755,11 +755,31 @@ found to be measuring altimeter noise: its target ascent rate sat *below* the
 corpus noise floor, making the search self-reinforcing. It was retracted and
 rebuilt on deadband-smoothed cells.
 
-### Entry 46 — The regime rule is stated but not enforced
+### Entry 46 — The regime rule, enforced at last — and what it exposed
+**Data:** 2,141 rides, 1,103 of them below the threshold.
+
 §3.3 recommends the dynamic estimator only on mean descent grades ≥3%. No
-harness implements it: every published ε_d column applies the estimator to
-every ride, including the 69% of Table 3's corpora below the threshold. The
-switch is registered, not yet built.
+harness implemented it: every published ε_d column applied the estimator to
+every ride, including the 52% below the threshold. Built as four columns
+beside the existing ones, the switch produced a contradiction — under the
+frozen priors it makes the pooled median *worse* (5.08 → 5.62), under honest
+per-ride physics it makes it *better* (5.51 → 4.12). Same rides, same rule,
+opposite verdict.
+
+The bias column settled it. Below the threshold the coasting limit clamps, so
+the ε the estimator actually applies has median 0.544 — against the flat
+constant's 0.20. That large refund cancels the over-prediction of the frozen
+CdA = 0.40, a value well above the 0.26–0.32 these riders really invert to.
+Under frozen priors ε_d therefore looks near-unbiased (+0.28) and the flat
+constant looks terrible (+5.90); give the law honest physics and the two swap
+places (−4.64 against +0.11).
+
+So the rule is right, and the frozen grid's flat-ride cells were accurate *by
+cancellation* — two errors agreeing to look like one success. It is the exact
+failure the project's accuracy-and-bias reporting rule was written to catch,
+and an accuracy column alone would have blessed it. The registered prediction
+that eq. (8) is unusable without the switch did not survive: unswitched, the
+grade-inverse form is slightly *better* overall, not worse.
 
 ### Entry 47 — Two pre-registered selections, and the incumbent wins
 **Data:** 48 calibration rides (D1 ∪ D2 at s̄ ≥ 3%), 990 evaluation rides.

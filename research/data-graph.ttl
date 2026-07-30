@@ -494,3 +494,20 @@
 :entry47 a :Statistic ; rdfs:label "Entry 47 — which deficit form? two pre-registered selections" ;
     prov:wasDerivedFrom :o_e47 ; :gatedBy :gate ;
     rdfs:comment "Calibration arms select eps_0 (the incumbent, 0 free parameters); the in-sample D3-D6 arms select eps_2 decisively (DeltaBIC 128.8 / 88.2). The disagreement is statistical power, not direction. Nothing published moved. Two unregistered findings: delta fitted on ENERGY does not recover the published constants (c = 0.044, k = 0.0020) while delta fitted on the DEFICIT does (c = 0.134, k = 0.0052 against the published 0.13 and 0.0051), because a free delta absorbs the law's positive bias instead of measuring descent pedalling; and DeltaBIC = 128.8 corresponds to 0.17 pp of median error, BIC scoring the MEAN absolute residual while every published statistic is a median." .
+
+# --- Entry 46: the regime switch ------------------------------------------
+
+:F_switch a :Transformer ; rdfs:label "the §3.3 regime switch" ;
+    rdfs:comment "eps_d when s_bar >= 3%, eps_f = 0.20 otherwise. Registered in Entry 46, built in Entry 47's wake. Stated in paper 1 since the first draft and implemented by NO published harness — every published eps_d column applies the dynamic estimator to every ride, including the 52% of all scored rides below the threshold." .
+
+:o_e46 a :Output ; dcterms:identifier "e46_switch.csv" ;
+    p-plan:correspondsToStep "src/harness/e46_switch.py" ;
+    :transformer :F_switch, :F3 ; :epsilonForm :eps0, :eps2, :eps_f ;
+    :cardinality 2141 ;
+    prov:wasDerivedFrom :o_e47 ;
+    :selection "every ride Entry 47 built; 1,103 (52%) fall below the 3% gate — the population the switch acts on" ;
+    rdfs:comment "A SECOND-ORDER output: O_46 = T(O_47), derived from an output rather than from a corpus. Legitimate because approximate() is exactly linear in eps, so Entry 47's stored E(0) and E(1) pin every eps in closed form — and it makes the two entries share a population by construction, which is what licenses the paired sign tests." .
+
+:entry46 a :Statistic ; rdfs:label "Entry 46 — the regime switch, implemented" ;
+    prov:wasDerivedFrom :o_e46 ; :gatedBy :gate ;
+    rdfs:comment "The two parameter classes REVERSE the verdict: under frozen priors switching worsens the pooled median (5.08 -> 5.62), under per-ride inverted physics it improves it (5.51 -> 4.12). The bias column adjudicates — below 3%, eps_d is near-unbiased under frozen priors (+0.28) and badly biased under honest physics (-4.64), while eps_f = 0.20 is the reverse (+5.90, +0.11). So eps_d on flat rides ABSORBS the frozen CdA = 0.40 prior rather than measuring recovery: the median applied eps_d there is 0.544 against eps_f's 0.20. Section 3.3's rule is right; the frozen grid's sub-3% cells are accurate by cancellation. Registered P3 fails: unswitched, grade-inverse is better overall (4.83 vs 5.08), not worse." .

@@ -44,6 +44,7 @@ resolve their inputs and this directory relative to their own location).
 | `e44_scurve_cells.csv`, `e44_scurve_fits.csv` | `python3 src/harness/e44_scurve.py` | 44 (S-curve reopened; occupancy sigmoids) |
 | `e45_ridelevel.ledger.csv`, `e45_ridelevel.paper.csv` | `E45_TARGET={ledger,paper} python3 src/harness/e45_ridelevel.py` | 45 (ride-level form contest) |
 | `e45_flatseg.csv` | `python3 src/harness/e45_flatseg.py` | 45 amendment (flat-terrain probe) |
+| `e46_switch.csv` | `python3 src/harness/e46_switch.py` | 46 (regime switch, four arms; a **second-order** output — reads `e47_formselect.csv` rather than the tracks) |
 | `e47_formselect.csv` | `python3 src/harness/e47_formselect.py` (`E47_SMOKE=1`) | 47 (deficit-form selection; D1∪D2 calibration + the D3–D6 in-sample arm) |
 
 `python3 src/harness/bootstrap_ci.py` (Entry 22) reads these CSVs and gates the
