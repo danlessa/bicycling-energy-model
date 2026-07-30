@@ -21,6 +21,7 @@ decision — not financial subsidy.)
 | `04-mission-threads.sysml` | End-to-end threads per stakeholder, each with its failure mode |
 | `05-deliverables.sysml` | The four articles, their enablement chain, and why A4 is deferred |
 | `06-lifecycle.sysml` | Life-cycle stages, the freeze tension, and the A1→A2→A3 roadmap |
+| `07-sub-missions.sysml` | One sub-mission per critical-path article, each with what it must *not* claim |
 
 Read in order; each imports the one before.
 
@@ -119,6 +120,47 @@ frozen; the repository is not, and a re-baseline has already moved every
 assumed-parameter number once. The cheap fix is a gate section pinned to a
 released paper's *as-published* values, which fails when the live numbers leave
 the published intervals — deliberately inverting the usual gate direction.
+
+## The sub-missions
+
+One per critical-path article. Each is a complete mission — own effect, own
+primary stakeholder, own measures, own failure mode.
+
+| | Sub-mission | Primary | Fails if |
+|---|---|---|---|
+| **SM-1** (A1) | Establish that the estimate is **credible** | (A) academics, (C) activists | The framing invites "validated against 2,025 rides" when the protocol is a shared-input consistency check |
+| **SM-2** (A2) | Make it **operable from a map** | (B) technicians | The smoothing is tuned per DEM — then the elevation source is a hidden free parameter, the same disease as a per-rider constant, one level up |
+| **SM-3** (A3) | Make it **searchable**, and MO-6 operational | (B), (C), (E) | The grid's own geometry decides the answer — connectivity bias, direction quantisation, a dead clamp (all three already caught once) |
+
+The load-bearing field is **what each must *not* claim**. A1's credibility
+depends on it not claiming planner-usability; A2's on it not claiming routing.
+The temptation at each stage is to reach for the next stage's conclusion, because
+that is where the interest is — and reaching is what a reviewer catches. Scope
+discipline here isn't modesty, it's the mechanism by which each article survives
+adversarial reading.
+
+**SM-3 carries a risk the others don't, and it is the mission's:**
+
+> Does energy-optimal routing actually differ from distance- or time-optimal
+> routing, materially and often?
+
+If the cheapest-energy route is usually the road the shortest path already
+picked, MO-6 is philosophically sound and operationally empty — the currency
+shift would change how a decision is *justified* without changing the decision.
+This is falsifiable, it is A3's to answer, and it has never been asked in that
+form. Entry 26's direction ladder and detour measurements on real endpoints are
+the seed evidence, but they were run to validate the search, not to test the
+currency claim. On São Paulo's relief the premise is plausible — gravity
+dominates, so detours around hills should be real — but plausible is not
+measured, and that terrain is also where the corpora are most concentrated.
+
+Two structural notes. The series is **not all-or-nothing**: SM-1 delivers a
+checkable result serving (A) and (C) whether or not SM-2 lands, which is the main
+practical argument for decomposing the monolith. And the sub-missions get
+**harder to evaluate as they go** — SM-1 is judged by readers who can check a
+derivation, SM-2 needs a planner to try it on their own raster, SM-3 needs
+someone to route with it. The evidence available inside this repository thins out
+along exactly the axis the mission travels.
 
 ## Conventions
 
