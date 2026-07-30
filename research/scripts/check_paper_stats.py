@@ -60,6 +60,33 @@ def gate_sections(src: str) -> dict[str, str]:
     return out
 
 
+def _asserted(value: str, section: str) -> bool:
+    """Is `value` asserted in this gate section, allowing for rounding?
+
+    The article rounds a statistic to the precision it prints; the gate holds it
+    to more (paper 8.5 vs gate 8.45). String equality would call that a missing
+    gate, which is a false alarm and the fastest way to make a checker ignored.
+    So: numeric, and a gate number matches if it rounds to the claim's value at
+    the claim's own precision.
+    """
+    if value in section:
+        return True
+    try:
+        v = float(value)
+    except ValueError:
+        return False
+    dp = len(value.split(".")[1]) if "." in value else 0
+    # +eps: 8.45 stores as 8.4499..., so |8.4499 - 8.5| exceeds a bare 0.05
+    tol = 0.5 * (10 ** -dp) + 1e-9
+    for m in re.finditer(r"-?\d+(?:\.\d+)?", section):
+        try:
+            if abs(float(m.group(0)) - v) <= tol:
+                return True
+        except ValueError:
+            continue
+    return False
+
+
 def check(path: str, sections: dict[str, str]) -> tuple[int, int, int]:
     text = open(path, encoding="utf-8").read()
     sidecar = path[:-3] + ".meta.ttl"
@@ -98,7 +125,7 @@ def check(path: str, sections: dict[str, str]) -> tuple[int, int, int]:
             g = str(gate)
             if g not in sections:
                 problems.append(f"gate section '{g}' does not exist")
-            elif str(val) not in sections[g]:
+            elif not _asserted(str(val), sections[g]):
                 problems.append(f"value {val} not asserted in gate section {g}")
 
         status = "OK" if not problems else "FAIL: " + "; ".join(problems)

@@ -207,7 +207,16 @@ def sign_p(w: int, l: int) -> float:
     return min(1, p)
 
 
-def paired(label: str, rows: list[dict], col_a: str, col_b: str) -> None:
+def paired(label: str, rows: list[dict], col_a: str, col_b: str,
+           expect_w: int | None = None, expect_p: float | None = None) -> None:
+    """Paired sign test. With expect_* it GATES; without, it only reports.
+
+    Added because the parity claim in section 3.1 — the paper's own headline for
+    hypothesis H1 — rested on a p-value this function printed and never
+    asserted. Found by check_paper_stats.py, which is exactly the class of gap
+    it exists to find.
+    """
+    global failed
     w = l = 0
     for r in rows:
         a, b = abs(parse_float(r.get(col_a))), abs(parse_float(r.get(col_b)))
@@ -217,8 +226,16 @@ def paired(label: str, rows: list[dict], col_a: str, col_b: str) -> None:
             w += 1
         elif a > b:
             l += 1
+    _p = sign_p(w, l)
+    _gate = ""
+    if expect_w is not None or expect_p is not None:
+        _ok = ((expect_w is None or w == expect_w)
+               and (expect_p is None or abs(_p - expect_p) <= 0.005))
+        _gate = " GATE-OK" if _ok else f" GATE-FAIL(exp {expect_w}/{expect_p})"
+        if not _ok:
+            failed = True
     print(f"{label}: A closer on {w}/{w + l} ({to_fixed(100 * w / (w + l), 0)}%), "
-          f"sign test p={to_fixed(sign_p(w, l), 4)}")
+          f"sign test p={to_fixed(_p, 4)}{_gate}")
 
 
 def strat_signed_gate(label: str, strata_cols: list[list[float]], es: float,
@@ -275,7 +292,8 @@ LG = [
 ]
 for label, c, ea, es, eci in LG:
     report(label, col(lg, c), ea, es, expect_ci=eci)
-paired("PAIRED champion (cfS) vs canonical", lg, "cfS_vs_emp", "canon_vs_emp")
+paired("PAIRED champion (cfS) vs canonical", lg, "cfS_vs_emp", "canon_vs_emp",
+       expect_w=24, expect_p=0.65)   # section 3.1 quotes this as the parity evidence
 
 # ---------- 1b. Longões FROZEN protocol (Entry 31 / paper Table 2) ----------
 sec("1b")

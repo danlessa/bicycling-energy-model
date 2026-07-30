@@ -90,3 +90,95 @@
   cito:citesAsEvidence dg:o_e48 ;
   prov:wasDerivedFrom claims:assert48 ;
   rdfs:comment "Formal equivalence, not a failure to reject; the interval sits on the side where the law is better" .
+
+
+<#c-d1.f4.informed.med> a schema:Claim ;
+  schema:text "F4 median |D%| 5.9 on D1, condition-informed parameters" ;
+  dcterms:type "calibration" ;
+  pc:value 5.9 ;
+  pc:gateSection "1" ;
+  cito:citesAsEvidence dg:o_model_comparison .
+
+<#c-d1.sim.informed.med> a schema:Claim ;
+  schema:text "Forward simulation median |D%| 5.2 on D1, same informed parameters" ;
+  dcterms:type "calibration" ;
+  pc:value 5.2 ;
+  pc:gateSection "1" ;
+  cito:citesAsEvidence dg:o_model_comparison .
+
+<#c-d1.f1.uncorrected.med> a schema:Claim ;
+  schema:text "Uncorrected F1 median |D%| 19.1 on D1 - the baseline the two corrections act on" ;
+  dcterms:type "calibration" ;
+  pc:value 19.1 ;
+  pc:gateSection "1" ;
+  cito:citesAsEvidence dg:o_model_comparison .
+
+<#c-d1.f2.split.med> a schema:Claim ;
+  schema:text "F2, aero gated off climbs only, median |D%| 8.6" ;
+  dcterms:type "calibration" ;
+  pc:value 8.6 ;
+  pc:gateSection "1" ;
+  cito:citesAsEvidence dg:o_model_comparison .
+
+<#c-d1.parity.signtest> a schema:Claim ;
+  schema:text "Paired sign test law vs simulation on D1, p = 0.65 - no detectable difference" ;
+  dcterms:type "calibration" ;
+  pc:value 0.65 ;
+  pc:gateSection "1" ;
+  cito:citesAsEvidence dg:o_model_comparison .
+
+<#c-d1.blind.f3.med> a schema:Claim ;
+  schema:text "F3 median |D%| 8.2 on D1 under the FROZEN protocol - the blind coherence check" ;
+  dcterms:type "calibration" ;
+  pc:value 8.2 ;
+  pc:gateSection "1b" ;
+  cito:citesAsEvidence dg:o_longoes_frozen .
+
+<#c-d2.f3.med> a schema:Claim ;
+  schema:text "F3 eps_d median |D%| 7.7 on the urban corpus, nothing refit" ;
+  dcterms:type "out-of-sample" ;
+  pc:value 7.7 ;
+  pc:gateSection "2" ;
+  cito:citesAsEvidence dg:o_censo .
+
+<#c-d2.tost.worse> a schema:Claim ;
+  schema:text "D2 is the one parity claim TOST declines to support: CI [-0.04, +2.18] allows the law being 2.2 pp worse" ;
+  dcterms:type "out-of-sample" ;
+  pc:value 1.08 ;
+  pc:gateSection "3n" ;
+  cito:citesAsEvidence dg:o_e48 .
+
+<#c-pool34.sim.med> a schema:Claim ;
+  schema:text "Simulation median |D%| 6.3 on the same D3+D4 pool - the comparator for the headline" ;
+  dcterms:type "out-of-sample" ;
+  pc:value 6.3 ;
+  pc:gateSection "3c" ;
+  cito:citesAsEvidence dg:o_ppaz, dg:o_jaam .
+
+<#c-pool35.f3d.med> a schema:Claim ;
+  schema:text "Adding D5 gives 5.9; D5 is the calibration rider's own history, so this pool is not out-of-sample" ;
+  dcterms:type "in-sample" ;
+  pc:value 5.9 ;
+  pc:gateSection "3c" ;
+  cito:citesAsEvidence dg:o_ppaz, dg:o_jaam, dg:o_danlessa .
+
+<#c-d6.f3f.collapse> a schema:Claim ;
+  schema:text "The flat constant collapses on D6 where the dynamic estimator holds - the regime rule visible in one corpus" ;
+  dcterms:type "external" ;
+  pc:value 8.5 ;
+  pc:gateSection "3j" ;
+  cito:citesAsEvidence dg:o_skc .
+
+<#c-pool.regime.f3d> a schema:Claim ;
+  schema:text "Under regime-consistent per-ride aero the pool reaches 3.9 - partially in-sample per ride by construction" ;
+  dcterms:type "in-sample" ;
+  pc:value 3.9 ;
+  pc:gateSection "3e" ;
+  cito:citesAsEvidence dg:o_perride_invert .
+
+<#c-pool.regime.sim> a schema:Claim ;
+  schema:text "Simulation under the same per-ride physics, 4.0 - the pairing restored" ;
+  dcterms:type "in-sample" ;
+  pc:value 4.0 ;
+  pc:gateSection "3e" ;
+  cito:citesAsEvidence dg:o_perride_invert .
