@@ -148,11 +148,11 @@ home of the *derivation* and the side-by-side comparison.
   file → producer → journal entry). Every file regenerates with one harness
   command.
 - `mission-model/` — the repo's **mission** in SysML v2 / Mission Engineering
-  terms (`00-mission` → `04-mission-threads`, read in order): the effect chain,
+  terms (`00-mission` → `05-deliverables`, read in order): the effect chain,
   the four stakeholder classes, capabilities vs the systems delivering them, and
   MOPs vs MOEs. Plain text, compiled by nothing (no-build rule). Descriptive, not
   aspirational — it records that `MOE-5` (adoption in practice) is uninstrumented
-  and that `cDeploy` is the thinnest capability. Changes on a *paper* landing or a
+  and that `cDeploy` is the thinnest capability. `05-deliverables` holds the article chain A1→A2→A3 (A4, the time dual, deferred on evidential grounds — Entry 13's descent bridge fails) and names A3 as the mission's binding constraint. Changes on a *paper* landing or a
   stakeholder shift, never on a re-baselined number.
 - `README.md` — user-facing overview.
 

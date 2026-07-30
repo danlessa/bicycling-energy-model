@@ -19,8 +19,35 @@ decision — not financial subsidy.)
 | `02-capabilities.sysml` | Seven required capabilities, the systems that deliver them, and where a capability is thin |
 | `03-measures.sysml` | MOPs vs MOEs — and the gap between them |
 | `04-mission-threads.sysml` | End-to-end threads per stakeholder, each with its failure mode |
+| `05-deliverables.sysml` | The four articles, their enablement chain, and why A4 is deferred |
 
 Read in order; each imports the one before.
+
+## The deliverables
+
+    A1 (closed form)  →  A2 (on DEMs)  →  A3 (discretised edge cost)
+                                              │
+                                              └→ energy-optimal routing,
+                                                 corridor comparison, diagnostics
+
+    A4 (time dual) — branch off A1, off the critical path
+
+The chain is ordered by **enablement**, not preference: A2 cannot be written
+without A1's law, and A3's discretisation question is *raised by* A2. The
+consequence worth noting is that **A3, not A1, is the deliverable that reaches
+the mission's terminal stakeholder** — routing over an edge-cost graph is what a
+planning tool actually does. A1 is mature and A2 drafted, so A3 is the binding
+constraint on the whole mission.
+
+**A4 is deferred, and the reason matters.** The obvious reason would be that time
+doesn't interest planners — that is false, and travel time is in fact the
+standard currency of transport appraisal, so a validated time model would be the
+most planner-legible of the four. The real reason is evidential: Entry 13 tested
+the dual and found it half broken (the ascent term holds, the descent bridge does
+not), with a marginal, mass-sensitive headline result. A4 would ship a claim whose
+weaker half is known to fail, into the one domain where practitioners have
+well-calibrated alternatives. So: **defer, don't abandon** — if the descent bridge
+is ever repaired, A4 moves from branch to critical path.
 
 ## The three things the model actually surfaces
 
@@ -35,7 +62,10 @@ or fails on whether a planner ever grounds a decision in the result, and no
 artefact here would detect that either way. `MOE-5` is the terminal measure of
 the stated mission and it is uninstrumented. That is a normal position for a
 research repository, but it means the mission's second clause is currently an
-*intent* rather than a demonstrated effect.
+*intent* rather than a demonstrated effect. The deliverable chain sharpens this:
+MOE-5 cannot plausibly move before **A3** lands, because until then there is no
+artefact a planning body can route with. The gap is an unfinished mission with a
+named unblocker, not a failing one.
 
 **2. The four stakeholders cannot be served by one artefact.** The error bars
 that satisfy academics are noise to the public; the plain-language summary that
