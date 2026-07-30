@@ -25,6 +25,8 @@
 
 **Results.** Frozen and carried to two riders who took no part in any model selection, the proposed form reproduces 660 rides to **5.6% [5.2, 6.2]<!--@c-pool34.f3d.med--> median error** — the headline, and the figure formal equivalence testing supports (TOST, 90% CI of the median difference against the simulation [−0.90, −0.33] pp<!--@c-pool34.tost-->, inside a registered ±1.0 margin). On the calibration corpus itself, with condition-informed per-ride parameters, the corrected forms reach 3.5%<!--@c-d1.f3.informed.med--> [95% CI 2.0, 5.6] (F3) and 5.9% [3.6, 8.3] (F4)<!--@c-d1.f4.informed.med--> against the simulation's 5.2% [3.8, 7.3]<!--@c-d1.sim.informed.med--> (uncorrected: 8.6% and 19.1%) — a **calibration ceiling under condition knowledge**, not a transfer result: everything tunable was fixed on that corpus and the informed run additionally chose an $\varepsilon$ per ride. Its blind re-run costs ≈ 4.6 points. Two corrections carry the gain: not charging climb aerodynamics at the flat reference speed, and not counting sub-metre elevation noise as climbing. No paired test separates the best form from the simulation. Blind, they cluster at 7.6–8.2% versus 8.4%: parity is protocol-independent, and the ≈ 3–5-point shift prices condition knowledge. For the descent term we derive the coasting limit $\varepsilon_{\mathrm{coast}}(s) = \min(1, (\alpha/\beta)/s)$ and subtract a **coasting deficit**, identically the descent pedal energy over the scaled drop — so its form is a claim about how *often* riders pedal descents, not how hard. Of four pre-registered forms the frozen $\varepsilon_0 = 0.13$ is an excellent constant, indistinguishable from the best refit ($p = 0.86$), yet beaten out of sample by $\varepsilon_2 = k/\bar s$ ($k = 0.0051$, no rider parameter): held-out error 0.067 → 0.055, winning 344 of 513 rides. $\varepsilon_0$ is then $\varepsilon_2$ read at the calibration corpus's own terrain. The contest covers mean descent grades ≥ 3% only. A limitation of our own evaluation qualifies every $\varepsilon_d$ figure here: the regime rule is a recommendation the tables do not enforce, applying $\varepsilon_d$ to all rides, including the 69% below 3%. Frozen, the law pools to **5.6% [5.2, 6.2] over the independent riders' 660 rides** against the simulation's 6.3% [5.8, 6.8]<!--@c-pool34.sim.med-->, 3.5–6.2% per corpus, and 6.4–7.7% on the urban regime test. The deficit's *sign* recurs on all seven riders; its *value* does not travel — 0.12–0.14 on the three São Paulo riders, 0.08–0.30 with the four Europeans.
 
+**Scope.** Seven riders, all on conventional road bicycles with power meters; the behavioural constants are calibrated at a 30 m elevation scale and paired with an assumed $\rho\,C_dA$. Whether the coasting deficit holds for utility commuters, e-bikes, cargo bikes or recumbents is untested, and the transfer claim rests on two independent riders plus four external ones — a thin base for a behavioural constant, and the limit most likely to bind in deployment ([§4.3.4](#4.3.4)).
+
 **Conclusions.** The proposed F3 — air resistance charged only off the climbs, elevation totals smoothed — matches the simulation under both protocols; F4, its totals-only approximation (subtract $c \approx 3$ m of phantom climb per kilometre), performs nearly as well and is computable by hand from distance, ascent, descent and a rough climbing share.
 
 Descent recovery has a geometry (the coasting limit) and a habit (the deficit), and the habit's spread across riders is behavioural: those who pedal descents twice as often show correspondingly larger deficits. Where the dynamic estimator applies, its deficit is better taken grade-inverse than constant; its edge over a flat constant is rider- and parameter-dependent, and flat $\varepsilon \approx 0.20$ suffices in urban riding. The law is cheap enough to serve as a per-edge routing cost at the sampling scale it was calibrated on.
@@ -521,7 +523,7 @@ Two forms with more parameters were also tested and do **not** displace eq. (8) 
 
 #### 3.2.3 Boundaries
 
-Two boundaries complete the picture. On flat terrain the clamp-to-1 prediction inverts — gentle rides are pedalled *through* dips, so measured $\varepsilon \to 0$ — harmlessly, since such rides carry ≈ 0 descent energy (this is why the estimator must be restricted to real descents; over all 44 rides it loses to a flat constant). And in urban stop-go riding, $\varepsilon_{\mathrm{coast}}$ over-credits recovery; a flat $\varepsilon \approx 0.20$ fits better there. A consistent reading is that the limit is a *free-run* bound: it assumes the descent's momentum is spent against drag and rolling over the run-out, but a dense grid spends it against infrastructure — mid-descent stops are repaid by gravity (above), while the light at the *bottom* of the hill confiscates exactly the run-out the geometry promised — so the coasting limit is systematically inaccessible and a lower flat constant absorbs the loss. Notably, the frozen $\varepsilon_d$ transferred to the urban corpus comes within 0.01 RMS of the flat constant selected in-sample *on that corpus* (0.09 vs 0.08) — the calibration survives the regime change even where the geometry itself stops helping.
+Two boundaries complete the picture. On flat terrain the clamp-to-1 prediction inverts — gentle rides are pedalled *through* dips, so measured $\varepsilon \to 0$ — harmlessly, since such rides carry ≈ 0 descent energy (this is why the estimator must be restricted to real descents; over all 44 rides it loses to a flat constant). And in urban stop-go riding, $\varepsilon_{\mathrm{coast}}$ over-credits recovery; a flat $\varepsilon \approx 0.20$ fits better there. **The obvious explanation is wrong, and we tested it.** If stopping were what confiscates the recovery, the shortfall should track how often a rider stops — it does not. Against the gap $\varepsilon_{\mathrm{coast}} - \varepsilon_{\mathrm{true}}$, stops per kilometre reaches $R^2 = 0.07$, descent braking energy 0.01, hard braking 0.02, all-decelerations 0.06; the best of any braking-style predictor is the flat speed $v_f$ itself at 0.14 (lab journal, Entry 10). So a route-level penalty weighted by intersection or signal density — the natural fix, and one readers propose unprompted — has no support in this corpus. The urban shortfall is real and a flat constant absorbs it, but its *mechanism* remains unidentified. A consistent reading is that the limit is a *free-run* bound: it assumes the descent's momentum is spent against drag and rolling over the run-out, but a dense grid spends it against infrastructure — mid-descent stops are repaid by gravity (above), while the light at the *bottom* of the hill confiscates exactly the run-out the geometry promised — so the coasting limit is systematically inaccessible and a lower flat constant absorbs the loss. Notably, the frozen $\varepsilon_d$ transferred to the urban corpus comes within 0.01 RMS of the flat constant selected in-sample *on that corpus* (0.09 vs 0.08) — the calibration survives the regime change even where the geometry itself stops helping.
 
 <a id="3.3"></a>
 
@@ -672,14 +674,18 @@ The closed form's error was never diffuse: two identifiable artifacts carried it
 
 *Physiology-adjacent estimates.* Mechanical kJ converts to food energy with a happy coincidence: typical muscular efficiency (~24%) means each mechanical kJ costs ≈ 4.2 kJ of metabolic energy, and 1 food kcal = 4.184 kJ — so 1 mechanical kJ ≈ 1 food kcal, and the law's output doubles as a meal-planning number for long rides.
 
+<a id="4.1.2"></a>
+
 #### 4.1.2 The calculation recipe
 
 For a rider of total system mass $m$ (rider + bike + gear, kg) and flat cruising speed $v_f$:
 
 > 1. **Constants** (defaults: $C_{rr} = 0.008$, $C_dA = 0.40\ \mathrm{m^2}$, $\rho = 1.13\ \mathrm{kg/m^3}$, $k_{\mathrm{eff}} = 0.98$, $g = 9.79\ \mathrm{m/s^2}$):
 >    $\alpha_r = C_{rr}\,m g/k_{\mathrm{eff}}$ · $\alpha_a = \tfrac{1}{2}\rho\,C_dA\,v_f^2/k_{\mathrm{eff}}$ · $\beta = m g/k_{\mathrm{eff}}$.
+>    **With a known wind**, replace $v_f$ by $v_f + w$ inside $\alpha_a$ only ($w > 0$ head, $w < 0$ tail) — the aero term already carries the relative-air speed, so no other term changes. The cost is quadratic and asymmetric: at $v_f$ = 20 km/h a 10 km/h headwind more than doubles $\alpha_a$ while the matching tailwind removes about three quarters of it, so an out-and-back in wind costs more than the still-air round trip. Use the component along your heading; on a route that turns, apply it per leg. All frozen results in this paper set $w = 0$, so this is a recipe affordance rather than a validated correction — [§4.3.6](#4.3.6) states what that omission costs.
 > 2. **If you know your flat power $P$ instead of your cruising speed** (the power you hold on a flat stretch — not the whole-ride average, which mixes climbs and coasting zeros): $v_f$ is the speed at which flat power balances, $P = (\alpha_r + \alpha_a(v_f))\,v_f$ — the same anchor the study uses to match the two models ([§2.1](#2.1)). Guess-and-check converges in two or three tries because $P$ grows steeply with speed; see the worked example. As anchors, at the step-1 defaults with a 75 kg system: 50 W → 16.6 km/h, 100 W → 23.2 km/h, 150 W → 27.6 km/h, 200 W → 31.1 km/h (a few kg of mass barely moves these — drag dominates the flat balance).
 > 3. **Correct the elevation totals**: subtract 3 m per km of route from both $h_+$ and $h_-$ — a rate measured on barometric ride recordings; DEM/map-derived profiles need their own, larger rate ([§2.4](#2.4)), and skip this step if your source already smooths.
+>    *What the deployed router uses today:* Simujaules evaluates a grade-local $\varepsilon$ per edge with the **frozen $\varepsilon_0 = 0.13$**, not eq. (8). That is deliberate rather than lagging: a pre-registered selection on the calibration corpora, by BIC under a Laplace likelihood and under two parameter classes, returned $\varepsilon_0$ in both arms, while eq. (8) wins only on the evaluation corpora — 48 calibration rides cannot resolve what 990 evaluation rides can, and only the calibration side is licensed to choose what ships (lab journal, Entry 47).
 > 4. **Choose $\varepsilon$**: with profile software use the dynamic $\varepsilon_d$, eq. (5), now with **$\varepsilon_2$, the grade-inverse deficit of eq. (8)**, in place of the frozen $\varepsilon_0$ — subtract $0.0051/\bar s$ rather than $0.13$, where $\bar s$ is the ride's total drop over its descending distance — **but only when $\bar s \geq 3\%$**, the regime [§3.3](#3.3) reserves for $\varepsilon_d$; on gentler terrain use $\varepsilon_f = 0.20$ instead, which is the existing rule and not a new one. It costs one extra division, needs no rider parameter, and matters most where terrain is steep (at $\bar s = 6\%$ it refunds 0.085, not 0.13). By hand, without a profile, use the flat $\varepsilon_f = 0.20$: it under-refunds open descents, so the estimate errs safe. (The mean-grade pencil shortcut for $\varepsilon_{\mathrm{coast}}$ itself was tested and rejected — journal Entry 42 — so eq. (8) refines the deficit term, not the coasting limit.)
 > 5. **Sum**: $E = \alpha_r x + \alpha_a x_{\mathrm{flat}} + \beta h_+ - \varepsilon\,\beta h_-$. The climbing-distance share is the recipe's fourth route input: read it from the profile if you have one, or use $\boldsymbol{x_{\mathrm{flat}} \approx 0.8\,x}$ as a rolling-terrain default (the calibration corpus's median ride climbs for 21% of its distance).
 >
@@ -716,15 +722,21 @@ To our knowledge the lumped, closed-form, route-level $\varepsilon$ — and a ca
 
 ### 4.3 Limitations
 
+<a id="4.3.1"></a>
+
 #### 4.3.1 Informed calibration and selection optimism
 
 The calibration rests on the informed-parameters run: per-ride best-guess constants from literature values and the author's judgment, chosen because useful beats blind for the study's purpose. The known coherence cost is that the hand-chosen per-ride $\varepsilon$ shades into per-ride fitting; the fully frozen re-run of [§3.1](#3.1) is the check, and the ≈ 3–5-point shift on the proposed-form/simulation pair bounds, in-sample, what the judgment buys. Model *selection* — the correction chain, the $\tau = 2$ m threshold, the choice of F3–F4 — was itself performed on the calibration corpus, so D1's numbers (and even its blind re-run, which inherits the selected forms) carry selection optimism the other corpora do not.
 
 The defense is structural: D3–D5 never touched the selection process and serve as the held-out validation set, which is why the pooled D3–D5 figure — not the calibration one — is this paper's headline accuracy claim.
 
+<a id="4.3.2"></a>
+
 #### 4.3.2 Accounting consistency, not blind prediction
 
 All accuracy figures are conditioned on each ride's measured power inputs and a data-implied or logged mass: they measure the consistency of the energy accounting, not blind prediction, which additionally requires a power model.
+
+<a id="4.3.3"></a>
 
 #### 4.3.3 On gentle terrain the frozen grid is accurate by cancellation
 
@@ -736,6 +748,8 @@ Below the threshold the coasting limit clamps, so the $\varepsilon_d$ actually a
 
 Two things follow. The regime rule of [§3.3](#3.3) is *correct* and should be implemented — but together with per-ride physics, since bolting it onto the frozen grid alone trades a cancelled bias for an exposed one and moves the pooled median the wrong way, 5.08 to 5.62<!--@c-e46.ag.switched.med-->. And accuracy reported without bias would have concealed all of it: a single error column reads 5.56 below the threshold and calls it success (lab journal, Entry 46).
 
+<a id="4.3.4"></a>
+
 #### 4.3.4 Broad in conditions, narrow in riders
 
 Within the corpora, terrain and context vary as widely as the region allows — urban stop-go group rides, 200 km-class brevets, gravel and rough surfaces (the informed run's per-ride $C_{rr}$ spans 0.004–0.020), rain and wind (air density 1.01–1.22 kg/m³, head/tailwinds −7 to +5 km/h), solo and group riding — and the law holds across that spread. The rider sample, by contrast, is three people in one metropolitan region, all conventional road-position cyclists with power meters, and the transfer evidence rests on exactly two of them: "transfers across riders" therefore means *consistency over a very small sample*, not a population estimate.
@@ -744,11 +758,26 @@ Vehicle classes outside the sample could shift the deficit constant or worse —
 
 One condition is frozen rather than spanned: wind is zero everywhere outside the informed run. A steady headwind acts on the balance like an invisible grade — at a 25 km/h cruise, a 10 km/h headwind adds $\tfrac{1}{2}\rho C_dA\,(2 v w + w^2)$ per metre, the cost of roughly an extra 1.4% slope at the frozen constants — so the blind figures on exposed, unidirectional routes inherit an error the route geometry cannot reveal. Round trips partly cancel it, and the wind-exposed brevets being blind D1's hardest rides ([§3.1](#3.1)) is this concession showing up in the data.
 
+<a id="4.3.5"></a>
+
 #### 4.3.5 The (α, ε) pairing and the constants' scope
 
 The headline numbers use literature-typical prior physics; the fitted-physics rerun ([§3.4](#3.4)) shows the law's accuracy and the deficit's recurrence survive that choice, but the dynamic estimator's margin over a flat constant and one rider's gap value do not — so the transferable content is the law, the regime rule, and the deficit's recurrence, not the 34% figure.
 
 More fundamentally, **only the (cost, refund) *pair* is identified by ride energies**: the behavioural constants are calibrated against the frozen priors. An ε fitted to match a ride's energy responds to a cost-side (α) error with lever $x/(\beta h_-)$ — whole-ride distance per unit drop — while the dynamic estimator can respond only with lever $x_-/(\beta h_-)$, several times smaller: no descent-geometry estimator can absorb a mis-priced α. Re-pair the physics without re-fitting and the regime rule can invert (measured in the lab journal, Entries 33 and 35); pair the law with a *ride-consistent* α (aero from flat power at the measured flat speed) and the frozen $\varepsilon_0$ works as designed ([§3.5](#3.5), [Table 6](#tab6)). The behavioural constants are likewise tied to the 30 m elevation-sampling scale ([§4.4](#4.4)).
+
+<a id="4.3.6"></a>
+
+#### 4.3.6 What zero wind costs
+
+Every frozen run in this paper sets $w = 0$; only the informed D1 run judged it per ride. That is a real omission rather than a rounding choice, and it is worth pricing.
+
+Wind enters only through $\alpha_a$, but quadratically in the relative-air speed, so its leverage is large at the low reference speeds this work plans around. At $v_f$ = 20 km/h a 10 km/h headwind raises $\alpha_a$ by a factor of 2.25; the matching tailwind cuts it to a quarter. The asymmetry is the point: on an out-and-back the two legs do **not** cancel, and the round trip costs more than the still-air equivalent. A steady wind therefore behaves like an unmetered virtual grade that route geometry cannot see.
+
+Three consequences bound how much this matters. It is confined to the aero term, so on climb-dominated routes — where $\beta h_+$ leads and $\alpha_a$ is a minority share — the exposure is small; the corpora most affected are the long, flat, exposed ones, which is consistent with D1 being the hardest corpus under the blind protocol. It is *unbiased in expectation* over many rides in mixed directions but not within any one ride, so it inflates the spread of the blind figures more than it shifts their median. And it places a floor on blind accuracy that no improvement to the geometry can lift: some of the residual reported here is weather, not modelling.
+
+We do not correct for it, because doing so honestly requires a wind field and a per-leg bearing, which is a different paper. [§4.1.2](#4.1.2) gives the affordance for a reader who knows their wind; it is untested here and should be treated as such.
+
 
 <a id="4.4"></a>
 
@@ -892,7 +921,7 @@ the clamp being the flat-band case $s < s_*$: there the rider pedals lightly to 
 
 #### A.6 Bounds
 
-The two sides are asymmetric. The upper bound is a theorem on descent-dominated grades: for $s_i \geq s_*$, $E_{\mathrm{legs},i} \geq 0$ gives $\varepsilon_i \leq \varepsilon_{\mathrm{coast}}(s_i) = s_*/s_i$. In the flat band the cap at 1 is a convention, not a bound — a rider coasting a shallow cell pays its drag below the $v_f$ bill and the balance form can read $\varepsilon_i > 1$ there; the real-descent restriction ($\bar s \geq 3\%$) keeps the calibration in the regime where the bound binds. There is **no physical lower bound** — but not by way of braking: setting $E_{\mathrm{legs},i} = 0$ in the balance form gives $\varepsilon_i = \alpha\,\Delta x_i/(\beta\,h_i) > 0$ *regardless of how much braking occurred*, because brakes dissipate gravity's share of the ledger, never the legs'.
+The two sides are asymmetric. The upper bound is a theorem on descent-dominated grades: for $s_i \geq s_*$, $E_{\mathrm{legs},i} \geq 0$ gives $\varepsilon_i \leq \varepsilon_{\mathrm{coast}}(s_i) = s_*/s_i$. In the flat band the cap at 1 is a convention, not a bound — a rider coasting a shallow cell pays its drag below the $v_f$ bill and the balance form can read $\varepsilon_i > 1$ there; the real-descent restriction ($\bar s \geq 3\%$) keeps the calibration in the regime where the bound binds. There is **no physical lower bound** — but not by way of braking: setting $E_{\mathrm{legs},i} = 0$ in the balance form gives $\varepsilon_i = \alpha\,\Delta x_i/(\beta\,h_i) > 0$ *regardless of how much braking occurred*, because brakes dissipate gravity's share of the ledger, never the legs'. The intuition: **a brake is an uncollected refund, not a charge.** The ledger asks what the legs paid, not where the descent's energy went — and a rider who brakes simply collects less of what gravity offered. They are not billed for the discarding, which is why no amount of braking can push $\varepsilon$ below the coasting floor.
 
 (A force-ceiling argument — maximal tyre friction $\mu\,m g\cos\theta$ sustained over the whole descent — would suggest arbitrarily deep negatives, but the energy budget binds long before the friction limit: sustaining that force without pedal input stops the bike within metres.) Negative recovery therefore requires $E_{\mathrm{legs},i} > \alpha\,\Delta x_i$ — pedalling the descent harder than the flat bill — which is legs-funded, bounded only by rider power, and observed on a few rides in the calibration corpus.
 
