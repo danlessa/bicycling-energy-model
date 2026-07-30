@@ -147,6 +147,13 @@ home of the *derivation* and the side-by-side comparison.
 - `data/results/` — harness outputs (gitignored except the README, which maps
   file → producer → journal entry). Every file regenerates with one harness
   command.
+- `mission-model/` — the repo's **mission** in SysML v2 / Mission Engineering
+  terms (`00-mission` → `04-mission-threads`, read in order): the effect chain,
+  the four stakeholder classes, capabilities vs the systems delivering them, and
+  MOPs vs MOEs. Plain text, compiled by nothing (no-build rule). Descriptive, not
+  aspirational — it records that `MOE-5` (adoption in practice) is uninstrumented
+  and that `cDeploy` is the thinnest capability. Changes on a *paper* landing or a
+  stakeholder shift, never on a re-baselined number.
 - `README.md` — user-facing overview.
 
 ## The two models
