@@ -121,6 +121,36 @@ assumed-parameter number once. The cheap fix is a gate section pinned to a
 released paper's *as-published* values, which fails when the live numbers leave
 the published intervals — deliberately inverting the usual gate direction.
 
+## A fourth deliverable, off the article axis
+
+**J — the open lab journal.** Publish the epistemic *process* — 16
+pre-registrations with failure modes fixed in advance, 9 withdrawn or corrected
+claims, 42 evidence crates, a 72-gate battery that re-derives rather than
+compares — as an interactive, reproducible artefact traceable to the articles.
+The components already exist (7,099-line append-only journal, executable
+`journal.qmd`, claims explorer at 190 nodes, the I/T/O/S lineage DAG); what is
+missing is publication, one navigable surface, and article-claim → entry links.
+
+Three properties make it unusually cheap: no citation dependency, privacy already
+clear (no activity paths, only pseudonyms the paper already carries), and — the
+distinguishing one — **zero lockstep cost**. Every other rung of the ladder must
+be updated when a published number moves; the journal must *not* be, since
+entries keep their as-written values by rule. It is the only artefact addable
+without adding propagation work. It also makes article-vs-repository drift
+*legible*, which is most of what the lifecycle's missing Support-stage detector
+would buy.
+
+The risk is real: a corpus of withdrawn claims reads as rigour to a fair reader
+and as ammunition to a hostile one. Both readings come from the same text. The
+mitigation is framing the norm explicitly and quantifying it in front matter —
+an unframed body of self-criticism is a liability, a framed and counted one is
+the credential.
+
+**Sequenced after A3** (maintainer decision); scope deliberately open. The
+consequence to carry forward: A1 ships *without* J behind it, so it cannot lean
+on the journal to show its limitations are stated — it must carry that in its own
+text, which raises rather than lowers the stakes on its framing fixes.
+
 ## The sub-missions
 
 One per critical-path article. Each is a complete mission — own effect, own

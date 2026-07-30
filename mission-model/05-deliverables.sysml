@@ -102,6 +102,134 @@ package MissionDeliverables {
         attribute redefines onCriticalPath default false;
     }
 
+    // ------------------------------------------- J — the open lab journal
+
+    part def NonArticleDeliverable {
+        attribute id : String;
+        attribute statement : String;
+        attribute composedOf : String;
+        attribute status : String;
+        attribute onCriticalPath : Boolean;
+    }
+
+    part j : NonArticleDeliverable {
+        doc
+        /*
+         * A deliverable off the article axis entirely: publish the epistemic
+         * PROCESS as an interactive, reproducible, citable artefact traceable to
+         * the articles' claims.
+         *
+         * The motivating observation: the journal is currently more convincing
+         * than the papers, and none of it reaches a reader. SM-1's success
+         * criterion is that an adversarial reader finds the limitations already
+         * stated — and the strongest demonstration of that habit (16
+         * pre-registrations with failure modes fixed in advance, 9 withdrawn or
+         * corrected claims, predictions recorded as failed, 42 evidence crates,
+         * a battery of 72 gates that re-derives rather than compares) lives in
+         * files a reader will never open.
+         *
+         * Nothing needs building. The components exist: a 7,099-line append-only
+         * lab journal, a readable retelling, an executable Quarto mirror that
+         * re-runs against live data, an interactive claims graph (190 nodes, 270
+         * edges), the I/T/O/S evaluation-lineage DAG, and per-entry RO-Crates.
+         * What is missing is publication, one navigable surface over them, and
+         * article-claim -> entry links in the machine-readable direction.
+         */
+        attribute redefines id default "J — the open lab journal";
+        attribute redefines statement default
+            "Publish the project's epistemic process — pre-registrations, failed "
+            + "predictions, withdrawn claims, evidence lineage and the gate "
+            + "battery — as an interactive, reproducible artefact traceable to "
+            + "the articles it underwrites.";
+        attribute redefines composedOf default
+            "MODEL_COMPARISON_JOURNAL.md (append-only, 49 entries) + "
+            + "CURATED_JOURNAL.md + journal.qmd (executable) + "
+            + "claims-explorer.html + data-graph.ttl + research/packages/ crates "
+            + "+ the gate battery output";
+        attribute redefines status default "components exist and are current; unpublished, unassembled; sequenced AFTER A3, scope deliberately open";
+        attribute redefines onCriticalPath default false;
+    }
+
+    part def JRationale {
+        doc
+        /*
+         * THREE PROPERTIES MAKE J UNUSUALLY CHEAP.
+         *
+         * 1. No citation dependency. Nothing cites J, so unlike A2 and A3 it is
+         *    not gated on anyone else's DOI. It can ship whenever it is ready.
+         *
+         * 2. ZERO LOCKSTEP COST — the property that distinguishes it from every
+         *    other rung of the artefact ladder. Paper, piece and applet must all
+         *    be updated when a published number moves; that propagation burden
+         *    is the standing cost of the ladder. The journal must NOT be updated:
+         *    entries keep their as-written values by existing rule. J is
+         *    therefore the only artefact that can be added without adding
+         *    propagation work.
+         *
+         * 3. Privacy already verified for this purpose: the journal contains no
+         *    activity paths and no identifiers beyond the pseudonyms the paper
+         *    already carries.
+         *
+         * AND IT PARTLY CLOSES A LIFECYCLE GAP. 06-lifecycle names the Support
+         * stage as having no drift detector — a released article is frozen while
+         * the repository keeps moving. A published, dated, append-only journal
+         * is exactly what lets a reader who finds today's numbers differing from
+         * A1's tell DRIFT from ERROR. It does not detect drift automatically,
+         * but it makes drift legible, which is most of the value.
+         *
+         * THE RISK, which is real and needs managing rather than noting. A
+         * journal of withdrawn claims reads as rigour to a fair reader and as
+         * ammunition to a hostile one: "by their own account they got it wrong
+         * nine times." Both readings are available from the same text. The
+         * mitigation is to make the norm explicit and quantified in front
+         * matter — that withdrawal is the process working, with the tally shown
+         * — rather than leaving a reader to infer it from 7,099 lines. An
+         * unframed corpus of self-criticism is a liability; a framed and counted
+         * one is the credential.
+         */
+        attribute cheapBecause : String default "no citation dependency; zero lockstep cost; privacy already clear";
+        attribute closes : String default "makes article-vs-repository drift legible (06-lifecycle's Support gap)";
+        attribute risk : String default "self-criticism reads as ammunition unless the norm is framed and counted";
+    }
+
+    part jRationale : JRationale;
+
+    part def JTiming {
+        doc
+        /*
+         * DECISION (Danilo): J is sequenced AFTER A3. Scope is deliberately left
+         * open and will be settled when it is reached.
+         *
+         * I had recommended releasing it with A1, on the reasoning that A1's
+         * weakest point is asserted rather than visible rigour. That reasoning
+         * does not survive the priority call, and the priority call is the right
+         * one on its own terms: A1->A2->A3 is the critical path to the mission's
+         * only uninstrumented measure, and J is corroboration for claims that
+         * are already made. Putting a zero-dependency deliverable in front of
+         * the chain would be exactly the pattern the project should avoid.
+         *
+         * THE CONSEQUENCE, which is worth carrying forward rather than
+         * discovering later: A1 ships WITHOUT the journal behind it, so it
+         * cannot lean on the pre-registrations, the withdrawn claims or the
+         * gate battery to establish that its limitations are stated. It must
+         * carry that in its own text. That does not weaken A1 — it raises the
+         * stakes on the three framing fixes, because they become the whole of
+         * SM-1's defence rather than its visible half.
+         *
+         * Sequencing J last also improves it: by then it covers three published
+         * articles instead of one, and the article-claim -> entry traceability
+         * it exists to provide has three targets rather than a single one.
+         */
+        attribute decision : String default "after A3 (Danilo)";
+        attribute scope : String default "deliberately unscoped — to be settled when reached";
+        attribute consequence : String default
+            "A1 ships without J behind it, so A1's own text carries the whole of "
+            + "SM-1's credibility defence — raising, not lowering, the importance "
+            + "of its framing fixes";
+    }
+
+    part jTiming : JTiming;
+
     // ---------------------------------------------------- dependency structure
 
     part def Enablement {
