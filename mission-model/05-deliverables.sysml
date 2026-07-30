@@ -181,20 +181,46 @@ package MissionDeliverables {
          * one domain where practitioners already have well-calibrated
          * alternatives and would notice.
          *
-         * That reframes the decision. A4 is not a distraction because time is
-         * uninteresting; it is a distraction because it is NOT READY, while
-         * A2 and A3 are on the critical path to the mission's only
-         * uninstrumented measure. Deferring it is correct. Abandoning it would
-         * be a different and weaker call — if the descent bridge were ever
-         * repaired, A4 would move from branch to critical path, because it
-         * would speak the language planners already budget in.
+         * That reframes the decision — but it is the SECOND reason, and the
+         * first is strategic (added after the author supplied it; the model had
+         * missed it entirely).
+         *
+         * STRATEGIC REASON, primary. Objective MO-6 is to shift the planning
+         * discourse from time to energy, because an energy ranking generalises
+         * across rider power profiles and a time ranking does not — energy-
+         * optimal routing is accessible routing. A4 is a rigorous, elegant
+         * argument conducted ENTIRELY IN THE CURRENCY THE MISSION IS TRYING TO
+         * DISPLACE. Publishing it well would lend the project's credibility to
+         * time-based reasoning at exactly the moment the series is arguing for
+         * energy. The very property that makes A4 planner-legible — that
+         * practitioners already budget in time — is what makes it strategically
+         * costly here.
+         *
+         * So the two reasons point the same way for different reasons, and both
+         * are worth keeping: A4 is not ready (evidential), and being ready would
+         * not by itself make it wise (strategic).
+         *
+         * The safeguard against this becoming motivated suppression: the
+         * deferral is recorded with a promotion condition and stays reversible.
+         * Repair the descent bridge AND establish energy as the currency first,
+         * and A4 becomes a bridge from the established frame back to the
+         * familiar one — which is a far better position to publish it from than
+         * leading with it would have been.
+         *
+         * A separate question, not the same one: the dual's NEGATIVE result
+         * (the ascent half transfers, the descent half does not) is currently
+         * unpublished and reaches nobody. Releasing that as a short note costs
+         * the strategic position little — a negative result about time does not
+         * advance time as a currency — and negative results are rarely
+         * published at all. Worth deciding on its own merits.
          */
         attribute verdict : String default "defer, do not abandon";
         attribute reason : String default
-            "not topical irrelevance — evidential immaturity: the descent half of the dual fails";
+            "primary: strategic — A4 argues in time, the currency MO-6 exists to displace; "
+            + "secondary: evidential — the descent half of the dual fails";
         attribute conditionToPromote : String default
-            "repair or replace the descent bridge; if it holds, A4 becomes the most "
-            + "planner-legible deliverable of the four";
+            "BOTH: repair or replace the descent bridge, AND energy established as the "
+            + "currency first — then A4 bridges from the established frame to the familiar one";
     }
 
     part a4Assessment : A4Assessment;

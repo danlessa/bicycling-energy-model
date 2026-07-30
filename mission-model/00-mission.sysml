@@ -154,6 +154,27 @@ package BicyclingEnergyMission {
          */
     }
 
+    requirement <'MO-6'> shiftThePlanningCurrency : MissionObjective {
+        doc
+        /*
+         * A normative objective, declared rather than implied: move the
+         * planning discourse from TIME to ENERGY as the currency in which
+         * cycling routes are argued, because an energy ranking generalises
+         * across rider power profiles in a way a time ranking does not
+         * (MissionStakeholders::AccessibilityArgument).
+         *
+         * Consequence the model must own: the mission is NOT indifferent about
+         * which of its own results are amplified. That is a legitimate position
+         * and a declared one — but it is also a bias with a specific failure
+         * mode, namely suppressing a sound result because it is inconvenient to
+         * the position. The safeguard is that suppression decisions are
+         * recorded with their reasons and remain reversible (see A4's
+         * assessment, which is a deferral with a stated promotion condition,
+         * not a burial).
+         */
+        attribute currency : String default "energy, not time";
+    }
+
     requirement <'MO-5'> reachPractice : MissionObjective {
         doc
         /*

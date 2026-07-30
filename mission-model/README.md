@@ -20,6 +20,7 @@ decision — not financial subsidy.)
 | `03-measures.sysml` | MOPs vs MOEs — and the gap between them |
 | `04-mission-threads.sysml` | End-to-end threads per stakeholder, each with its failure mode |
 | `05-deliverables.sysml` | The four articles, their enablement chain, and why A4 is deferred |
+| `06-lifecycle.sysml` | Life-cycle stages, the freeze tension, and the A1→A2→A3 roadmap |
 
 Read in order; each imports the one before.
 
@@ -39,15 +40,23 @@ the mission's terminal stakeholder** — routing over an edge-cost graph is what
 planning tool actually does. A1 is mature and A2 drafted, so A3 is the binding
 constraint on the whole mission.
 
-**A4 is deferred, and the reason matters.** The obvious reason would be that time
-doesn't interest planners — that is false, and travel time is in fact the
-standard currency of transport appraisal, so a validated time model would be the
-most planner-legible of the four. The real reason is evidential: Entry 13 tested
-the dual and found it half broken (the ascent term holds, the descent bridge does
-not), with a marginal, mass-sensitive headline result. A4 would ship a claim whose
-weaker half is known to fail, into the one domain where practitioners have
-well-calibrated alternatives. So: **defer, don't abandon** — if the descent bridge
-is ever repaired, A4 moves from branch to critical path.
+**A4 is deferred for two reasons, the first strategic.** Objective MO-6 is to
+shift the planning discourse from *time* to *energy*, because an energy ranking
+generalises across rider power profiles and a time ranking does not —
+**energy-optimal routing is accessible routing**. A4 argues entirely in the
+currency the mission exists to displace, so publishing it well would lend the
+project's credibility to time-based reasoning at exactly the wrong moment. The
+property that makes A4 planner-legible is what makes it strategically costly.
+The second reason is evidential: Entry 13 found the dual half broken (ascent
+holds, descent bridge does not), with a marginal, mass-sensitive headline. So
+**defer, don't abandon**, with a two-part promotion condition — repair the
+descent bridge *and* establish energy as the currency first, after which A4
+becomes a bridge from the established frame back to the familiar one.
+
+Separately: the dual's *negative* result is currently unpublished and reaches
+nobody. Releasing that alone costs the strategic position little — a negative
+result about time does not advance time as a currency — and is worth deciding on
+its own merits.
 
 ## The three things the model actually surfaces
 
@@ -81,6 +90,35 @@ The E2→E3 link — public evidence becoming something a planner can operate �
 carried entirely by the deployed tools. They exist and run. No adoption by an
 actual planning body is evidenced anywhere in this repository, and the repo's own
 instruments cannot see that gap, because they all point at the model.
+
+## The roadmap
+
+Release order is **forced** by citation resolvability — each article cites its
+predecessor, and a citation needs a DOI that exists. Drafting can overlap;
+releasing cannot.
+
+| | Stage | Next gate | Blocked by |
+|---|---|---|---|
+| **A1** | Review — second external round returned | Close the two framing calls, elevate the cancellation limitation, full battery, propagation checklist | Nothing technical — a maintainer decision |
+| **A2** | Draft (letter, ~4pp; Entry 41 evidence already gated) | Finish draft → review | A1's *release*, for the citation |
+| **A3** | Scaffold | Decide whether the discretisation claim needs its own registered experiment | A2's scale prescription, then A2's release |
+
+Combined with the previous two findings, the chain closes into an uncomfortable
+result: **A1's remaining framing fixes are on the critical path to MOE-5**, the
+mission's only uninstrumented measure. The bottleneck on the whole mission is not
+a missing experiment or a weak number — it is two editorial decisions about A1's
+title and abstract, which the last review called "framing, not science."
+
+Nothing is published yet: the Zenodo DOI is **reserved, not minted**, so A1 will
+be the project's first public release and the monolithic working paper is a draft
+to be retired rather than a record to be superseded. Retiring it costs nothing
+publicly — no citations break.
+
+The life cycle's own gap: **Support has no drift detector.** A released article is
+frozen; the repository is not, and a re-baseline has already moved every
+assumed-parameter number once. The cheap fix is a gate section pinned to a
+released paper's *as-published* values, which fails when the live numbers leave
+the published intervals — deliberately inverting the usual gate direction.
 
 ## Conventions
 

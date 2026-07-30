@@ -97,6 +97,71 @@ package MissionStakeholders {
         attribute needsPrivacy : Boolean default true;
     }
 
+    // ------------------------------------------- (E) the author and collective
+
+    part def AuthorCollective :> Stakeholder {
+        doc
+        /*
+         * The author and the Pedal Hidrográfico collective. Not a beneficiary —
+         * a stakeholder with a NORMATIVE objective, and omitting it made the
+         * mission look purely epistemic when it is not.
+         *
+         * The objective: shift the mainstream planning discourse away from TIME
+         * and toward ENERGY as the currency in which cycling routes are argued.
+         * The reason is equity, and it is a technical argument, not a slogan —
+         * see AccessibilityArgument below.
+         *
+         * This stakeholder is why the mission is not neutral about which of its
+         * own results get amplified, and it is a legitimate interest to declare
+         * rather than to hide: a reader is entitled to know that the choice of
+         * currency is itself a position the work advances.
+         */
+        attribute redefines name default "Author and collective — Pedal Hidrográfico";
+        attribute redefines interest default
+            "Establish energy as the currency in which cycling routes are "
+            + "planned and argued, because an energy-optimal route is an "
+            + "accessible route.";
+        attribute holdsNormativePosition : Boolean default true;
+    }
+
+    part authorCollective : AuthorCollective;
+
+    part def AccessibilityArgument {
+        doc
+        /*
+         * Why energy rather than time, stated so it can be disagreed with.
+         *
+         * A TIME-optimal route is optimal for the rider who can ride it fast.
+         * Ranking routes by travel time embeds the fit rider's advantage into
+         * the recommendation: change the rider's power and the ranking changes,
+         * so the infrastructure conclusion inherits whoever was assumed.
+         *
+         * An ENERGY-optimal route is far closer to rider-invariant. The
+         * dominant term on real terrain is gravitational — beta*(h+ - eps*h-),
+         * which scales with mass and is otherwise independent of how strong the
+         * rider is. Two riders of very different fitness AGREE on which of two
+         * hilly routes costs less energy; they disagree about which is faster.
+         * So an energy ranking generalises across power profiles in a way a
+         * time ranking does not.
+         *
+         * The honest qualification: invariance is approximate, not exact. The
+         * rolling-and-aero term alpha carries the reference speed, so energy
+         * rankings do drift with assumed pace — but the aero share is small at
+         * the low reference output the collective plans around (~50 W), and
+         * shrinks further as terrain steepens. The argument is therefore
+         * STRONGEST exactly where this collective rides: São Paulo's relief is
+         * where gravity dominates and the ranking is most nearly everyone's.
+         *
+         * Which turns the mission's insistence on universal constants from a
+         * deployability convenience into an equity requirement. A model needing
+         * per-rider parameters could not make this argument at all: it would
+         * rank routes for the rider it was fitted to.
+         */
+        stakeholder e : AuthorCollective;
+        stakeholder c : Activist;
+        stakeholder d : GeneralPublic;
+    }
+
     part academics : Academic;
     part technicians : Technician;
     part activists : Activist;
