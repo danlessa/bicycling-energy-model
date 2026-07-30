@@ -152,6 +152,45 @@ package MissionStakeholders {
          * STRONGEST exactly where this collective rides: São Paulo's relief is
          * where gravity dominates and the ranking is most nearly everyone's.
          *
+         * TWO SEPARATE COMPARISONS, and they resolve differently.
+         *
+         * Against DISTANCE the question is not empirical at all — it is an
+         * exchange rate readable straight off the law. With beta = mg/k_eff and
+         * alpha the rolling-plus-aero term, beta/alpha is about 69 at the ~50 W
+         * reference the collective plans around, rising past 120 as speed falls
+         * and aero vanishes. One metre of ascent costs what 70 to 125 metres of
+         * flat riding costs. A distance objective weights that metre the same as
+         * any other. So the two objectives cannot coincide except by accident,
+         * and they will select different paths wherever the network offers an
+         * alternative at all — which on São Paulo's relief is routine. (Where
+         * the network offers no alternative — one road up one valley — every
+         * objective agrees, and the currency question is moot rather than
+         * answered.)
+         *
+         * Against TIME the answer is the substantive one: time is
+         * behaviour-driven and energy is much less so. This is not an assertion;
+         * it is what Entry 13 found while testing the time dual. The dual's
+         * ascent half transfers to an unseen rider, and its DESCENT half does
+         * not predict measured descent speed at all — because how fast someone
+         * descends is a choice about risk and comfort, not a fact about the
+         * hill. A time-optimal route therefore inherits whichever descending
+         * temperament was assumed.
+         *
+         * Energy is not behaviour-free either, and the model should not pretend
+         * otherwise: the coasting deficit is descent-pedalling behaviour, and it
+         * spans 0.08 to 0.30 across the seven riders measured. But that
+         * dependence is CONFINED — it enters through one term, eps*h_minus,
+         * and is bounded by that range — while the dominant term beta*h_plus is
+         * mass times geometry and nothing else. Time's dependence is neither
+         * confined nor bounded.
+         *
+         * The consequence for the deliverables is uncomfortable and worth
+         * stating: the strongest available evidence for this argument sits
+         * inside A4, the article deferred for arguing in the wrong currency. Its
+         * negative result — that the time dual's descent half fails BECAUSE
+         * descents are behaviour-limited — is precisely the demonstration that
+         * time is the weaker planning currency.
+         *
          * Which turns the mission's insistence on universal constants from a
          * deployability convenience into an equity requirement. A model needing
          * per-rider parameters could not make this argument at all: it would

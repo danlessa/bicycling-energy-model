@@ -156,38 +156,47 @@ package SubMissions {
     part def SM3Measures {
         doc
         /*
-         * SM-3 carries a measure the other two do not, and it is the one that
-         * puts the mission's normative objective at risk:
+         * SM-3 must show that energy-optimal routing differs from the
+         * alternatives, or MO-6 is philosophically sound and operationally
+         * empty. An earlier draft of this model posed that as one open
+         * empirical risk. It is two questions, and they resolve differently —
+         * the correction came from Danilo.
          *
-         *   DOES ENERGY-OPTIMAL ROUTING ACTUALLY DIFFER FROM DISTANCE- OR
-         *   TIME-OPTIMAL ROUTING, MATERIALLY AND OFTEN?
+         * AGAINST DISTANCE: settled, and not empirically. beta/alpha is the
+         * exchange rate, about 69 at the ~50 W planning reference and above 120
+         * as speed falls. One metre of ascent costs what 70-125 metres of flat
+         * costs, and a distance objective prices that metre like any other. The
+         * objectives therefore cannot coincide except by accident. A3 should
+         * state this as the derivation it is rather than measure it — the only
+         * empirical residue is how often a real network actually offers the
+         * alternative, since where one road climbs one valley every objective
+         * agrees and the question is moot rather than answered.
          *
-         * If the cheapest-energy route is usually the same road the shortest
-         * path already picked, then MO-6 is philosophically sound and
-         * operationally empty: the currency shift would change how a decision is
-         * JUSTIFIED without changing the decision. The accessibility argument
-         * would survive as an argument and lose its practical bite.
+         * AGAINST TIME: the substantive comparison, and already half-answered
+         * by evidence the project holds. Time is behaviour-driven — Entry 13
+         * found the time dual's descent half does not predict measured descent
+         * speed, because descending pace is a choice about risk and comfort
+         * rather than a fact about the hill. Energy's own behaviour-dependence
+         * is real but CONFINED: it enters through eps*h_minus alone, bounded by
+         * the 0.08-0.30 spread across seven riders, while the dominant
+         * beta*h_plus term is mass times geometry. So a time ranking inherits
+         * whichever temperament was assumed and an energy ranking largely does
+         * not.
          *
-         * This is falsifiable, it is A3's to answer, and nobody has answered it.
-         * Entry 26's direction ladder and detour measurements on real ride
-         * endpoints are the seed evidence — they already quantify how far an
-         * energy-aware path departs from the direct one — but they were run to
-         * validate the search, not to test the currency claim, so the question
-         * has never been asked in that form.
-         *
-         * Stated as a risk rather than a prediction: the answer could go either
-         * way, and the honest position is that the mission's normative objective
-         * currently rests on an untested operational premise. On São Paulo's
-         * relief the premise is plausible — gravity dominates, so detours around
-         * hills should be real — but plausible is not measured, and the terrain
-         * where it is most plausible is also the terrain the corpora are most
-         * concentrated in.
+         * What remains genuinely open for A3 is narrower and worth stating
+         * precisely: how often, on a real network, the energy-optimal path
+         * departs from the distance-optimal one, and by how much. Entry 26's
+         * direction ladder and detour measurements on real ride endpoints are
+         * the seed evidence — gathered to validate the search rather than to
+         * test the currency claim, so the question has not been asked in that
+         * form.
          */
         attribute m1 : String default "agreement between the per-edge cost and the route-level integral";
         attribute m2 : String default "discretisation artefacts characterised: connectivity, direction quantisation, clamping";
         attribute m3 : String default
-            "MATERIAL DIVERGENCE of energy-optimal from distance-optimal routes — "
-            + "the untested premise MO-6 rests on";
+            "HOW OFTEN a real network offers the alternative that makes energy- "
+            + "and distance-optimal paths diverge (the exchange rate guarantees "
+            + "they can; only the frequency is empirical)";
         attribute m4 : String default "search cost compatible with a browser / self-hosted deployment";
     }
     part sm3Measures : SM3Measures;

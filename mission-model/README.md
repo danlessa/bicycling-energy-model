@@ -139,20 +139,34 @@ that is where the interest is — and reaching is what a reviewer catches. Scope
 discipline here isn't modesty, it's the mechanism by which each article survives
 adversarial reading.
 
-**SM-3 carries a risk the others don't, and it is the mission's:**
+**Does energy-optimal routing differ from the alternatives?** I first posed this
+as one open empirical risk to MO-6. It is two questions and they resolve
+differently.
 
-> Does energy-optimal routing actually differ from distance- or time-optimal
-> routing, materially and often?
+*Against distance — settled, and not empirically.* β/α is the exchange rate:
+about **69** at the ~50 W planning reference, above **120** as speed falls and
+aero vanishes. One metre of ascent costs what 70–125 metres of flat riding costs,
+and a distance objective prices that metre like any other. The objectives cannot
+coincide except by accident. A3 should *derive* this, not measure it — the only
+empirical residue is how often a real network offers the alternative, since where
+one road climbs one valley every objective agrees and the question is moot rather
+than answered.
 
-If the cheapest-energy route is usually the road the shortest path already
-picked, MO-6 is philosophically sound and operationally empty — the currency
-shift would change how a decision is *justified* without changing the decision.
-This is falsifiable, it is A3's to answer, and it has never been asked in that
-form. Entry 26's direction ladder and detour measurements on real endpoints are
-the seed evidence, but they were run to validate the search, not to test the
-currency claim. On São Paulo's relief the premise is plausible — gravity
-dominates, so detours around hills should be real — but plausible is not
-measured, and that terrain is also where the corpora are most concentrated.
+*Against time — the substantive one, and already half-answered.* Time is
+behaviour-driven: Entry 13 found the time dual's descent half does not predict
+measured descent speed, because descending pace is a choice about risk and
+comfort, not a fact about the hill. Energy's behaviour-dependence is real but
+**confined** — it enters through `ε·h₋` alone, bounded by the 0.08–0.30 spread
+across seven riders, while the dominant `β·h₊` term is mass × geometry. A time
+ranking inherits whichever temperament was assumed; an energy ranking largely
+does not.
+
+Which produces an awkward and useful result: **the strongest available evidence
+for MO-6 sits inside A4** — the article deferred for arguing in the wrong
+currency — and it is the half that *failed*. The dual's descent bridge breaks
+precisely because time is behaviour-limited. So deferring A4-as-a-positive-claim
+and publishing A4's-negative-result pull in opposite directions, and both are
+right.
 
 Two structural notes. The series is **not all-or-nothing**: SM-1 delivers a
 checkable result serving (A) and (C) whether or not SM-2 lands, which is the main

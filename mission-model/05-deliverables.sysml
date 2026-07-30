@@ -207,6 +207,18 @@ package MissionDeliverables {
          * familiar one — which is a far better position to publish it from than
          * leading with it would have been.
          *
+         * A twist that strengthens the case for publishing the negative result:
+         * A4's failure is EVIDENCE FOR MO-6. The descent half of the dual fails
+         * because descending pace is behaviour-limited rather than geometric —
+         * which is exactly the demonstration that time is the weaker planning
+         * currency and energy the more transferable one. The strongest available
+         * support for the mission's normative claim currently sits inside the
+         * article deferred for arguing in the wrong currency, and it is the half
+         * that did not work.
+         *
+         * So the deferral of A4-as-a-positive-claim and the publication of
+         * A4's-negative-result pull in opposite directions, and both are right.
+         *
          * A separate question, not the same one: the dual's NEGATIVE result
          * (the ascent half transfers, the descent half does not) is currently
          * unpublished and reaches nobody. Releasing that as a short note costs
