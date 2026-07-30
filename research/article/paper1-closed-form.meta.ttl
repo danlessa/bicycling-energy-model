@@ -36,7 +36,8 @@
   pc:gateSection "3j" ;
   cito:citesAsEvidence dg:o_skc ;
   prov:wasDerivedFrom claims:assert43 ;
-  rdfs:comment "The only corpus sharing no rider, country, terrain, device or model-selection history" .
+  rdfs:comment "The only corpus sharing no rider, country, terrain, device or model-selection history" ;
+  pc:preRegistered true .
 
 <#c-e46.ag.switched.med> a schema:Claim ;
   schema:text "Applying section 3.3's regime switch under frozen priors moves the pooled median 5.08 -> 5.62" ;
@@ -45,7 +46,8 @@
   pc:gateSection "3m" ;
   cito:citesAsEvidence dg:o_e46 ;
   prov:wasDerivedFrom claims:assert46 ;
-  rdfs:comment "The switch makes the FROZEN grid worse; under per-ride inverted physics it makes it better. The bias column adjudicates" .
+  rdfs:comment "The switch makes the FROZEN grid worse; under per-ride inverted physics it makes it better. The bias column adjudicates" ;
+  pc:preRegistered true .
 
 <#c-e46.eps_applied.sub3> a schema:Claim ;
   schema:text "Median eps_d actually applied below the 3% gate is 0.544, against eps_f = 0.20" ;
@@ -54,7 +56,8 @@
   pc:gateSection "3m" ;
   cito:citesAsEvidence dg:o_e46 ;
   prov:wasDerivedFrom claims:assert46 ;
-  rdfs:comment "Why the frozen sub-threshold cells are accurate BY CANCELLATION rather than by fit" .
+  rdfs:comment "Why the frozen sub-threshold cells are accurate BY CANCELLATION rather than by fit" ;
+  pc:preRegistered true .
 
 <#c-e47.insample.dbic> a schema:Claim ;
   schema:text "On the in-sample D3-D6 arm, eps_2 beats frozen eps_0 by dBIC 128.8" ;
@@ -63,7 +66,8 @@
   pc:gateSection "3l" ;
   cito:citesAsEvidence dg:o_e47 ;
   prov:wasDerivedFrom claims:assert47 ;
-  rdfs:comment "Decisive on BIC and worth 0.17 pp of median error; the two criteria disagree in size, never in direction" .
+  rdfs:comment "Decisive on BIC and worth 0.17 pp of median error; the two criteria disagree in size, never in direction" ;
+  pc:preRegistered true .
 
 <#c-d1.f3.informed.med> a schema:Claim ;
   schema:text "F3 median |D%| 3.5 [2.0, 5.6] on D1 under condition-informed per-ride parameters" ;
@@ -89,7 +93,8 @@
   pc:gateSection "3n" ;
   cito:citesAsEvidence dg:o_e48 ;
   prov:wasDerivedFrom claims:assert48 ;
-  rdfs:comment "Formal equivalence, not a failure to reject; the interval sits on the side where the law is better" .
+  rdfs:comment "Formal equivalence, not a failure to reject; the interval sits on the side where the law is better" ;
+  pc:preRegistered true .
 
 
 <#c-d1.f4.informed.med> a schema:Claim ;

@@ -128,8 +128,10 @@ def check(path: str, sections: dict[str, str]) -> tuple[int, int, int]:
             elif not _asserted(str(val), sections[g]):
                 problems.append(f"value {val} not asserted in gate section {g}")
 
+        prereg = graph.value(node, PC.preRegistered)
+        tag = " [pre-reg]" if str(prereg).lower() == "true" else ""
         status = "OK" if not problems else "FAIL: " + "; ".join(problems)
-        print(f"  {cid:<32} {str(val):>9}  {scope:<14} {status}")
+        print(f"  {cid:<32} {str(val):>9}  {scope:<14}{tag:<10} {status}")
         if problems:
             bad += 1
 
