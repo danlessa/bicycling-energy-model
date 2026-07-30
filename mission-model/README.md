@@ -326,13 +326,19 @@ says so, and not the person who did the work).
 
 | | State | Verification | Validation |
 |--:|---|---|---|
-| 0 | Research ongoing | claims registered, run, gated | author judges the open questions answered or out of scope |
-| 1 | **Content is frozen** | a pre-draft body produced and handed over for human writing and diagramming | the author has reviewed and is confident of the results being put |
-| 2 | Draft is done | a PDF validated by at least each stakeholder | each class confirms it serves *its* use |
-| 3 | Venue selected | venue named, requirements known, licence compatible with MO-1 | the venue reaches the stakeholders this article is *for* |
-| 4 | Release infrastructure | repo built, anonymised, **anonymisation gate passes both halves** | someone other than the builder reproduces the headline numbers from the repo alone |
-| 5 | Submitted | artefact set complete and internally consistent | the author accepts the record becomes immutable |
-| 6 | Published | DOI resolves, repo reachable, sibling citations resolve | — |
+| 0 | Research ongoing | claims registered, run, gated | the author judges the research **exhausted w.r.t. the goals and accessible wins** |
+| 1 | **Content is frozen** | a pre-draft body produced and handed over | — (see state 2; the conviction is about doc *and* repo together) |
+| 2 | **Article repo is built** | **two** repos — private *with* history, public with history **trimmed** — both reproducing the pre-draft; anonymisation gate passes on the public one *including its git history* | the author is convinced document + repo are **legible, defensible, reproducible** enough to hand to human drafters |
+| 3 | Draft is done | a PDF validated by at least each stakeholder, **with the repo available to them** | each class confirms it serves *its* use |
+| 4 | Venue selected | venue named, requirements known, licence compatible with MO-1 | the venue reaches the stakeholders this article is *for* |
+| 5 | Release infrastructure | publication mechanics ready (DOI, build, hosting, archive) | someone other than the builder reproduces the headline numbers |
+| 6 | Submitted | artefact set complete and internally consistent | the author accepts the record becomes immutable |
+| 7 | Published | DOI resolves, repo reachable, sibling citations resolve | — |
+
+**`paper1-closed-form.md` is the pre-draft body**, not the draft — state 1's
+deliverable. The human draft is written on top of it and doesn't exist yet, which
+changes what the outstanding review items are: **inputs to that draft, not edits
+to this one.**
 
 Gates marked *PROPOSED* in the file are mine and not yet settled; the rest are
 the maintainer's.
@@ -353,6 +359,20 @@ only gate with real calendar latency.** The long pole is not the work.
 Cheapest available win: **declare A2's content frozen** — Entry 41 is registered,
 run and gated (1,188 rides), so its research is effectively done and only the
 decision is missing.
+
+**Two repos per article**, and the split isn't cosmetic: git history is itself a
+leak surface, and this project has already been bitten by it — `longoes.xlsx` had
+to be purged from history in 2026-07, because a file deleted in a later commit is
+still fully retrievable from an earlier one. A repo with a clean *checkout* can
+have an unclean *past*, and whoever clones it gets both.
+
+Two rules follow. **Build the public repo by fresh `git init`**, never by
+filtering the working repo's history — rewriting leaves a large surface for
+something to survive, while a fresh init over a generated tree has none, because
+nothing was ever there. Then accumulate one commit per released version: version
+traceability worth having, development trace that isn't. And **the anonymisation
+gate must scan history, not just the working tree** — a gate checking only the
+checkout would pass a repo whose second commit holds the file the third deleted.
 
 ## Assistance and authorship
 

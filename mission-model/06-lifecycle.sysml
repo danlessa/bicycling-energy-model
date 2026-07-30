@@ -162,6 +162,32 @@ package MissionLifecycle {
          * journal belongs to J, and each extra path is another place a private
          * one can hide.
          *
+         * TWO REPOS PER ARTICLE, and the split is not cosmetic. The private one
+         * keeps its history — the provenance, the false starts, the audit trail
+         * that makes the work defensible to its own author later. The public one
+         * has history trimmed.
+         *
+         * THE REASON IS THAT GIT HISTORY IS ITSELF A LEAK SURFACE, and this
+         * project has already been bitten by it: longoes.xlsx had to be purged
+         * from history in 2026-07, because a file deleted in a later commit is
+         * still fully retrievable from an earlier one. A repo whose working tree
+         * is clean can have an unclean past, and a reader who clones it gets
+         * both.
+         *
+         * The implementation consequence is sharp enough to state as a rule:
+         * BUILD THE PUBLIC REPO BY FRESH INITIALISATION, not by filtering the
+         * working repository's history. Rewriting history with a filter tool
+         * leaves a large surface for something to survive; a fresh `git init`
+         * over a generated tree has none, because nothing was ever there. The
+         * public repo then accumulates one commit per released version, which
+         * preserves the version traceability worth having and none of the
+         * development trace that is not.
+         *
+         * And it extends the anonymisation gate: it must scan the public repo's
+         * HISTORY, not only its working tree. A gate that checks the checkout
+         * would pass a repository whose second commit contains the file the
+         * third one deleted.
+         *
          * WHAT MAKES THIS TRACTABLE is the I/T/O/S layering. The repo ships the
          * O layer (per-ride outputs), the T layer (the transformers that made
          * them) and the S derivation (the gate battery subset that re-derives
@@ -171,6 +197,8 @@ package MissionLifecycle {
          * reproduces the RESULTS without ever holding the rides.
          */
         attribute perArticle : Boolean default true;
+        attribute twoRepos : String default
+            "PRIVATE with history + PUBLIC with history trimmed (Danilo)";
         attribute ships : String default "O (per-ride outputs, anonymised) + T (the harnesses) + the gate subset + the article";
         attribute excludes : String default "D (raw tracks, any coordinate), other articles' machinery, the lab journal (that is J)";
     }
@@ -285,7 +313,8 @@ package MissionLifecycle {
          *        float column whose range sits inside [-90, 90] paired with one
          *        inside [-180, 180] is flagged for a human, because the next
          *        leak will not be called `lat`
-         *      - no *.fit, *.gpx, nothing under any activities path
+         *      - no *.fit, *.gpx, nothing under any activities path, and none
+         *        of the above anywhere in the COMMIT HISTORY either
          *      - at most ONE centroid per corpus; zero per ride
          *
          *   B. EVERYTHING PUBLISHED STILL REPRODUCES
@@ -308,7 +337,9 @@ package MissionLifecycle {
          * ambiguity half A wins, and the release waits.
          */
         attribute blocking : Boolean default true;
-        attribute runsAgainst : String default "the release artefact, never the working repo";
+        attribute runsAgainst : String default
+            "the PUBLIC release artefact including its git HISTORY, never the "
+            + "working repo — a clean checkout can have an unclean past";
         attribute halfA : String default "nothing identifying survives — names, dates, paths, coordinates by VALUE, tracks, per-ride centroids";
         attribute halfB : String default "everything published still reproduces, split-halves identical";
         attribute form : String default "an executable script that exits non-zero; output archived with the release";

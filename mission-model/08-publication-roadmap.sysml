@@ -39,6 +39,7 @@ package PublicationRoadmap {
 
         state researchOngoing;
         state contentFrozen;
+        state repoBuilt;
         state draftDone;
         state venueSelected;
         state infrastructureImplemented;
@@ -46,7 +47,8 @@ package PublicationRoadmap {
         state published;
 
         transition researchOngoing then contentFrozen;
-        transition contentFrozen then draftDone;
+        transition contentFrozen then repoBuilt;
+        transition repoBuilt then draftDone;
         transition draftDone then venueSelected;
         transition venueSelected then infrastructureImplemented;
         transition infrastructureImplemented then submitted;
@@ -82,19 +84,53 @@ package PublicationRoadmap {
             "a pre-draft article body is produced and handed over for human "
             + "writing and diagramming";
         attribute redefines validatedWhen default
-            "the author has reviewed and is confident of the results being put";
+            "the author is convinced the relevant research content has been "
+            + "EXHAUSTED with respect to the goals and the accessible wins — not "
+            + "that every question is answered, but that the ones worth the "
+            + "remaining effort are";
         attribute redefines note default
             "FROZEN means frozen: after this, a changed number is a re-entry to "
             + "state 0, not an edit. That is the whole value of the state — A1 "
             + "has been drafted and re-drafted for weeks precisely because its "
             + "content was never declared frozen, so every new result found an "
-            + "open document to land in.";
+            + "open document to land in.\n"
+            + "CONFIRMED: paper1-closed-form.md IS the pre-draft body, not the "
+            + "draft. It is state 1's deliverable. The human draft is written on "
+            + "top of it and does not exist yet — which materially changes what "
+            + "the outstanding review items mean: they are inputs to that draft, "
+            + "not edits to this one.";
+    }
+
+    part gRepo : Gate {
+        attribute redefines phase default "2. Article repo is built  [NEW]";
+        attribute redefines verifiedWhen default
+            "TWO repos exist and both reproduce the pre-draft's results: a "
+            + "PRIVATE one retaining history, and a PUBLIC one with history "
+            + "trimmed. The anonymisation gate passes on the public one — "
+            + "INCLUDING ITS GIT HISTORY, not only its working tree.";
+        attribute redefines validatedWhen default
+            "the author is convinced the document AND the repo together are "
+            + "legible, defensible and reproducible enough to hand over to "
+            + "humans to draft on top of";
+        attribute redefines note default
+            "Danilo's addition, and it corrects a sequencing error of mine: I had "
+            + "the repo at 'release infrastructure', late. But the repo is PART "
+            + "OF THE DRAFT EVALUATION — a validator asked whether the work is "
+            + "defensible and reproducible cannot answer against a repo that does "
+            + "not exist. Putting it before the draft also means the human "
+            + "drafters write with a working reproduction in hand rather than a "
+            + "promise of one.\n"
+            + "The handover to human writing happens at the EXIT of this state, "
+            + "not state 1's: the author's conviction is about the document and "
+            + "the repo as a package.";
     }
 
     part g2 : Gate {
-        attribute redefines phase default "2. Draft is done";
+        attribute redefines phase default "3. Draft is done";
         attribute redefines verifiedWhen default
-            "there is a PDF which has been validated by at least each stakeholder";
+            "there is a PDF which has been validated by at least each "
+            + "stakeholder, WITH the article repo available to them as part of "
+            + "that evaluation";
         attribute redefines validatedWhen default
             "PROPOSED: each stakeholder class confirms the draft serves ITS use — "
             + "(A) can check the derivation, (B) can apply it, (C) can cite it "
@@ -109,7 +145,7 @@ package PublicationRoadmap {
     }
 
     part g3 : Gate {
-        attribute redefines phase default "3. Publication venue is selected";
+        attribute redefines phase default "4. Publication venue is selected";
         attribute redefines verifiedWhen default
             "PROPOSED: the venue is named, its submission requirements are "
             + "known, and any licence it imposes is compatible with the open "
@@ -127,12 +163,13 @@ package PublicationRoadmap {
     }
 
     part g4 : Gate {
-        attribute redefines phase default "4. Release infrastructure is implemented";
+        attribute redefines phase default "5. Release infrastructure is implemented";
         attribute redefines verifiedWhen default
-            "PROPOSED: the per-article reproduction repo is built — filtered, "
-            + "anonymised (file dropped, ride to surrogate, date to per-rider "
-            + "rank) — and the ANONYMISATION GATE passes both halves against the "
-            + "built artefact";
+            "PROPOSED: the publication mechanics are ready — DOI reserved, the "
+            + "PDF/HTML build reproducible, hosting configured, CITATION.cff "
+            + "prepared, the gate-battery output archived. The REPO is no longer "
+            + "built here; it was built at state 2 and only needs re-verifying "
+            + "against the final draft's numbers.";
         attribute redefines validatedWhen default
             "PROPOSED: a person other than the builder reproduces the article's "
             + "headline numbers from the published repo alone, holding nothing "
@@ -146,7 +183,7 @@ package PublicationRoadmap {
     }
 
     part g5 : Gate {
-        attribute redefines phase default "5. Publication is submitted";
+        attribute redefines phase default "6. Publication is submitted";
         attribute redefines verifiedWhen default
             "PROPOSED: the artefact set is complete and consistent — article, "
             + "reproduction repo, archived gate-battery output, CITATION.cff — "
@@ -161,7 +198,7 @@ package PublicationRoadmap {
     }
 
     part g6 : Gate {
-        attribute redefines phase default "6. Publication is done";
+        attribute redefines phase default "7. Publication is done";
         attribute redefines verifiedWhen default
             "PROPOSED: the DOI resolves, the repo is publicly reachable, and "
             + "every citation the article makes to a sibling article resolves";
@@ -301,8 +338,19 @@ package PublicationRoadmap {
             + "explicitly a hand-over rather than a draft.";
     }
 
+    part asStateRepo : AssistanceScope {
+        attribute redefines phase default "2. Article repo is built";
+        attribute redefines assisted default true;
+        attribute redefines rationale default
+            "Infrastructure, explicitly in scope. Its correctness is "
+            + "machine-checkable — the repo either reproduces the numbers or it "
+            + "does not, and the anonymisation gate either passes or fails — "
+            + "which is exactly the criterion that licenses assistance here and "
+            + "withholds it one state later.";
+    }
+
     part asState2 : AssistanceScope {
-        attribute redefines phase default "2. Draft is done";
+        attribute redefines phase default "3. Draft is done";
         attribute redefines assisted default false;
         attribute redefines rationale default
             "Written and diagrammed entirely by humans. The prose, the figures, "
@@ -310,13 +358,13 @@ package PublicationRoadmap {
     }
 
     part asState3 : AssistanceScope {
-        attribute redefines phase default "3. Venue selected";
+        attribute redefines phase default "4. Venue selected";
         attribute redefines assisted default false;
         attribute redefines rationale default "A judgement about audience and reach; the author's call.";
     }
 
     part asState4 : AssistanceScope {
-        attribute redefines phase default "4. Release infrastructure";
+        attribute redefines phase default "5. Release infrastructure";
         attribute redefines assisted default true;
         attribute redefines rationale default
             "Explicitly in scope: the filtering, the anonymisation transform, the "
@@ -326,7 +374,7 @@ package PublicationRoadmap {
     }
 
     part asState5 : AssistanceScope {
-        attribute redefines phase default "5-6. Submitted, published";
+        attribute redefines phase default "6-7. Submitted, published";
         attribute redefines assisted default false;
         attribute redefines rationale default
             "Acts of the author. Publishing is a decision to stand behind a "
