@@ -87,7 +87,8 @@ package MissionLifecycle {
         attribute redefines exitCriterion default
             "DOI minted; HTML deployed; CITATION.cff updated; the propagation "
             + "checklist run across every number-bearing surface; the gate "
-            + "battery output archived AS PUBLISHED";
+            + "battery output archived AS PUBLISHED; and a REPRODUCTION REPO "
+            + "published alongside (see ReproductionRepo below)";
     }
 
     part sUtilization : Stage {
@@ -141,6 +142,88 @@ package MissionLifecycle {
     }
 
     part freezeTension : FreezeTension;
+
+    // -------------------------------------------------- the reproduction repo
+
+    part def ReproductionRepo {
+        doc
+        /*
+         * DECISION (Danilo): A1/A2/A3 each ship with a repository that
+         * reproduces the results written in that article AND NOTHING ELSE —
+         * including the data, anonymised and filtered. One repo per article, a
+         * filtered and cleaned-up subset of this one.
+         *
+         * The "nothing else" is the load-bearing half. A reproduction repo is
+         * not a copy of the working repository with secrets removed; it is a
+         * minimal artefact built to a single question — can a reader re-derive
+         * the numbers in THIS article? Everything not answering that question is
+         * a liability: other articles' harnesses invite scope confusion, the lab
+         * journal belongs to J, and each extra path is another place a private
+         * one can hide.
+         *
+         * WHAT MAKES THIS TRACTABLE is the I/T/O/S layering. The repo ships the
+         * O layer (per-ride outputs), the T layer (the transformers that made
+         * them) and the S derivation (the gate battery subset that re-derives
+         * the published statistics). It does NOT ship D — no raw tracks, no
+         * geometry, nothing with a coordinate in it. Every published number in
+         * these articles is a statistic over O, so O is sufficient: the reader
+         * reproduces the RESULTS without ever holding the rides.
+         */
+        attribute perArticle : Boolean default true;
+        attribute ships : String default "O (per-ride outputs, anonymised) + T (the harnesses) + the gate subset + the article";
+        attribute excludes : String default "D (raw tracks, any coordinate), other articles' machinery, the lab journal (that is J)";
+    }
+
+    part def AnonymisationDesign {
+        doc
+        /*
+         * The apparent tension — exact reproducibility versus anonymisation
+         * strength — largely dissolves once the identifying surface is measured
+         * rather than assumed.
+         *
+         * ACROSS EVERY RESULT CSV THERE ARE THREE IDENTIFYING FIELDS: `ride`
+         * (a name), `date`, and `file` (a path). Everything else is aggregate:
+         * distance, ascent, energy, fitted constants, errors. So the question is
+         * only what those three cost to remove.
+         *
+         *   file  -> dropped outright. Nothing consumes it.
+         *   ride  -> surrogate identifier.
+         *   date  -> a per-rider MONOTONIC RANK, not a calendar value.
+         *
+         * The date substitution is the one that matters and it costs nothing.
+         * The only published statistics touching dates are the chronological
+         * split-halves (Entries 44, 47, 49), which sort by date and assign
+         * half = index % 2 — they consume the ORDER and never the value. A rank
+         * preserves every such operation exactly. Assign the surrogate IDs in
+         * chronological order too, so sorting by surrogate reproduces sorting by
+         * date including tie-breaks, and the split-halves come out identical.
+         *
+         * That leaves the residual risk worth stating plainly: per-ride
+         * distance-and-ascent rows remain a weak fingerprint against a public
+         * activity profile. Removing the calendar value is what takes this from
+         * near-certain matching to weak matching — a date plus a distance
+         * identifies a ride, a distance alone mostly does not. Perturbing the
+         * values would reduce it further and would break exact reproduction,
+         * which is the one thing the repo exists to provide. The recommended
+         * trade is therefore exact values, no dates, surrogate IDs.
+         *
+         * CONSENT IS A SEPARATE QUESTION FROM ANONYMITY, and is the open action.
+         * D6 is CC BY 4.0, so derived aggregates are publishable outright.
+         * D1 and D5 are the author's own. But D3 and D4 were shared by
+         * independent riders for ANALYSIS; publishing per-ride derived rows is a
+         * new use, however anonymised, and should be asked rather than assumed.
+         * That request is the thing to raise early — it gates A1's release and
+         * has a human on the other end of it.
+         */
+        attribute identifyingFields : String default "ride, date, file — measured across every result CSV, not assumed";
+        attribute substitution : String default "file dropped; ride -> surrogate; date -> per-rider monotonic rank";
+        attribute costsReproducibility : Boolean default false;
+        attribute residualRisk : String default "aggregate rows are a weak fingerprint; removing dates is what makes it weak";
+        attribute openAction : String default "renewed consent from the D3 and D4 riders for publishing derived per-ride rows";
+    }
+
+    part reproductionRepo : ReproductionRepo;
+    part anonymisation : AnonymisationDesign;
 
     // ----------------------------------------------------- supersession of v1.0
 

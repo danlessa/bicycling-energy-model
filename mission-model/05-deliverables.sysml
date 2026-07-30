@@ -223,9 +223,12 @@ package MissionDeliverables {
         attribute decision : String default "after A3 (Danilo)";
         attribute scope : String default "deliberately unscoped — to be settled when reached";
         attribute consequence : String default
-            "A1 ships without J behind it, so A1's own text carries the whole of "
-            + "SM-1's credibility defence — raising, not lowering, the importance "
-            + "of its framing fixes";
+            "A1 ships without J, but WITH a reproduction repo, so a reader can "
+            + "verify MOP-4 rather than take it on trust; what stays invisible "
+            + "until J is the epistemic process — the pre-registrations, the "
+            + "failed predictions, the withdrawals. The credibility burden on "
+            + "A1's own text is therefore lighter than first stated, but the "
+            + "framing fixes still carry it alone";
     }
 
     part jTiming : JTiming;

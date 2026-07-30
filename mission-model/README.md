@@ -169,6 +169,50 @@ consequence to carry forward: A1 ships *without* J behind it, so it cannot lean
 on the journal to show its limitations are stated — it must carry that in its own
 text, which raises rather than lowers the stakes on its framing fixes.
 
+## Reproduction repos — one per article
+
+**A1/A2/A3 each ship with a repository that reproduces that article's results and
+nothing else**, data included, anonymised and filtered — a cleaned-up subset of
+this repo, not a copy with secrets removed.
+
+The *nothing else* is the load-bearing half: other articles' harnesses invite
+scope confusion, the lab journal belongs to J, and every extra path is one more
+place a private one can hide.
+
+The I/T/O/S layering is what makes it tractable. The repo ships **O** (per-ride
+outputs), **T** (the harnesses) and the **S** derivation (the gate subset). It
+never ships **D** — no tracks, no coordinates. Every published number is a
+statistic over O, so O is sufficient: a reader reproduces the *results* without
+ever holding the rides.
+
+**The anonymisation tension mostly dissolves once measured.** Across every result
+CSV there are exactly three identifying fields — `ride`, `date`, `file`:
+
+| field | treatment | cost |
+|---|---|---|
+| `file` | dropped | none — nothing consumes it |
+| `ride` | surrogate ID, assigned in chronological order | none |
+| `date` | per-rider **monotonic rank**, not a calendar value | **none** |
+
+The date substitution is the one that matters. The only published statistics
+touching dates are the chronological split-halves (Entries 44, 47, 49), which
+sort by date and take `half = index % 2` — they consume the *order*, never the
+value. A rank preserves them exactly.
+
+Residual risk, stated plainly: per-ride distance-and-ascent rows are still a weak
+fingerprint against a public activity profile. Removing the calendar value takes
+this from near-certain matching to weak — a date *plus* a distance identifies a
+ride, a distance alone mostly doesn't. Perturbing values would reduce it further
+and break exact reproduction, which is the one thing the repo exists for. So:
+exact values, no dates, surrogate IDs.
+
+**Open action, and it has a human on the other end.** Consent is a separate
+question from anonymity. D6 is CC BY 4.0 — derived aggregates are publishable
+outright. D1 and D5 are the author's own. But D3 and D4 were shared by
+independent riders *for analysis*; publishing derived per-ride rows is a new use
+however anonymised, and should be asked rather than assumed. That request gates
+A1's release and is worth raising early.
+
 ## The sub-missions
 
 One per critical-path article. Each is a complete mission — own effect, own
