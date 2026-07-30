@@ -1,3 +1,12 @@
+> **STATUS 2026-07-30 — DONE, as Entry 48.** Phases A–C, E and F complete and
+> gated (`bootstrap_ci.py` §3n; 279 GATE-OK). Numbering: drafted 43 → 44 → 45,
+> all taken, so it landed as **48**. Two documented deviations: the margin's
+> stated justification was corrected before registration (1.0 pp is *above* the
+> pooled rows' published CI half-widths, not below), and Table 6's rows were
+> dropped from the registered set as partially in-sample per ride.
+> **Phase D was declined by Danilo and will not be done.** This file is kept as
+> the historical plan; the lab journal's Entry 48 is authoritative.
+
 # Implementation plan — Entry 45: formal equivalence testing (TOST) for paper 1's parity claims, plus an optional error-distribution disclosure
 
 > Renumbered twice on 2026-07-29: drafted as Entry 43, which went to the D6

@@ -348,7 +348,12 @@ inverts physics from the scored ride itself, so a law-vs-simulation parity claim
 different kind of claim — partially in-sample per ride — and mixing it into a set otherwise
 made of frozen-transfer comparisons would make one margin do two jobs. Left for a later entry.
 
-**Phase D (error-distribution disclosure) remains gated** and unstarted.
+**Phase D (error-distribution disclosure) — declined by Danilo, 2026-07-30.** Not gated any
+longer, and not deferred: it will not be done. The reason stands on the plan's own argument
+against it — the paper already reports a signed median with a CI beside every accuracy figure
+(the accuracy-and-bias rule), which carries the first-order asymmetry the disclosure would
+restate, and paper 1 is dense already. Recorded here so a later reader finds a decision rather
+than an open item.
 
 ---
 
