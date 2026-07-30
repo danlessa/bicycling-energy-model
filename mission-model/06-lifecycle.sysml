@@ -29,6 +29,23 @@ package MissionLifecycle {
         attribute exitCriterion : String;
     }
 
+    part sScoping : Stage {
+        doc
+        /*
+         * A stage the articles do not need and J does: deciding what the
+         * deliverable IS. Its exit criterion is unusual in carrying a design
+         * constraint rather than an evidence threshold — see
+         * MissionDeliverables::JScopingGate.
+         */
+        attribute redefines name default "0. Scoping (non-article deliverables only)";
+        attribute redefines entryCriterion default "a deliverable proposed but not defined";
+        attribute redefines exitCriterion default
+            "scope settled AND a structural answer to the deliverable's central "
+            + "presentation risk — for J, that no admission is reachable without "
+            + "its resolution in view, tested adversarially against the most "
+            + "damaging out-of-context passages";
+    }
+
     part sRegistration : Stage {
         attribute redefines name default "1. Registration (concept)";
         attribute redefines entryCriterion default "a question worth an experiment";

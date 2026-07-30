@@ -141,10 +141,28 @@ without adding propagation work. It also makes article-vs-repository drift
 would buy.
 
 The risk is real: a corpus of withdrawn claims reads as rigour to a fair reader
-and as ammunition to a hostile one. Both readings come from the same text. The
-mitigation is framing the norm explicitly and quantifying it in front matter —
-an unframed body of self-criticism is a liability, a framed and counted one is
-the credential.
+and as ammunition to a hostile one. Both readings come from the same text — so
+**answering it is a validation gate on J's scoping stage**, not a caveat.
+
+What counts as an answer is structural, not rhetorical: a hostile reader won't
+read a defensive preamble, and a preamble that must be read to work doesn't work.
+The navigation has to make it impossible to reach an admission without its
+resolution in view — and the mechanism already exists unused, since the claims
+graph carries typed `disputes`/`qualifies`/`corrects` edges linking every
+withdrawal to what replaced it. A withdrawn claim shown beside its correction
+reads as the process working; the same claim shown alone reads as an error
+admitted. Same text, opposite effect, and the difference is layout.
+
+The gate is tested adversarially, as everything else here is: enumerate the
+passages most damaging when quoted alone — *"accurate by cancellation rather than
+by fit"*, the probe that turned out to be measuring altimeter noise, the 9-of-9
+rescored to 7-of-9, the 52% that should have been 69% with the gate certifying
+the wrong denominator — and for each ask whether a reader can reach it without
+seeing what it was corrected to. If yes for any, the scope isn't settled.
+
+What the gate must **not** become is a licence to prune. If the answer to hostile
+reading were to publish fewer withdrawals, J would have destroyed the thing it
+exists to show. It constrains presentation only; the corpus stays complete.
 
 **Sequenced after A3** (maintainer decision); scope deliberately open. The
 consequence to carry forward: A1 ships *without* J behind it, so it cannot lean

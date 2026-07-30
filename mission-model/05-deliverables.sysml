@@ -230,6 +230,67 @@ package MissionDeliverables {
 
     part jTiming : JTiming;
 
+    part def JScopingGate {
+        doc
+        /*
+         * VALIDATION GATE — the scoping stage for J cannot exit until the
+         * hostile-reading risk has an ANSWER, not an acknowledgement. Danilo's
+         * call, and the right one: the risk is the deliverable's central design
+         * problem rather than a caveat attached to it, so it belongs in the exit
+         * criteria of the stage that decides what J is.
+         *
+         * WHAT WOULD COUNT AS AN ANSWER. Not a defensive preamble — a reader
+         * hostile enough to quote a withdrawal against the project will not read
+         * the preamble, and a preamble that has to be read to work does not
+         * work. The answer has to be STRUCTURAL: the navigation must make it
+         * impossible to reach an admission without its resolution in view.
+         *
+         * The mechanism already exists and is unused for this purpose. The
+         * claims graph carries typed cito:disputes / cito:qualifies / cito:
+         * corrects edges between assertions, so every withdrawal is already
+         * linked to what replaced it. J's surface should render those edges as
+         * adjacency rather than as a graph a reader must traverse deliberately.
+         * A withdrawn claim displayed beside its correction reads as the process
+         * working; the same claim displayed alone reads as an error admitted.
+         * Same text, opposite effect, and the difference is layout.
+         *
+         * HOW THE GATE IS TESTED. Adversarially, as the project tests everything
+         * else. Take the passages most damaging when quoted alone — candidates
+         * from this year include "the frozen grid's sub-3% cells are accurate by
+         * cancellation rather than by fit", the flat-terrain probe that turned
+         * out to be measuring altimeter noise, the 9-of-9 result rescored to
+         * 7-of-9 after a leak was found, the published 52% that should have been
+         * 69% with the gate certifying the wrong denominator, and the smoke flag
+         * that overwrote a canonical results file. For each: can a reader reach
+         * it without also seeing what it was corrected to? If yes for any of
+         * them, the gate FAILS and the scope is not settled.
+         *
+         * A second and cheaper component, which the risk note already proposed:
+         * quantify the norm in front matter — N pre-registrations with failure
+         * modes fixed in advance, M withdrawals — so the tally is the first
+         * thing seen. Counting converts "they were wrong repeatedly" into "they
+         * catch things repeatedly", which is the honest reading and the one a
+         * bare corpus does not supply on its own.
+         *
+         * WHAT THE GATE MUST NOT BECOME. A reason to soften, prune or curate the
+         * record. If the answer to hostile reading were to publish fewer
+         * withdrawals, the deliverable would have destroyed the thing it exists
+         * to show. The gate constrains PRESENTATION only; the corpus stays
+         * complete.
+         */
+        attribute stage : String default "scoping — exit criterion";
+        attribute criterion : String default
+            "a structural answer to the hostile-reading risk: no admission "
+            + "reachable without its resolution in view";
+        attribute test : String default
+            "adversarial — the most damaging out-of-context passages are "
+            + "enumerated, and each must be unreachable without its correction";
+        attribute alsoRequired : String default "the norm quantified in front matter (pre-registrations, withdrawals)";
+        attribute mustNotBecome : String default "a licence to prune the record — presentation only, corpus stays complete";
+    }
+
+    part jScopingGate : JScopingGate;
+
     // ---------------------------------------------------- dependency structure
 
     part def Enablement {
