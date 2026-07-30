@@ -302,10 +302,11 @@ def main() -> None:
     print("\ncomplexity-adjusted: BIC on the FIT half (Laplace likelihood, which is the")
     print("one the median/MAE metric implies), and a paired sign test on the HELD-OUT half.")
     print("\n" + "estimator".ljust(20) + "k".rjust(4) + "fit MAE".rjust(10)
-          + "dBIC vs A'".rjust(12) + "held-out".rjust(10)
+          + "dBIC vs A'".rjust(12) + "dAIC vs A'".rjust(12) + "held-out".rjust(10)
           + "vs A' (wins/n)".rjust(16) + "p".rjust(9))
     nfit = len(fit)
     bic = {}
+    aic = {}          # same -2logL, flat 2k penalty (Danilo, post-registration)
     for nm in NAMES:
         e = [abs(predict(r, nm) - r["d_meas"]) for r in fit if is_finite(predict(r, nm))]
         if not e:
@@ -313,6 +314,7 @@ def main() -> None:
         mae = sum(e) / len(e)
         # Laplace: -2logL = 2n ln(2*MAE) + 2n ; the 2n cancels in a difference
         bic[nm] = 2 * nfit * math.log(2 * mae) + NPAR[nm] * math.log(nfit)
+        aic[nm] = 2 * nfit * math.log(2 * mae) + 2 * NPAR[nm]
     base = bic.get("A'")
     for nm in NAMES:
         if nm not in bic:
@@ -330,13 +332,17 @@ def main() -> None:
             elif a > b:
                 l += 1
         db = bic[nm] - base
+        da = aic[nm] - aic["A'"]
         mark = "" if nm in ("A", "A'") else ("  better" if db < -10 else
                                              "  worse" if db > 10 else "  ~tie")
         print(LABEL[nm].ljust(20) + str(NPAR[nm]).rjust(4) + to_fixed(mae, 4).rjust(10)
               + (to_fixed(db, 1) if nm != "A'" else "—").rjust(12)
+              + (to_fixed(da, 1) if nm != "A'" else "—").rjust(12)
               + to_fixed(pooled[nm], 4).rjust(10)
               + f"{w}/{w + l}".rjust(16) + to_fixed(sign_p(w, l), 4).rjust(9) + mark)
     print("  (dBIC < -10 = decisive support over the pooled constant; > +10 = decisively worse.")
+    print("   dAIC is the same quantity under a flat 2k penalty instead of k*ln(n); where the")
+    print("   two disagree, the extra parameter is worth having only under the weaker penalty.)")
     print("   The sign test asks only whether the held-out win rate is real, ignoring cost.)")
 
     order = sorted((nm for nm in NAMES if is_finite(pooled[nm])), key=lambda nm: pooled[nm])

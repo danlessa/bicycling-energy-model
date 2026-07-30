@@ -427,7 +427,8 @@ the constant its correct ride-level summary (the logistic estimator lost its hel
 0/3). Momentum reads as a travel-limited suspension:
 
 ```{python}
-G = 9.7864
+from bicycling_energy_model.engines import G   # never re-declare it: a local
+# `G = 9.7864` here would shadow the package and silently survive a re-baseline
 for kmh in (25, 30, 35, 40):
     v = kmh/3.6
     print(f"{kmh} km/h → h_KE = v²/2g = {v*v/(2*G):.1f} m")
@@ -446,6 +447,79 @@ near-constant 0.08–0.11 of ε (its numerator counts all descent metres, its de
 below-threshold distance) and was rejected by the pre-fixed decision rule — the paper's hand
 recipe now uses ε_f = 0.20, which errs on the safe side. Entry 41 (the DEM-deployment
 letter's substitution experiment) runs in a parallel line of work.
+
+# Entries 43–49 — the external corpus, and putting ε on trial
+
+D6 (four European riders, an open deposit) is the first corpus sharing no rider,
+country, terrain, device or model-selection history with the calibration set — and the
+frozen law reaches its closest parity there. Entries 44–49 then interrogate the deficit
+itself: is it a constant, a function of grade, a rider property, or a rescaling of the
+coasting limit? Every constant below is **imported, never retyped**.
+
+```{python}
+from bicycling_energy_model.engines import EPS0, G
+import csv, os
+RES = os.path.join("..", "..", "data", "results")
+
+# The published deficit and the eq. (8) competitor, side by side at D1's terrain.
+K_EQ8 = 0.0051                      # Entry 45, fitted in DEFICIT space
+print(f"eps_0 (package) = {EPS0}   G = {G}")
+for s_bar in (0.030, 0.038, 0.060, 0.097):
+    print(f"  s_bar {s_bar*100:4.1f}%  ->  eq.(8) delta = k/s_bar = {K_EQ8/s_bar:.3f}"
+          + ("   <- exceeds eps_0" if K_EQ8/s_bar > EPS0 else ""))
+print(f"\neq.(8) is defined only on real descents: k/s_bar exceeds 1 below "
+      f"s_bar = {K_EQ8*100:.2f}%")
+```
+
+**Entry 47** selected the deficit's *form* the way it should have been done from the
+start — on the calibration side only (D1 ∪ D2), by BIC under a Laplace likelihood, under
+two parameter classes. Both returned the incumbent. **Entry 49** then asked whether the
+coasting limit itself needs rescaling, via `delta_5 = k1·eps_coast + k2`:
+
+```{python}
+rows = list(csv.DictReader(open(os.path.join(RES, "e49_affine.csv"))))
+fr = {r["form"]: r for r in rows if r["scope"] == "fr-gated"}
+k1, k2 = (float(x) for x in fr["delta5 global"]["params"].split(","))
+print(f"delta_5 global fit (P_f,r):  k1 = {k1:.4f}   k2 = {k2:.4f}")
+print(f"  => eps_d = (1 - k1)*eps_coast - k2 = {1-k1:.3f}*eps_coast + {-k2:.3f}")
+print(f"  but 1 - k1 has 95% CI [-1.73, +0.54]: the two-parameter fit is UNIDENTIFIED\n")
+print(f"  {'form':<18}{'par':>4}{'held-out':>10}{'signed':>9}")
+for f in ("eps0 frozen", "eps0 refit", "eps2 k/s_bar", "delta5 global", "delta5 per rider"):
+    r = fr[f]
+    print(f"  {f:<18}{r['npar']:>4}{float(r['held']):>10.2f}{float(r['signed']):>9.2f}")
+print("\n  the zero-parameter incumbent wins on held-out error AND on bias;")
+print("  and the flat constant (1 par) beats delta5 (2 par) on BIC — the extra parameter buys nothing")
+```
+
+**Entry 46** built §3.3's regime switch, stated since the first draft and implemented by
+no harness. The two parameter classes reverse the verdict, and the bias column says which
+is real — below 3% the applied `eps_d` has median 0.544 against the flat constant's 0.20,
+and that refund cancels the frozen `CdA = 0.40`:
+
+```{python}
+sw = list(csv.DictReader(open(os.path.join(RES, "e46_switch.csv"))))
+lo = [r for r in sw if r["real"] == "false"]
+def med(v):
+    v = sorted(v); n = len(v)
+    return v[(n-1)//2] if n % 2 else (v[n//2-1] + v[n//2]) / 2
+print(f"{len(sw)} rides, {len(lo)} ({100*len(lo)/len(sw):.0f}%) below the 3% gate")
+print(f"  median eps_d applied below the gate = "
+      f"{med([float(r['const_unsw_eps']) for r in lo]):.3f}   vs eps_f = 0.20")
+for a in ("const_unsw", "const_sw", "grade_unsw", "grade_sw"):
+    print(f"  {a:<12} med|D%| {med([abs(float(r[a])) for r in sw]):.2f}")
+```
+
+**Entry 48** replaced "no detectable difference" with a registered equivalence test — TOST
+at ±1.0 pp, margin fixed before any interval was computed:
+
+```{python}
+eq = list(csv.DictReader(open(os.path.join(RES, "e48_equiv.csv"))))
+for r in eq:
+    print(f"  {r['comparison']:<20} n={int(r['n']):>5}  d={float(r['d']):>6.2f}  "
+          f"[{float(r['ci90_lo']):>6.2f}, {float(r['ci90_hi']):>6.2f}]  {r['verdict']}")
+print("\n  five of six inconclusive verdicts fail on the side where the LAW BEATS the sim")
+```
+
 
 # Reproducing everything
 

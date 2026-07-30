@@ -306,6 +306,89 @@ Two disclosures, because the ordering matters:
    (no prediction was written after seeing data), while carrying the caveat that a *related*
    arm had been seen.
 
+### Results (run 2026-07-30, `e49_affine.py`; primary = $P_{f,r}$, $\lvert O \rvert$ = 990)
+
+| form | par | fitted | BIC | med $\lvert\Delta\%\rvert$ | signed | **held-out** | $\varepsilon \notin [0,1]$ |
+|---|--:|---|--:|--:|--:|--:|--:|
+| $\delta_5$ per rider | 14 | (below) | **8171** | 4.37 | −1.05 | 4.38 | 0.2% · on a bound |
+| flat $\varepsilon$ fitted | 1 | 0.3444 | 8842 | 5.08 | −0.46 | 5.05 | 0% |
+| $\delta_5$ global | 2 | $k_1$ = 0.922, $k_2$ = −0.311 | 8847 | 5.02 | −0.50 | 5.04 | 0% |
+| $\varepsilon_2 = k/\bar s$ | 1 | 0.0032 | 8968 | 5.12 | −2.24 | 5.08 | 0% |
+| $\varepsilon_0$ refit | 1 | 0.0665 | 8995 | 5.52 | −2.57 | 5.55 | 0% |
+| **$\varepsilon_0$ frozen (0.13)** | **0** | — | 9052 | **4.94** | **+0.24** | **4.94** | 0% |
+
+AIC, added alongside (Danilo, post-registration): 8103 / 8837 / 8838 / 8963 / 8990 / 9052 in the
+same row order. At $n = 990$ the penalties are $k\ln n = 6.9k$ against $2k$, so AIC charges a
+third of what BIC does — and **nothing reorders**. The flat constant still edges $\delta_5$
+(8836.9 vs 8837.5, a smaller gap than BIC's 5.5 but the same sign), and the per-rider arm still
+leads on both criteria while failing every other check. Where a conclusion here depends on the
+penalty, it is the *size* of $\delta_5$'s defeat, never its direction.
+
+**The two-parameter fit is unidentified — this is the headline.** Bootstrapping the global fit
+(stratified by rider, B = 10⁴, seed 45; the objective is *linear* in $(k_1, k_2)$, so LAD is a
+median regression solvable by IRLS and the refits are affordable):
+
+| quantity | point | 95% CI |
+|---|--:|:--|
+| $k_1$ | 0.9225 | [0.464, 2.727] |
+| slope $1 - k_1$ | 0.0775 | **[−1.727, +0.536]** |
+| intercept $-k_2$ | 0.3115 | [0.095, 1.214] |
+| **flat $\varepsilon$ (1 parameter)** | **0.3444** | **[0.292, 0.394]** |
+
+$k_1 > 0$ is solid — the interval excludes zero, so **P1 holds**: the coasting limit needs
+shrinking. Everything past that is not supported. The slope's interval runs from strongly
+*inverted* to substantially positive, because $k_1$ and $k_2$ trade off against each other; the
+form cannot say by how much the geometry should be rescaled. *An earlier draft of this entry
+read the point estimate (slope 0.078) as "the fit nearly deletes the geometry". That was an
+overclaim on an interval this wide, and it is withdrawn.* What the data do identify is the
+**one**-parameter answer, and sharply: a flat $\varepsilon = 0.344$ [0.292, 0.394].
+
+**$\delta_5$'s second parameter buys nothing.** Against the flat constant it nests at $k_1 = 1$,
+and the comparison is unambiguous: the flat form has the **lower** BIC (8842 vs 8847) with half
+the parameters, and an identical held-out error (5.05 vs 5.04). The affine form is a flat
+constant carrying one unidentified extra parameter. **P2 fails on the honest comparison** —
+$\delta_5$ beats $\varepsilon_0$ on BIC, but so does the strictly simpler form it contains.
+
+**And the fitted answer does not generalise.** Both fitted forms want to discard or discount
+$\varepsilon_{\mathrm{coast}}$, yet frozen $\varepsilon_0$ — which keeps the geometry at *full*
+weight and subtracts 0.13 — has the best held-out error of every cheap form (4.94 against
+5.04/5.05/5.08/5.55) and by far the smallest bias (+0.24 against −0.46, −0.50, −2.24, −2.57).
+So the in-sample pull toward deleting the geometry is an artefact of fitting, not a property of
+the data: at full weight the geometry helps, and the sample cannot resolve any better weight
+than the one already published.
+
+**P3 fails on its metric and should not be believed.** Per-rider held-out (4.38) beats global
+(5.04), so a rider's rescaling does transfer to that rider's other rides. Four reasons that is
+not what it looks like: the fits **disagree on sign** ($k_1$ from −1.08 to +2.67 across seven
+riders); one rider stays **pinned to a bound** after the box was widened from $\pm0.6$ to
+$\pm1.5$; it is the only form that leaves the physical interval (0.2% of rides get
+$\varepsilon_d \notin [0,1]$, refunding more than the descent holds); and within-rider held-out
+never tests a **new** rider, which is what deployment needs — [§3.2.2](#3.2.2) already declines
+rider-parameter forms on exactly that ground. Fourteen parameters bought 0.56 pp.
+
+**Verdict: nothing here enters paper 1.** The affine form is unidentified and dominated by the
+constant it contains; the per-rider arm is incoherent; the incumbent $\varepsilon_0 = 0.13$ has
+the best held-out error and bias of every form with fewer than 14 parameters. This is the third
+entry running (47, 46, 49) in which the published constant survives a challenger.
+
+**One number worth keeping.** On real descents under honest per-ride physics the best *flat*
+$\varepsilon$ is **0.344 [0.292, 0.394]** — an interval that excludes the published
+$\varepsilon_f = 0.20$. No contradiction: $\varepsilon_f$ was selected on D2, urban stop-go
+riding, a different regime from $\bar s \geq 3\%$ open descents. But it says the flat constant
+is regime-specific, and 0.20 should not be carried onto real descents as if it were universal.
+
+**Secondary — every ride ($\lvert O \rvert$ = 2,028).** Same shape; with the sub-3% rides
+included $\varepsilon_2$ (held-out 4.23) beats frozen $\varepsilon_0$ (5.48), reversing the
+gated ordering — consistent with Entry 46, where the sub-3% band is exactly where the parameter
+class and the $\varepsilon$ choice trade against each other.
+
+**Disclosed — the $P_{a,g}$ arm** (run first, on my misreading). Global $k_1$ = 0.712
+[0.256, 2.944] — same story, same width. Held-out: per rider 3.98, $\varepsilon_2$ 4.13, global
+4.15, frozen $\varepsilon_0$ 4.21. The two arms agree on everything load-bearing ($k_1 > 0$ but
+unidentified; per-rider incoherent; nothing worth shipping) and disagree on the ordering of the
+cheap forms — the Entry-46 lesson restated: when the question is about $\varepsilon$, the
+parameter class is not a background detail.
+
 ---
 
 ## 2026-07-30 — Entry 48: formal equivalence testing (TOST) for the parity claims — pre-registration
@@ -608,6 +691,30 @@ the arm entitled to build the tables is the calibration arm and not the other on
 is $\varepsilon_0 = 0.13$, which is what the paper already ships. The pre-registration
 endorsed the incumbent, and the value of that is precisely that it could have gone the other
 way — $\varepsilon_2$ won the in-sample arm decisively, on 20× the rides.
+
+### AIC beside BIC (added 2026-07-30 at Danilo's request, after the fact)
+
+BIC was the registered instrument; AIC is reported beside it everywhere BIC appears, because
+which penalty is used is a fact about how much evidence there is, not a detail. Both are
+$-2\log L$; they differ only in the per-parameter charge, $k\ln n$ against a flat $2k$. At
+$n = 48$ that is 3.87 against 2, so BIC charges nearly twice as much.
+
+| arm | form | BIC | $\Delta$BIC | AIC | $\Delta$AIC |
+|---|---|--:|--:|--:|--:|
+| $P_{a,g}$ | $\varepsilon_2$ | 465.7 | 0.0 | **463.8** | 0.0 |
+| $P_{a,g}$ | **$\varepsilon_0$ frozen** | 465.8 | 0.0 | 465.8 | **1.9** |
+| $P_{f,r}$ | **$\varepsilon_0$ frozen** | 459.1 | 0.0 | 459.1 | 0.0 |
+| $P_{f,r}$ | $\varepsilon_2$ | 460.9 | 1.8 | 459.1 | 0.0 |
+
+**The champion does not change** — under AIC's own $\Delta < 2 \Rightarrow$ fewest parameters
+rule, $\varepsilon_0$ still takes both arms. But the margin in the $P_{a,g}$ arm is
+$\Delta$AIC = **1.9 against a threshold of 2.0**: the incumbent survives that arm by a tenth of
+a unit. Under the weaker penalty $\varepsilon_2$ has the lowest raw AIC there, and only the
+parsimony tie-break keeps $\varepsilon_0$. Stated plainly because "both selections return
+$\varepsilon_0$" is true but, on one arm, barely.
+
+*(An intermediate reading of these numbers — that AIC "flips the champion" — compared raw AIC
+minima and forgot the tie-break the protocol applies to whichever criterion is used. Withdrawn.)*
 
 ### Three findings that were not registered
 

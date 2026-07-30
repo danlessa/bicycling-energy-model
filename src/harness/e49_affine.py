@@ -110,6 +110,16 @@ def d_affine(r: Ride, q: Sequence[float]) -> float:
     return q[0] * r[0] + q[1]
 
 
+def d_flat(r: Ride, q: Sequence[float]) -> float:
+    """A FLAT eps_d = q[0]: delta = eps_coast - c, so the geometry cancels.
+
+    This is delta_5 restricted to k1 = 1 — exactly nested — so comparing the two
+    asks whether the affine form's second parameter buys anything over simply
+    ignoring eps_coast, and puts a fitted flat constant beside delta_5's implied
+    intercept."""
+    return r[0] - q[0]
+
+
 def resid(rows: Sequence[Ride], fn: Delta, q: Sequence[float],
           space: str = "energy") -> list[float]:
     out: list[float] = []
@@ -164,6 +174,17 @@ def bic_of(res: Sequence[float], npar: int) -> float:
     n = len(res)
     b = sum(abs(v) for v in res) / n
     return 2 * n * math.log(2 * b) + 2 * n + npar * math.log(n)
+
+
+def aic_of(res: Sequence[float], npar: int) -> float:
+    """AIC beside BIC (Danilo, post-registration). Same -2logL, flat 2k penalty.
+
+    At n ~ 990, ln(n) = 6.9, so BIC charges 3.4x what AIC does per parameter —
+    which is why the two can disagree about whether an extra parameter earned
+    its place."""
+    n = len(res)
+    b = sum(abs(v) for v in res) / n
+    return 2 * n * math.log(2 * b) + 2 * n + 2 * npar
 
 
 # Deliberately wide. The first run used [-1, 1.5] x [-0.6, 0.6] and the per-rider
@@ -257,6 +278,7 @@ def run(rows: list[Ride], title: str) -> list[dict[str, object]]:  # noqa: C901
         ("eps0 frozen", d_frozen, [], False),
         ("eps0 refit", d_const, [(0.0, 0.60)], False),
         ("eps2 k/s_bar", d_grade, [(0.0, 0.05)], False),
+        ("eps flat fitted", d_flat, [(0.0, 1.0)], False),
         ("delta5 global", d_affine, AFF_B, False),
         ("delta5 per rider", d_affine, AFF_B, True),
     ]
@@ -284,7 +306,7 @@ def run(rows: list[Ride], title: str) -> list[dict[str, object]]:  # noqa: C901
             dq = ", ".join(to_fixed(v, 4) for v in qd) if qd else "—"
         out.append({"form": name, "npar": npar, "params": shown,
                     "frac_eps_out": f_out, "at_bound": bound_hit,
-                    "bic": bic_of(res, npar),
+                    "bic": bic_of(res, npar), "aic": aic_of(res, npar),
                     "med": median([abs(v) for v in res]),
                     "signed": median(res),
                     "held": median([abs(v) for v in ho]) if ho else float("nan"),
@@ -293,15 +315,19 @@ def run(rows: list[Ride], title: str) -> list[dict[str, object]]:  # noqa: C901
     lo = min(float(r["bic"]) for r in out)
     for r in out:
         r["dbic"] = float(r["bic"]) - lo
+    loa = min(float(r["aic"]) for r in out)
+    for r in out:
+        r["daic"] = float(r["aic"]) - loa
     tied = [r for r in out if float(r["dbic"]) < 2.0]
     champ = min(tied, key=lambda r: (int(r["npar"]), float(r["dbic"])))
 
     print(f"\n  {'form':<18}{'par':>4}  {'fitted':<22}{'BIC':>9}{'dBIC':>7}"
-          f"{'med|D%|':>9}{'signed':>8}{'HELD-OUT':>10}{'eps∉[0,1]':>11}")
+          f"{'AIC':>9}{'dAIC':>7}{'med|D%|':>9}{'signed':>8}{'HELD-OUT':>10}{'eps∉[0,1]':>11}")
     for r in sorted(out, key=lambda r: float(r["bic"])):
         mark = "  <-- lowest BIC" if r is min(out, key=lambda x: float(x["bic"])) else ""
         print(f"  {str(r['form']):<18}{int(r['npar']):>4}  {str(r['params']):<22}"
               f"{to_fixed(float(r['bic']), 1):>9}{to_fixed(float(r['dbic']), 1):>7}"
+              f"{to_fixed(float(r['aic']), 1):>9}{to_fixed(float(r['daic']), 1):>7}"
               f"{to_fixed(float(r['med']), 2):>9}{to_fixed(float(r['signed']), 2):>8}"
               f"{to_fixed(float(r['held']), 2):>10}"
               f"{to_fixed(100 * float(r['frac_eps_out']), 1) + '%':>11}"
@@ -324,9 +350,140 @@ def run(rows: list[Ride], title: str) -> list[dict[str, object]]:  # noqa: C901
     return out
 
 
+
+# ---- CI on the global affine fit (E49_CI=1) --------------------------------
+# The objective is LINEAR in (k1, k2). With
+#     A_i = 100*(E0_i/1000 - emp_i)/emp_i ,  B_i = 100*(E1_i - E0_i)/(1000*emp_i)
+# the residual is r_i = (A_i + B_i c_i) - (B_i c_i) k1 - (B_i) k2, c_i = eps_coast.
+# So LAD is a median regression, solvable by IRLS in microseconds — which is what
+# makes B = 10^4 bootstrap refits affordable where the grid search never would be.
+# Seed 45: 42/43 are the published CIs and 44 is Entry 48's equivalence interval.
+
+def design(rows: Sequence[Ride]) -> tuple[list[float], list[tuple[float, float]]]:
+    y: list[float] = []
+    X: list[tuple[float, float]] = []
+    for r in rows:
+        A = 100.0 * (r[1] / 1000 - r[3]) / r[3]
+        Bc = 100.0 * (r[2] - r[1]) / (1000 * r[3])
+        y.append(A + Bc * r[0])
+        X.append((Bc * r[0], Bc))
+    return y, X
+
+
+def lad_irls(y: Sequence[float], X: Sequence[tuple[float, float]],
+             iters: int = 60) -> tuple[float, float]:
+    """Median regression by iteratively reweighted least squares (2 parameters)."""
+    u = v = 0.0
+    for _ in range(iters):
+        s11 = s12 = s22 = b1 = b2 = 0.0
+        for yi, (x1, x2) in zip(y, X):
+            r = yi - x1 * u - x2 * v
+            w = 1.0 / max(abs(r), 1e-6)
+            s11 += w * x1 * x1
+            s12 += w * x1 * x2
+            s22 += w * x2 * x2
+            b1 += w * x1 * yi
+            b2 += w * x2 * yi
+        det = s11 * s22 - s12 * s12
+        if abs(det) < 1e-18:
+            break
+        u, v = (b1 * s22 - b2 * s12) / det, (s11 * b2 - s12 * b1) / det
+    return u, v
+
+
+def flat_design(rows: Sequence[Ride]) -> tuple[list[float], list[float]]:
+    """Delta%_i = A_i + B_i*c for a flat eps_d = c: minimise sum|A_i + B_i c|."""
+    y: list[float] = []
+    x: list[float] = []
+    for r in rows:
+        y.append(-100.0 * (r[1] / 1000 - r[3]) / r[3])
+        x.append(100.0 * (r[2] - r[1]) / (1000 * r[3]))
+    return y, x
+
+
+def lad_1d(y: Sequence[float], x: Sequence[float], iters: int = 60) -> float:
+    c = 0.0
+    for _ in range(iters):
+        sxx = sxy = 0.0
+        for yi, xi in zip(y, x):
+            w = 1.0 / max(abs(yi - xi * c), 1e-6)
+            sxx += w * xi * xi
+            sxy += w * xi * yi
+        if sxx < 1e-18:
+            break
+        c = sxy / sxx
+    return c
+
+
+def global_ci(rows: list[Ride], seed: int = 45, B: int = 10000) -> None:
+    y, X = design(rows)
+    k1, k2 = lad_irls(y, X)
+    print(f"\n  IRLS point fit: k1 = {to_fixed(k1, 4)}  k2 = {to_fixed(k2, 4)}"
+          f"   (grid search gave 0.9223 / -0.3112 — agreement is the correctness check)")
+    by: dict[str, list[int]] = {}
+    for i, r in enumerate(rows):
+        by.setdefault(r[6], []).append(i)
+    rand = rng(seed)
+    k1s: list[float] = []
+    slopes: list[float] = []
+    ints: list[float] = []
+    for _ in range(B):
+        idx: list[int] = []
+        for g, ii in by.items():
+            n = len(ii)
+            idx += [ii[int(rand() * n)] for _ in range(n)]
+        yy = [y[i] for i in idx]
+        XX = [X[i] for i in idx]
+        a, b = lad_irls(yy, XX, iters=40)
+        k1s.append(a)
+        slopes.append(1.0 - a)
+        ints.append(-b)
+    # the fitted FLAT eps, for comparison with delta_5's implied intercept
+    fy, fx = flat_design(rows)
+    c_hat = lad_1d(fy, fx)
+    rand2 = rng(seed)
+    cs: list[float] = []
+    for _ in range(B):
+        idx2: list[int] = []
+        for g, ii in by.items():
+            n = len(ii)
+            idx2 += [ii[int(rand2() * n)] for _ in range(n)]
+        cs.append(lad_1d([fy[i] for i in idx2], [fx[i] for i in idx2], iters=40))
+    cs.sort()
+    print(f"    {'flat eps fitted':<14} {to_fixed(c_hat, 4):>8}  95% CI "
+          f"[{to_fixed(cs[int(0.025 * B)], 4)}, {to_fixed(cs[int(0.975 * B) - 1], 4)}]"
+          f"   (published eps_f = 0.20)")
+    for name, vals, pt in (("k1", k1s, k1), ("slope 1-k1", slopes, 1 - k1),
+                           ("intercept -k2", ints, -k2)):
+        vals.sort()
+        lo, hi = vals[int(0.025 * B)], vals[int(0.975 * B) - 1]
+        print(f"    {name:<14} {to_fixed(pt, 4):>8}  95% CI [{to_fixed(lo, 4)}, "
+              f"{to_fixed(hi, 4)}]")
+    print(f"    (stratified by rider, B = {B}, seed {seed})")
+
+
+def rng(seed: int) -> Callable[[], float]:
+    a = seed & 0xFFFFFFFF
+
+    def rand() -> float:
+        nonlocal a
+        a = (a + 0x6D2B79F5) & 0xFFFFFFFF
+        t = ((a ^ (a >> 15)) * (1 | a)) & 0xFFFFFFFF
+        t = ((t + (((t ^ (t >> 7)) * (61 | t)) & 0xFFFFFFFF)) & 0xFFFFFFFF) ^ t
+        return ((t ^ (t >> 14)) & 0xFFFFFFFF) / 4294967296
+
+    return rand
+
+
 def main() -> None:
     print("Entry 49 — the affine deficit delta_5 = k1*eps_coast + k2"
           + ("  [E49_SMOKE]" if SMOKE else ""))
+    if os.environ.get("E49_CI"):
+        for pfx, gated, lab in (("fr", True, "P_f,r, s_bar >= 3% (primary)"),
+                                ("ag", True, "P_a,g, s_bar >= 3% (disclosed)")):
+            print(f"\n== global affine fit, {lab} ==")
+            global_ci(load(pfx=pfx, gated=gated))
+        return
     # P_f,r is the intended parameter class (Danilo, 2026-07-30): the per-ride
     # inverted, regime-consistent physics. The P_a,g arm was run first on my
     # misreading and is kept as a disclosed secondary — deleting a result I have
@@ -346,8 +503,8 @@ def main() -> None:
     res_g = results[0][1]
 
     name = "e49_affine.SMOKE.csv" if SMOKE else "e49_affine.csv"
-    cols = ["scope", "form", "npar", "params", "bic", "dbic", "med", "signed",
-            "held", "frac_eps_out", "deficit_params"]
+    cols = ["scope", "form", "npar", "params", "bic", "dbic", "aic", "daic",
+            "med", "signed", "held", "frac_eps_out", "deficit_params"]
     with open(os.path.join(RESULTS, name), "w", encoding="utf-8") as fh:
         fh.write(",".join(cols) + "\n")
         for scope, rows_out in results:

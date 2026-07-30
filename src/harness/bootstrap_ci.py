@@ -1154,10 +1154,18 @@ def _e47_contest(pk) -> tuple[str, dict]:
             rs.append(100.0 * ((t[1] + (t[2] - t[1]) * eps) / 1000 - t[3]) / t[3])
         b = sum(abs(v) for v in rs) / n
         res[name] = {"q": q, "npar": npar, "med": median([abs(v) for v in rs]),
-                     "bic": 2 * n * math.log(2 * b) + 2 * n + npar * math.log(n)}
+                     "bic": 2 * n * math.log(2 * b) + 2 * n + npar * math.log(n),
+                     "aic": 2 * n * math.log(2 * b) + 2 * n + 2 * npar}
     lo = min(v["bic"] for v in res.values())
     tied = [(k, v) for k, v in res.items() if v["bic"] - lo < 2.0]
     return min(tied, key=lambda kv: (kv[1]["npar"], kv[1]["bic"] - lo))[0], res
+
+
+def _e47_aic_champ(res: dict) -> str:
+    """The same parsimony rule under AIC — reported, never used to select."""
+    lo = min(v["aic"] for v in res.values())
+    tied = [(k, v) for k, v in res.items() if v["aic"] - lo < 2.0]
+    return min(tied, key=lambda kv: (kv[1]["npar"], kv[1]["aic"] - lo))[0]
 
 
 _e47_exp = {
@@ -1172,8 +1180,9 @@ for (_calib, _arm), (_en, _ech, _emed) in _e47_exp.items():
     _med = _res["eps0_frozen"]["med"]
     _ok = len(_pk) == _en and _ch == _ech and abs(_med - _emed) <= 0.02
     _tag = ("calibration D1uD2" if _calib else "in-sample D3-D6") + f" · {_arm}"
+    _ach = _e47_aic_champ(_res)
     print(f"  {_tag:<28} |O|={len(_pk):>4} champion {_ch:<12} "
-          f"eps0 med {to_fixed(_med, 2)}"
+          f"eps0 med {to_fixed(_med, 2)}  [AIC would pick {_ach}]"
           + (" GATE-OK" if _ok else f" GATE-FAIL(exp n={_en} {_ech} {_emed})"))
     if not _ok:
         failed = True
@@ -1328,6 +1337,88 @@ _ok = not _bad and _inc_worse == ["D2 frozen · F3"]
 print(f"  none outside margin ({len(_bad)}); inconclusive-on-the-worse-side: "
       f"{_inc_worse or 'none'}"
       + (" GATE-OK" if _ok else " GATE-FAIL(exp only D2 frozen · F3)"))
+if not _ok:
+    failed = True
+
+
+# ---------------------------------------------------------------- 3o. Entry 49
+# The affine deficit. Gates the fitted k1 and, more importantly, the ORDERING
+# claims the journal entry rests on — that under P_f,r the zero-parameter frozen
+# constant beats both one-parameter rivals and the two-parameter affine form on
+# held-out error, and that only the 14-parameter arm leaves the physical interval.
+# Numbers alone would not catch a reordering; the comparisons are asserted.
+print("\n== Affine deficit (Entry 49, journal only — delta_5 does not enter the paper) ==")
+
+_e49 = {(r["scope"], r["form"]): r for r in parse_csv("e49_affine.csv")}
+
+
+def _e49f(scope: str, form: str, key: str) -> float:
+    try:
+        return float(_e49[(scope, form)][key])
+    except (KeyError, ValueError):
+        return float("nan")
+
+
+# k1 of the global affine fit, parsed from the params string it was printed with
+_k1_fr = float(_e49[("fr-gated", "delta5 global")]["params"].split(",")[0])
+_k1_ag = float(_e49[("ag-gated", "delta5 global")]["params"].split(",")[0])
+_ok = abs(_k1_fr - 0.9223) <= 0.005 and abs(_k1_ag - 0.7145) <= 0.005 and _k1_fr > 0
+print(f"  global k1: P_f,r {to_fixed(_k1_fr, 4)} · P_a,g {to_fixed(_k1_ag, 4)}  (P1: k1 > 0)"
+      + (" GATE-OK" if _ok else " GATE-FAIL(exp 0.9223 / 0.7145)"))
+if not _ok:
+    failed = True
+
+# delta_5 NESTS the flat constant at k1 = 1, so the honest comparison is against
+# that, not against eps_0. An earlier version of this gate asserted the slope
+# (1 - k1) was below 0.15 — certifying "the fit nearly deletes the geometry",
+# a point-estimate reading whose 95% CI is [-1.73, +0.54]. The claim was
+# withdrawn and this gate now asserts the identified result instead.
+_flat = _e49f("fr-gated", "eps flat fitted", "params_num") if False else float(
+    _e49[("fr-gated", "eps flat fitted")]["params"])
+_ok = (abs(_flat - 0.3444) <= 0.002
+       and _e49f("fr-gated", "eps flat fitted", "bic")
+       < _e49f("fr-gated", "delta5 global", "bic"))
+print(f"  the affine form is dominated by the flat constant it nests: "
+      f"flat eps {to_fixed(_flat, 4)} (1 par, BIC "
+      f"{to_fixed(_e49f('fr-gated', 'eps flat fitted', 'bic'), 0)}) beats delta5 global "
+      f"(2 par, BIC {to_fixed(_e49f('fr-gated', 'delta5 global', 'bic'), 0)})"
+      + (" GATE-OK" if _ok else " GATE-FAIL(exp flat 0.3444 and lower BIC)"))
+if not failed and not _ok:
+    failed = True
+elif not _ok:
+    failed = True
+
+# the ordering the entry rests on, under the INTENDED parameter class
+_h_frozen = _e49f("fr-gated", "eps0 frozen", "held")
+_h_global = _e49f("fr-gated", "delta5 global", "held")
+_h_eps2 = _e49f("fr-gated", "eps2 k/s_bar", "held")
+_h_refit = _e49f("fr-gated", "eps0 refit", "held")
+_b_frozen = _e49f("fr-gated", "eps0 frozen", "signed")
+_ok = (_h_frozen < _h_global and _h_frozen < _h_eps2 and _h_frozen < _h_refit
+       and abs(_b_frozen) < 0.5 and abs(_h_frozen - 4.94) <= 0.02)
+print(f"  P_f,r held-out: frozen eps0 {to_fixed(_h_frozen, 2)} beats global "
+      f"{to_fixed(_h_global, 2)}, eps2 {to_fixed(_h_eps2, 2)}, refit "
+      f"{to_fixed(_h_refit, 2)}; bias {to_fixed(_b_frozen, 2)}"
+      + (" GATE-OK" if _ok else " GATE-FAIL(zero-parameter incumbent must win)"))
+if not _ok:
+    failed = True
+
+# BIC and held-out disagree — the entry says so explicitly, so gate it
+_ok = (_e49f("fr-gated", "eps0 frozen", "bic")
+       > _e49f("fr-gated", "delta5 global", "bic")) and _h_frozen < _h_global
+print("  BIC and held-out disagree on frozen eps0 (worst BIC, best held-out of the cheap forms)"
+      + (" GATE-OK" if _ok else " GATE-FAIL"))
+if not _ok:
+    failed = True
+
+# only the 14-parameter arm leaves [0, 1]
+_out_per = _e49f("fr-gated", "delta5 per rider", "frac_eps_out")
+_out_rest = [_e49f("fr-gated", f, "frac_eps_out")
+             for f in ("eps0 frozen", "eps0 refit", "eps2 k/s_bar", "delta5 global")]
+_ok = _out_per > 0 and all(v == 0 for v in _out_rest)
+print(f"  only the per-rider arm leaves [0,1]: {to_fixed(100 * _out_per, 1)}% vs "
+      f"{', '.join(to_fixed(100 * v, 1) for v in _out_rest)}%"
+      + (" GATE-OK" if _ok else " GATE-FAIL"))
 if not _ok:
     failed = True
 

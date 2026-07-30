@@ -241,6 +241,18 @@ def bic(rows: list[dict], fn, q: tuple, npar: int, arm: str) -> tuple:
     return 2 * n * math.log(2 * b) + 2 * n + npar * math.log(n), b, n
 
 
+def aic_of(bic_val: float, npar: int, n: int) -> float:
+    """AIC from BIC: both are -2logL + penalty, so they differ only in it.
+
+    Added at Danilo's request AFTER the registration, which named BIC. It is
+    reported beside BIC and does NOT drive the registered selection — but where
+    the two disagree, that is stated, because the disagreement is a fact about
+    how much evidence there is, not a detail. At n = 48, ln(n) = 3.87 against
+    AIC's flat 2, so BIC charges nearly twice as much per parameter.
+    """
+    return bic_val - npar * math.log(n) + 2 * npar
+
+
 # --------------------------------------------------------------- ride build
 
 FUNNEL: dict[str, int] = {}
@@ -474,7 +486,7 @@ def run_arm(rows: list[dict], arm: str, title: str,
         qd, _ = fit(dv, fn, npar, bounds, arm, space="deficit") if (npar and dv) else ((), 0.0)
         med_d = med_of([abs(v) for v in residuals(view, fn, qd, arm)]) if dv else float("nan")
         results.append({"name": name, "expr": expr, "npar": npar, "q": q,
-                        "bic": B, "b_hat": b_hat, "med_abs": med_a, "ci_a": ci_a,
+                        "bic": B, "aic": aic_of(B, npar, n), "b_hat": b_hat, "med_abs": med_a, "ci_a": ci_a,
                         "med_sgn": med_s, "ci_s": ci_s,
                         "held": med_of(ho) if ho else float("nan"),
                         "qd": qd, "med_abs_dev": med_d})
@@ -482,18 +494,22 @@ def run_arm(rows: list[dict], arm: str, title: str,
     best = min(r["bic"] for r in results)
     for r in results:
         r["dbic"] = r["bic"] - best
+    best_a = min(r["aic"] for r in results)
+    for r in results:
+        r["daic"] = r["aic"] - best_a
 
     # DeltaBIC < 2 -> the fewest-parameter form takes it
     tied = [r for r in results if r["dbic"] < 2.0]
     champ = min(tied, key=lambda r: (r["npar"], r["dbic"]))
 
     print(f"\n  {'form':<12} {'delta':<20} {'par':>3} {'fitted':<18} "
-          f"{'BIC':>8} {'dBIC':>7} {'med|D%|':>9} {'signed':>9} {'held':>7}")
+          f"{'BIC':>8} {'dBIC':>7} {'AIC':>8} {'dAIC':>7} {'med|D%|':>9} {'signed':>9} {'held':>7}")
     for r in sorted(results, key=lambda r: r["bic"]):
         qs = ", ".join(to_fixed(v, 4) for v in r["q"]) if r["q"] else "-"
         mark = "  <-- champion" if r is champ else ""
         print(f"  {r['name']:<12} {r['expr']:<20} {r['npar']:>3} {qs:<18} "
               f"{to_fixed(r['bic'], 1):>8} {to_fixed(r['dbic'], 1):>7} "
+              f"{to_fixed(r['aic'], 1):>8} {to_fixed(r['daic'], 1):>7} "
               f"{to_fixed(r['med_abs'], 2):>9} {to_fixed(r['med_sgn'], 2):>9} "
               f"{to_fixed(r['held'], 2):>7}{mark}")
     print(f"\n  95% CIs (B = 10^4, mulberry32 seeds 42/43):")
@@ -507,6 +523,15 @@ def run_arm(rows: list[dict], arm: str, title: str,
         qs = ", ".join(to_fixed(v, 4) for v in r["qd"]) if r["qd"] else "-"
         print(f"    {r['name']:<12} params {qs:<20} -> med|D%| {to_fixed(r['med_abs_dev'], 2)}")
 
+    a_tied = [r for r in results if r["daic"] < 2.0]
+    a_champ = min(a_tied, key=lambda r: (r["npar"], r["daic"]))
+    if a_champ["name"] != champ["name"]:
+        print(f"\n  !! AIC DISAGREES: it selects {a_champ['name']} "
+              f"(dAIC {to_fixed(champ['aic'] - a_champ['aic'], 2)} over the BIC champion).\n"
+              f"     BIC is the registered instrument and stands; the disagreement is "
+              f"reported, not resolved.")
+    else:
+        print(f"\n  AIC agrees: {a_champ['name']}")
     print(f"\n  CHAMPION: {champ['name']}  ({champ['expr']}"
           + (f", fitted {', '.join(to_fixed(v, 4) for v in champ['q'])}" if champ["q"] else "")
           + ")")
