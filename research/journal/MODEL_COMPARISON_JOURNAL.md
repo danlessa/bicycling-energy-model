@@ -221,6 +221,87 @@ what the other rows *mean* without producing a per-ride table of their own.
 
 ---
 
+## 2026-07-30 — Entry 52: one protocol, one split — retiring $P_{a,g}$ and selecting the form on held-out rides — pre-registration
+
+**Lineage** — $I$: $(D_3..D_6, P_{f,r})$ · $T$: $\{F_1, F_2, F_3, F_4, F_\mathrm{base}\}$ · $O$: `e52_split.csv` · $S$: the shipped form, its $\varepsilon$, and a test-half error for both
+
+*Prompt (Danilo): "What if we just split D3-D6 corpus on $P_{f,r}$ in training, validation and
+test sets, and we just try forms F1-F4 + $F_\mathrm{base}$ on it? We use training to perform
+parameter selection, validation for model selection, and test for estimating error. And that's it.
+We could get away from a lot of complexity." — and, separately: "we should drop the frozen protocol
+altogether. We don't know what are the riders CdA/Crr, and they're the main drivers of
+uncertainty… $P_{a,g}$ is just generally a bad idea. The only place where assumed values of CdA
+and Crr are of any value is on Corpus 1/2."*
+
+### Pre-registration (written before the split was drawn)
+
+**Why retire $P_{a,g}$.** Entry 50 decomposed the error variance of F1–F4 over
+$(m, C_dA, C_{rr}, \varepsilon)$ and put $\varepsilon$ at ~7%; the remaining ~93% lives in the
+three constants that $P_{a,g}$ *assumes*. A frozen-protocol table therefore does not measure the
+law — it measures how wrong the assumed constants were, with the law's own error underneath.
+That is also the mechanism behind §4.3.3's cancellation: $\varepsilon_d$'s over-refund offsets a
+frozen $C_dA$'s over-prediction, which is why the dynamic estimator looks good under $P_{a,g}$
+(5.90, bias +0.42) and loses by 1.32 pp under $P_{f,r}$ (Entry 51). Two protocols in one paper
+also force every table to carry two arms and every claim to name which one it means. One protocol
+removes the artefact and the bookkeeping together.
+
+$P_{a,g}$ survives **only on D1/D2**, where it is the honest description of the situation: a
+generic assumed rider is all that was ever available there. It is reported as a scope statement —
+*what the law costs with no calibration at all* — not as a headline.
+
+**What the split does and does not make out-of-sample.** The per-ride inversion is a
+**data-preparation** step: it runs before the split, and its output is the dataset. So the split
+holds out rides for **$\varepsilon$ and the form choice**, which are the two things paper 1 ships.
+It does *not* hold out the constants — every ride keeps its own inverted values. The claim the
+design licenses is therefore a statement about structure, and must be worded as one:
+
+> Given a ride's own constants, the functional form and a universal $\varepsilon$ reproduce its
+> energy to $X$% on rides that were used to choose neither.
+
+Prediction from geometry alone, without per-ride constants, is **A2's** ground (SM-2), and A1 must
+not borrow it — `mustNotClaim` in `07-sub-missions.sysml` names this as A1's most likely way to
+fail review.
+
+**What $P_{f,r}$ actually contains** (counted from `e47_formselect.csv`, 2,028 rides, and stated
+because the label overstates it): $C_{rr} = 0.008$ **exactly** on 77% of rides — the prior, not an
+inversion — and $C_dA = 0.400$ **exactly** on 26% — the fallback rail. Both were genuinely
+inverted on only **15%**. Mass is the constant that is really identified per ride, and it is
+near-constant within a rider (D6-user_1's inter-quartile range is 99.9–99.9 kg). So retiring
+$P_{a,g}$ escapes assumed constants **for mass**, and largely *not* for $C_{rr}$ and $C_dA$;
+Entry 50's dominant uncertainty is still present, now behind a label that reads "fitted". This is
+the honest reading and the paper states it rather than letting "per-ride inverted physics" imply
+three fitted constants. Mass is nonetheless the high-value one: $\beta = mg/k_\mathrm{eff}$, so it
+scales the dominant climb term directly.
+
+### Design
+
+- **Split** — within each of the seven riders, chronological index mod 3 → train / validation /
+  test. Deterministic, no RNG, riders balanced across all three (the Entries 44/47/49/51 rule,
+  extended from halves to thirds). ~676 rides per split from 2,028.
+- **Train** — for each form $F_1..F_4$, the $\varepsilon$ (and any additional parameter) minimising
+  median $|\Delta\%|$; the LAD optimum reported beside it, since Entry 47 showed the two can
+  disagree. $F_\mathrm{base}$ has no free parameter and is fitted on nothing.
+- **Validation** — the form is selected here, by median $|\Delta\%|$, **once**. No peeking at test.
+- **Test** — median $|\Delta\%|$ and signed bias with 95% stratified bootstrap CIs (mulberry32,
+  seed 48), for the selected form *and* for every contestant, so the selection can be audited.
+
+### Registered predictions
+
+- **P1** — $F_3$ wins on validation. It won Entry 47's selection and Entry 51's comparison.
+- **P2** — the selected $\varepsilon$ lands in [0.20, 0.26], consistent with Entry 51's 0.228 on a
+  two-way split of the same rides.
+- **P3** — $F_\mathrm{base}$ does **not** win. Entry 51's test half already put it behind the
+  closed form under this parameter class; if it wins, the paper's central simplification claim is
+  in trouble and the entry says so.
+- **P4** — the test-half error of the winner is within 0.5 pp of Entry 51's 4.17, since this is the
+  same data under a finer split.
+
+### Gate
+
+The entry lands only if validation selects the form **before** any test number is computed, and
+the script enforces this by construction — test statistics are unreachable until the validation
+winner is written out.
+
 ## 2026-07-30 — Entry 51: the replacement flat constant — train/test on D3–D6 under $P_{f,r}$ — pre-registration
 
 **Lineage** — $I$: $(D_3..D_6, P_{a,g} \cdot P_{f,r}(m, C_{rr}, C_dA))$ · $T$: $F_3$ with a flat $\varepsilon$ · $O$: `e51_flatconst.csv` · $S$: the value paper 1 would ship, and an honest error for it
