@@ -833,9 +833,31 @@ else:
     # strat_report REQUIRES an expected CI — passing None crashed it on the
     # `abs(lo - expect_ci[0])` comparison. The bands are Entry 43's published
     # stratified brackets.
-    for _lab, _col_, _ea, _eci in (("E43 F3·ε_d pooled", "f3_d", 3.16, (2.9, 3.5)),
-                                   ("E43 simulation pooled", "canon_d", 3.15, (2.9, 3.3))):
+    # Every cell of Table 3's D6 column, not only the two the text quotes: an
+    # ungated cell in a published table is the failure mode this section exists
+    # for. F4's columns are gated at their DEGRADED values on purpose — c = 3 m/km
+    # is not transferable to D6's cleaner chain, and the table says so.
+    for _lab, _col_, _ea, _eci in (("E43 T3/D6 F3·ε_d", "f3_d", 3.16, (2.9, 3.5)),
+                                   ("E43 T3/D6 F4·ε_d", "f4_d", 4.04, (3.8, 4.4)),
+                                   ("E43 T3/D6 F3·ε_f", "f3_f", 8.45, (8.0, 8.8)),
+                                   ("E43 T3/D6 F4·ε_f", "f4_f", 3.58, (3.2, 3.9)),
+                                   ("E43 T3/D6 simulation", "canon_d", 3.15, (2.9, 3.3))):
         strat_report(_lab, [col(s, _col_) for s in _d6str], _ea, _eci)
+    # the fourth deficit gap, now that all four are printed in §3.3.2
+    _v5 = [num(r, "eps_gap") for r in _d6ok if r.get("rider") == "user_5"
+           and is_finite(num(r, "eps_gap"))]
+    _ok = bool(_v5) and abs(median(_v5) - 0.175) <= 0.006
+    print(f"E43 deficit gap user_5: {median(_v5):.3f}"
+          + (" GATE-OK" if _ok else " GATE-FAIL(exp 0.175)"))
+    if not _ok:
+        failed = True
+    # the corpus counts the paper now states in Table 1 and its title
+    _ok = len(_d6ok) == 740
+    print(f"E43 Table 1 count: D6 clean = {len(_d6ok)} (paper states 740; "
+          f"totals 2,025 unique / 2,127 evaluations)"
+          + (" GATE-OK" if _ok else " GATE-FAIL(exp 740)"))
+    if not _ok:
+        failed = True
 # P2: F4's bias sits 3-6 points BELOW F3's, predicted from the corpus noise rate
 _b3 = median(col(_d6ok, "f3_d"))
 _b4 = median(col(_d6ok, "f4_d"))
