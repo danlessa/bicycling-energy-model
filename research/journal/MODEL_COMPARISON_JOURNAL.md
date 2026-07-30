@@ -162,7 +162,7 @@ counted from its CSV rather than asserted, is [`research/data-graph.ttl`](../dat
 
 | entry | $I = (D, P)$ | $T$ | $O$ (rows) | $S$ |
 |--:|---|---|---|---|
-| 50 | $(D_3..D_6, P_{a,g} \cdot P_{f,r})$ | $F_{\mathrm{base}}$ under perturbation of $(m, C_dA, C_{rr}, \lambda)$ | `e50_sensitivity.csv` | does ε earn its density in paper 1? |
+| 50 | $(D_3..D_6, P_{a,g} \cdot P_{f,r})$ | $F_{\mathrm{base}}$ under perturbation of $(m, C_dA, C_{rr}, \lambda)$ | `e50_sensitivity.csv` | does ε earn its density in paper 1? ($S_T > 0.50$ to keep it) |
 | 49 | $(D_3..D_6, P_{a,g} \cdot P_{f,r})$ via $O_{47}$ | $F_3^{\delta_5}$, affine in $\varepsilon_{\mathrm{coast}}$, global and per rider | `e49_affine.csv` — second-order | does the coasting limit need rescaling? |
 | 48 | the published per-ride $O$ of Entries 1/31/9/12/14/16 | TOST, difference of medians, paired bootstrap | `e48_equiv.csv` (one row per comparison) — second-order | parity sentences upgraded or not |
 | 47 | $(D_1 \cup D_2, P_{a,g})$ and $(D_1 \cup D_2, P_{a,g} \cdot P_{f,r})$ | F3 $\times$ {$\varepsilon_0,\varepsilon_2,\varepsilon_3$}, selected by BIC | `e47_formselect.csv` (2,141 rows; contests on 48 and 990) | **$\varepsilon_0$ retained**; nothing published moved |
@@ -276,12 +276,30 @@ reports the decomposition under an alternative parameterisation (±1 SD rather t
 percentile) and the verdict must hold under both, or it is a statement about the ranges rather
 than about the model.
 
-**Decision rule, registered.** $S_T(\varepsilon) < 0.40$ — ε's **total-order index as a share
-of total prediction-error variance**. With four parameters an equal split is 0.25 each, so this
-asks ε to be *more influential than average*, not merely present.
+**Decision rule, registered.** $S_T(\varepsilon) \leq 0.50$ sends the ε research to a letter;
+ε must exceed **half of total prediction-error variance** to keep its place in paper 1.
+(Raised from 0.40 by Danilo before the run.)
 
-- **If ε clears 0.40**: it is a first-class lever, its research earns its place, paper 1 keeps it.
-- **If ε falls below 0.40**: paper 1 keeps the frozen $\varepsilon_0 = 0.13$ as a calibrated
+That is a deliberately demanding bar and its character should be stated rather than discovered
+later. With four parameters an equal split is 0.25 each, so 0.50 asks ε to explain **more than
+$m$, $C_dA$ and $C_{rr}$ combined** — to be the dominant parameter, not merely an important
+one. The stance it encodes is defensible and worth naming: density in a paper about *prediction*
+is reserved for effects that dominate prediction.
+
+**But it changes what this entry is.** At 0.40 the threshold was doing discriminating work; at
+0.50, given Entry 45's 0.17 pp margin and Entry 49's unidentified form, the outcome is close to
+foreseeable and the decision is largely already made. The entry's value therefore shifts from
+*deciding* to (i) quantifying **by how much** ε falls short, which is the number the letter will
+need to justify its own existence, and (ii) the second-order structure, which nobody has
+measured and which no prior entry predicts. Recording this so the entry is not later read as a
+test that discriminated when it mostly confirmed.
+
+It also raises the stakes on P3: if ε and $C_dA$ cannot be separated, ε's "share" is ill-defined
+and **no threshold can be applied cleanly in either direction** — which would be a more
+interesting result than either verdict.
+
+- **If ε exceeds 0.50**: it is the dominant lever, its research earns its place, paper 1 keeps it.
+- **If ε falls at or below 0.50**: paper 1 keeps the frozen $\varepsilon_0 = 0.13$ as a calibrated
   constant with a forward reference, and the *forms contest and the deficit derivation* move to
   a letter. Note the surgical line: the closed form still needs an ε to be computed at all, so
   what moves is the theory, not the parameter.
@@ -298,7 +316,7 @@ increasingly favours, then the coasting-limit apparatus has no *predictive* clai
 
 - **P1**: $C_dA$ dominates, and largely because its empirical range is widest — testable, since
   the ±1 SD parameterisation should shrink its share more than the others'.
-- **P2**: $S_T(\varepsilon) < 0.40$, so the decision rule fires toward the letter. Stated with a
+- **P2**: $S_T(\varepsilon) \leq 0.50$, so the decision rule fires toward the letter. Stated with a
   declared bias: three entries already point this way (Entry 45's 0.17 pp margin, Entry 46's
   finding that the ε choice and the parameter class trade against each other, Entry 49's
   unidentified affine form), and Danilo holds this hypothesis. **That makes the refuting outcome
