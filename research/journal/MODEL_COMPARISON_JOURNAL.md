@@ -540,10 +540,38 @@ parameter space, ε accounts for **7% of prediction-error variance**, against 55
 46% for mass. A theory of ε is a theory of the seventh part of the error — which is a fine thing
 to write, and not a thing paper 1 should be organised around.
 
-**What the entry also found, which paper 1 may want.** The flat term's two components are far
-more entangled with each other ($C_dA \times C_{rr} = 0.346$ at measured precision) than either
-is with ε. The paper currently describes an $(\alpha, \varepsilon)$ pairing; the stronger pairing
-in the data is inside $\alpha$ itself.
+**What the entry also found, which paper 1 may want: the split inside $\alpha$ is not identified.**
+
+The largest interaction at measured precision is $C_dA \times C_{rr} = 0.346$ — larger than any
+involving ε. Two mechanisms produce it. The components are **additive substitutes**: raise
+$C_{rr}$, lower $C_dA$, and the flat cost is unchanged, so only their sum is constrained. And
+$v_f$ **closes the loop**: it is solved from $P_{\mathrm{flat}} = (\alpha_r + \alpha_a(v_f))v_f$,
+so raising $C_{rr}$ lowers $v_f$, which lowers $\alpha_a$ — they partially cancel through the
+speed anchor.
+
+That predicts the sum should be far better determined than its parts, and it is. Within-rider
+coefficients of variation over the rides where both constants were genuinely inverted:
+
+| | $C_dA$ | $C_{rr}$ | $\alpha_r$ | $\alpha_a$ | $\alpha$ |
+|---|--:|--:|--:|--:|--:|
+| median CV | 0.451 | 0.360 | 0.370 | 0.330 | **0.154** |
+
+$\alpha$ is determined **2.9× better than $C_dA$ and 2.3× better than $C_{rr}$**. The route-level
+energy identifies the flat resistance, not its division into rolling and aero.
+
+Three consequences. **(i)** §3.5.1 reports per-ride $\hat C_dA$ spanning 0.26–0.39 as though it
+were a measurement of drag; it is 2.9× noisier than the quantity actually identified, and the
+paper already makes exactly this kind of statement for ε ("the $(\alpha, \varepsilon)$ pair is
+what is identified") without making it one level down. **(ii)** A deployment caution with the
+same shape as [§4.3.3](#4.3.3)'s: a reader who improves their $C_dA$ estimate *alone*, leaving
+$C_{rr}$ at the prior, moves along the ridge rather than toward the truth and can get a worse
+answer — improving one input of an unidentified pair is not an improvement. **(iii)** It explains
+the inversion's apparent noise: $C_{rr}$'s ±48% is not a defect of the method but a consequence
+of $C_{rr}$ not being separately identifiable from route-level energy.
+
+And it reinforces the ε verdict from the other side. ε is *separable* — its interactions are
+small — so removing it from paper 1 disturbs nothing else. The α components are not separable,
+so what paper 1 should tighten is how it reports **them**.
 
 ---
 
