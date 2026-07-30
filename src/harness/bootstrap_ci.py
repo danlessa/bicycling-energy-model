@@ -960,6 +960,16 @@ else:
           + (" GATE-OK" if _ok else " GATE-FAIL(exp 0.055/0.067/344)"))
     if not _ok:
         failed = True
+    # The RANGE the contest covers, not just its result. 3.2.1 now claims eps_2
+    # beats eps_0 "in that regime and not gentler terrain"; this gate fails if a
+    # rerun ever admits a ride below 3%, which would silently widen the claim.
+    _sb = sorted(num(r, "s_bar") for r in e45 if is_finite(num(r, "s_bar")))
+    _ok = bool(_sb) and _sb[0] >= 0.0299 and 0.09 <= _sb[-1] <= 0.10
+    print(f"E45 tested range: s̄ = {100*_sb[0]:.2f}%–{100*_sb[-1]:.2f}%, "
+          f"{sum(1 for x in _sb if x < 0.03)} rides below 3%"
+          + (" GATE-OK" if _ok else " GATE-FAIL(exp 3.00-9.69%, none below 3%)"))
+    if not _ok:
+        failed = True
     # the scope figure the article leans on: half the rides fall BELOW the 3% regime
     # The article's scope figure is about the evaluation behind TABLE 3, i.e.
     # D2-D5 (1,366 rides), NOT all nine corpora scored in Entry 45 (2,155, which
