@@ -319,18 +319,30 @@ on this paper, else, it is a future direction of research."**
 
 - **If ε exceeds 0.50**: it is the dominant lever and the deficit work stays in paper 1.
 - **If ε falls at or below 0.50**: it becomes a **future direction of research** — not a
-  commitment to write a letter, and not a judgement that the work is wrong. Paper 1 keeps the
-  frozen $\varepsilon_0 = 0.13$ as a calibrated constant, and the *forms contest and the deficit
-  derivation* leave it. The surgical line matters: the closed form still needs an ε to be
-  computed at all, so what leaves is the theory, not the parameter.
+  commitment to write a letter, and not a judgement that the work is wrong. Paper 1 then ships
+  **a flat constant ε** (Danilo, before the run — *"my idea was actually to just use the flat
+  constant. At most we'll cite some of our developments during discussion"*). That is a deeper
+  cut than keeping the frozen $\varepsilon_0$: the coasting limit, the deficit, the dynamic
+  estimator and the four-form contest all leave paper 1 together, surviving as a citation in the
+  discussion. What remains is one number.
+
+  **Which raises a question the fallback does not answer for free: WHICH flat constant?**
+  $\varepsilon_f = 0.20$ was selected on D2 — urban stop-go, and in-sample there. Entry 49
+  measured the best flat ε on *real descents* under exactly this entry's parameter class
+  ($P_{f,r}$) at **0.344 [0.292, 0.394]**, an interval that **excludes 0.20**. So the fallback
+  inherits a calibration decision of its own, and the honest reading is that $\varepsilon_f$ is
+  regime-specific rather than universal. This entry should report the best flat constant per
+  corpus alongside the sensitivity result, since the fallback branch needs it.
 
 *(This supersedes the prompt's original phrasing, "be content with $F_{\mathrm{base}}$ on the
 article". That phrase is ambiguous in this project's notation — $F_{\mathrm{base}}$ is the
 forward simulation, while the sense intended was closer to "the incumbent form, unrefined". The
 later wording carries no such ambiguity and is the operative one.)*
 
-**A second question that may settle it more directly.** Under $P_{f,r}$, does the dynamic
-$\varepsilon_d$ beat a flat $\varepsilon_f$ **at all**? §3.3.2 already reports P. Paz's 34%
+**The question that now settles it most directly — promoted to primary.** With a flat constant
+as the fallback, the operative comparison is no longer "does ε matter" but **"does the
+*geometry-derived* ε beat a flat number by enough to justify its density?"** Under $P_{f,r}$,
+does the dynamic $\varepsilon_d$ beat a flat $\varepsilon_f$ **at all**? §3.3.2 already reports P. Paz's 34%
 descent-term margin collapsing to a tie under his fitted constants, and Entry 46 found
 $\varepsilon_f$ winning outright below 3% under honest physics (3.37 against 5.90). If the
 dynamic estimator's advantage over a constant is ≈ 0 under the parameter class the article
