@@ -162,6 +162,7 @@ counted from its CSV rather than asserted, is [`research/data-graph.ttl`](../dat
 
 | entry | $I = (D, P)$ | $T$ | $O$ (rows) | $S$ |
 |--:|---|---|---|---|
+| 51 | $(D_3..D_6, P_{a,g} \cdot P_{f,r})$ | $F_3$ with a flat ε, train/test | `e51_flatconst.csv` | the value paper 1 would ship, and its honest error |
 | 50 | $(D_3..D_6, P_{a,g} \cdot P_{f,r})$ | $F_{\mathrm{base}}$ under perturbation of $(m, C_dA, C_{rr}, \lambda)$ | `e50_sensitivity.csv` | does ε earn its density in paper 1? ($S_T > 0.50$ to keep it) |
 | 49 | $(D_3..D_6, P_{a,g} \cdot P_{f,r})$ via $O_{47}$ | $F_3^{\delta_5}$, affine in $\varepsilon_{\mathrm{coast}}$, global and per rider | `e49_affine.csv` — second-order | does the coasting limit need rescaling? |
 | 48 | the published per-ride $O$ of Entries 1/31/9/12/14/16 | TOST, difference of medians, paired bootstrap | `e48_equiv.csv` (one row per comparison) — second-order | parity sentences upgraded or not |
@@ -217,6 +218,63 @@ Entries with no $O$ are reviews, registrations, imported notes or refactors — 
 what the other rows *mean* without producing a per-ride table of their own.
 
 ---
+
+---
+
+## 2026-07-30 — Entry 51: the replacement flat constant — train/test on D3–D6 under $P_{f,r}$ — pre-registration
+
+**Lineage** — $I$: $(D_3..D_6, P_{a,g} \cdot P_{f,r}(m, C_{rr}, C_dA))$ · $T$: $F_3$ with a flat $\varepsilon$ · $O$: `e51_flatconst.csv` · $S$: the value paper 1 would ship, and an honest error for it
+
+*Prompt (Danilo): "Finding the new flat constant should be a new journal entry. My suggestion is
+that we simply do a training-test split over the D3-D6 under $P_{f,r}$, use training for finding
+the value, and test for estimating the error."*
+
+### Pre-registration (written before the split was drawn)
+
+**Why it is needed.** If Entry 50 sends the deficit to future research, paper 1 ships a flat
+$\varepsilon$ — and the incumbent value is not obviously the right one. $\varepsilon_f = 0.20$ was
+selected on **D2**: urban stop-go, generic assumed rider, and in-sample there. Entry 49 measured
+the best flat $\varepsilon$ on **real descents** under exactly this parameter class at
+**0.344 [0.292, 0.394]**, an interval that excludes 0.20. Shipping 0.20 onto open-road corpora
+because it was calibrated on urban ones would repeat, in the fallback, the scope error the paper
+spends §3.2.2 warning about.
+
+**Design.** A single split, drawn once and not re-drawn:
+
+- **Train / test**: chronological odd/even within each of the seven riders, as Entries 44, 47 and
+  49 use — so the split is deterministic, needs no RNG, and balances riders by construction.
+- **Fit on train**: the flat $\varepsilon$ minimising the median absolute $\Delta\%$ of
+  $F_3$. Reported alongside the LAD (sum of absolute) optimum, since the project's published
+  statistic is a median while its fitting convention is LAD, and Entry 47 showed those can
+  disagree.
+- **Estimate on test**: median $\lvert\Delta\%\rvert$ and signed bias with 95% bootstrap CIs
+  (mulberry32, seed 47 — 42/43 published, 44 TOST, 45 Entry 49, 46 Entry 50), stratified within
+  rider.
+- **Report per corpus as well as pooled**, because the whole point is whether one number
+  travels.
+
+**Comparators, all scored on the same test half.** The fitted constant against: the incumbent
+$\varepsilon_f = 0.20$; the frozen $\varepsilon_0 = 0.13$ used dynamically ($\varepsilon_d$);
+Entry 49's 0.344; and $\varepsilon = 0$, which prices the descent term's existence.
+
+**Predictions.**
+
+- **P1**: the fitted constant lands near Entry 49's 0.344 and well above 0.20. If so, 0.20 is a
+  D2 artefact and paper 1 should not ship it for open-road use.
+- **P2**: the *per-corpus* optima disagree materially — a constant fitted on D3 is not the one
+  D4 wants. If they disagree by more than the test-half CI, then "one flat constant" is itself a
+  compromise and the paper must say which regime it is for.
+- **P3**: test error under the fitted flat constant is close to the dynamic estimator's on the
+  same half. This is the number that makes or breaks the fallback: if the flat constant costs
+  much accuracy, Entry 50's verdict is cheap to state and expensive to act on.
+
+*Failure modes.* If the train and test optima differ by more than the test CI, the constant is
+not identified at this sample size and the entry reports that rather than a number. If P3 comes
+back badly — the flat constant materially worse than $\varepsilon_d$ — then the fallback has a
+price, and that price belongs in paper 1's discussion whatever Entry 50 concludes.
+
+**Not registered.** Any change to the deployed router. The per-edge question is A3's
+(Entry 50's note), and a route-level constant does not settle an edge-level cost.
 
 ---
 
@@ -331,8 +389,10 @@ on this paper, else, it is a future direction of research."**
   measured the best flat ε on *real descents* under exactly this entry's parameter class
   ($P_{f,r}$) at **0.344 [0.292, 0.394]**, an interval that **excludes 0.20**. So the fallback
   inherits a calibration decision of its own, and the honest reading is that $\varepsilon_f$ is
-  regime-specific rather than universal. This entry should report the best flat constant per
-  corpus alongside the sensitivity result, since the fallback branch needs it.
+  regime-specific rather than universal. **Finding the replacement value is Entry 51's job, not
+  this one's** (Danilo): a training/test split over D3–D6 under $P_{f,r}$, the value fitted on
+  train and its error estimated on test. This entry decides only whether the geometry earns its
+  density; the constant that replaces it is a separate, and separately falsifiable, question.
 
   **And it reaches further downstream than paper 1.** Danilo: *"flat constant is all we need for
   Article 2 and Article 3 after all."* For A2 that is simply true — the DEM paper measures what
