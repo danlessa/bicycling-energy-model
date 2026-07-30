@@ -16,7 +16,7 @@ resolve their inputs and this directory relative to their own location).
 | `jaam_comparison.csv` | `python3 src/harness/jaam_compare.py` | 14 |
 | `param_sweep.csv` / `param_sweep_canon.csv` | `python3 src/harness/param_sweep.py` (`SWEEP_CANON=1` for the latter) | 29–30 |
 | `longoes_frozen.csv` | `python3 src/harness/longoes_frozen.py` | 31 |
-| `perride_invert.csv` | `python3 src/harness/perride_invert.py` (`INVERT_SMOKE=1`, `INVERT_NOFETCH=1`) | 33 |
+| `perride_invert.csv` | `python3 src/harness/perride_invert.py` (`INVERT_NOFETCH=1`; `INVERT_SMOKE=1` writes `perride_invert.SMOKE.csv` — before Entry 47 it overwrote the canonical file) | 33 |
 | `scurve_deficit.csv` | `python3 src/harness/scurve_deficit.py` (`SCURVE_SMOKE=1`) | 34 |
 | `e35_residual.csv` | `python3 src/harness/e35_residual.py` (`E35_SMOKE=1`) | 35 |
 | `e36_eps0.csv` | `python3 src/harness/e36_eps0.py` (`E36_SMOKE=1`) | 36 |
@@ -44,6 +44,7 @@ resolve their inputs and this directory relative to their own location).
 | `e44_scurve_cells.csv`, `e44_scurve_fits.csv` | `python3 src/harness/e44_scurve.py` | 44 (S-curve reopened; occupancy sigmoids) |
 | `e45_ridelevel.ledger.csv`, `e45_ridelevel.paper.csv` | `E45_TARGET={ledger,paper} python3 src/harness/e45_ridelevel.py` | 45 (ride-level form contest) |
 | `e45_flatseg.csv` | `python3 src/harness/e45_flatseg.py` | 45 amendment (flat-terrain probe) |
+| `e47_formselect.csv` | `python3 src/harness/e47_formselect.py` (`E47_SMOKE=1`) | 47 (deficit-form selection; D1∪D2 calibration + the D3–D6 in-sample arm) |
 
 `python3 src/harness/bootstrap_ci.py` (Entry 22) reads these CSVs and gates the
 article's published medians against them.

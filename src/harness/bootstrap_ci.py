@@ -1060,6 +1060,148 @@ print(f"PAIRED T1b vs T0: {_tw}/{_tw + _tl}, p={to_fixed(_tp, 4)}"
 if not _ok:
     failed = True
 
+# ---------------------------------------------------------------- 3l. Entry 47
+# Deficit-form selection. The contest is RE-DERIVED here from the per-ride CSV
+# rather than compared against transcribed numbers: the gate refits all four
+# forms and re-applies the DeltaBIC < 2 -> fewest-parameters rule, so a change in
+# the fitting code fails the gate instead of quietly moving the champion.
+# Populations are counted, never asserted.
+#
+# Each ride is packed ONCE into a numeric tuple; re-parsing CSV strings inside a
+# 15M-iteration fit loop made this section slower than the whole rest of the
+# battery. The 2-parameter form is fitted on a coarser grid than the harness
+# uses -- that can only OVERstate its BIC, never promote it, and it trails the
+# champion by >= 4.2 in every arm.
+print("\n== Deficit-form selection (Entry 47, journal only — nothing published moves) ==")
+
+_e47 = parse_csv("e47_formselect.csv")
+
+
+def _e47f(r: dict, k: str) -> float:
+    try:
+        return float(r[k])
+    except (KeyError, ValueError):
+        return float("nan")
+
+
+def _e47_pack(arm: str, calib: bool) -> list[tuple]:
+    """(eps_coast, E0, E1, emp, s_bar, phi, dmeas) per surviving ride."""
+    out = []
+    for r in _e47:
+        if (r["group"] in ("D1", "D2")) != calib:
+            continue
+        sb = _e47f(r, arm + "_sbar_cells")
+        e0 = _e47f(r, arm + "_E0")
+        if not (is_finite(sb) and sb >= 0.03 and is_finite(e0)):
+            continue
+        out.append((_e47f(r, arm + "_eps_coast"), e0, _e47f(r, arm + "_E1"),
+                    _e47f(r, "emp"), _e47f(r, arm + "_s_bar"),
+                    _e47f(r, arm + "_phi"), _e47f(r, arm + "_dmeas")))
+    return out
+
+
+# form id -> (name, npar, bounds, delta(row, q))
+_E47_FORMS = [
+    ("eps0_frozen", 0, [], lambda t, q: 0.13),
+    ("eps0_fit",    1, [(0.0, 0.60)], lambda t, q: q[0]),
+    ("eps2",        1, [(0.0, 0.05)], lambda t, q: q[0] / t[4]),
+    ("eps3",        2, [(-0.30, 0.60), (-1.0, 1.0)], lambda t, q: q[0] + q[1] * t[5]),
+]
+
+
+def _e47_sad(pk, fn, q, space="energy") -> float:
+    tot = 0.0
+    for t in pk:
+        if space == "deficit":
+            if not is_finite(t[6]):
+                continue
+            tot += abs(t[6] - fn(t, q))
+        else:
+            eps = t[0] - fn(t, q)
+            tot += abs(100.0 * ((t[1] + (t[2] - t[1]) * eps) / 1000 - t[3]) / t[3])
+    return tot
+
+
+def _e47_fit(pk, fn, npar, bounds, space="energy"):
+    if npar == 0:
+        return ()
+    lo = [b[0] for b in bounds]
+    hi = [b[1] for b in bounds]
+    ng, passes = (240, 4) if npar == 1 else (40, 3)
+    bq, bv = None, float("inf")
+    for _ in range(passes):
+        st = [(hi[i] - lo[i]) / ng for i in range(npar)]
+        cand = ([(lo[0] + i * st[0],) for i in range(ng + 1)] if npar == 1 else
+                [(lo[0] + i * st[0], lo[1] + j * st[1])
+                 for i in range(ng + 1) for j in range(ng + 1)])
+        for q in cand:
+            v = _e47_sad(pk, fn, q, space)
+            if v < bv - 1e-12:
+                bq, bv = q, v
+        lo = [max(bounds[i][0], bq[i] - st[i]) for i in range(npar)]
+        hi = [min(bounds[i][1], bq[i] + st[i]) for i in range(npar)]
+    return bq
+
+
+def _e47_contest(pk) -> tuple[str, dict]:
+    res = {}
+    n = len(pk)
+    for name, npar, bounds, fn in _E47_FORMS:
+        q = _e47_fit(pk, fn, npar, bounds)
+        rs = []
+        for t in pk:
+            eps = t[0] - fn(t, q)
+            rs.append(100.0 * ((t[1] + (t[2] - t[1]) * eps) / 1000 - t[3]) / t[3])
+        b = sum(abs(v) for v in rs) / n
+        res[name] = {"q": q, "npar": npar, "med": median([abs(v) for v in rs]),
+                     "bic": 2 * n * math.log(2 * b) + 2 * n + npar * math.log(n)}
+    lo = min(v["bic"] for v in res.values())
+    tied = [(k, v) for k, v in res.items() if v["bic"] - lo < 2.0]
+    return min(tied, key=lambda kv: (kv[1]["npar"], kv[1]["bic"] - lo))[0], res
+
+
+_e47_exp = {
+    (True,  "ag"): (48, "eps0_frozen", 9.17),
+    (True,  "fr"): (48, "eps0_frozen", 6.72),
+    (False, "ag"): (990, "eps2", 4.21),
+    (False, "fr"): (990, "eps2", 4.94),
+}
+for (_calib, _arm), (_en, _ech, _emed) in _e47_exp.items():
+    _pk = _e47_pack(_arm, _calib)
+    _ch, _res = _e47_contest(_pk)
+    _med = _res["eps0_frozen"]["med"]
+    _ok = len(_pk) == _en and _ch == _ech and abs(_med - _emed) <= 0.02
+    _tag = ("calibration D1uD2" if _calib else "in-sample D3-D6") + f" · {_arm}"
+    print(f"  {_tag:<28} |O|={len(_pk):>4} champion {_ch:<12} "
+          f"eps0 med {to_fixed(_med, 2)}"
+          + (" GATE-OK" if _ok else f" GATE-FAIL(exp n={_en} {_ech} {_emed})"))
+    if not _ok:
+        failed = True
+
+# The population must equal Entry 45's, ride for ride, or sigma has drifted.
+_n_all = len(_e47_pack("ag", True)) + len(_e47_pack("ag", False))
+_ok = _n_all == 1038
+print(f"  population vs Entry 45: {_n_all}"
+      + (" GATE-OK" if _ok else " GATE-FAIL(exp 1038)"))
+if not _ok:
+    failed = True
+
+# The finding that matters most: fitting delta on ENERGY does not recover the
+# published constants; fitting it on the DEFICIT does. If this stops holding,
+# section 1.3.2's physical reading of delta needs revisiting.
+_pk = _e47_pack("ag", False)
+_c_dev = _e47_fit(_pk, lambda t, q: q[0], 1, [(0.0, 0.60)], "deficit")[0]
+_k_dev = _e47_fit(_pk, lambda t, q: q[0] / t[4], 1, [(0.0, 0.05)], "deficit")[0]
+_c_en = _e47_fit(_pk, lambda t, q: q[0], 1, [(0.0, 0.60)])[0]
+_ok = (abs(_c_dev - 0.1339) <= 0.002 and abs(_k_dev - 0.0052) <= 0.0002
+       and _c_en < 0.5 * _c_dev)
+print(f"  deficit-space refit: c={to_fixed(_c_dev, 4)} (pub 0.13) "
+      f"k={to_fixed(_k_dev, 4)} (pub 0.0051); energy-space c={to_fixed(_c_en, 4)}"
+      + (" GATE-OK" if _ok else " GATE-FAIL(exp 0.1339/0.0052, energy < half)"))
+if not _ok:
+    failed = True
+
+
 if failed:
     print("\nONE OR MORE GATES FAILED", file=sys.stderr)
     sys.exit(1)

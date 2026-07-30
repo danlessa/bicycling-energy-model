@@ -365,32 +365,21 @@ def spread_pick(segs: list[dict], k: int) -> tuple[list[dict], list[dict]]:
 
 # ---------------------------------------------------------------- per-ride
 
-def run_ride(pts: list[dict], label: str, corpus: str, date: str | None,
-             fit_path: str | None, m_fallback: float | None = None) -> dict | None:
-    emp = empirical_kj(pts)
-    if not is_finite(emp) or emp <= 0:
-        return None
-    phys = build_profile([q["x"] for q in pts], [q["alt"] for q in pts])
-    prof = resample_profile(phys, ENGINE_DX)
-    if prof["x"][-1] - prof["x"][0] < 3000:
-        return None
-    profS = {"x": prof["x"], "h": deadband(prof["h"], TAU_SMOOTH)}
+def invert_physics(prof: dict, wb_climbs: list[dict], wb_flats: list[dict],
+                   corpus: str, m_fallback: float | None) -> dict | None:
+    """Steps 4-6 of the per-ride inversion: mass from sustained climbs, then Crr
+    from the climbs mass did NOT consume, then CdA from the flats.
 
-    try:
-        geo = geo_summary(fit_path) if fit_path else None
-    except Exception:
-        geo = None
-    wind, wind_src = headwind_ms(geo, date)
-
-    climbs_raw, flats_raw = find_segments(prof)
-    climbs = [s for s in (seg_integrals(pts, c, wind) for c in climbs_raw) if s]
-    flats = [s for s in (seg_integrals(pts, f, wind) for f in flats_raw) if s]
-    wb_climbs = [s for s in climbs if s["ok"]]
-    wb_flats = [s for s in flats if s["ok"]]
-
+    Extracted from run_ride (Entry 47) so other entries reuse this code rather
+    than copy it; run_ride's behaviour is unchanged. The order matters — each
+    step consumes the previous estimate, so Crr is only trusted when mass was
+    actually inverted, and the mass never comes from a frozen literal (the
+    Entry-27 lesson: m*g is the identified product, so a hardcoded mass silently
+    breaks when G moves).
+    """
     # step 4 — mass
     m_src = "fallback"
-    m_hat = m_fallback if m_fallback is not None else ANCHOR_M[corpus]
+    m_hat = m_fallback if m_fallback is not None else ANCHOR_M.get(corpus)
     crr_pool: list[dict] = wb_climbs
     if wb_climbs:
         k = min(len(wb_climbs), max(2, math.ceil(len(wb_climbs) / 3)))
@@ -426,6 +415,40 @@ def run_ride(pts: list[dict], label: str, corpus: str, date: str | None,
         if est:
             cda_hat = sum(c * w for c, w in est) / sum(w for _, w in est)
             cda_src = "inverted"
+
+    return {"m_hat": m_hat, "m_src": m_src, "crr_hat": crr_hat,
+            "crr_src": crr_src, "cda_hat": cda_hat, "cda_src": cda_src}
+
+
+def run_ride(pts: list[dict], label: str, corpus: str, date: str | None,
+             fit_path: str | None, m_fallback: float | None = None) -> dict | None:
+    emp = empirical_kj(pts)
+    if not is_finite(emp) or emp <= 0:
+        return None
+    phys = build_profile([q["x"] for q in pts], [q["alt"] for q in pts])
+    prof = resample_profile(phys, ENGINE_DX)
+    if prof["x"][-1] - prof["x"][0] < 3000:
+        return None
+    profS = {"x": prof["x"], "h": deadband(prof["h"], TAU_SMOOTH)}
+
+    try:
+        geo = geo_summary(fit_path) if fit_path else None
+    except Exception:
+        geo = None
+    wind, wind_src = headwind_ms(geo, date)
+
+    climbs_raw, flats_raw = find_segments(prof)
+    climbs = [s for s in (seg_integrals(pts, c, wind) for c in climbs_raw) if s]
+    flats = [s for s in (seg_integrals(pts, f, wind) for f in flats_raw) if s]
+    wb_climbs = [s for s in climbs if s["ok"]]
+    wb_flats = [s for s in flats if s["ok"]]
+
+    inv = invert_physics(prof, wb_climbs, wb_flats, corpus, m_fallback)
+    if inv is None:
+        return None
+    m_hat, m_src = inv["m_hat"], inv["m_src"]
+    crr_hat, crr_src = inv["crr_hat"], inv["crr_src"]
+    cda_hat, cda_src = inv["cda_hat"], inv["cda_src"]
 
     # scoring — the Table-3 grid under the inverted physics
     p = {"m": m_hat, "Crr": crr_hat, "CdA": cda_hat, "rho": RHO, "keff": KEFF,
@@ -558,13 +581,14 @@ def main() -> None:
 
     json.dump(_geo_cache, open(_GEO_CACHE_PATH, "w"))
     cols = list(all_rows[0].keys())
-    out = os.path.join(RESULTS, "perride_invert.csv")
+    name = "perride_invert.SMOKE.csv" if SMOKE else "perride_invert.csv"
+    out = os.path.join(RESULTS, name)
     with open(out, "w", encoding="utf-8") as fh:
         fh.write(",".join(cols) + "\n")
         for r in all_rows:
             fh.write(",".join((f'"{v}"' if isinstance(v, str) else to_fixed(v, 4))
                               for v in (r[k] for k in cols)) + "\n")
-    print(f"\nwrote perride_invert.csv ({len(all_rows)} rides)")
+    print(f"\nwrote {name} ({len(all_rows)} rides)")
 
 
 if __name__ == "__main__":

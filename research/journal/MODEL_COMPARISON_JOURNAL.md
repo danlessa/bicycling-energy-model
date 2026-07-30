@@ -142,7 +142,82 @@ changed. See Entry 11.)*
 
 ---
 
-## 2026-07-30 — Entry 47: which deficit form? — pre-registration of the two selections, in I/F/O/T
+## Data traceability
+
+Every entry's data operations in the **I/T/O/S** notation, one row each. An input
+$I = (D, P)$ crosses a corpus with a parameter class ($P_{a,g}$ assumed-global,
+$P_{a,r}$ assumed-per-ride, $P_{f,r}$ fitted-per-ride, $P_{f,p}$ fitted-per-person;
+overrides joined by $\cdot$). A transformer $T$ is a model or an estimator — $T$ is the
+class, the named forms F1–F4 and $F_\mathrm{base}$ (the forward simulation) are its
+instances. An output $O = T(I)\,|\,\sigma$ is **per ride**, and its count is the rows its
+CSV actually holds, which is *not* the corpus size: $\sigma$ intervenes, sometimes cutting
+(48 of 113 on Entry 47) and sometimes widening (69 rows for D2's 62 clean rides, because
+flagged rides are kept with their results). A statistic $S(O)$ is what gets published.
+
+**The counts below are the population to reason about — never the corpus size.** Reading a
+$\lvert D \rvert$ where the claim needs an $\lvert O \rvert$ is the error this table
+exists to prevent; it produced a published 52% that should have been 69%, and the gate
+written for it inherited the same wrong denominator. The full graph, with each cardinality
+counted from its CSV rather than asserted, is [`research/data-graph.ttl`](../data-graph.ttl).
+
+| entry | $I = (D, P)$ | $T$ | $O$ (rows) | $S$ |
+|--:|---|---|---|---|
+| 47 | $(D_1 \cup D_2, P_{a,g})$ and $(D_1 \cup D_2, P_{a,g} \cdot P_{f,r})$ | F3 $\times$ {$\varepsilon_0,\varepsilon_2,\varepsilon_3$}, selected by BIC | `e47_formselect.csv` (2,141 rows; contests on 48 and 990) | **$\varepsilon_0$ retained**; nothing published moved |
+| 46 | $(D_1..D_6, P_{a,g})$ | regime switch | not yet built | registration only |
+| 45 | $(D_1..D_6, P_{a,g})$ | ride-level deficit contest | `e45_ridelevel.csv` (1,039), `e45_ridelevel.paper.csv` (1,038), `e45_flatseg.csv` (396 segments) | **eq. (8)**, $k$ = 0.0051 |
+| 44 | $(D_1..D_6, P_{f,r})$ | occupancy sigmoid, split-half | `e44_scurve_cells.csv` (153 cells), `e44_scurve_fits.csv` (9 rider-halves) | $s_{50}$ separates the populations |
+| 43 | $(D_6, P_{a,g} \cdot P_{f,p}(m))$ | F1–F4, $F_\mathrm{base}$; inversion; occupancy | `skc_comparison.csv` (743), `skc_invert.csv` (743), `skc_descent_occupancy.csv` (2,193), `skc_eps_vs_pedal.csv` (1,038) | **Table 1, Table 3, Tables 5–6**; 3.16 vs 3.15 |
+| 42 | $(D_1..D_5, P_{f,r})$ | F3, lumped $\varepsilon_d$ | `e42_lump.csv` (1,378) | the hand recipe stops recommending it |
+| 41 | $(D_1..D_5 \text{ routes}, \mathrm{DEM})$ | F3 on planner profiles | `e41_dem_route.csv` (1,188) | **paper 2's headline** |
+| 40 | $(D_1..D_5, P_{f,r})$ | roller covariate | `e40_roller.csv` (1,409) | roller recycling |
+| 39 | $(D_1..D_5, P_{f,r})$ | deconfounded $\tau$-sweep | `e39_tau_reg.csv` (1,409) | momentum vs measurement |
+| 38 | $(D_1..D_5, P_{f,r})$ | deadband $\tau$-sweep | `e38_tau.csv` (1,409) | $\tau^*$ vs $v_f^2/2g$ |
+| 37 | — | hypothesis note | no run | KE-equivalent height |
+| 36 | $(D_1..D_5, P_{f,r})$ | $\varepsilon_0$ regressed per dataset | `e36_eps0.csv` (1,400) | 0.13 survives two regressions |
+| 35 | $(D_1..D_5, P_{f,r})$ | F3 vs $F_\mathrm{base}$ residual | `e35_residual.csv` (1,409) | where the missing 4–5 points live |
+| 34 | $(D_1..D_5, P_{f,r})$ | occupancy sigmoid | `scurve_deficit.csv` (1,287) | $\varepsilon_0$ as a pedalling probability |
+| 33 | $(D_1..D_5, P_{a,g} \cdot P_{f,r}(m, C_{rr}, C_dA))$ | inversion + F1–F4 | `perride_invert.csv` (1,409) | **Tables 5 and 6** |
+| 32 | — | review | no new $O$ | the un-gated numbers were where the rot was |
+| 31 | $(D_1, P_{a,g})$ | F1–F4, $F_\mathrm{base}$ | `longoes_frozen.csv` (44) | **Table 2's blind block**; the D2∩D5 discovery |
+| 30 | $(D_2..D_5, P_{a,g} \times \mathrm{grid})$ | $F_\mathrm{base}$ under the same sweep | `param_sweep_canon.csv` (48) | Tier B |
+| 29 | $(D_2..D_5, P_{a,g} \times \mathrm{grid})$ | F3, $C_dA \times C_{rr} \times \rho$ | `param_sweep.csv` (432 corpus×combination) | the sensitivity envelope |
+| 28 | — | package refactor | no $O$ | one implementation for all harnesses |
+| 27 | — | $G$ = 9.7864 re-baseline | every $O$ regenerated | ≤ 0.2 pp; **$\hat m \cdot g$ is the invariant** |
+| 26 | $(\mathrm{OSM} + \mathrm{DEM}, P_{a,g})$ | v2Edge on real endpoints | `e26_grid.csv` (86), `e26_portal_profiles.csv` (922), `e26_detour.csv` (321) | the direction ladder; portals |
+| 25 | — | — | no new $O$ (imported verbatim) | grid-connectivity note |
+| 24 | — | literature review | no $O$ | what an ascent measurement is worth |
+| 23 | — | move-grid connectivity | no new $O$ (imported note) | connectivity bias in terrain mode |
+| 22 | every $O$ above | stratified bootstrap, B = 10⁴ | — | **every published median AND its 95% band** |
+| 21 | $(\mathrm{DEM}, P_{a,g})$ | v2Edge, three scales | `scale_trio.csv` (922) | **the scale prescription** (paper 2/3) |
+| 20 | $(\mathrm{DEM}, P_{a,g})$ | v2Edge + smoothing sweep | `goal_calibration.csv` (864) | the ±5%/±2% goal; anchor constants |
+| 19 | $(\mathrm{DEM}_{5\,\mathrm{m}}, \mathrm{DEM}_{30\,\mathrm{m}})$ | v2Edge | `igc_resolution_test.csv` (922) | the resolution gap |
+| 18 | $(D_1..D_5, P_{a,g})$ | v2Edge (unclamped) | `regime_comparison.csv` (1,402) | correction: the app's per-edge $\varepsilon$ never clamps |
+| 17 | $(D_1..D_5, P_{a,g})$ | regime-decomposed / v2Edge | `regime_comparison.csv` (1,402) | the regime split does not beat the champion |
+| 16 | $(D_5, P_{a,g} \cdot P_{f,p}(m))$ | F1–F4, $F_\mathrm{base}$ | `danlessa_comparison.csv` (636 rows, 621 clean) | Table 3's D5 column |
+| 15 | $(D_1 \cup D_3 \cup D_4, P_{f,p})$ | physics inversion + wind | `cda_estimate.csv` (3), `param_fit.csv` (4) | Table 4's fitted constants |
+| 14 | $(D_4, P_{a,g} \cdot P_{f,p}(m))$ | F1–F4, $F_\mathrm{base}$ | `jaam_comparison.csv` (219) | Table 3's D4 column |
+| 13 | $(D_1 \cup D_3, P_{a,g} \cdot P_{f,p}(m))$ | time model $x^* = x + k_+h_+ - k_-h_-$ | `time_comparison.csv` (542) | gated, but out of paper 1 |
+| 12 | $(D_3, P_{a,g} \cdot P_{f,p}(m))$ | F1–F4, $F_\mathrm{base}$ | `ppaz_comparison.csv` (441) | Table 3's D3 column |
+| 11 | — | — | no new $O$; every $O$ above regenerated | ≤ 0.3 pp shifts across the board |
+| 10 | $(D_2, P_{a,g})$ | $\varepsilon$ from the descent balance | `eps_sp.csv` (59) | $\varepsilon_f$ = 0.20 |
+| 9 | $(D_2, P_{a,g})$ | F1–F4, $F_\mathrm{base}$ | `censo_comparison.csv` (69 rows, 62 clean) | Table 3's D2 column |
+| 8 | $(D_1, P_{a,r})$ | $\varepsilon$ from geometry | `eps_hypothesis.csv` (44) | **$\varepsilon_0$ = 0.13** |
+| 7 | $(D_1, P_{a,r})$ | sustained-climb balance | `model_comparison.csv` (44) | $k_h$ |
+| 6 | $(D_1, \mathrm{DEM})$ | elevation substitution | `harness/dem/` products | `dem-elevation-comparison.md`; $k_\mathrm{DEM}$ |
+| 5 | $(D_1, P_{a,r})$ | F3 (deadband $\tau$ = 2 m) | `model_comparison.csv` (44) | scoreboard champion row; $\tau$ = 2 m |
+| 4 | $(D_1, P_{a,r})$ | F2, $v_f$ variants | `model_comparison.csv` (44) | scoreboard $v_f$ rows |
+| 3 | $(D_1, P_{a,r})$ | F2 (climb-fraction $\alpha$) | `model_comparison.csv` (44) | scoreboard `cf` rows |
+| 2 | $(D_1, P_{a,r})$ | F1–F4, $F_\mathrm{base}$ | `model_comparison.csv` (44) | scoreboard baseline row |
+| 1 | $(D_1, P_{a,r})$ | F1–F4, $F_\mathrm{base}$ | `model_comparison.csv` (44) | the running scoreboard |
+
+Entries with no $O$ are reviews, registrations, imported notes or refactors — they change
+what the other rows *mean* without producing a per-ride table of their own.
+
+---
+
+## 2026-07-30 — Entry 47: which deficit form? — pre-registration of the two selections, in I/T/O/S
+
+**Lineage** — $I$: $(D_1 \cup D_2, P_{a,g})$ and $(D_1 \cup D_2, P_{a,g} \cdot P_{f,r})$ · $T$: F3 $\times$ {$\varepsilon_0,\varepsilon_2,\varepsilon_3$}, selected by BIC · $O$: `e47_formselect.csv` (2,141 rows; contests on 48 and 990) · $S$: **$\varepsilon_0$ retained**; nothing published moved
 
 *Prompt (Danilo), proposing the protocol and asking for feedback before any work began:
 "1. Test all forms on D1 and calibrate against it. That's the 'best calibration-dataset arm',
@@ -158,9 +233,9 @@ calibration side to D1 ∪ D2: "Agreed"; and on the rider-constant form: "drop i
 Landed with this entry in paper 1's Terminology and its four table captions. An **input**
 $I = (D, P)$ pairs a corpus with a parameter class ($P_{a,g}$ assumed-global, $P_{a,r}$
 assumed-per-ride, $P_{f,r}$ fitted-per-ride, $P_{f,p}$ fitted-per-person), overrides joined by
-$\cdot$. A **transformer** $F$ is a model — $F_1$–$F_4$, or $F_{\mathrm{base}}$ for the forward
-simulation, which is a *peer* of the closed forms and not the reference. An **output**
-$O = F(I)\,|\,\sigma$ is per-ride, with $\sigma$ the inclusion rule. A **statistic** $T(O)$ is
+$\cdot$. A **transformer** $T$ is a model — $F_1$–$F_4$, or $F_{\mathrm{base}}$ for the forward
+simulation, which is a *peer* of the closed forms and not the reference; $T$ is the class, $F_i$ the instance. An **output**
+$O = T(I)\,|\,\sigma$ is per-ride, with $\sigma$ the inclusion rule. A **statistic** $S(O)$ is
 what a table prints.
 
 The load-bearing part is $\lvert O \rvert \leq \lvert D \rvert$: a transformer preserves ride
@@ -243,7 +318,102 @@ this selects.
 
 ---
 
+### Results (run 2026-07-30, `e47_formselect.py`; |O| = 48 calibration, 990 in-sample)
+
+**Population.** $\sigma$ reproduces Entry 45's exactly — 22/26/156/20/224/149/267/162/12
+across the nine groups, 1,038 in total, ride for ride. The registered $\lvert O \rvert = 48$
+is confirmed.
+
+It was confirmed only after a correction. The first run returned 43, because I gated on the
+$\bar s$ of $\varepsilon_{\mathrm{geom}}$'s own cells while Entry 45 and every published
+harness gate on $\varepsilon_{\mathrm{cells}}$'. Two definitions of "mean descent grade",
+disagreeing on 5 of 113 rides. The registration said a disagreement would be reported and not
+silently adopted, so: the registered gate is the published one, and the champion is reported
+under **both** — it does not move. Note the shape of the near-miss — the first cross-check I
+wrote compared only the *survivors*, which cannot see a ride the other gate would have kept.
+A one-sided check on a population question is the same error as the 52% denominator.
+
+**Selection 1 — $\varepsilon_d(P_{a,g})$, |O| = 48.**
+
+| form | par | fitted | BIC | $\Delta$BIC | med $\lvert\Delta\%\rvert$ | signed | held |
+|---|--:|---|--:|--:|--:|--:|--:|
+| $\varepsilon_2$ | 1 | $k$ = 0.0020 | 465.7 | 0.0 | 11.32 | −1.15 | 11.32 |
+| **$\varepsilon_0$ frozen** | **0** | — | **465.8** | **0.0** | **9.17** | **+2.26** | **9.17** |
+| $\varepsilon_0$ fitted | 1 | $c$ = 0.0556 | 466.3 | 0.6 | 11.41 | −1.47 | 11.28 |
+| $\varepsilon_3$ | 2 | 0.0052, 0.3667 | 469.9 | 4.2 | 11.61 | −2.66 | 13.06 |
+
+Champion $\varepsilon_0$, 95% CIs 9.17 [6.12, 11.83] and +2.26 [−3.42, 6.43].
+
+**Selection 2 — $\varepsilon_d(P_{f,r})$, |O| = 48.**
+
+| form | par | fitted | BIC | $\Delta$BIC | med $\lvert\Delta\%\rvert$ | signed | held |
+|---|--:|---|--:|--:|--:|--:|--:|
+| **$\varepsilon_0$ frozen** | **0** | — | **459.1** | **0.0** | **6.72** | **+0.68** | **6.72** |
+| $\varepsilon_2$ | 1 | $k$ = 0.0033 | 460.9 | 1.8 | 7.85 | −1.78 | 8.23 |
+| $\varepsilon_0$ fitted | 1 | $c$ = 0.0705 | 461.6 | 2.5 | 8.78 | −2.61 | 9.10 |
+| $\varepsilon_3$ | 2 | 0.0875, −0.0704 | 465.5 | 6.4 | 8.27 | −2.03 | 8.60 |
+
+Champion $\varepsilon_0$, 95% CIs 6.72 [4.69, 11.25] and +0.68 [−3.24, 5.63].
+
+**$\varepsilon_{d,\mathrm{all}}$ — the in-sample arm, D3–D6, |O| = 990.** Both arms select
+$\varepsilon_2$, and not narrowly: $\Delta$BIC 128.8 ($P_{a,g}$, $k$ = 0.0020) and 88.2
+($P_{f,r}$, $k$ = 0.0032) over the frozen constant.
+
+**Verdicts.** P1 holds — the calibration arm selects $\varepsilon_0$, one of the two Danilo
+named. P2 holds — the two parameter classes agree, at both stages, so the form choice is not
+absorbing parameter error. P3 holds — $\varepsilon_{d,\mathrm{all}}$ selects $\varepsilon_2$.
+
+**P1 and P3 disagree, which the registration named as the interesting outcome**, and it says
+what it was registered to say: 48 calibration rides cannot see what 990 evaluation rides can.
+That is a statement about power, not about $\varepsilon_2$ being wrong — and it is the reason
+the arm entitled to build the tables is the calibration arm and not the other one.
+
+**Consequence for paper 1: nothing moves.** The champion of the only arm licensed to select
+is $\varepsilon_0 = 0.13$, which is what the paper already ships. The pre-registration
+endorsed the incumbent, and the value of that is precisely that it could have gone the other
+way — $\varepsilon_2$ won the in-sample arm decisively, on 20× the rides.
+
+### Three findings that were not registered
+
+**1. Fitting $\delta$ against energy does not recover $\delta$.** Every form was fitted twice:
+against the energy residual (primary) and against the measured deficit (how
+$\varepsilon_0 = 0.13$ was originally derived). On D3–D6 the deficit-space fits land at
+$c$ = 0.1339 and $k$ = 0.0052 — reproducing the published 0.13 and 0.0051 almost exactly,
+from an independent implementation. The energy-space fits land at $c$ = 0.0441 and
+$k$ = 0.0020, a factor of 2.5–3 lower. The gap is bias absorption: the frozen law
+over-predicts (signed +1.92 with $\varepsilon_0$), and a $\delta$ free to move in energy space
+buys that bias down by crediting recovery the descents did not deliver. **A $\delta$ fitted on
+energy is no longer a measurement of descent pedalling**, which is the physical claim
+§1.3.2 rests on. The published constants come from deficit space, and this is the argument
+for keeping them there.
+
+**2. $\Delta$BIC's scale is not the reader's scale.** On D3–D6, $\varepsilon_2$ beats
+$\varepsilon_0$ by $\Delta$BIC = 128.8 — decisive by any convention — and by **0.17 pp** of
+median error (4.04 vs 4.21). In the $P_{f,r}$ arm it is starker: $\varepsilon_2$ wins on BIC
+by 88.2 while being *worse* on the median (5.04 vs 4.94). BIC scores the mean absolute
+residual; every statistic this paper prints is a median. LAD fitting lowers the sum, which can
+raise the median. Both numbers are correct and they disagree, so any future claim of the form
+"$\varepsilon_2$ beats $\varepsilon_0$" must name the metric.
+
+**3. Neither constant is bias-free, and they miss in opposite directions.** With
+$\varepsilon_0$ the signed median is +1.92 ($P_{a,g}$) and +0.24 ($P_{f,r}$); every fitted form
+lands between −1.3 and −2.6. Trading a small positive bias for a larger negative one is not an
+improvement, which the accuracy column alone would have hidden.
+
+### Harness note — a defect this entry caused and fixed
+
+`INVERT_SMOKE=1` wrote to `perride_invert.csv`, the canonical file. A smoke run during this
+entry overwrote it, 1,409 rows to 204, silently invalidating Tables 5–6 and the gate battery
+until it was regenerated. Smoke output is now suffixed `.SMOKE`, as `skc_compare.py` already
+did. The per-ride inversion was also extracted from `run_ride` into `invert_physics` so this
+entry could reuse it rather than copy it; verified behaviour-neutral by diffing a smoke run
+against the pre-refactor output (identical but for the filename).
+
+---
+
 ## 2026-07-29 — Entry 46: implementing the regime switch — pre-registration
+
+**Lineage** — $I$: $(D_1..D_6, P_{a,g})$ · $T$: regime switch · $O$: not yet built · $S$: registration only
 
 *Prompt (Danilo), after Entry 45 established that §3.3's regime rule is stated but never
 enforced: "Are we saying that we should recommend using G only when the mean descent is above
@@ -294,6 +464,8 @@ wrong when written — the battery had already landed in `e827330`. Entries 43�
 ---
 
 ## 2026-07-29 — Entry 45: what should ε₀ be? — a contest of ride-level summaries
+
+**Lineage** — $I$: $(D_1..D_6, P_{a,g})$ · $T$: ride-level deficit contest · $O$: `e45_ridelevel.csv` (1,039), `e45_ridelevel.paper.csv` (1,038), `e45_flatseg.csv` (396 segments) · $S$: **eq. (8)**, $k$ = 0.0051
 
 *Prompt (Danilo), before letting any of Entries 43–44 reach the article: "i feel we should have
 a competing hypothesis for eps_0 for summarizing ride-level", then two candidate forms —
@@ -585,6 +757,8 @@ invalid at gentle grades.
 
 ## 2026-07-29 — Entry 44: the S-curve, reopened — pinning the magnitude and testing speed against slope
 
+**Lineage** — $I$: $(D_1..D_6, P_{f,r})$ · $T$: occupancy sigmoid, split-half · $O$: `e44_scurve_cells.csv` (153 cells), `e44_scurve_fits.csv` (9 rider-halves) · $S$: $s_{50}$ separates the populations
+
 *Prompt (Danilo), after Entry 43's arms established that the deficit spread is behavioural:
 "I feel we need to go back to the S-curve hypothesis. If δ = Effect Magnitude of Pedalling
 during Descent(slope) × Probability of Pedalling During Descent(slope), then maybe we can set
@@ -787,6 +961,8 @@ magnitude taper or an honest statement that it assumes $I \approx I_{\mathrm{fla
 ---
 
 ## 2026-07-29 — Entry 43: the fifth rider set — the frozen law on four European riders (D6)
+
+**Lineage** — $I$: $(D_6, P_{a,g} \cdot P_{f,p}(m))$ · $T$: F1–F4, $F_\mathrm{base}$; inversion; occupancy · $O$: `skc_comparison.csv` (743), `skc_invert.csv` (743), `skc_descent_occupancy.csv` (2,193), `skc_eps_vs_pedal.csv` (1,038) · $S$: **Table 1, Table 3, Tables 5–6**; 3.16 vs 3.15
 
 *Prompt (Danilo), after an external-review round in which all five reviewers named the narrow
 rider sample as the study's main weakness, and after a survey of open cycling data: "let's
@@ -1219,6 +1395,8 @@ deficit" reading should not be carried further without a dedicated test.
 
 ## 2026-07-28 — Entry 42: the lumped ε_d — pricing the hand recipe's proxy
 
+**Lineage** — $I$: $(D_1..D_5, P_{f,r})$ · $T$: F3, lumped $\varepsilon_d$ · $O$: `e42_lump.csv` (1,378) · $S$: the hand recipe stops recommending it
+
 *Prompt (Danilo), on review-v4's finding that §4.1.2's lumped variant is validated nowhere at
 energy level: "we should use the inverted params protocol. let's assume that mean descent
 grade = corrected vertical meters / x_downhill (eg. fraction of distance below threshold).
@@ -1308,6 +1486,8 @@ are gated in `bootstrap_ci.py`.
 ---
 
 ## 2026-07-28 — Entry 41: the elevation-source substitution — paper 1's law on planner DEM profiles
+
+**Lineage** — $I$: $(D_1..D_5 \text{ routes}, \mathrm{DEM})$ · $T$: F3 on planner profiles · $O$: `e41_dem_route.csv` (1,188) · $S$: **paper 2's headline**
 
 *Prompt (Danilo): implement `research/article/paper2-dem-deployment.PLAN.md` — the letter on
 deploying the closed form at planning time, where there is no barometric stream. Mid-flight
@@ -1699,6 +1879,8 @@ costs are gated in `bootstrap_ci.py`.
 
 ## 2026-07-28 — Entry 40: roller recycling — the covariate test
 
+**Lineage** — $I$: $(D_1..D_5, P_{f,r})$ · $T$: roller covariate · $O$: `e40_roller.csv` (1,409) · $S$: roller recycling
+
 *Prompt (Danilo): "Let's test that" — Entry 37's registered roller-drop-share covariate
 against the form-3 residual.*
 
@@ -1793,6 +1975,8 @@ Instrument: [`e40_roller.py`](../../src/harness/e40_roller.py) (`E40_SMOKE=1`); 
 
 ## 2026-07-28 — Entry 39: the deconfounded τ-sweep — momentum vs measurement, with the bias fog lifted
 
+**Lineage** — $I$: $(D_1..D_5, P_{f,r})$ · $T$: deconfounded $\tau$-sweep · $O$: `e39_tau_reg.csv` (1,409) · $S$: momentum vs measurement
+
 *Prompt (Danilo), on Entry 38's confound: "can we use the per-ride physics inversion
 protocol?"*
 
@@ -1880,6 +2064,8 @@ Instrument: [`e39_tau_reg.py`](../../src/harness/e39_tau_reg.py) (`E39_SMOKE=1`)
 
 ## 2026-07-28 — Entry 38: the τ-sweep — does the optimal deadband track v_f²/2g?
 
+**Lineage** — $I$: $(D_1..D_5, P_{f,r})$ · $T$: deadband $\tau$-sweep · $O$: `e38_tau.csv` (1,409) · $S$: $\tau^*$ vs $v_f^2/2g$
+
 *Prompt (Danilo), on Entry 37's registered test: "let's do it."*
 
 ### Pre-registration (written before any result was seen)
@@ -1966,6 +2152,8 @@ Instrument: [`e38_tau.py`](../../src/harness/e38_tau.py) (`E38_SMOKE=1`); output
 ---
 
 ## 2026-07-28 — Entry 37: the KE-equivalent height — momentum under rollers (hypothesis note, no run)
+
+**Lineage** — $I$: — · $T$: hypothesis note · $O$: no run · $S$: KE-equivalent height
 
 *Prompt (Danilo): "On hilly terrain, esp. closely spaced hills together, we would expect the
 descent inertia to play a role when going over the next hill. For a 75 kg rider at speeds of
@@ -2074,6 +2262,8 @@ refuted as tested (bias-confounded criterion; the universal τ = 2 m stays), the
 mechanism itself untouched. See Entry 38 for the verdict and the deconfounded follow-up.---
 
 ## 2026-07-28 — Entry 36: ε₀ per dataset — regressed, two ways, against the frozen 0.13
+
+**Lineage** — $I$: $(D_1..D_5, P_{f,r})$ · $T$: $\varepsilon_0$ regressed per dataset · $O$: `e36_eps0.csv` (1,400) · $S$: 0.13 survives two regressions
 
 *Prompt (Danilo): "I think that a loose end is to regress eps_0 per dataset rather than using
 the frozen 0.13 one."*
@@ -2198,6 +2388,8 @@ Instrument: [`e36_eps0.py`](../../src/harness/e36_eps0.py) (`E36_SMOKE=1`); outp
 ---
 
 ## 2026-07-28 — Entry 35: the honest-physics residual — where do the missing 4–5 points live?
+
+**Lineage** — $I$: $(D_1..D_5, P_{f,r})$ · $T$: F3 vs $F_\mathrm{base}$ residual · $O$: `e35_residual.csv` (1,409) · $S$: where the missing 4–5 points live
 
 *Prompt (Danilo), on Entry 33's shared −4…−5 pp under-prediction bias at inverted physics and
 the (α, ε) pairing analysis: run arms A and B as journal entries; the two-CdA transfer split
@@ -2341,6 +2533,8 @@ estimator is reported unchanged alongside them.
 ---
 
 ## 2026-07-28 — Entry 34: the S-curve deficit — ε₀ as a grade-conditional pedalling probability
+
+**Lineage** — $I$: $(D_1..D_5, P_{f,r})$ · $T$: occupancy sigmoid · $O$: `scurve_deficit.csv` (1,287) · $S$: $\varepsilon_0$ as a pedalling probability
 
 *Prompt (Danilo), on the unclamped ε_d going negative beyond s_*/ε₀ ≈ 15%: "I feel this is a
 weakness that we should figure out, esp. considering the intuition of coasting deficit being
@@ -2534,6 +2728,8 @@ seeded bootstrap CIs; `SCURVE_SMOKE=1`); output `scurve_deficit.csv` (1,287 ride
 ---
 
 ## 2026-07-28 — Entry 33: per-ride physics inversion — the Table-3 analogue under m̂/Ĉrr/ĈdA inverted from each ride's own segments
+
+**Lineage** — $I$: $(D_1..D_5, P_{a,g} \cdot P_{f,r}(m, C_{rr}, C_dA))$ · $T$: inversion + F1–F4 · $O$: `perride_invert.csv` (1,409) · $S$: **Tables 5 and 6**
 
 *Prompt (Danilo): "generate another result aiming to produce something analogue to Table 3, one
 where m, Crr and CdA are inverted per ride", with a six-step strategy (wind rule; flat/climb
@@ -2760,6 +2956,8 @@ m̂ medians, in `bootstrap_ci.py`.
 
 ## 2026-07-28 — Entry 32: review v3 — the un-gated numbers were exactly where the rot was
 
+**Lineage** — $I$: — · $T$: review · $O$: no new $O$ · $S$: the un-gated numbers were where the rot was
+
 *Prompt (Danilo): "do another review for quality", then "ok do it" on the consolidated findings.*
 
 A third adversarial review (six lenses; five completed — the journal-fidelity lens stalled and
@@ -2840,6 +3038,8 @@ more than three aimed at the gated ones.*
 ---
 
 ## 2026-07-28 — Entry 31: the D1 protocol correction — frozen re-run, the D2∩D5 discovery, and the review-v2 response
+
+**Lineage** — $I$: $(D_1, P_{a,g})$ · $T$: F1–F4, $F_\mathrm{base}$ · $O$: `longoes_frozen.csv` (44) · $S$: **Table 2's blind block**; the D2∩D5 discovery
 
 *Prompt (Danilo): a second adversarial review over the rewritten paper; on its blocking finding
 B1, "re-run (b)"; beyond that, "do all fixes and improvements".*
@@ -2927,6 +3127,8 @@ the paper's form vocabulary; sweep-paragraph rewritten to name all six predictio
 
 ## 2026-07-27 — Entry 30: pre-registration — Tier B: the canonical simulation under the sweep
 
+**Lineage** — $I$: $(D_2..D_5, P_{a,g} \times \mathrm{grid})$ · $T$: $F_\mathrm{base}$ under the same sweep · $O$: `param_sweep_canon.csv` (48) · $S$: Tier B
+
 *Prompt (Danilo): "let's do tier b".*
 
 Entry 29 swept the closed forms; the canonical simulation was deferred because it is the
@@ -2993,6 +3195,8 @@ on Tier A is itself informative: what we understand well is the machinery's stru
 understood less well (Tier A's P2/P5/P6) was where the *data* gets to talk.
 
 ## 2026-07-27 — Entry 29: pre-registration — the physical-constants sensitivity sweep (CdA × Crr × ρ)
+
+**Lineage** — $I$: $(D_2..D_5, P_{a,g} \times \mathrm{grid})$ · $T$: F3, $C_dA \times C_{rr} \times \rho$ · $O$: `param_sweep.csv` (432 corpus×combination) · $S$: the sensitivity envelope
 
 *Prompt (Danilo): scope a parameter sweep over CdA ∈ [0.25, 0.50] step 0.05, Crr ∈ [0.003, 0.015]
 step 0.002, ρ ∈ [1.0, 1.225] step 0.05; pre-register it; add 95% CI bands for the absolute median
@@ -3128,6 +3332,8 @@ than point pairs. Tier B (canonical, one-at-a-time; D1) remains open.
 
 ## 2026-07-25 — Entry 28: one implementation to rule the harnesses — dedup, package rename, layout
 
+**Lineage** — $I$: — · $T$: package refactor · $O$: no $O$ · $S$: one implementation for all harnesses
+
 *Prompt (Danilo): reduce code duplication on harness/ — "the canonical model is implemented
 7× over the code"; make the codebase cohesive; we don't have a debt to the past. Plus a
 folder restructure: src/, research/journal/, data/inputs|results/, drop the JS parity relics.*
@@ -3181,6 +3387,8 @@ own sanity gates.
 ---
 
 ## 2026-07-25 — Entry 27: re-baseline — São Paulo's gravity, bisect back in `bem`, and V8-exactness retired
+
+**Lineage** — $I$: — · $T$: $G$ = 9.7864 re-baseline · $O$: every $O$ regenerated · $S$: ≤ 0.2 pp; **$\hat m \cdot g$ is the invariant**
 
 *Prompt (Danilo): "G=9.7864 is a standard value for são paulo, according to lab measurements at
 IAG-USP" → "note: we can drop the requirement of being v8-exact. We can also revert to bisect if
@@ -3507,6 +3715,8 @@ above).
 
 ## 2026-07-24 — Entry 26: pre-registered — the direction ladder on real ride endpoints, and portals (bridges/tunnels) in both the track and the search
 
+**Lineage** — $I$: $(\mathrm{OSM} + \mathrm{DEM}, P_{a,g})$ · $T$: v2Edge on real endpoints · $O$: `e26_grid.csv` (86), `e26_portal_profiles.csv` (922), `e26_detour.csv` (321) · $S$: the direction ladder; portals
+
 *Prompt (Danilo): "I want to prepare two experiments, one that follows up on E23 and E19: Right
 now, simujaules has implemented support for long edges and more grid directions (eg. 8, 16, 32,
 64 and 128). Also, it has support for the notions of 'portals', which corrects DEMs for bridges
@@ -3784,6 +3994,8 @@ Tooling: `python3 harness/e26_pairs.py` → `node ../simujaules/docs/grid-e26.mj
 ---
 
 ## 2026-07-24 — Entry 25: the simujaules grid-connectivity note, imported verbatim
+
+**Lineage** — $I$: — · $T$: — · $O$: no new $O$ (imported verbatim) · $S$: grid-connectivity note
 
 *Prompt (Danilo): "Include ../simujaules/docs/grid-connectivity-sensitivity-2026-07-11 as entry
 E25." Entry 23 is the condensation of this study, written when the note was imported the first
@@ -4293,6 +4505,8 @@ an explicit file list; `docs/` never deploys).
 
 ## 2026-07-12 — Entry 24: what the literature says a cumulative-ascent measurement is worth — and why our energy endpoint can decide what geometry cannot
 
+**Lineage** — $I$: — · $T$: literature review · $O$: no $O$ · $S$: what an ascent measurement is worth
+
 *Prompt (Danilo): "literature review on the typical cumulative ascent error when using
 consumer grade barometers, and when using FABDEM or terrain data from aerophotogrammetry —
 compare to the journal entries." No engine ran; no published number changed. Full survey with
@@ -4362,6 +4576,8 @@ Tooling: none (survey only). Sources and the full comparison table:
 ---
 
 ## 2026-07-11 — Entry 23: move-grid connectivity bias in simujaules terrain-mode optimal energy
+
+**Lineage** — $I$: — · $T$: move-grid connectivity · $O$: no new $O$ (imported note) · $S$: connectivity bias in terrain mode
 
 *Prepared in the simujaules session and imported here. The full tables, threats-to-validity, and
 the reproducible harness live in the sibling repo:
@@ -4535,6 +4751,8 @@ pre-register distributions, not point ranges.
 
 ## 2026-07-09 — Entry 22: error bars for the headline medians — the champion "beats" the sim only on the median, so the article now claims parity
 
+**Lineage** — $I$: every $O$ above · $T$: stratified bootstrap, B = 10⁴ · $O$: — · $S$: **every published median AND its 95% band**
+
 *Prompt (Danilo): revise the article for the review weaknesses — fold Entries 19–21 in, re-frame
 the title/abstract around what transfers, and put uncertainty on the headline numbers. This entry
 records the new statistics; no engine ran and no published median changed.*
@@ -4583,6 +4801,8 @@ non-zero on any gate failure).
 ---
 
 ## 2026-07-07 — Entry 21: hypothesis — the resolution gap is a parameter problem, not a DEM problem
+
+**Lineage** — $I$: $(\mathrm{DEM}, P_{a,g})$ · $T$: v2Edge, three scales · $O$: `scale_trio.csv` (922) · $S$: **the scale prescription** (paper 2/3)
 
 *Prompt (Danilo, `/goal`): "Can we bridge that gap through parameters on the closed form
 rather than messing with the DEM? Investigate and make an hypothesis. Purely empirical is
@@ -4714,6 +4934,8 @@ cache + Entry 19's warp raster; writes the gitignored `scale_trio.csv`).
 
 ## 2026-07-07 — Entry 20: goal-driven — can the deployed pipeline hit ±5% error / ±2% bias?
 
+**Lineage** — $I$: $(\mathrm{DEM}, P_{a,g})$ · $T$: v2Edge + smoothing sweep · $O$: `goal_calibration.csv` (864) · $S$: the ±5%/±2% goal; anchor constants
+
 *Prompt (Danilo, `/goal`): "Simujaules, when routing a path, should have a prediction error of
 less than ±5%, with a bias lower than ±2%. danlessa/ppaz/jaam as the training/validation
 datasets."*
@@ -4832,6 +5054,8 @@ prep, gdallocationinfo, `sampa_geral.tif`; writes the gitignored `goal_calibrati
 ---
 
 ## 2026-07-06 — Entry 19: the app on its usual DEM — v2Edge on the deployed IGC-SP 5 m raster vs a 30 m resample
+
+**Lineage** — $I$: $(\mathrm{DEM}_{5\,\mathrm{m}}, \mathrm{DEM}_{30\,\mathrm{m}})$ · $T$: v2Edge · $O$: `igc_resolution_test.csv` (922) · $S$: the resolution gap
 
 *Prompt (Danilo): "most of the time we use IGC-SP DTM which has 5 m resolution — is this a
 concern?" (after Entry 18's R1d showed v2Edge's grade-local ε collapses at fine sampling).
@@ -4976,6 +5200,8 @@ gitignored `igc_resolution_test.csv`).
 
 ## 2026-07-06 — Entry 18: correction — R1a is not sampasimu's realisation (the app's per-edge ε never clamps), and the Jensen sign flips
 
+**Lineage** — $I$: $(D_1..D_5, P_{a,g})$ · $T$: v2Edge (unclamped) · $O$: `regime_comparison.csv` (1,402) · $S$: correction: the app's per-edge $\varepsilon$ never clamps
+
 *Prompt (Danilo): implement Entry 17's recommendation in sampasimu, under two product
 requirements — viewing energy ≡ routing energy (one number everywhere), and Dijkstra-fast
 local edge costs. The pre-implementation audit refuted the premise instead; this entry records
@@ -5099,6 +5325,8 @@ check, resolution×smoothing grid, and the dead-clamp assert; fitted rerun via t
 ---
 
 ## 2026-07-06 — Entry 17: a regime-decomposed closed form — does splitting the ride by slope beat the champion?
+
+**Lineage** — $I$: $(D_1..D_5, P_{a,g})$ · $T$: regime-decomposed / v2Edge · $O$: `regime_comparison.csv` (1,402) · $S$: the regime split does not beat the champion
 
 *Prompt (Danilo): test an alternative closed form `E_new = E_flat(x₌;P₌) + E_climb(x₊;P₊) +
 E_descent(x₋;P₋)` — decompose the ride by a climb/descent slope threshold and let each regime draw
@@ -5322,6 +5550,8 @@ Writes the gitignored `regime_comparison.csv`.
 
 ## 2026-07-04 — Entry 16: does it hold with the *real* rider physics? + the author's full export
 
+**Lineage** — $I$: $(D_5, P_{a,g} \cdot P_{f,p}(m))$ · $T$: F1–F4, $F_\mathrm{base}$ · $O$: `danlessa_comparison.csv` (636 rows, 621 clean) · $S$: Table 3's D5 column
+
 *Prompt (Danilo): (a) test how the article conclusions change if we use the Entry-15 *fitted* rider
 physics instead of the generic assumed constants — that's our best guess for riders 2–3; (b) then, add
 the author's own full Strava export (`strava_danlessa`, 1597 power rides) and analyse it as another
@@ -5400,6 +5630,8 @@ the gitignored exports, write gitignored CSVs.
 ---
 
 ## 2026-07-03 — Entry 15: independently estimating CdA, C_rr, mass and wind — what the data can and cannot give
+
+**Lineage** — $I$: $(D_1 \cup D_3 \cup D_4, P_{f,p})$ · $T$: physics inversion + wind · $O$: `cda_estimate.csv` (3), `param_fit.csv` (4) · $S$: Table 4's fitted constants
 
 *Prompt (Danilo): can we independently estimate CdA for P. Paz and JAAM? Then, over several
 iterations: uphill segments are braking-free (the cleanest data); this is akin to virtual-elevation;
@@ -5504,6 +5736,8 @@ high implied mass is simply genuine mass — the rider really is ~100 kg.** Tool
 
 ## 2026-07-03 — Entry 14: a third rider (JAAM) qualifies the transfer — and a framing correction
 
+**Lineage** — $I$: $(D_4, P_{a,g} \cdot P_{f,p}(m))$ · $T$: F1–F4, $F_\mathrm{base}$ · $O$: `jaam_comparison.csv` (219) · $S$: Table 3's D4 column
+
 *Prompt (Danilo): a third rider's export was added at `strava_jaam`; test it. Two corrections: P. Paz
 and JAAM are **not** members of Pedal Hidrográfico (independent riders who shared data with consent);
 and the author's own rwgps/strava rides — the "longões" — are **not** Pedal Hidrográfico activities
@@ -5593,6 +5827,8 @@ the gitignored export and write gitignored outputs.
 ---
 
 ## 2026-07-02 — Entry 13: the time model, finally tested — ascent half holds, descent bridge does not
+
+**Lineage** — $I$: $(D_1 \cup D_3, P_{a,g} \cdot P_{f,p}(m))$ · $T$: time model $x^* = x + k_+h_+ - k_-h_-$ · $O$: `time_comparison.csv` (542) · $S$: gated, but out of paper 1
 
 *Prompt (Danilo): write a plan to test the time model with the existing datasets; hand to Opus/Sonnet to execute.*
 
@@ -5691,6 +5927,8 @@ Tooling: `python3 time_compare.py` (reads the three gitignored track sets + mani
 
 ## 2026-07-02 — Entry 12: a second rider — the frozen ε estimator survives the transfer
 
+**Lineage** — $I$: $(D_3, P_{a,g} \cdot P_{f,p}(m))$ · $T$: F1–F4, $F_\mathrm{base}$ · $O$: `ppaz_comparison.csv` (441) · $S$: Table 3's D3 column
+
 *Prompt (Danilo): P. Paz shared their full Strava history export (`data/activities/strava_ppaz/`,
 gitignored — third-party GPS, shared with consent). Incorporate it into the analysis.*
 
@@ -5771,6 +6009,8 @@ writes `strava_ppaz_manifest.json` + `ppaz_comparison.csv`, both gitignored).
 
 ## 2026-07 — Entry 11: general review — code fixes, and what they moved
 
+**Lineage** — $I$: — · $T$: — · $O$: no new $O$; every $O$ above regenerated · $S$: ≤ 0.3 pp shifts across the board
+
 *Prompt (Danilo): a general review over the results, methodology, codebase, and data.*
 
 A 13-agent adversarially-verified review (findings independently re-checked against the files
@@ -5845,6 +6085,8 @@ Entry 4 also uses the measured flat speed). None of these reverse a conclusion; 
 
 ## 2026-06-29 — Entry 10: is São Paulo's ε a braking-driven quantity? (no — it's a constant)
 
+**Lineage** — $I$: $(D_2, P_{a,g})$ · $T$: $\varepsilon$ from the descent balance · $O$: `eps_sp.csv` (59) · $S$: $\varepsilon_f$ = 0.20
+
 *Prompt (Danilo): hypothesise how to estimate ε for São Paulo. Hypothesis tested: urban
 stop-go suppresses descent recovery below the free-coasting closed form, so*
 `ε_SP = clamp(ε_coast − Δε_brake)`, *with* `Δε_brake = (1/(g·H₋))·Σ_descent ½·Δ(v²)` *at forced
@@ -5896,6 +6138,8 @@ offset transfers to São Paulo essentially unchanged; **drop the braking correct
 ---
 
 ## 2026-06-28 — Entry 9: closed-form models vs the Pedal Hidrográfico urban rides
+
+**Lineage** — $I$: $(D_2, P_{a,g})$ · $T$: F1–F4, $F_\mathrm{base}$ · $O$: `censo_comparison.csv` (69 rows, 62 clean) · $S$: Table 3's D2 column
 
 *Prompt (Danilo): verify canonical / smooth-approximate / poor-man's-approximate against the
 collective's own rides (`censo-hidrografico.xlsx`, Strava/RWGPS links), assuming the rider
@@ -5958,6 +6202,8 @@ downloader) → [harness/censo_compare.py](../../src/harness/censo_compare.py). 
 ---
 
 ## 2026-06-28 — Entry 8: a closed form for ε from route geometry
+
+**Lineage** — $I$: $(D_1, P_{a,r})$ · $T$: $\varepsilon$ from geometry · $O$: `eps_hypothesis.csv` (44) · $S$: **$\varepsilon_0$ = 0.13**
 
 *Prompt (Danilo): hypothesise a closed form for ε from each activity's details. Intuitions:
 long descents → a non-zero floor tied to max safe speed; close/low rollers and flat terrain
@@ -6025,6 +6271,8 @@ wired into the app as an auto-ε option. The closed form does **not** replace th
 
 ## 2026-06-28 — Entry 7: fitting k_h on sustained climbs (the clean way)
 
+**Lineage** — $I$: $(D_1, P_{a,r})$ · $T$: sustained-climb balance · $O$: `model_comparison.csv` (44) · $S$: $k_h$
+
 *Prompt (Danilo): fit k_h by taking sustained ascent sections (mean slope > 3 % over
 > 100 m) and comparing measured energy output to expected.*
 
@@ -6077,6 +6325,8 @@ is the cheap, unbiased fallback for the low-compute closed form.
 ---
 
 ## 2026-06-28 — Entry 6: external DEMs (FABDEM/SRTM/COP30) and k_h for DEM-derived h₊/h₋
+
+**Lineage** — $I$: $(D_1, \mathrm{DEM})$ · $T$: elevation substitution · $O$: `harness/dem/` products · $S$: `dem-elevation-comparison.md`; $k_\mathrm{DEM}$
 
 *Prompt: pull FABDEM, SRTM, COP30 for the routes and see how the elevation differs; then —
 what is k_h for h₊/h₋ derived from a DEM?*
@@ -6140,6 +6390,8 @@ momentum explicitly via KE.)
 ---
 
 ## 2026-06-28 — Entry 5: per-regime breakdown, elevation noise in h₊, and a smoothing filter
+
+**Lineage** — $I$: $(D_1, P_{a,r})$ · $T$: F3 (deadband $\tau$ = 2 m) · $O$: `model_comparison.csv` (44) · $S$: scoreboard champion row; $\tau$ = 2 m
 
 *Prompts: how do the models compare on climb / flat / descent separately? how much is
 elevation noise affecting h₊? then — apply a filter and compare.*
@@ -6226,6 +6478,8 @@ Reproduce: the per-regime, elevation-noise, and filter blocks are at the end of
 
 ## 2026-06-28 — Entry 4: the `P_flat/P_avg` term and the `v_f` lever
 
+**Lineage** — $I$: $(D_1, P_{a,r})$ · $T$: F2, $v_f$ variants · $O$: `model_comparison.csv` (44) · $S$: scoreboard $v_f$ rows
+
 *Prompt: the sheet has a `P_flat/P_avg` column (col AB) — flat power as a fraction
 of average power (= energy / moving time). Can we take it into account?*
 
@@ -6277,6 +6531,8 @@ before recommending a `v_f` policy for the app/`research/notes/original_notes.md
 
 ## 2026-06-28 — Entry 3: climb-fraction correction in α
 
+**Lineage** — $I$: $(D_1, P_{a,r})$ · $T$: F2 (climb-fraction $\alpha$) · $O$: `model_comparison.csv` (44) · $S$: scoreboard `cf` rows
+
 *Prompt: how does the approximate behave if the climb-fraction correction is folded
 into α?*
 
@@ -6314,6 +6570,8 @@ Median climb fraction across rides: **21 %**.
 
 ## 2026-06-28 — Entry 2: baseline run (climb-aero `off`)
 
+**Lineage** — $I$: $(D_1, P_{a,r})$ · $T$: F1–F4, $F_\mathrm{base}$ · $O$: `model_comparison.csv` (44) · $S$: scoreboard baseline row
+
 First full run over the 44 power rides. Δ% = (model − empirical)/empirical.
 
 | model vs empirical | n | median \|Δ%\| | median Δ% | mean Δ% |
@@ -6347,6 +6605,8 @@ First full run over the 44 power rides. Δ% = (model − empirical)/empirical.
 ---
 
 ## 2026-06-28 — Entry 1: methodology & how the three energies are built
+
+**Lineage** — $I$: $(D_1, P_{a,r})$ · $T$: F1–F4, $F_\mathrm{base}$ · $O$: `model_comparison.csv` (44) · $S$: the running scoreboard
 
 The comparison is only meaningful if the inputs are pinned. This entry is the
 reference for all the runs above.

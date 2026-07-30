@@ -1,12 +1,13 @@
 # data-graph.ttl — the evaluation lineage of every published output.
 #
-# One node per artefact in the I/F/O/T notation defined in paper 1's
+# One node per artefact in the I/T/O/S notation defined in paper 1's
 # Terminology and used in its table captions:
 #
 #   I = (D, P)        an input: a corpus D crossed with a parameter class P,
 #                     P being a base plus overrides joined by `·`
-#   F                 a transformer: the model (F1-F4, F_base) or an estimator
-#   O = F(I) | σ      an output: PER RIDE, one row per ride, σ the inclusion
+#   T                 a transformer: the model (F1-F4, F_base) or an estimator.
+#                     T is the CLASS; F1-F4/F_base are the named instances.
+#   O = T(I) | σ      an output: PER RIDE, one row per ride, σ the inclusion
 #                     rule.  The transformer preserves ride grain but NOT
 #                     population.  Every :cardinality below is COUNTED from the
 #                     CSV, never asserted.
@@ -17,7 +18,7 @@
 # rows for 62; D5 636 for 621) without any inequality being violated. The full
 # D5 funnel is 3,219 export files -> 636 scored -> 621 clean = the published
 # |D|. Compare an output against the stage it was actually drawn from.
-#   T(O)              a statistic: the medians, CIs and figures the article and
+#   S(O)              a statistic: the medians, CIs and figures the article and
 #                     journal actually print, and what bootstrap_ci.py re-derives.
 #
 # Why the graph exists: the notation's whole job is to keep a population from
@@ -33,7 +34,7 @@
 # Stack: widely-used vocabularies — PROV-O (entities, activities, derivation),
 # P-Plan (the harness as a plan), Dublin Core, schema.org. The five terms in the
 # local namespace (:Dataset :ParameterClass :Transformer :Output :Statistic and
-# their properties) are the I/F/O/T notation itself, which has no standard
+# their properties) are the I/T/O/S notation itself, which has no standard
 # equivalent; everything else is reused.
 #
 # Sibling graph: research/notes/claims.ttl holds the claims-questions-evidence
@@ -54,7 +55,7 @@
 
 <https://danlessa.github.io/bicycling-energy-model/data-graph>
     a prov:Bundle, schema:Dataset ;
-    dcterms:title "Evaluation lineage (I/F/O/T) for the bicycling energy model" ;
+    dcterms:title "Evaluation lineage (I/T/O/S) for the bicycling energy model" ;
     dcterms:creator "Danilo Lessa Bernardineli" ;
     dcterms:modified "2026-07-30"^^xsd:date ;
     dcterms:description "Corpora, parameter classes, transformers, per-ride outputs and the published statistics derived from them." ;
@@ -73,7 +74,7 @@
     rdfs:comment "How the physical constants were obtained: assumed (a) or fitted (f), globally (g), per ride (r) or per person (p)." .
 
 :Transformer    a owl:Class ; rdfs:subClassOf p-plan:Plan ;
-    rdfs:label "F — transformer" ;
+    rdfs:label "T — transformer (instances: F1-F4, F_base, estimators)" ;
     rdfs:comment "A model form or an estimator: consumes an I, emits one row per surviving ride." .
 
 :Model          a owl:Class ; rdfs:subClassOf :Transformer ;
@@ -86,11 +87,11 @@
     rdfs:label "I = (D, P)" .
 
 :Output         a owl:Class ; rdfs:subClassOf prov:Entity ;
-    rdfs:label "O = F(I) | σ" ;
+    rdfs:label "O = T(I) | σ" ;
     rdfs:comment "Per-ride result table. ALWAYS carries :cardinality and :selection: the pair is what distinguishes O from D." .
 
 :Statistic      a owl:Class ; rdfs:subClassOf prov:Entity ;
-    rdfs:label "T(O)" ;
+    rdfs:label "S(O)" ;
     rdfs:comment "A published aggregate — table cell, figure, headline median — with its bootstrap interval." .
 
 :dataset        a owl:ObjectProperty ; rdfs:domain :Input ; rdfs:range :Dataset .
@@ -469,3 +470,27 @@
 
 :dataOK a :Estimator ; rdfs:label "the dataOK plausibility flag: emp >= β·h₊(smoothed)" ;
     rdfs:comment "Measured pedalling energy must clear the gravitational potential energy of the climbing — the measurement-side counterpart of the engine invariant legE >= mg·h₊/k_eff. It fires on incomplete power streams AND on climb-heavy rides where the floor is largest; it is not a pure dropout filter. Note the floor uses the SMOOTHED ascent while the CSV's hplus column is RAW — reading the raw column against the floor overstates the miss." .
+
+# --- Entry 47: deficit-form selection -------------------------------------
+
+:P_fp_e47 a :ParameterClass ; rdfs:label "P_{f,p} via invert_physics" ;
+    rdfs:comment "Steps 4-6 of the per-ride inversion, extracted from perride_invert.run_ride in Entry 47 so it has exactly one copy; verified behaviour-neutral by diffing a smoke run against the pre-refactor output." .
+
+:F_select a :Estimator ; rdfs:label "deficit-form selection by BIC (Laplace)" ;
+    rdfs:comment "argmin_delta BIC with b_hat = mean|Delta%| the Laplace MLE scale; DeltaBIC < 2 goes to the fewest parameters, so the incumbent is the default champion. Fits by LAD (argmin sum|r|) on a deterministic refining grid — no RNG, so the same answer on every machine." .
+
+:i_d12_ag a :Input ; rdfs:label "(D₁∪D₂, P_{a,g})" ; :dataset :D1, :D2 ; :parameters :P_ag ;
+    rdfs:comment "The frozen protocol as each corpus's PUBLISHED harness applies it: logged mass on D1 (longoes_frozen.py), the generic 78 kg on D2 (censo_compare.py). Copied rather than idealised." .
+:i_d12_fr a :Input ; rdfs:label "(D₁∪D₂, P_{a,g} · P_{f,r}(m, C_rr, C_dA))" ;
+    :dataset :D1, :D2 ; :parameters :P_ag ; :override :ov_m, :ov_crr, :ov_cda .
+
+:o_e47 a :Output ; dcterms:identifier "e47_formselect.csv" ;
+    p-plan:correspondsToStep "src/harness/e47_formselect.py" ;
+    :input :i_d12_ag, :i_d12_fr ; :transformer :F3, :F_select ;
+    :epsilonForm :eps0, :eps2, :eps3 ; :cardinality 2141 ;
+    :selection "parse + power + >= 3 km + s_bar >= 3%; 48 on the calibration side (D1 22, D2 26) and 990 on D3-D6 — 1,038 in total, reproducing Entry 45's population ride for ride across all nine groups" ;
+    rdfs:comment "|O| 2141 is the ROWS WRITTEN (every ride reaching the gate, gated or not, so the funnel is auditable); the contest populations are 48 and 990. Two s_bar definitions exist and disagree on 5 of 113 calibration rides — eps_cells' (what every published harness gates on, and what |O| = 48 was registered from) and eps_geom's (the profile the law reads). The champion is reported under both and does not move." .
+
+:entry47 a :Statistic ; rdfs:label "Entry 47 — which deficit form? two pre-registered selections" ;
+    prov:wasDerivedFrom :o_e47 ; :gatedBy :gate ;
+    rdfs:comment "Calibration arms select eps_0 (the incumbent, 0 free parameters); the in-sample D3-D6 arms select eps_2 decisively (DeltaBIC 128.8 / 88.2). The disagreement is statistical power, not direction. Nothing published moved. Two unregistered findings: delta fitted on ENERGY does not recover the published constants (c = 0.044, k = 0.0020) while delta fitted on the DEFICIT does (c = 0.134, k = 0.0052 against the published 0.13 and 0.0051), because a free delta absorbs the law's positive bias instead of measuring descent pedalling; and DeltaBIC = 128.8 corresponds to 0.17 pp of median error, BIC scoring the MEAN absolute residual while every published statistic is a median." .

@@ -47,6 +47,10 @@ home of the *derivation* and the side-by-side comparison.
   (Entry 19), `goal_calibration.py` + `goal_smooth_rasters.py` (Entry 20;
   `GOAL_SMOKE=1`), `scale_trio.py` (Entry 21; `SCALE_SMOKE=1`; carries the
   Entry-20 anchor constants — refresh them whenever Entry 20 re-runs),
+  `e47_formselect.py` (Entry 47 — deficit-form selection by BIC under a Laplace
+  likelihood, on D1∪D2 under two parameter arms, plus the labelled in-sample
+  D3–D6 arm; `E47_SMOKE=1`. Hosts `invert_physics`, extracted from
+  `perride_invert.run_ride` so the per-ride inversion has exactly one copy),
   `bootstrap_ci.py` (bootstrap CIs + paired sign tests for every published
   median AND its 95% band — **the gate script**; exits non-zero on failure),
   `longoes_frozen.py` (Entry 31; D1 under the frozen
@@ -68,6 +72,10 @@ home of the *derivation* and the side-by-side comparison.
   and `goal_calibration.py` are import-safe** (driver under
   `if __name__ == "__main__"`): the DEM chain imports them (`igc` ← `regime`;
   `goal` ← `regime`+`igc`; `scale_trio` ← all three) — keep them importable.
+  **A smoke flag must never write the canonical CSV** — `INVERT_SMOKE=1` did
+  until Entry 47 caught it by overwriting `perride_invert.csv` (1,409 rows → 204,
+  silently breaking Tables 5–6 and the gate battery); smoke runs now suffix
+  `.SMOKE`, as `skc_compare.py` and `e47_formselect.py` already did.
   Every FIT/GPX parse goes through `bicycling_energy_model.load_pts`, which
   caches the parsed points on disk under `data/results/cache/` keyed on
   (path, size, mtime, a schema version) — repeat runs and sensitivity sweeps
@@ -91,7 +99,7 @@ home of the *derivation* and the side-by-side comparison.
   Claim/Question, CiTO, PROV-O/P-Plan, Dublin Core; validate with `rdflib`
   after editing), `claims-explorer.html` (generated — regenerate via
   `research/scripts/make_claims_explorer.py`, never hand-edit),
-  `data-graph.ttl` (the **evaluation-lineage DAG** in the I/F/O/T notation:
+  `data-graph.ttl` (the **evaluation-lineage DAG** in the I/T/O/S notation:
   corpora D, parameter classes P, transformers F, per-ride outputs O and the
   published statistics T derived from them — every `:cardinality` on an output
   is *counted from its CSV*, never asserted, because `|O| ≤ |D|` and reading a
