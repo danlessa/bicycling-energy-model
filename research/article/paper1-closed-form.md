@@ -85,7 +85,7 @@ Notation rule — evaluation lineage: every result in this paper is one triple, 
 | $s_=$ | — | — | flat band | $\lvert s\rvert < s_*$: resistance dominates, aero at $v_f$ is fair, descents refund fully; the 2% gate approximates its edge. |
 | $\varepsilon$ | — | ride | descent-recovery factor | Fraction of descent potential energy refunded; measured values can be negative (Appendix A). |
 | $\varepsilon_d$ | — | ride | dynamic $\varepsilon$ (reported, not recommended; see [§4.4.2](#4.4.2)) | the geometry-derived variant of [§4.4.2](#4.4.2); reported for comparison, not recommended — adapts to descent geometry ([§1.3](#4.4.2)). |
-| $\varepsilon$ | — | 0.288 | flat $\varepsilon$ | One constant for every route, fitted on the training half ([§3.1](#3.1)). |
+| $\varepsilon$ | — | 0.294 | flat $\varepsilon$ | One constant for every route, fitted on the training half ([§3.1](#3.1)). |
 | $\varepsilon_0$ | — | 0.13 | calibrated deficit constant ([§4.4.2](#4.4.2)) | Gap between ideal and measured recovery; 0.13 at the shared priors and 30 m scale (0.10–0.19 across plausible physics and pairings, [§3.1](#3.1)); recurrence robust, value conditional. |
 | $c$ | m/km | ≈ 3 | ascent-noise rate | Phantom climb per route-km, subtracted from raw totals; measured ([§2.5](#2.5)), frozen. |
 | $\tau$ | m | 2 | deadband threshold | Elevation changes below $\tau$ are ignored when summing $h_\pm$. |
@@ -184,7 +184,7 @@ flowchart LR
     own segments; priors as flagged
     fallbacks (§2.2)"]
     C["behavioural constants
-    ε = 0.288 · τ = 2 m
+    ε = 0.294 · τ = 6 m
     fitted on the training half (§3.1)"]
   end
   subgraph PIPE["per-ride pipeline"]
@@ -347,7 +347,7 @@ flowchart LR
   fit ε, τ, c inside every fold
   select form by CV, AIC reported"]
   CV --> W["winner: F3
-  ε = 0.288 · τ = 2 m"]
+  ε = 0.294 · τ = 6 m"]
   W --> TE
   classDef blue stroke:#0072B2,fill:#fff,color:#222
   classDef verm stroke:#D55E00,fill:#fff,color:#222
