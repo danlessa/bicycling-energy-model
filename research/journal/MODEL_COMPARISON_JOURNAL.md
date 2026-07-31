@@ -433,7 +433,20 @@ aero gating. That is a **shape** correction, and the inversion cannot absorb it.
 prediction this implies is testable and unregistered: under $P_{a,g}$, where no inversion
 absorbs anything, $c$ should *not* collapse to zero.
 
-**The deadband τ is a hidden parameter the chain never fitted.** F3 *is* F2 evaluated on a
+**The deadband τ was a hidden parameter — now fitted, and the concern proved benign.**
+*(Resolved in the same session, at Danilo's call: "we should refit. Let's also fit that c.")*
+τ is now searched over a cached grid (0–12 m) **inside every fold**, exactly like ε and c, and
+`e52_build.py` stores F3's components at each grid point. On the full 1,734-ride training set
+τ refits to **exactly 2.0 m** — the historical value — and nothing moves: CV 0.07323 against
+0.07316 frozen, ε unchanged at 0.2879, the held-out half unchanged at 3.98. AIC moves by
+exactly 2 (−3192.8 against −3194.8), which is the parsimony penalty for F3 now honestly
+carrying $k = 2$, and F3 still wins on both criteria. **So F3's margin over F2 is not an upper
+bound; it survives τ being fitted.** A smoke run on 103 rides had put τ at 8.0 m, which is
+why the full run matters. An internal check confirms the grid is sound: τ = 0 is a no-op
+deadband, and F3(τ=0) reproduces F2 to **0.000e+00 kJ**. The original concern below stands as
+written, because it was correct in principle and is why the check was run.
+
+**The concern, as filed:** F3 *is* F2 evaluated on a
 deadbanded profile, so the whole F3-over-F2 gain (0.07316 vs 0.07669) is τ's doing — and τ
 is frozen at `TAU_SMOOTH = 2` m, selected back in Entry 5 on data overlapping D3–D6. It is
 therefore fitted **outside** the chain, on rides now sitting in $D_\mathrm{test}$: exactly

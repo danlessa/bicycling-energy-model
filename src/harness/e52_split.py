@@ -43,7 +43,7 @@ sys.path.insert(0, HERE)
 from bicycling_energy_model import is_finite
 from bicycling_energy_model.jsfmt import to_fixed
 
-from e52_build import C_PUB, FORMS, GROUPS, NPAR, e_form
+from e52_build import C_PUB, FORMS, GROUPS, NPAR, TAU_GRID, TAU_PUB_I, e_form
 from perride_invert import RESULTS
 from skc_compare import boot_ci_strat, med_of, sign_p
 
@@ -92,40 +92,55 @@ def load() -> list[dict]:
 
 # --------------------------------------------------------------- the losses
 
-def logratio(rows, form, eps, c=C_PUB) -> list[float]:
+def logratio(rows, form, eps, c=C_PUB, ti=TAU_PUB_I) -> list[float]:
     """|log(Ehat/E)| per ride — the FITTING loss (symmetric, scale-free)."""
     out = []
     for r in rows:
-        e = e_form(r, form, eps, c)
+        e = e_form(r, form, eps, c, ti)
         if e > 0:
             out.append(abs(math.log(e / r["emp"])))
     return out
 
 
-def pct(rows, form, eps, c=C_PUB) -> list[float]:
+def pct(rows, form, eps, c=C_PUB, ti=TAU_PUB_I) -> list[float]:
     """Signed Delta% per ride — the REPORTING statistic."""
-    return [100.0 * (e_form(r, form, eps, c) - r["emp"]) / r["emp"] for r in rows]
+    return [100.0 * (e_form(r, form, eps, c, ti) - r["emp"]) / r["emp"] for r in rows]
 
 
-def cv_loss(rows, form, eps, c=C_PUB) -> float:
-    v = logratio(rows, form, eps, c)
+def cv_loss(rows, form, eps, c=C_PUB, ti=TAU_PUB_I) -> float:
+    v = logratio(rows, form, eps, c, ti)
     return sum(v) / len(v) if v else float("inf")
 
 
 # --------------------------------------------------------------- A.4 fitting
 
-def fit(rows, form) -> tuple[float, float]:
+def fit(rows, form) -> tuple[float, float, int]:
     """Fit a form's free parameters on `rows` by minimising the CV loss.
-    Grid then refine, deterministic. F4 carries (eps, c); F1-F3 only eps."""
-    lo, hi = EPS_BOUNDS
-    best_e, best_c = 0.2, C_PUB
-    if form != "F4":
+    Grid then refine, deterministic.
+
+    F3 carries (eps, tau) and F4 (eps, c) -- tau is fitted here rather than
+    inherited, because Entry 52's findings caught it frozen at the historical
+    2 m, selected on data overlapping D3-D6 and therefore fitted outside the
+    chain on rides now in the test half. tau is searched over the cached grid,
+    so it is a discrete parameter; that is reported rather than smoothed over."""
+    def eps_opt(ti, c):
+        lo, hi = EPS_BOUNDS
+        best = 0.2
         for _ in range(5):
             step = (hi - lo) / 200
             cand = [lo + i * step for i in range(201)]
-            best_e = min(cand, key=lambda e: cv_loss(rows, form, e))
-            lo, hi = best_e - step, best_e + step
-        return best_e, C_PUB
+            best = min(cand, key=lambda e: cv_loss(rows, form, e, c, ti))
+            lo, hi = best - step, best + step
+        return best
+
+    if form == "F3":
+        best = min(((eps_opt(ti, C_PUB), C_PUB, ti) for ti in range(len(TAU_GRID))),
+                   key=lambda q: cv_loss(rows, form, q[0], q[1], q[2]))
+        return best
+    if form != "F4":
+        return eps_opt(TAU_PUB_I, C_PUB), C_PUB, TAU_PUB_I
+    lo, hi = EPS_BOUNDS
+    best_e, best_c = 0.2, C_PUB
     clo, chi = C_BOUNDS
     for _ in range(4):
         es = [lo + i * (hi - lo) / 40 for i in range(41)]
@@ -135,15 +150,15 @@ def fit(rows, form) -> tuple[float, float]:
         de, dc = (hi - lo) / 40, (chi - clo) / 40
         lo, hi = best_e - de, best_e + de
         clo, chi = max(C_BOUNDS[0], best_c - dc), best_c + dc
-    return best_e, best_c
+    return best_e, best_c, TAU_PUB_I
 
 
-def aic(rows, form, eps, c) -> float:
+def aic(rows, form, eps, c, ti=TAU_PUB_I) -> float:
     """AIC under a Laplace likelihood on the log-ratio residual — the
     likelihood that matches the L1 fitting loss. Reported, not binding
     (Entry 49's precedent: held-out primary, information criterion
     corroborating)."""
-    r = logratio(rows, form, eps, c)
+    r = logratio(rows, form, eps, c, ti)
     n = len(r)
     if not n:
         return float("nan")
@@ -218,8 +233,8 @@ def cross_validate(train) -> dict:
         scores = []
         for rep in range(N_REPEATS):
             for tr, va in folds(train, K_FOLDS, rep):
-                e, c = fit(tr, form)
-                scores.append(cv_loss(va, form, e, c))
+                e, c, ti = fit(tr, form)
+                scores.append(cv_loss(va, form, e, c, ti))
         n = len(scores)
         mean = sum(scores) / n
         sd = math.sqrt(sum((s - mean) ** 2 for s in scores) / (n - 1)) if n > 1 else 0.0
@@ -231,42 +246,44 @@ def select(train, cv) -> dict:
     """A.5 — CV binding, 1-SE rule toward the simpler form; AIC reported."""
     global _WINNER
     for form in FORMS:
-        e, c = fit(train, form)
-        cv[form].update({"eps": e, "c": c, "aic": aic(train, form, e, c)})
+        e, c, ti = fit(train, form)
+        cv[form].update({"eps": e, "c": c, "ti": ti, "tau": TAU_GRID[ti],
+                         "aic": aic(train, form, e, c, ti)})
     best = min(FORMS, key=lambda f: cv[f]["cv"])
     thr = cv[best]["cv"] + cv[best]["se"]
     tied = [f for f in FORMS if cv[f]["cv"] <= thr]
     winner = min(tied, key=lambda f: (NPAR[f], cv[f]["cv"]))
     aic_best = min(FORMS, key=lambda f: cv[f]["aic"])
     _WINNER = {"form": winner, "eps": cv[winner]["eps"], "c": cv[winner]["c"],
+               "ti": cv[winner]["ti"], "tau": cv[winner]["tau"],
                "cv_best": best, "aic_best": aic_best, "tied": tied}
     return _WINNER
 
 
 # ------------------------------------------------------------------ A.7/A.8
 
-def sensitivity(train, form, eps, c) -> list[tuple]:
+def sensitivity(train, form, eps, c, ti=TAU_PUB_I) -> list[tuple]:
     """A.7 — one-at-a-time sensitivity of the CV loss to the constants, using
     the dispersion A.3 measured. The constants are baked into the cached
     energies, so this perturbs them through the terms they scale: mass and the
     climb term move together (beta = mg/keff), CdA through aero, Crr through
     roll. Reported as elasticities, not as a variance decomposition -- Entry 50
     already did the Sobol version and this is a consistency check on it."""
-    base = cv_loss(train, form, eps, c)
+    base = cv_loss(train, form, eps, c, ti)
     out = []
-    tag = {"F1": "f1", "F2": "f2", "F3": "f3", "F4": "f2"}[form]
+    tag = {"F1": "f1", "F2": "f2", "F3": f"f3t{ti}", "F4": "f2"}[form]
     for name, key, frac in ((f"m / climb", f"{tag}_climb", 0.10),
                             (f"CdA / aero", f"{tag}_aero", 0.10),
                             (f"Crr / roll", f"{tag}_roll", 0.10),
                             ("eps", None, 0.10)):
         if key is None:
-            hi = cv_loss(train, form, eps * (1 + frac), c)
-            lo = cv_loss(train, form, eps * (1 - frac), c)
+            hi = cv_loss(train, form, eps * (1 + frac), c, ti)
+            lo = cv_loss(train, form, eps * (1 - frac), c, ti)
         else:
             def bumped(mult):
                 return [{**r, key: r[key] * mult} for r in train]
-            hi = cv_loss(bumped(1 + frac), form, eps, c)
-            lo = cv_loss(bumped(1 - frac), form, eps, c)
+            hi = cv_loss(bumped(1 + frac), form, eps, c, ti)
+            lo = cv_loss(bumped(1 - frac), form, eps, c, ti)
         # LOSS INFLATION, not a derivative. eps is FITTED, so the loss sits at a
         # minimum in it and a central difference is ~0 by construction -- which
         # made the first version report CdA (the most damaging constant) as
@@ -277,18 +294,18 @@ def sensitivity(train, form, eps, c) -> list[tuple]:
     return out
 
 
-def score_test(test, form, eps, c, label) -> dict:
+def score_test(test, form, eps, c, label, ti=TAU_PUB_I) -> dict:
     """A.8 — the single scoring of the held-out half. Refuses to run before the
     A.5 winner exists: that is the registered gate, enforced structurally."""
     if _WINNER is None:
         raise RuntimeError("A.8 reached before A.5 selected a form — gate violation")
-    e = pct(test, form, eps, c)
+    e = pct(test, form, eps, c, ti)
     a = [abs(v) for v in e]
-    gs = [[abs(x) for x in pct([r for r in test if r["group"] == g], form, eps, c)]
+    gs = [[abs(x) for x in pct([r for r in test if r["group"] == g], form, eps, c, ti)]
           for g in GROUPS]
     gs = [x for x in gs if x]
     ci_a = boot_ci_strat(gs, SEED)
-    gs2 = [[x for x in pct([r for r in test if r["group"] == g], form, eps, c)]
+    gs2 = [[x for x in pct([r for r in test if r["group"] == g], form, eps, c, ti)]
            for g in GROUPS]
     ci_s = boot_ci_strat([x for x in gs2 if x], SEED + 1)
     print(f"    {label:<26} {to_fixed(med_of(a), 2):>6} "
@@ -333,29 +350,36 @@ def main() -> None:
     # ---- A.5
     w = select(train, cv)
     print(f"\n  A.5  selection")
-    print(f"    {'form':<5} {'CV':>9} {'1-SE band':>11} {'AIC':>11} {'eps':>7} {'c':>6} {'k':>3}")
+    print(f"    {'form':<5} {'CV':>9} {'1-SE band':>11} {'AIC':>11} {'eps':>7} {'tau':>5} {'c':>6} {'k':>3}")
     thr = cv[w['cv_best']]['cv'] + cv[w['cv_best']]['se']
     for f in FORMS:
         mark = "  <- CV" if f == w["cv_best"] else ""
         mark += "  <- AIC" if f == w["aic_best"] else ""
         print(f"    {f:<5} {cv[f]['cv']:>9.5f} {'in' if cv[f]['cv'] <= thr else 'out':>11} "
               f"{cv[f]['aic']:>11.1f} {cv[f]['eps']:>7.4f} "
+              f"{(cv[f]['tau'] if f == 'F3' else float('nan')):>5.1f} "
               f"{(cv[f]['c'] if f == 'F4' else float('nan')):>6.2f} {NPAR[f]:>3}{mark}")
     print(f"\n    CV best {w['cv_best']} · within 1 SE {w['tied']} "
           f"· AIC best {w['aic_best']}")
     print(f"    WINNER (CV binding, 1-SE toward simpler): {w['form']} "
           f"with eps = {to_fixed(w['eps'], 4)}"
+          + (f", tau = {w['tau']} m" if w["form"] == "F3" else "")
           + (f", c = {to_fixed(w['c'], 3)}" if w["form"] == "F4" else ""))
     agree = "AGREE" if w["aic_best"] == w["cv_best"] else "DISAGREE"
     print(f"    P6 — CV and AIC {agree}"
           + ("" if agree == "AGREE" else "; Entry 49's precedent governs (held-out primary)"))
 
     # ---- A.6 / A.7
-    print(f"\n  A.6  refit on all of D_train: eps = {to_fixed(w['eps'], 4)}")
+    # internal check: tau = 0 is a no-op deadband, so F3 must reproduce F2 exactly
+    d = max(abs(e_form(r, "F3", 0.3, C_PUB, 0) - e_form(r, "F2", 0.3)) for r in train[:400])
+    print(f"\n    check: F3(tau=0) vs F2 max abs diff = {d:.3e} kJ "
+          f"{'GATE-OK' if d < 1e-9 else 'GATE-FAIL'}")
+    print(f"\n  A.6  refit on all of D_train: eps = {to_fixed(w['eps'], 4)}"
+          + (f", tau = {w['tau']} m" if w["form"] == "F3" else ""))
     print(f"\n  A.7  sensitivity of the winner's CV loss (+/-10% one at a time,"
           f" reported as the cost of being wrong)")
     print(f"    {'perturbed':<12} {'base':>9} {'-10%':>9} {'+10%':>9} {'loss infl.':>11}")
-    sens = sorted(sensitivity(train, w["form"], w["eps"], w["c"]),
+    sens = sorted(sensitivity(train, w["form"], w["eps"], w["c"], w["ti"]),
                   key=lambda z: -z[4])
     for name, base, lo, hi, el in sens:
         print(f"    {name:<12} {base:>9.5f} {lo:>9.5f} {hi:>9.5f} {100 * el:>10.1f}%")
@@ -367,14 +391,14 @@ def main() -> None:
     res = {}
     for f in FORMS:
         tag = f + (" (WINNER)" if f == w["form"] else "")
-        res[f] = score_test(test, f, cv[f]["eps"], cv[f]["c"], tag)
+        res[f] = score_test(test, f, cv[f]["eps"], cv[f]["c"], tag, cv[f]["ti"])
     # F_base: a comparator, not a contestant
     ce = [100.0 * (r["canon_kj"] - r["emp"]) / r["emp"]
           for r in test if is_finite(r["canon_kj"])]
     if ce:
         print(f"    {'F_base (comparator)':<26} {to_fixed(med_of([abs(v) for v in ce]), 2):>6} "
               f"{'':<19}  {to_fixed(med_of(ce), 2):>6}")
-        wf = [abs(v) for v in pct(test, w["form"], w["eps"], w["c"])]
+        wf = [abs(v) for v in pct(test, w["form"], w["eps"], w["c"], w["ti"])]
         pair = [(a, abs(b)) for a, b in zip(wf, ce)]
         win = sum(1 for a, b in pair if a < b)
         los = sum(1 for a, b in pair if a > b)
@@ -383,11 +407,12 @@ def main() -> None:
 
     out = os.path.join(RESULTS, "e52_split" + (".SMOKE" if SMOKE else "") + ".csv")
     with open(out, "w", encoding="utf-8") as fh:
-        fh.write("form,npar,cv,cv_se,aic,eps,c,test_med_abs,test_med_signed,winner\n")
+        fh.write("form,npar,cv,cv_se,aic,eps,c,tau,test_med_abs,test_med_signed,winner\n")
         for f in FORMS:
             fh.write(f"{f},{NPAR[f]},{cv[f]['cv']:.6f},{cv[f]['se']:.6f},"
                      f"{cv[f]['aic']:.3f},{to_fixed(cv[f]['eps'], 4)},"
                      f"{to_fixed(cv[f]['c'], 4) if f == 'F4' else ''},"
+                     f"{cv[f]['tau'] if f == 'F3' else ''},"
                      f"{to_fixed(res[f]['med_abs'], 4)},"
                      f"{to_fixed(res[f]['med_signed'], 4)},"
                      f"{1 if f == w['form'] else 0}\n")

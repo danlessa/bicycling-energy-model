@@ -56,12 +56,21 @@ SMOKE = bool(os.environ.get("E52_SMOKE"))
 CHECK: list[float] = []   # build-time cache-vs-engine deviations
 CANON_FAIL: list[str] = []   # F_base failures, counted rather than swallowed
 C_PUB = 3.0                      # F4's published climb-fraction constant
+# tau grid for F3's deadband. Entry 52's findings showed tau was frozen at the
+# historical 2 m -- selected in Entry 5 on data overlapping D3-D6, so fitted
+# OUTSIDE the chain on rides now in the test half. Caching a grid lets A.4 refit
+# it per fold like every other parameter. tau = 0 is a no-op deadband, so
+# F3(tau=0) must reproduce F2 exactly -- an internal check, not an assumption.
+TAU_GRID = (0.0, 0.5, 1.0, 2.0, 3.0, 4.0, 6.0, 8.0, 12.0)
+TAU_PUB_I = TAU_GRID.index(2.0)
 GROUPS = ("D3", "D4", "D5", "D6-user_1", "D6-user_2", "D6-user_3", "D6-user_5")
 ANCHOR_KEY = {"D3": "ppaz", "D4": "jaam", "D5": "danlessa"}
 
 COLS = (["group", "ride", "date", "emp",
          "m_hat", "m_src", "crr_hat", "crr_src", "cda_hat", "cda_src", "wind_ms"]
-        + [f"{t}_{k}" for t in ("f1", "f2", "f3")
+        + [f"{t}_{k}" for t in ("f1", "f2")
+           for k in ("roll", "aero", "climb", "recov1")]
+        + [f"f3t{i}_{k}" for i in range(len(TAU_GRID))
            for k in ("roll", "aero", "climb", "recov1")]
         + ["x_m", "hplus", "hminus", "vf_kmh", "canon_kj"])
 
@@ -84,7 +93,6 @@ def one_ride(pts, label, group, m_logged) -> dict | None:
     prof = resample_profile(phys, ENGINE_DX)
     if prof["x"][-1] - prof["x"][0] < 3000:
         return None
-    profS = {"x": prof["x"], "h": deadband(prof["h"], TAU_SMOOTH)}
 
     rp = extract_regime_powers(pts, CLIMB_THR, DESC_THR)
     flat = rp["flat"]["mean"] if rp["flat"]["mean"] is not None else overall_mean_power(pts)
@@ -120,8 +128,11 @@ def one_ride(pts, label, group, m_logged) -> dict | None:
            "wind_ms": wind, "vf_kmh": vf * 3.6}
 
     # --- the two-point cache: eps = 0 and eps = 1 pin every form
-    for tag, (pr, mode) in (("f1", (prof, "off")), ("f2", (prof, "zero")),
-                            ("f3", (profS, "zero"))):
+    forms = [("f1", prof, "off"), ("f2", prof, "zero")]
+    for i, tau in enumerate(TAU_GRID):
+        forms.append((f"f3t{i}",
+                      {"x": prof["x"], "h": deadband(prof["h"], tau)}, "zero"))
+    for tag, pr, mode in forms:
         a0 = approximate(pr, p, vf, 0.0, opt(mode))
         a1 = approximate(pr, p, vf, 1.0, opt(mode))
         # Components, not just the E0/E1 pair: the decomposition invariant
@@ -142,8 +153,7 @@ def one_ride(pts, label, group, m_logged) -> dict | None:
     # e_form, so it can actually fail.
     if len(CHECK) < 300:
         worst = 0.0
-        for tag, (pr, mode) in (("f1", (prof, "off")), ("f2", (prof, "zero")),
-                                ("f3", (profS, "zero"))):
+        for tag, pr, mode in forms:
             for eps in (0.2, 0.37, 0.85):
                 want = approximate(pr, p, vf, eps, opt(mode))["E"]
                 got = (row[tag + "_roll"] + row[tag + "_aero"]
@@ -176,10 +186,11 @@ def one_ride(pts, label, group, m_logged) -> dict | None:
 # (CV, selection, sensitivity, test) calls THESE, so a form cannot drift
 # between stages.
 
-def e_form(r: dict, form: str, eps: float, c: float = C_PUB) -> float:
-    """Energy in kJ for one ride under one form at (eps, c)."""
+def e_form(r: dict, form: str, eps: float, c: float = C_PUB,
+           ti: int = TAU_PUB_I) -> float:
+    """Energy in kJ for one ride under one form at (eps, c, tau-index)."""
     if form in ("F1", "F2", "F3"):
-        k = {"F1": "f1", "F2": "f2", "F3": "f3"}[form]
+        k = {"F1": "f1", "F2": "f2", "F3": f"f3t{ti}"}[form]
         return (r[k + "_roll"] + r[k + "_aero"] + r[k + "_climb"]
                 + eps * r[k + "_recov1"]) / 1000
     if form == "F4":
@@ -191,7 +202,7 @@ def e_form(r: dict, form: str, eps: float, c: float = C_PUB) -> float:
 
 
 FORMS = ("F1", "F2", "F3", "F4")
-NPAR = {"F1": 1, "F2": 1, "F3": 1, "F4": 2}      # eps; F4 adds c
+NPAR = {"F1": 1, "F2": 1, "F3": 2, "F4": 2}   # eps; F3 adds tau, F4 adds c
 
 
 def verify() -> bool:
