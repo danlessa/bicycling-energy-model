@@ -245,9 +245,12 @@ frozen $C_dA$'s over-prediction, which is why the dynamic estimator looks good u
 also force every table to carry two arms and every claim to name which one it means. One protocol
 removes the artefact and the bookkeeping together.
 
-$P_{a,g}$ survives **only on D1/D2**, where it is the honest description of the situation: a
-generic assumed rider is all that was ever available there. It is reported as a scope statement —
-*what the law costs with no calibration at all* — not as a headline.
+$P_{a,g}$ was to survive **only on D1/D2**, as the honest description of a situation where a
+generic assumed rider was all that existed. That role collapsed later in the same exchange: D1
+and D2 turn out to be re-processings of D5 rides (see the Design section), so they are not an
+independent no-calibration check — they are the same rider under an older protocol. $P_{a,g}$
+therefore survives as **history, not evidence**: the paper reports what the assumed-constant era
+produced and why it was retired, and no result rests on it.
 
 **What the split does and does not make out-of-sample.** The per-ride inversion is a
 **data-preparation** step: it runs before the split, and its output is the dataset. So the split
@@ -273,34 +276,79 @@ the honest reading and the paper states it rather than letting "per-ride inverte
 three fitted constants. Mass is nonetheless the high-value one: $\beta = mg/k_\mathrm{eff}$, so it
 scales the dominant climb term directly.
 
-### Design
+### Design — the A-chain
 
-- **Split** — within each of the seven riders, chronological index mod 3 → train / validation /
-  test. Deterministic, no RNG, riders balanced across all three (the Entries 44/47/49/51 rule,
-  extended from halves to thirds). ~676 rides per split from 2,028.
-- **Train** — for each form $F_1..F_4$, the $\varepsilon$ (and any additional parameter) minimising
-  median $|\Delta\%|$; the LAD optimum reported beside it, since Entry 47 showed the two can
-  disagree. $F_\mathrm{base}$ has no free parameter and is fitted on nothing.
-- **Validation** — the form is selected here, by median $|\Delta\%|$, **once**. No peeking at test.
-- **Test** — median $|\Delta\%|$ and signed bias with 95% stratified bootstrap CIs (mulberry32,
-  seed 48), for the selected form *and* for every contestant, so the selection can be audited.
+Danilo's chain, adopted with four amendments agreed in the same exchange (each noted
+inline). **D1 and D2 do not appear: they are re-processings of D5 rides** — matching on
+measured kJ puts 87% of D2 and 43% of D1 inside D5, against a 1–14% coincidence baseline
+against other corpora. They are therefore not an external check and not independent data;
+they survive in the paper as a historical scope note about the assumed-constant era, and
+every corpus total that summed D1..D6 double-counted by ~80–100 rides.
+
+**Preliminary.** F2's $x_\mathrm{flat}$ and F4's $c$ are **not** estimated up front.
+*(Amendment 1.)* Estimating them before the split would let those two forms enter selection
+having seen $D_\mathrm{test}$, and estimating them once on all of $D_\mathrm{train}$ would
+still flatter them against forms refitted per fold. They are fitted **inside each CV fold**,
+from that fold's training part only, exactly as every other free parameter.
+
+- **A.1** — hold out **15% of each of D3, D4, D5, D6** at random (seed fixed, drawn once) →
+  $D_\mathrm{test}$. Random rather than chronological, *by decision*: a time split confounds
+  model error with fitness, equipment and seasonal drift. The exposure a random split carries
+  instead — near-duplicate routes straddling the split — is **measured and reported**, not
+  assumed away *(amendment 2)*: the count of test rides having a train ride within a tolerance
+  on (distance, ascent) ships beside the headline as a disclosure.
+- **A.2** — the remainder, unified across corpora → $D_\mathrm{train}$ (~1,724 rides).
+- **A.3** — per-ride $C_dA$, $C_{rr}$, $m$ by inversion. This runs **before** the split, as
+  data preparation, so the split holds out $\varepsilon$ and the form choice but **not** the
+  constants (see the scope paragraph above). Their **dispersion is reported as a table**, and
+  it is expected to show that the label overstates the fit: $C_{rr}$ is the 0.008 prior on 77%
+  of rides, $C_dA$ the 0.400 rail on 26%, both genuinely inverted on 15%.
+- **A.4** — repeated stratified $k$-fold on $D_\mathrm{train}$ (stratified by rider), fitting
+  and scoring F1–F4. **Loss: mean $|\Delta\%|$** *(amendment 3, replacing RMSE)*. RMSE on kJ
+  is dominated by long rides; RMSE on $\Delta\%$ is outlier-driven on corpora with known bad
+  power traces; and either breaks continuity with the median $|\Delta\%|$ that all 293 gates
+  and every published number use. MASE was considered and rejected — its denominator is a
+  naive one-step forecast, which has no meaning for a cross-sectional ride set, so it would
+  require inventing and defending a benchmark. Mean $|\Delta\%|$ is scale-free and $L^1$-robust
+  with no new concept. Noted once in the paper: percentage error is asymmetric (bounded at
+  $-100\%$, unbounded above), which tilts fitting slightly toward under-prediction.
+- **A.5** — select by CV score under the **1-SE rule** *(amendment 4, replacing AIC)*. With
+  $n \approx 1{,}700$ and forms one parameter apart, AIC's penalty of 2 is negligible beside
+  the log-likelihood gap, so AIC would simply pick the best-fitting form and deliver no
+  parsimony — and it would leave two criteria with no tie-break. Entry 47's BIC-under-Laplace
+  selection is cited as independent corroboration rather than re-run here. The simplest form
+  within one standard error of the best wins.
+- **A.6** — refit the selected form on all of $D_\mathrm{train}$.
+- **A.7** — sensitivity of the selected form over $(m, C_dA, C_{rr}, \varepsilon)$, reusing
+  Entry 50's decomposition, with the boxes taken from **A.3's measured dispersion** rather
+  than from assumed ranges.
+- **A.8** — score $D_\mathrm{test}$ **once**: median $|\Delta\%|$ and signed bias with 95%
+  stratified bootstrap CIs (mulberry32, seed 48). Reported for the selected form and for every
+  contestant, so the selection can be audited after the fact.
+
+**$F_\mathrm{base}$ is a comparator, not a contestant** *(Danilo)*. The forward simulation has
+no free parameter; it is scored on $D_\mathrm{train}$ and $D_\mathrm{test}$ and reported
+alongside, to say what the closed form costs against the simulation it replaces — but it does
+not enter A.4's selection.
 
 ### Registered predictions
 
-- **P1** — $F_3$ wins on validation. It won Entry 47's selection and Entry 51's comparison.
-- **P2** — the selected $\varepsilon$ lands in [0.20, 0.26], consistent with Entry 51's 0.228 on a
-  two-way split of the same rides.
-- **P3** — $F_\mathrm{base}$ does **not** win. Entry 51's test half already put it behind the
-  closed form under this parameter class; if it wins, the paper's central simplification claim is
-  in trouble and the entry says so.
-- **P4** — the test-half error of the winner is within 0.5 pp of Entry 51's 4.17, since this is the
-  same data under a finer split.
+- **P1** — F3 wins A.5, or ties within 1 SE and loses to a simpler form on the parsimony rule.
+- **P2** — the selected $\varepsilon$ lands in [0.20, 0.26], consistent with Entry 51's 0.228
+  on a two-way split of the same rides.
+- **P3** — the closed form is **not worse** than $F_\mathrm{base}$ on $D_\mathrm{test}$.
+  Entry 51 already put the simulation behind it under this parameter class; if it loses here,
+  the paper's central simplification claim is in trouble and the entry says so.
+- **P4** — $D_\mathrm{test}$ median $|\Delta\%|$ within 0.5 pp of Entry 51's 4.17, this being
+  the same rides under a different split.
+- **P5** — the CV spread across F1–F4 is small enough that the 1-SE rule binds, i.e. form
+  choice matters less than the parameter uncertainty A.7 measures.
 
 ### Gate
 
-The entry lands only if validation selects the form **before** any test number is computed, and
-the script enforces this by construction — test statistics are unreachable until the validation
-winner is written out.
+The entry lands only if A.5 is written out **before** any $D_\mathrm{test}$ statistic is
+computed, enforced by construction: the test-scoring routine refuses to run until the
+validation winner has been serialised.
 
 ## 2026-07-30 — Entry 51: the replacement flat constant — train/test on D3–D6 under $P_{f,r}$ — pre-registration
 
