@@ -465,11 +465,11 @@ One exposure is inherent to a random split and is reported rather than assumed a
 
 **Between riders who share a landscape, ε travels for free.** Fitting it on a *single* rider's training rides and scoring it on six others' held-out rides — a different person, and rides withheld from selection — costs a median **0.05 pp** [0.03, 0.08] against the constant fitted on everyone. That is two orders of magnitude inside the ±1.0 pp margin registered in advance as the threshold for mattering. Donor identity is not irrelevant — the per-rider optima span 0.215 to 0.470 — but the spread across *recipients* (2.85 pp) exceeds the spread across *donors* (1.62 pp), so who you are matters more than whose constant you borrow.
 
-**Between landscapes it does not.** Fitted separately, the São Paulo corpora want $\varepsilon = 0.239$ and the European deposit $0.371$ ([Table 5](#tab5)). Ignoring that costs **0.82 pp** on D3–D5 and **0.92 pp** on D6 — an order of magnitude more than the between-rider penalty, and larger than any other effect measured in this paper.
+**Between landscapes it does not.** Fitted separately, the São Paulo corpora want $\varepsilon = 0.239$ and the European deposit $0.371$ ([Table 4](#tab4)). Ignoring that costs **0.82 pp** on D3–D5 and **0.92 pp** on D6 — an order of magnitude more than the between-rider penalty, and larger than any other effect measured in this paper.
 
-<a id="tab5"></a>
+<a id="tab4"></a>
 
-**Table 5.** Regional pools against a single pool, held-out rides, scored once. *A* uses one $\varepsilon$ for everything; *B* keeps the pooled form and deadband and fits $\varepsilon$ per region; *C* selects form, deadband and $\varepsilon$ independently inside each region. Cells: median $\lvert\Delta\%\rvert$ [95% CI] · median signed $\Delta\%$. Lineage: $O$ = `e60_regional.csv`.
+**Table 4.** Regional pools against a single pool, held-out rides, scored once. *A* uses one $\varepsilon$ for everything; *B* keeps the pooled form and deadband and fits $\varepsilon$ per region; *C* selects form, deadband and $\varepsilon$ independently inside each region. Cells: median $\lvert\Delta\%\rvert$ [95% CI] · median signed $\Delta\%$. Lineage: $O$ = `e60_regional.csv`.
 
 | region | A · one pool | B · regional $\varepsilon$ | C · regional selection |
 |---|--:|--:|--:|
@@ -497,11 +497,11 @@ Two caveats travel with this. Two landscapes are two data points, so the *values
 
 Route-level energy therefore identifies the flat resistance, not its division into rolling and aerodynamic shares. Two consequences for use follow. A reader who improves one of the two while leaving the other at its prior moves along a ridge rather than toward the truth, and can end up worse — the same shape of trap as improving one constant while another absorbs the error. And the apparent imprecision of the per-ride inversion in $C_{rr}$ ([§2.2](#2.2)) is not a defect of the method but a consequence of the quantity not being separately identifiable from route-level energy.
 
-**How precisely must the published constants be stated?** The decomposition above prices what a *user* supplies. [Table 4](#tab4) prices, on a single common scale, everything the model reads — including the two constants this paper publishes and a user simply inherits, the deadband $\tau$ and F4's scalar $c$.
+**How precisely must the published constants be stated?** The decomposition above prices what a *user* supplies. [Table 5](#tab5) prices, on a single common scale, everything the model reads — including the two constants this paper publishes and a user simply inherits, the deadband $\tau$ and F4's scalar $c$.
 
-<a id="tab4"></a>
+<a id="tab5"></a>
 
-**Table 4.** Cost of getting each constant wrong: the percentage increase in cross-validation loss when it is moved $\pm 10\%$ off its fitted value, worse side reported, on the training half under the physics of [§2.2](#2.2). Loss inflation rather than a derivative, because each parameter sits at a minimum where the derivative vanishes by construction. *Tolerable range* inverts the question — the multiplier at which the loss inflates by 50%, i.e. how much error a constant can absorb before it costs something. The last column gives the penalty at a *grossly* wrong value, which is the number that matters for the two the method supplies. Lineage: $O$ = `e56_struct.csv`.
+**Table 5.** Cost of getting each constant wrong: the percentage increase in cross-validation loss when it is moved $\pm 10\%$ off its fitted value, worse side reported, on the training half under the physics of [§2.2](#2.2). Loss inflation rather than a derivative, because each parameter sits at a minimum where the derivative vanishes by construction. *Tolerable range* inverts the question — the multiplier at which the loss inflates by 50%, i.e. how much error a constant can absorb before it costs something. The last column gives the penalty at a *grossly* wrong value, which is the number that matters for the two the method supplies. Lineage: $O$ = `e56_struct.csv`.
 
 | constant | supplied by | fitted | cost at ±10% | tolerable range | cost if badly wrong |
 |---|---|--:|--:|:--:|---|

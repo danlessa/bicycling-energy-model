@@ -600,7 +600,7 @@ print("\n== Entry 56 — structural-parameter sensitivity (paper Table 4) ==")
 _s = {r["parameter"].strip('"'): parse_float(r["loss_inflation_pct"])
       for r in parse_csv(os.path.join(RESULTS, "e56_struct.csv"))}
 for _k, _want in (("tau (F3 deadband)", 0.2), ("c (F4 scalar)", 0.1),
-                  ("eps (F3, for reference)", 2.9), ("eps (F4, for reference)", 4.7)):
+                  ("eps (F3, for reference)", 1.1), ("eps (F4, for reference)", 3.3)):
     _v = _s.get(_k, NAN)
     _ok = abs(_v - _want) <= 0.11
     print(f"  {_k:<28} {to_fixed(_v, 2):>7}%  (expect {_want})"

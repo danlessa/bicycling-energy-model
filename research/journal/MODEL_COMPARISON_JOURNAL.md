@@ -221,6 +221,85 @@ what the other rows *mean* without producing a per-ride table of their own.
 
 ---
 
+## 2026-07-31 — Entry 61: does the regional ε gap survive when behaviour is held fixed? — a synthetic sweep
+
+**Lineage** — $I$: (200 real route geometries from $D_3..D_5$ and $D_6$, synthetic physics) · $T$: $F_\mathrm{base}$ to generate, $F_1..F_4$ to fit · $O$: `e61_sweep.csv` · $S$: ε pooled by region under known physics
+
+*Prompt (Danilo): "Assuming Crr, CdA and m sample 100 distinct routes from D3-D5 and D6 each. Use
+the canonical engine to simulate by assuming that P is either one of P_flat, P_climb = P_flat *
+k_climb and P_descent = P_flat * k_descent. Use climbThr to select. Sweep … Then, fit and
+cross-validate F_1..F_4 against the resulting canonical energy work. Report the eps values pooled
+by region."*
+
+### Why this is the decisive experiment for §4.4.3
+
+Entry 60 found $\varepsilon \approx 0.24$ on São Paulo and $0.37$ on the European deposit. Two
+explanations fit that equally well and the empirical data cannot separate them:
+
+1. **Terrain.** The landscapes differ in descent length and grade distribution, so the same rider
+   would recover different fractions in each.
+2. **Behaviour.** The riders differ — European road riders coast and descend differently from São
+   Paulo commuters — and the corpora confound rider with place.
+
+This sweep separates them by construction. The canonical engine's behaviour is *fixed by the
+sweep* through $(k_\mathrm{climb}, k_\mathrm{descent})$: the same synthetic rider is run over both
+regions' geometries. **Any regional $\varepsilon$ gap that survives is terrain, because there is
+no rider left to vary.** If the gap vanishes, Entry 60's split is about people and the two-pool
+decision in §3.1.5 is measuring the wrong thing.
+
+It is also the simulation half of the landscape-class programme §4.4.3 sets out, on real route
+geometries rather than synthetic terrain — which is the version that avoids inventing a terrain
+generator whose properties would be doing the work.
+
+### Design, and one correction to it
+
+Routes: 100 drawn from $D_3..D_5$ and 100 from $D_6$, deterministic by seed. Ground truth is the
+canonical engine's leg energy; the closed forms are then fitted to it, so the experiment asks
+what $\varepsilon$ the *geometry plus known physics* implies, with the measurement noise of real
+power meters removed.
+
+| swept | values |
+|---|---|
+| $C_{rr}$ | 0.004, 0.008, **0.012** |
+| $C_dA$ | 0.30, 0.40, 0.50 |
+| $m$ | 70, 85, 100 kg |
+| $P_\mathrm{flat}$ | 50, 100, 200 W |
+| $k_\mathrm{climb}$ | 1, 1.5, 2 |
+| $k_\mathrm{descent}$ | 0, 0.1, 0.5 |
+
+**The $C_{rr}$ grid as written was 0.004, 0.008, 0.0012.** The third is read as **0.012**: 0.0012
+is below any plausible rolling coefficient and breaks the geometric progression the other two
+establish. Recorded rather than silently corrected.
+
+**Cost, and the reduction.** The full grid is $3^6 = 729$ combinations; canonical runs at 252 ms
+per route, so $729 \times 200 = 145{,}800$ simulations is **10.2 hours**. That is affordable but
+not interactive, so the first pass draws a **random 24-combination subsample of the grid** (seed
+53) over all 200 routes — 4,800 runs, about 20 minutes. The route sample is kept whole because
+the question is about *routes*; it is the physics grid that is subsampled, and a random draw over
+a full-factorial grid is unbiased for the marginal effects this entry reports. The full grid is
+worth running afterwards if the reduced pass shows anything.
+
+### Registered predictions
+
+- **P1** — a regional $\varepsilon$ gap appears with the same **sign** as Entry 60's: the D6
+  geometries want a higher $\varepsilon$ than the São Paulo ones.
+- **P2** — the gap is **smaller** than the empirical 0.133, because behaviour is now identical
+  across regions and can no longer contribute.
+- **P3** — $\varepsilon$ rises with $k_\mathrm{descent}$. It is defined as the recovered fraction,
+  and a rider pedalling on descents recovers more, so this is close to a sanity check on the
+  whole apparatus; if it fails, the fitting is wrong rather than the physics.
+- **P4** — $\varepsilon$ falls as $P_\mathrm{flat}$ rises, because $\alpha/\beta$ grows with $v_f$
+  and the coasting ceiling $\min(1, (\alpha/\beta)/s)$ rises with it — the mechanism of §4.4.2
+  predicts the direction and this is the first chance to test it under known physics.
+- **P5** — F3 fits the synthetic energy better than F1, F2 and F4, as it does the real data.
+
+### What each outcome means
+
+If **P1 holds**, the regional split is terrain and the landscape-class programme is well founded:
+$\varepsilon$ can in principle be predicted from geometry. If **P1 fails** — no gap, or the wrong
+sign — then Entry 60's split is rider-driven, §3.1.5's two pools are fitting a confound, and the
+paper must say so.
+
 ## 2026-07-31 — Entry 60: ε has a regional structure — separate pools for D3–D5 and D6
 
 **Lineage** — $I$: $(D_3..D_5, P_{f,r}^{\mathrm{rider}})$ and $(D_6, \cdot)$ · $T$: $F_3$ at $\tau = 6$ m · $O$: `e60_regional.csv` · $S$: two constants instead of one, and what the single one was costing
