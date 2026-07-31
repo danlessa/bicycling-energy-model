@@ -42,7 +42,7 @@ Descent recovery has a geometry (the recovery ceiling) and a habit (the deficit)
 3. **A descent term with a mechanism, held as a constant.** $\varepsilon$ is not a free coefficient: it decomposes into a parameter-free geometric ceiling and a behavioural shortfall whose ledger identity makes it a measurement of descent pedalling *occupancy*. A sensitivity decomposition shows that its value accounts for 7% of prediction-error variance against 55% for drag area, so this paper carries it as a calibrated constant and sets the decomposition, the candidate forms and the out-of-sample contest between them out as a research programme ([§3.2](#3.2), [§4.4.2](#4.4.2)).
 4. **An apportioned error budget, and a non-identifiability.** The variance of the prediction error is decomposed over the constants a user must supply. Drag area and mass dominate; more usefully, $C_dA$ and $C_{rr}$ are shown *not to be separately identified* by route-level energy — their sum is determined two to three times better than either part — so improving one alone can make an estimate worse ([§3.2](#3.2)).
 5. **A regime rule for the descent term** — dynamic $\varepsilon_d$ on open terrain, flat $\varepsilon_f$ in stop-go — together with its scope condition: only the (cost, refund) *pair* is identified by ride energies, so the rule holds per physics protocol and inverts if the law is re-paired without re-calibration ([§4.3](#4.3)).
-6. **External validation on an open deposit.** The frozen law carried to four European riders (Catalonia, Burgundy, the French Alps) who share no rider, country, terrain regime, recording device or model-selection history with the calibration set — and reaching its closest parity there, 3.16%<!--@c-d6.f3d.med--> against the simulation's 3.15% on 740 rides.
+6. **Evidence that the descent constant is a property of cycling, not of a rider.** Fitted on one person's rides and carried unchanged to six others who took no part in fitting it, it costs 0.5 pp of median accuracy<!--@c-e54.transfer-->, inside the margin registered in advance as the threshold for mattering — so the published number serves a user who contributed nothing to it. The corpus that makes this testable is an open European deposit (Catalonia, Burgundy, the French Alps) sharing no rider, country, terrain regime or recording device with the São Paulo data.
 
  The same corpus shows F4's scalar $c$ failing where the *form* does not, which is the sharpest evidence that $c$ belongs to the elevation source rather than to cycling: fitted freely on corpora whose elevation arrives pre-smoothed, it collapses to 0.03 m/km ([Table 1](#tab1), [Table 2](#tab2)).
 7. **A frozen-constants transfer methodology with a dual calibration protocol**: constants calibrated once and carried blind to independent riders and to 14× scale; an informed-vs-blind pair of calibration runs that prices per-ride condition knowledge; every published number re-derived by a gate battery, with per-entry research packages ([§2.4](#2.4)).
@@ -303,18 +303,18 @@ Each form reduces, per ride, to four geometry aggregates — route length, the d
 
 #### 2.4.1 Datasets and roles
 
-**Datasets.** Four corpora — 2,021 rides, of which D3–D5 are ridden overwhelmingly in and around São Paulo (a few away rides retained; [§2.1](#2.1)) and D6 entirely in Western Europe, all with per-second power meters ([Table 1](#tab1); [Figure 5](#fig5) draws every São Paulo route on one map — D6's are withheld, see below). Together they span seven riders, three recording platforms and two continents. Earlier drafts of this work also used two smaller corpora of the author's — a 44-ride brevet set and a 62-ride urban census — to calibrate the behavioural constants under assumed resistances. Both are subsets of D5 rather than independent data, and the constants they set are now fitted on D3–D6's training half instead ([§3.1](#3.1)), so neither is reported here; the lab journal retains their results.
+**Datasets.** Four corpora — 2,039 rides, of which D3–D5 are ridden overwhelmingly in and around São Paulo (a few away rides retained; [§2.1](#2.1)) and D6 entirely in Western Europe, all with per-second power meters ([Table 1](#tab1); [Figure 5](#fig5) draws every São Paulo route on one map — D6's are withheld, see below). Together they span seven riders, three recording platforms and two continents. Earlier drafts of this work also used two smaller corpora of the author's — a 44-ride brevet set and a 62-ride urban census — to calibrate the behavioural constants under assumed resistances. Both are subsets of D5 rather than independent data, and the constants they set are now fitted on D3–D6's training half instead ([§3.1](#3.1)), so neither is reported here; the lab journal retains their results.
 
 <a id="tab1"></a>
 
-**Table 1.** The four corpora and their roles.
+**Table 1.** The four corpora and their roles. *rides* is the population this paper evaluates — parses, carries power, and covers at least 3 km — which is the number every result below is drawn from.
 
 | corpus | rides (clean) | character | role |
 |---|--:|---|---|
 | D3 P. Paz | 441 | independent rider's full history, fast open-road | selection + held-out evaluation |
 | D4 JAAM | 219 | independent rider's full history, gentle terrain, strong descent-pedaller | selection + held-out evaluation |
-| D5 author-full | 621 | author's complete history | large-sample validation |
-| D6 scikit-cycling | 740 | four European riders (Catalonia, Burgundy, French Alps), open public deposit | selection + held-out evaluation — no shared country, terrain or device |
+| D5 author-full | 636 | author's complete history | large-sample validation |
+| D6 scikit-cycling | 743 | four European riders (Catalonia, Burgundy, French Alps), open public deposit | selection + held-out evaluation — no shared country, terrain or device |
 
 The roles, precisely:
 

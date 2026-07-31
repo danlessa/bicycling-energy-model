@@ -1,21 +1,35 @@
 #!/usr/bin/env python3
-"""bootstrap_ci.py — bootstrap 95% CIs + paired sign tests for the article's
-headline medians (journal Entry 22; article v0.16 §7.1/§8.1/§8.4/§8.6/§8.8).
+"""bootstrap_ci.py — the gate battery for every number the papers publish.
 
-Python port of the retired bootstrap_ci.mjs (byte-identical output).
+SCOPE, narrowed 2026-07-31: this battery gates the CURRENT claims of paper 1
+and paper 2, and nothing else. It used to carry twenty-two sections spanning
+every entry in the lab journal; eighteen of those gated results the papers no
+longer make — the frozen protocol, the D1/D2 corpora, the per-ride physics
+tables and the regime-aero tables all left paper 1 in the 2026-07 rewrite. A
+gate on a number nobody publishes is not a safety net, it is a slow test that
+fails for reasons the reader will never see, so those sections were retired
+with the prose they served. The lab journal retains every one of their results,
+and git history retains the code.
 
-Reads ONLY the per-ride CSVs already written by the other harnesses — no
-engine runs, no FIT parsing:
-  model_comparison.csv                      (compare.py, 44 longões)
-  censo_comparison.csv    (censo_compare, 62 clean)
-  ppaz_comparison.csv / jaam_comparison.csv (ppaz_compare / jaam_compare)
-  time_comparison.csv                       (time_compare)
+What remains is keyed to `pc:gateSection` in the article sidecars, and
+research/scripts/check_paper_stats.py asserts the correspondence both ways:
 
-Every published median is reproduced as a GATE (±0.11 tolerance for the
-1-decimal journal rounding) before its CI is reported; any gate failure
-exits non-zero. Bootstrap: percentile method, B = 10⁴, deterministic
-mulberry32 seed so the run is reproducible. Paired comparisons: exact
-two-sided sign test on |Δ%|.
+  1   corpus populations (paper 1, Table 1)
+  3i  elevation-source substitution (Entry 41, paper 2)
+  3p  parameter sensitivity, Sobol shares (Entry 50, paper 1 §3.2)
+  3q  the A-chain: selection and held-out error (Entries 52/55, paper 1 §3.1)
+  3r  leave-one-rider-out transfer (Entry 54, paper 1 §1.3 — its hypothesis)
+  3s  structural-parameter sensitivity (Entry 56, paper 1 Table 4)
+
+Reads ONLY per-ride CSVs already written by the other harnesses — no engine
+runs, no FIT parsing. Every published median is reproduced as a GATE before its
+CI is reported; any gate failure exits non-zero. Bootstrap: percentile method,
+B = 10⁴, deterministic mulberry32 seed so the run is reproducible. Paired
+comparisons: exact two-sided sign test on |Δ%|.
+
+Levers, both of which print a NON-AUTHORITATIVE banner: GATES=3q,3r computes
+intervals only in the named sections (medians still gate everywhere), and
+GATE_B lowers the resample count.
 
 Usage: python3 src/harness/bootstrap_ci.py
 """
@@ -277,480 +291,35 @@ def col(rows: list[dict], c: str) -> list[float]:
     return [x for x in (num(r, c) for r in rows) if is_finite(x)]
 
 
-# ---------- 1. Longões scoreboard (44 rides), §8.1 ----------
+
+# ---------- 1. Corpus populations (paper 1, Table 1) ----------
 sec("1")
-print("== Longões (44 power rides), §8.1 scoreboard ==")
-lg = parse_csv("model_comparison.csv")
-LG = [
-    ("approx cf + 2m smooth", "cfS_vs_emp", 3.5, 2.1, (2.0, 5.6)),
-    ("canonical", "canon_vs_emp", 5.2, -1.8, (3.8, 7.3)),
-    ("canonical + 2m smooth", "canonS_vs_emp", 5.7, -3.6, None),
-    ("approx cf + k_smooth", "ksmooth_vs_emp", 5.9, -0.6, (3.6, 8.3)),
-    ("approx cf + sheet v_f", "cfsheet_vs_emp", 7.2, -0.6, None),
-    ("approx cf + measured v_f", "cfmeas_vs_emp", 8.0, 6.6, None),
-    ("approx cf", "cf_vs_emp", 8.6, 8.4, (7.2, 11.0)),
-    ("approx off (baseline)", "off_vs_emp", 19.1, 19.1, (17.3, 21.5)),
-]
-for label, c, ea, es, eci in LG:
-    report(label, col(lg, c), ea, es, expect_ci=eci)
-paired("PAIRED champion (cfS) vs canonical", lg, "cfS_vs_emp", "canon_vs_emp",
-       expect_w=24, expect_p=0.65)   # section 3.1 quotes this as the parity evidence
-
-# ---------- 1b. Longões FROZEN protocol (Entry 31 / paper Table 2) ----------
-sec("1b")
-print("\n== Longões FROZEN protocol (44 rides), Entry 31 ==")
-lf = parse_csv("longoes_frozen.csv")
-LF = [
-    ("form 1 · ε_d (original)", "f1_d", 14.9, 14.0, (10.6, 22.6)),
-    ("form 2 · ε_d (split)", "f2_d", 7.9, 4.9, (5.5, 13.6)),
-    ("form 3 · ε_d (proposed)", "f3_d", 8.2, 2.2, (4.5, 10.8)),
-    ("form 4 · ε_d (scalar c)", "f4_d", 7.6, -0.5, (5.6, 11.6)),
-    ("canonical (frozen)", "canon_d", 8.4, 2.5, (5.1, 10.9)),
-]
-for label, c, ea, es, eci in LF:
-    report(label, col(lf, c), ea, es, expect_ci=eci)
-_nr = sorted(col(lf, "noise_rate"))
-_nm = median(_nr)
-_ok = abs(_nm - 3.1) <= 0.11
-print(f"ascent-noise rate: median {to_fixed(_nm, 2)} m/km "
-      f"[IQR {to_fixed(_nr[int(0.25*(len(_nr)-1))], 1)}–{to_fixed(_nr[int(0.75*(len(_nr)-1))], 1)}]"
-      + (" GATE-OK" if _ok else " GATE-FAIL(exp 3.1)"))
-if not _ok:
-    failed = True
-paired("PAIRED frozen form 3 vs canonical", lf, "f3_d", "canon_d")
-paired("PAIRED frozen form 4 vs canonical", lf, "f4_d", "canon_d")
-
-# ---------- 2. Censo sweep (62 clean rides), §8.4 ----------
-sec("2")
-print("\n== Censo (clean urban rides), §8.4 sweep ==")
-cz = [r for r in parse_csv("censo_comparison.csv") if r.get("dataOK") == "true"]
-if len(cz) != 62:
-    print(f"GATE-FAIL: expected 62 clean censo rides, got {len(cz)}")
-    failed = True
-CZ = [
-    ("canonical", "canon_d", 6.6, -3.5, (4.7, 8.7), None),
-    ("smooth · ε=0.10", "sm_0.10", 4.4, 3.3, None, None),
-    ("smooth · ε=0.15", "sm_0.15", 4.8, 1.1, None, None),
-    ("smooth · ε=0.20", "sm_0.20", 4.7, -0.9, (3.3, 6.2), None),
-    ("poor-man · ε=0.20", "pm_0.20", 3.9, 1.1, (3.2, 6.1), None),
-    ("poor-man · ε=0.25", "pm_0.25", 5.0, -1.4, None, None),
-    ("poor-man · ε=geom", "pm_geom", 6.4, -3.4, (4.8, 8.6), None),
-    ("smooth · ε=geom", "sm_geom", 7.7, -5.1, (6.0, 9.3), None),
-    ("smooth · ε=0.00", "sm_0.00", 7.4, 7.2, None, (4.9, 9.2)),
-    ("poor-man · ε=0.00", "pm_0.00", 10.4, 10.4, None, (8.2, 13.7)),
-]
-for label, c, ea, es, eci, ecis in CZ:
-    report(label, col(cz, c), ea, es, expect_ci=eci, expect_ci_signed=ecis)
-paired("PAIRED poor-man ε0.20 vs canonical", cz, "pm_0.20", "canon_d")
-paired("PAIRED frozen sm_geom vs canonical", cz, "sm_geom", "canon_d")
-paired("PAIRED frozen pm_geom vs canonical", cz, "pm_geom", "canon_d")
-
-# ---------- 3. P. Paz (441) and JAAM (219), §8.6 ----------
-sec("3")
-print("\n== P. Paz (441 rides), §8.6 ==")
-pp = parse_csv("ppaz_comparison.csv")
-report("poor-man · ε=geom", col(pp, "pm_geom"), 4.9, 0.6, expect_ci=(4.4, 5.8))
-report("smooth · ε=geom", col(pp, "sm_geom"), 5.8, 4.3, expect_ci=(5.3, 6.4))
-report("smooth · ε=0.20", col(pp, "sm_0.20"), 10.1, 10.0, expect_ci=(9.3, 10.7))
-report("poor-man · ε=0.20", col(pp, "pm_0.20"), 6.8, 5.4, expect_ci=(6.0, 7.6))
-report("canonical", col(pp, "canon_d"), 6.8, 5.0, expect_ci=(6.2, 7.8))
-paired("PAIRED pm_geom vs canonical", pp, "pm_geom", "canon_d")
-paired("PAIRED pm_geom vs sm_0.20", pp, "pm_geom", "sm_0.20")
-
-print("\n== JAAM (219 rides), §8.6 ==")
-jm = parse_csv("jaam_comparison.csv")
-report("smooth · ε=0.20", col(jm, "sm_0.20"), 3.5, 0.4, expect_ci=(3.1, 4.2))
-report("smooth · ε=geom", col(jm, "sm_geom"), 5.5, -4.7, expect_ci=(4.4, 6.4))
-report("poor-man · ε=geom", col(jm, "pm_geom"), 9.0, -8.4, expect_ci=(7.9, 9.7))
-report("poor-man · ε=0.20", col(jm, "pm_0.20"), 5.6, -4.3, expect_ci=(4.8, 6.4))
-report("canonical", col(jm, "canon_d"), 5.4, -5.0, expect_ci=(4.9, 6.1))
-paired("PAIRED sm_0.20 vs sm_geom", jm, "sm_0.20", "sm_geom")
-
-# JAAM real-descent statistics (paper §3.3; regenerated one-pass, Entry 31)
-_sub = [r for r in jm if r.get("dataOK") == "true"
-        and is_finite(num(r, "epsBal")) and is_finite(num(r, "epsCoast"))
-        and num(r, "sbar") >= 0.03]
-_eb = [num(r, "epsBal") for r in _sub]
-_pred = [num(r, "epsCoast") - 0.13 for r in _sub]
-_rms = lambda v: math.sqrt(sum(x * x for x in v) / len(v))
-_dyn = _rms([_eb[i] - _pred[i] for i in range(len(_eb))])
-_f20 = _rms([x - 0.20 for x in _eb])
-_best = _rms([x - median(_eb) for x in _eb])
-_ok = (len(_sub) == 21 and abs(_dyn - 0.090) <= 0.005
-       and abs(_f20 - 0.111) <= 0.005 and abs(_best - 0.085) <= 0.005)
-print(f"JAAM real descents: n={len(_sub)} rms_dyn={to_fixed(_dyn, 3)} "
-      f"rms_flat0.20={to_fixed(_f20, 3)} rms_best_in={to_fixed(_best, 3)}"
-      + (" GATE-OK" if _ok else " GATE-FAIL(exp n=21/0.090/0.111/0.085)"))
+print("== Corpus populations (paper Table 1) ==")
+_agg = parse_csv(os.path.join(RESULTS, "e52_aggregates.csv"))
+_want_pop = {"D3": 441, "D4": 219, "D5": 636, "D6": 743}
+_seen = {"D3": 0, "D4": 0, "D5": 0, "D6": 0}
+for _r in _agg:
+    _g = _r["group"]
+    _k = "D6" if _g.startswith("D6") else _g
+    if _k in _seen:
+        _seen[_k] += 1
+# Table 1 now reports the EVALUATED population, so the gate is exact equality.
+# It was written as `<=` on the assumption that Table 1's older "clean" counts
+# were a superset; they are not -- D5 and D6 evaluate 15 and 3 rides MORE than
+# those counts, because the eligibility rules differ. Table 1 was corrected to
+# the population the paper actually draws on, which is what this gate now pins.
+for _k in ("D3", "D4", "D5", "D6"):
+    _ok = _seen[_k] == _want_pop[_k]
+    print(f"  {_k} evaluated {_seen[_k]:>5} (expect {_want_pop[_k]})"
+          + (" GATE-OK" if _ok else " GATE-FAIL"))
+    if not _ok:
+        failed = True
+_ok = len(_agg) == 2039
+print(f"  D3-D6 evaluated total {len(_agg)} (expect 2,039)"
+      + (" GATE-OK" if _ok else " GATE-FAIL"))
 if not _ok:
     failed = True
 
-# ---------- 3b. Author-full D5 (621 rides), paper §3.4 ----------
-sec("3b")
-print("\n== Author-full (621 rides), paper §3.4 ==")
-dl = [r for r in parse_csv("danlessa_comparison.csv") if r.get("dataOK", "true") == "true"]
-if len(dl) != 621:
-    print(f"GATE-FAIL: expected 621 clean author-full rides, got {len(dl)}")
-    failed = True
-report("smooth · ε=geom", col(dl, "sm_geom"), 6.2, -0.3, expect_ci=(5.6, 6.9))
-report("poor-man · ε=geom", col(dl, "pm_geom"), 7.1, -1.9, expect_ci=(6.4, 8.1))
-report("smooth · ε=0.20", col(dl, "sm_0.20"), 8.1, 5.6, expect_ci=(7.3, 8.7))
-report("poor-man · ε=0.20", col(dl, "pm_0.20"), 6.9, 3.8, expect_ci=(6.2, 7.5))
-report("canonical", col(dl, "canon_d"), 6.1, None, expect_ci=(5.5, 6.7))
-
-# ---------- 3b2. Paired sign tests + descent statistics (paper §3.3-3.4) ----------
-sec("3b2")
-print("\n== Paired tests and descent statistics (paper §3.3-3.4) ==")
-paired("PAIRED D3 sm_geom vs canonical", pp, "sm_geom", "canon_d")
-paired("PAIRED D5 sm_geom vs canonical", dl, "sm_geom", "canon_d")
-
-
-def descent_rms(rows: list[dict], label: str, exp_n: int | None = None,
-                exp_pair: tuple[float, float] | None = None) -> None:
-    """Frozen dynamic-eps RMS vs the corpus's own in-sample best flat, on
-    real descents (s_bar >= 3%) — the paper's Table 4 RMS row."""
-    global failed
-    sub = [r for r in rows if r.get("dataOK", "true") == "true"
-           and is_finite(num(r, "epsBal")) and is_finite(num(r, "epsCoast"))
-           and num(r, "sbar") >= 0.03]
-    eb = [num(r, "epsBal") for r in sub]
-    pred = [num(r, "epsCoast") - 0.13 for r in sub]
-    rms = lambda v: math.sqrt(sum(x * x for x in v) / len(v))
-    dyn = rms([eb[i] - pred[i] for i in range(len(eb))])
-    flat_in = rms([x - median(eb) for x in eb])
-    gap = median([num(r, "epsCoast") for r in sub]) - median(eb)
-    ok = True
-    if exp_n is not None:
-        ok = ok and len(sub) == exp_n
-    if exp_pair is not None:
-        ok = ok and abs(dyn - exp_pair[0]) <= 0.002 and abs(flat_in - exp_pair[1]) <= 0.002
-    print(f"{label.ljust(34)} n={str(len(sub)).rjust(3)}  "
-          f"RMS dyn={to_fixed(dyn, 3)} vs own-flat={to_fixed(flat_in, 3)}  "
-          f"gap={to_fixed(gap, 2)}"
-          + ("" if exp_pair is None else (" GATE-OK" if ok else
-             f" GATE-FAIL(exp n={exp_n} {exp_pair})")))
-    if not ok:
-        failed = True
-
-
-descent_rms(pp, "D3 descents (assumed)", 161, (0.096, 0.145))
-descent_rms(jm, "D4 descents (assumed)", 21, (0.090, 0.085))
-descent_rms(dl, "D5 descents (in-sample)", 221, (0.092, 0.126))
-
-# ---------- 3c. Pooled D3-D5 (paper Table 3; stratified bootstrap) ----------
-sec("3c")
-print("\n== Pooled D3–D5 (1,281 rides), paper Table 3 ==")
-
-
-def strat_report(label: str, strata: list[list[float]], expect_abs: float,
-                 expect_ci: tuple[float, float]) -> None:
-    """Pooled median with stratified bootstrap: resample within each corpus,
-    pool, take the median (respects the within-corpus sampling model)."""
-    global failed
-    pooled_abs = [abs(x) for s in strata for x in s]
-    m = median(pooled_abs)
-
-    def ci(vals_per_stratum: list[list[float]], seed: int) -> tuple[float, float]:
-        if not _ci_wanted():
-            return float("nan"), float("nan")
-        rand = rng(seed)
-        stats = []
-        for _ in range(B):
-            samp = []
-            for s in vals_per_stratum:
-                n = len(s)
-                samp.extend(s[int(rand() * n)] for _ in range(n))
-            stats.append(median(samp))
-        stats.sort()
-        return stats[math.floor(0.025 * B)], stats[math.ceil(0.975 * B) - 1]
-
-    lo, hi = ci([[abs(x) for x in s] for s in strata], 42)
-    if not is_finite(lo):
-        _ok = abs(m - expect_abs) <= 0.11
-        print(f"{label.ljust(34)} n={len(pooled_abs)}  med|Δ%|={to_fixed(m, 2)}"
-              + ("  GATE-OK(median) CI-SKIP" if _ok else "  GATE-FAIL(median) CI-SKIP"))
-        if not _ok:
-            failed = True
-        return
-    ok = (abs(m - expect_abs) <= 0.11
-          and abs(lo - expect_ci[0]) <= 0.06 and abs(hi - expect_ci[1]) <= 0.06)
-    print(f"{label.ljust(34)} n={len(pooled_abs)}  med|Δ%|={to_fixed(m, 2)} "
-          f"[{to_fixed(lo, 1)}, {to_fixed(hi, 1)}]"
-          + (" GATE-OK" if ok else f" GATE-FAIL(exp {expect_abs} ci{expect_ci})"))
-    if not ok:
-        failed = True
-
-
-_strata_src = [pp, jm, dl]
-_strata_transfer = [pp, jm]
-for _lab, _col, _ea, _eci in (
-        ("pooled smooth · ε=geom", "sm_geom", 5.9, (5.5, 6.2)),
-        ("pooled poor-man · ε=geom", "pm_geom", 6.6, (6.3, 7.1)),
-        ("pooled smooth · ε=0.20", "sm_0.20", 7.5, (7.0, 8.0)),
-        ("pooled poor-man · ε=0.20", "pm_0.20", 6.6, (6.1, 7.0)),
-        ("pooled canonical", "canon_d", 6.2, (5.9, 6.6))):
-    strat_report(_lab, [col([r for r in rows_ if r.get("dataOK", "true") == "true"], _col)
-                        for rows_ in _strata_src], _ea, _eci)
-
-for _lab, _col, _es, _ecis in (
-        ("T3 pooled signed sm_geom", "sm_geom", 0.4, (-0.1, 1.1)),
-        ("T3 pooled signed pm_geom", "pm_geom", -2.4, (-3.0, -1.9)),
-        ("T3 pooled signed sm_flat", "sm_0.20", 5.9, (5.2, 6.5)),
-        ("T3 pooled signed pm_flat", "pm_0.20", 2.8, (2.2, 3.5)),
-        ("T3 pooled signed canon", "canon_d", 0.7, (0.1, 1.3))):
-    strat_signed_gate(_lab, [col([r for r in rows_ if r.get("dataOK", "true") == "true"], _col)
-                             for rows_ in _strata_src], _es, _ecis)
-
-# transfer-only pool (D3+D4) — the paper's out-of-sample headline (abs + signed)
-for _lab, _col, _ea, _eci, _es, _ecis in (
-        ("pooled D3+D4 smooth · ε=geom", "sm_geom", 5.6, (5.2, 6.2), 1.1, (0.4, 1.7)),
-        ("pooled D3+D4 canonical", "canon_d", 6.3, (5.8, 6.8), 1.3, (0.6, 2.0))):
-    _strata_cols = [col([r for r in rows_ if r.get("dataOK", "true") == "true"], _col)
-                    for rows_ in _strata_transfer]
-    strat_report(_lab, _strata_cols, _ea, _eci)
-    _pooled_signed = [x for v in _strata_cols for x in v]
-    _ms = median(_pooled_signed)
-    if not _ci_wanted():
-        print(f"{_lab} signed: medΔ%={to_fixed(_ms, 2)}  CI-SKIP")
-        continue
-    _rand = rng(43)
-    _stats = []
-    for _ in range(B):
-        _samp = []
-        for v in _strata_cols:
-            _n = len(v)
-            _samp.extend(v[int(_rand() * _n)] for _ in range(_n))
-        _stats.append(median(_samp))
-    _stats.sort()
-    _slo, _shi = _stats[250], _stats[9749]
-    _ok = (abs(_ms - _es) <= 0.11 and abs(_slo - _ecis[0]) <= 0.06
-           and abs(_shi - _ecis[1]) <= 0.06)
-    print(f"  signed: {to_fixed(_ms, 2)} [{to_fixed(_slo, 1)}, {to_fixed(_shi, 1)}]"
-          + (" GATE-OK" if _ok else f" GATE-FAIL(exp {_es} {_ecis})"))
-    if not _ok:
-        failed = True
-
-# ---------- 3d. Per-ride inverted physics (Entry 33 / paper Table 5) ----------
-sec("3d")
-print("\n== Per-ride inverted physics (Entry 33, Table 5) ==")
-pi = parse_csv("perride_invert.csv")
-PI = {
-    "censo": [("f3_d", 7.0, -3.1, (5.4, 9.5)), ("f3_f", 5.8, -0.5, (4.9, 7.8)),
-              ("f4_f", 5.4, 2.4, (3.2, 7.1)), ("canon_d", 7.8, -2.2, (4.7, 9.5))],
-    "ppaz": [("f3_d", 5.1, -3.8, (4.6, 5.5)), ("f3_f", 3.2, 0.2, (2.7, 3.6)),
-             ("f4_f", 4.8, -3.0, (4.3, 5.2)), ("canon_d", 5.7, -4.6, (5.3, 6.2))],
-    "jaam": [("f3_d", 6.0, -5.2, (5.2, 6.5)), ("f3_f", 3.1, -0.4, (2.6, 3.3)),
-             ("f4_f", 6.4, -5.3, (5.9, 7.0)), ("canon_d", 5.8, -4.9, (4.9, 6.5))],
-    "danlessa": [("f3_d", 7.5, -4.0, (7.1, 8.0)), ("f3_f", 5.3, 0.9, (4.6, 6.1)),
-                 ("f4_f", 5.8, -0.4, (5.3, 6.3)), ("canon_d", 7.2, -3.5, (6.7, 7.9))],
-}
-PI_M = {"longoes": 76.6, "censo": 82.3, "ppaz": 75.4, "jaam": 98.7, "danlessa": 73.7}
-for _corpus, _exp in (("ppaz", 7.1), ("jaam", 9.7), ("danlessa", 9.3)):
-    _sub = [r for r in pi if r.get("corpus") == _corpus]
-    _v = [abs(num(r, "f4_d")) for r in _sub if is_finite(num(r, "f4_d"))]
-    _ok = abs(median(_v) - _exp) <= 0.11
-    print(f"E33 {_corpus} f4_d (caption note): {to_fixed(median(_v), 2)}"
-          + (" GATE-OK" if _ok else f" GATE-FAIL(exp {_exp})"))
-    if not _ok:
-        failed = True
-for _corpus, _rows in PI.items():
-    _sub = [r for r in pi if r.get("corpus") == _corpus]
-    for _c, _ea, _es, _eci in _rows:
-        report(f"E33 {_corpus} {_c}", col(_sub, _c), _ea, _es, expect_ci=_eci)
-# pooled D3-D5 (Table 5 pooled column) — stratified, same convention as Table 3's pool
-_pi_strata = [[r for r in pi if r.get("corpus") == c] for c in ("ppaz", "jaam", "danlessa")]
-for _lab, _col, _ea, _eci in (
-        ("E33 pooled f3_d", "f3_d", 6.3, (6.0, 6.6)),
-        ("E33 pooled f3_f", "f3_f", 3.8, (3.6, 4.1)),
-        ("E33 pooled f4_f", "f4_f", 5.7, (5.2, 6.0)),
-        ("E33 pooled canon", "canon_d", 6.4, (6.1, 6.7))):
-    strat_report(_lab, [col(s, _col) for s in _pi_strata], _ea, _eci)
-# constants medians (Entry 33 constants table) + D1 per-ride mass accuracy
-for _corpus, _field, _src, _exp, _tol in (
-        ("ppaz", "crr_hat", "crr_src", 0.0083, 0.00011), ("jaam", "crr_hat", "crr_src", 0.0095, 0.00011),
-        ("danlessa", "crr_hat", "crr_src", 0.0088, 0.00011),
-        ("ppaz", "cda_hat", "cda_src", 0.258, 0.0011), ("jaam", "cda_hat", "cda_src", 0.391, 0.0011),
-        ("danlessa", "cda_hat", "cda_src", 0.293, 0.0011)):
-    _v = [num(r, _field) for r in pi if r.get("corpus") == _corpus
-          and r.get(_src) == "inverted"]
-    _ok = abs(median(_v) - _exp) <= _tol
-    print(f"E33 {_field} {_corpus}: {median(_v):.4f} (n={len(_v)})"
-          + (" GATE-OK" if _ok else f" GATE-FAIL(exp {_exp})"))
-    if not _ok:
-        failed = True
-_d1 = [r for r in pi if r.get("corpus") == "longoes" and r.get("m_src") in ("inverted", "thin")
-       and is_finite(num(r, "m_logged"))]
-_me = [num(r, "m_hat") - num(r, "m_logged") for r in _d1]
-_ok = abs(median(_me) - 2.4) <= 0.11 and abs(median([abs(e) for e in _me]) - 5.3) <= 0.11
-print(f"E33 D1 m̂−m_logged: bias {to_fixed(median(_me), 1)}, |err| "
-      f"{to_fixed(median([abs(e) for e in _me]), 1)} (n={len(_d1)})"
-      + (" GATE-OK" if _ok else " GATE-FAIL(exp +2.4/5.3)"))
-if not _ok:
-    failed = True
-# ---------- 3e. Regime-consistent aero (Entry 35 / paper Table 6) ----------
-sec("3e")
-print("\n== Regime-consistent aero (Entry 35, Table 6) ==")
-e35 = parse_csv("e35_residual.csv")
-T6 = {
-    "censo": [("f3_d_reg", 4.6, 1.4, (2.7, 6.1)), ("f3_f_reg", 8.0, 6.4, (6.4, 10.6)),
-              ("f4_f_reg", 8.4, 8.0, (7.2, 11.2)), ("canon_reg", 7.6, 4.6, (4.6, 9.9))],
-    "ppaz": [("f3_d_reg", 3.1, -1.3, (2.8, 3.3)), ("f3_f_reg", 4.0, 3.6, (3.3, 4.7)),
-             ("f4_f_reg", 3.9, -0.2, (3.5, 4.3)), ("canon_reg", 3.2, -1.2, (2.8, 3.6))],
-    "jaam": [("f3_d_reg", 3.2, -2.7, (2.8, 3.6)), ("f3_f_reg", 2.8, 2.5, (2.1, 3.4)),
-             ("f4_f_reg", 4.2, -2.4, (3.7, 4.8)), ("canon_reg", 3.3, -2.4, (2.6, 3.6))],
-    "danlessa": [("f3_d_reg", 4.9, -0.5, (4.6, 5.3)), ("f3_f_reg", 5.9, 4.8, (5.1, 6.7)),
-                 ("f4_f_reg", 5.3, 3.5, (4.7, 5.9)), ("canon_reg", 5.1, 0.3, (4.8, 5.7))],
-}
-for _corpus, _rows in T6.items():
-    _sub = [r for r in e35 if r.get("corpus") == _corpus]
-    for _c, _ea, _es, _eci in _rows:
-        report(f"T6 {_corpus} {_c}", col(_sub, _c), _ea, _es, expect_ci=_eci)
-_e35_strata = [[r for r in e35 if r.get("corpus") == c] for c in ("ppaz", "jaam", "danlessa")]
-for _lab, _col, _ea, _eci in (
-        ("T6 pooled f3_d_reg", "f3_d_reg", 3.9, (3.6, 4.1)),
-        ("T6 pooled f3_f_reg", "f3_f_reg", 4.5, (4.1, 4.8)),
-        ("T6 pooled f4_f_reg", "f4_f_reg", 4.5, (4.2, 4.8)),
-        ("T6 pooled canon_reg", "canon_reg", 4.0, (3.7, 4.2))):
-    strat_report(_lab, [col(s, _col) for s in _e35_strata], _ea, _eci)
-for _lab, _col, _es, _ecis in (
-        ("T6 pooled signed f3_d", "f3_d_reg", -1.4, (-1.8, -1.0)),
-        ("T6 pooled signed f3_f", "f3_f_reg", 3.8, (3.4, 4.2)),
-        ("T6 pooled signed f4_f", "f4_f_reg", 0.8, (0.2, 1.3)),
-        ("T6 pooled signed canon", "canon_reg", -0.8, (-1.1, -0.5))):
-    strat_signed_gate(_lab, [col(s, _col) for s in _e35_strata], _es, _ecis)
-
-# braking strict-reading medians (paper §3.4 prose: 0.6-0.8% open / 1.3-1.4% stop-heavy)
-for _corpus, _exp in (("longoes", 0.64), ("censo", 1.36), ("ppaz", 0.72),
-                      ("jaam", 0.79), ("danlessa", 1.34)):
-    _v = [num(r, "brake_share_cad0_pct") for r in e35 if r.get("corpus") == _corpus
-          and is_finite(num(r, "brake_share_cad0_pct"))]
-    _ok = abs(median(_v) - _exp) <= 0.011
-    print(f"T6 brake-strict {_corpus}: {to_fixed(median(_v), 2)}%"
-          + (" GATE-OK" if _ok else f" GATE-FAIL(exp {_exp})"))
-    if not _ok:
-        failed = True
-
-# ---------- 3f. eps0 per dataset (Entry 36) ----------
-sec("3f")
-print("\n== ε₀ per dataset (Entry 36) ==")
-e36 = parse_csv("e36_eps0.csv")
-for _corpus, _bal, _bias in (("longoes", 0.113, 0.127), ("censo", 0.070, 0.099),
-                             ("ppaz", 0.115, 0.201), ("jaam", 0.098, 0.356),
-                             ("danlessa", 0.115, 0.153)):
-    _sub = [r for r in e36 if r.get("corpus") == _corpus]
-    _g = [num(r, "gapR") for r in _sub if is_finite(num(r, "gapR"))
-          and num(r, "balR_sbar") >= 0.03]
-    _b = [num(r, "eps0_bias_i") for r in _sub if is_finite(num(r, "eps0_bias_i"))]
-    _ok = abs(median(_g) - _bal) <= 0.0011 and abs(median(_b) - _bias) <= 0.0011
-    print(f"E36 {_corpus}: balance-ε₀ {median(_g):.3f} bias-ε₀ {median(_b):.3f}"
-          + (" GATE-OK" if _ok else f" GATE-FAIL(exp {_bal}/{_bias})"))
-    if not _ok:
-        failed = True
-
-_e36_str = [[r for r in e36 if r.get("corpus") == c] for c in ("ppaz", "jaam", "danlessa")]
-_pg = [num(r, "gapR") for s in _e36_str for r in s
-       if is_finite(num(r, "gapR")) and num(r, "balR_sbar") >= 0.03]
-_pf = [num(r, "gapF") for s in _e36_str for r in s
-       if is_finite(num(r, "gapF")) and num(r, "balR_sbar") >= 0.03]
-_pb = [num(r, "eps0_bias_i") for s in _e36_str for r in s if is_finite(num(r, "eps0_bias_i"))]
-_ok = (abs(median(_pg) - 0.115) <= 0.0011 and abs(median(_pf) - 0.109) <= 0.0011
-       and abs(median(_pb) - 0.202) <= 0.0011)
-print(f"E36 pooled D3-D5: balance-ε₀ reg {median(_pg):.3f} frz {median(_pf):.3f} "
-      f"bias-ε₀ {median(_pb):.3f}" + (" GATE-OK" if _ok else " GATE-FAIL(exp .115/.109/.202)"))
-if not _ok:
-    failed = True
-
-_pi_str = [[r for r in pi if r.get("corpus") == c] for c in ("ppaz", "jaam", "danlessa")]
-for _lab, _col, _es, _ecis in (
-        ("T5 pooled signed f3_d", "f3_d", -4.2, (-4.5, -3.7)),
-        ("T5 pooled signed f3_f", "f3_f", 0.4, (-0.0, 0.8)),
-        ("T5 pooled signed f4_f", "f4_f", -2.4, (-2.7, -1.9)),
-        ("T5 pooled signed canon", "canon_d", -4.3, (-4.7, -3.9))):
-    strat_signed_gate(_lab, [col(s, _col) for s in _pi_str], _es, _ecis)
-
-for _corpus, _em in PI_M.items():
-    _mv = [num(r, "m_hat") for r in pi if r.get("corpus") == _corpus
-           and r.get("m_src") in ("inverted", "thin")]
-    _ok = abs(median(_mv) - _em) <= 0.11
-    print(f"E33 m̂ {_corpus}: {to_fixed(median(_mv), 1)} (n={len(_mv)})"
-          + (" GATE-OK" if _ok else f" GATE-FAIL(exp {_em})"))
-    if not _ok:
-        failed = True
-
-# ---------- 3g. Deadband-suspension thread (Entries 38-40 / paper §4.4) ----------
-sec("3g")
-print("\n== Deadband thread (E39 τ* + E40 roller), §4.4 ==")
-e39 = parse_csv("e39_tau_reg.csv")
-_j39 = [r for r in e39 if r.get("corpus") == "jaam"]
-_w = sum(1 for r in _j39 if is_finite(num(r, "t30_d")) and is_finite(num(r, "t20_d"))
-         and abs(num(r, "t30_d")) < abs(num(r, "t20_d")))
-_l = sum(1 for r in _j39 if is_finite(num(r, "t30_d")) and is_finite(num(r, "t20_d"))
-         and abs(num(r, "t30_d")) > abs(num(r, "t20_d")))
-_m35 = median([abs(num(r, "t35_d")) for r in _j39 if is_finite(num(r, "t35_d"))])
-_m20 = median([abs(num(r, "t20_d")) for r in _j39 if is_finite(num(r, "t20_d"))])
-_ok = (_w == 137 and _w + _l == 215 and sign_p(_w, _l) <= 0.001
-       and abs(_m35 - 3.06) <= 0.011 and abs(_m20 - 3.24) <= 0.011)
-print(f"E39 jaam: τ=3 beats τ=2 on {_w}/{_w + _l} (p={to_fixed(sign_p(_w, _l), 5)}); "
-      f"med|Δ%| τ3.5={to_fixed(_m35, 2)} τ2.0={to_fixed(_m20, 2)}"
-      + (" GATE-OK" if _ok else " GATE-FAIL(exp 137/215, 3.06/3.24)"))
-if not _ok:
-    failed = True
-
-
-def _ranks(v: list) -> list:
-    idx = sorted(range(len(v)), key=lambda i: v[i])
-    r = [0.0] * len(v)
-    for rank, i in enumerate(idx):
-        r[i] = rank
-    return r
-
-
-def _spearman(xs: list, ys: list) -> float:
-    rx, ry = _ranks(xs), _ranks(ys)
-    mx, my = sum(rx) / len(rx), sum(ry) / len(ry)
-    n_ = sum((rx[i] - mx) * (ry[i] - my) for i in range(len(rx)))
-    d_ = math.sqrt(sum((r - mx) ** 2 for r in rx) * sum((r - my) ** 2 for r in ry))
-    return n_ / d_ if d_ > 0 else NAN
-
-
-e40 = parse_csv("e40_roller.csv")
-for _corpus, _erho, _eres in (("longoes", 0.444, 0.48), ("censo", 0.125, 0.44),
-                              ("ppaz", 0.204, 0.23), ("jaam", 0.429, 0.03),
-                              ("danlessa", 0.394, 0.46)):
-    _sub = [r for r in e40 if r.get("corpus") == _corpus]
-    _xy = [(num(r, "res_pct"), num(r, "f3_d_reg")) for r in _sub
-           if is_finite(num(r, "res_pct")) and is_finite(num(r, "f3_d_reg"))]
-    _rho = _spearman([a for a, _ in _xy], [b for _, b in _xy])
-    _res = median([a for a, _ in _xy])
-    _ok = abs(_rho - _erho) <= 0.0015 and abs(_res - _eres) <= 0.011
-    print(f"E40 {_corpus}: ρ(RES,Δ%)={_rho:+.3f} RES med={to_fixed(_res, 2)}%"
-          + (" GATE-OK" if _ok else f" GATE-FAIL(exp {_erho}/{_eres})"))
-    if not _ok:
-        failed = True
-
-# ---------- 3h. Lumped-eps proxy (Entry 42) ----------
-sec("3h")
-print("\n== Lumped ε proxy (Entry 42) ==")
-e42 = parse_csv("e42_lump.csv")
-for _corpus, _de in (("longoes", -0.079), ("censo", -0.112), ("ppaz", -0.083),
-                     ("jaam", -0.110), ("danlessa", -0.098)):
-    _v = [num(r, "d_eps") for r in e42 if r.get("corpus") == _corpus
-          and is_finite(num(r, "d_eps"))]
-    _ok = abs(median(_v) - _de) <= 0.0011
-    print(f"E42 {_corpus}: med(ε_lump − ε_d) = {median(_v):+.3f}"
-          + (" GATE-OK" if _ok else f" GATE-FAIL(exp {_de})"))
-    if not _ok:
-        failed = True
-for _corpus, _w, _n in (("censo", 16, 69), ("jaam", 143, 215)):
-    _sub = [r for r in e42 if r.get("corpus") == _corpus]
-    _wc = sum(1 for r in _sub if is_finite(num(r, "f3_lump")) and is_finite(num(r, "f3_d"))
-              and abs(num(r, "f3_lump")) < abs(num(r, "f3_d")))
-    _lc = sum(1 for r in _sub if is_finite(num(r, "f3_lump")) and is_finite(num(r, "f3_d"))
-              and abs(num(r, "f3_lump")) > abs(num(r, "f3_d")))
-    _ok = _wc == _w and _wc + _lc == _n and sign_p(_wc, _lc) <= 0.001
-    print(f"E42 paired {_corpus}: {_wc}/{_wc + _lc}"
-          + (" GATE-OK" if _ok else f" GATE-FAIL(exp {_w}/{_n})"))
-    if not _ok:
-        failed = True
 
 # ---------- 3i. Elevation-source substitution (Entry 41 / paper 2) ----------
 sec("3i")
@@ -908,680 +477,6 @@ for _arm, _ew, _en in (("igc5", 501, 943), ("igc5s30", 400, 935),
     if not _ok:
         failed = True
 
-# ---------- 3j. D6 + the deficit's form (Entries 43-45, paper §1.3.2/§3.2) ----------
-sec("3j")
-print("\n== D6 European corpus (Entry 43) ==")
-d6 = parse_csv("skc_comparison.csv")
-_d6ok = [r for r in d6 if r.get("dataOK", "true") == "true"]
-_ok = len(d6) == 743 and len(_d6ok) == 740
-print(f"E43 population: {len(d6)} evaluated, {len(_d6ok)} above the physical floor"
-      + (" GATE-OK" if _ok else " GATE-FAIL(exp 743/740)"))
-if not _ok:
-    failed = True
-_riders = ["user_1", "user_2", "user_3", "user_5"]
-_d6str = [[r for r in _d6ok if r.get("rider") == u] for u in _riders]
-# Guard: an empty stratum means a filter matched nothing (a renamed column, or a
-# boolean written "True" where every other harness writes "true" — both happened
-# while this section was being written). Report it as a FAILURE rather than
-# crashing the battery on an empty median, which is what it did the first time.
-if not all(_d6str) or not _d6ok:
-    print("E43 strata: EMPTY — a filter matched nothing GATE-FAIL")
-    failed = True
-else:
-    # strat_report REQUIRES an expected CI — passing None crashed it on the
-    # `abs(lo - expect_ci[0])` comparison. The bands are Entry 43's published
-    # stratified brackets.
-    # Every cell of Table 3's D6 column, not only the two the text quotes: an
-    # ungated cell in a published table is the failure mode this section exists
-    # for. F4's columns are gated at their DEGRADED values on purpose — c = 3 m/km
-    # is not transferable to D6's cleaner chain, and the table says so.
-    for _lab, _col_, _ea, _eci in (("E43 T3/D6 F3·ε_d", "f3_d", 3.16, (2.9, 3.5)),
-                                   ("E43 T3/D6 F4·ε_d", "f4_d", 4.04, (3.8, 4.4)),
-                                   ("E43 T3/D6 F3·ε_f", "f3_f", 8.45, (8.0, 8.8)),
-                                   ("E43 T3/D6 F4·ε_f", "f4_f", 3.58, (3.2, 3.9)),
-                                   ("E43 T3/D6 simulation", "canon_d", 3.15, (2.9, 3.3))):
-        strat_report(_lab, [col(s, _col_) for s in _d6str], _ea, _eci)
-    # the fourth deficit gap, now that all four are printed in §3.3.2
-    _v5 = [num(r, "eps_gap") for r in _d6ok if r.get("rider") == "user_5"
-           and is_finite(num(r, "eps_gap"))]
-    _ok = bool(_v5) and abs(median(_v5) - 0.175) <= 0.006
-    print(f"E43 deficit gap user_5: {median(_v5):.3f}"
-          + (" GATE-OK" if _ok else " GATE-FAIL(exp 0.175)"))
-    if not _ok:
-        failed = True
-    # the corpus counts the paper now states in Table 1 and its title
-    _ok = len(_d6ok) == 740
-    print(f"E43 Table 1 count: D6 clean = {len(_d6ok)} (paper states 740; "
-          f"totals 2,025 unique / 2,127 evaluations)"
-          + (" GATE-OK" if _ok else " GATE-FAIL(exp 740)"))
-    if not _ok:
-        failed = True
-# P2: F4's bias sits 3-6 points BELOW F3's, predicted from the corpus noise rate
-_b3 = median(col(_d6ok, "f3_d"))
-_b4 = median(col(_d6ok, "f4_d"))
-_ok = -6.0 <= _b4 - _b3 <= -3.0
-print(f"E43 P2 F4−F3 bias delta = {_b4 - _b3:+.2f} points"
-      + (" GATE-OK" if _ok else " GATE-FAIL(exp -6..-3)"))
-if not _ok:
-    failed = True
-# the measured noise rate that P2 was derived from, before any energy was computed
-_nr = median(col(_d6ok, "noise_rate"))
-_ok = abs(_nr - 1.24) <= 0.05
-print(f"E43 noise rate c = {_nr:.2f} m/km"
-      + (" GATE-OK" if _ok else " GATE-FAIL(exp 1.24)"))
-if not _ok:
-    failed = True
-# P3: the deficit spread across riders — the paper's portability bound
-for _u, _g in (("user_1", 0.117), ("user_2", 0.298), ("user_3", 0.080)):
-    _v = [num(r, "eps_gap") for r in _d6ok if r.get("rider") == _u
-          and is_finite(num(r, "eps_gap"))]
-    _ok = abs(median(_v) - _g) <= 0.006
-    print(f"E43 deficit gap {_u}: {median(_v):.3f}"
-          + (" GATE-OK" if _ok else f" GATE-FAIL(exp {_g})"))
-    if not _ok:
-        failed = True
-
-print("\n== Occupancy sigmoids (Entry 44, paper §1.3.2) ==")
-e44 = parse_csv("e44_scurve_fits.csv")
-_s50 = {r["group"]: num(r, "s50_pct") for r in e44}
-# the article claims the two rider populations do not overlap in s50
-_br = [_s50[g] for g in ("D1", "D3", "D4", "D5") if g in _s50]
-_eu = [_s50[g] for g in _s50 if g.startswith("D6")]
-_ok = bool(_br) and bool(_eu) and max(_br) < min(_eu)
-print(f"E44 s50: Brazilian {min(_br):.1f}-{max(_br):.1f}% vs European "
-      f"{min(_eu):.1f}-{max(_eu):.1f}%"
-      + (" GATE-OK (disjoint)" if _ok else " GATE-FAIL(expected disjoint)"))
-if not _ok:
-    failed = True
-# H-P2 refuted: slope must beat speed on held-out RMSE by a wide margin
-_sr = median([num(r, "s_rmse_out") for r in e44 if is_finite(num(r, "s_rmse_out"))])
-_vr = median([num(r, "v_rmse_out") for r in e44 if is_finite(num(r, "v_rmse_out"))])
-_ok = _vr / _sr >= 2.5
-print(f"E44 slope vs speed held-out RMSE: {_sr:.4f} vs {_vr:.4f} ({_vr/_sr:.1f}x)"
-      + (" GATE-OK" if _ok else " GATE-FAIL(exp >=2.5x)"))
-if not _ok:
-    failed = True
-
-print("\n== Grade-inverse deficit, eq. (8) (Entry 45, paper §3.2.1) ==")
-# eq. (8)'s constant is fitted on paper 1's CLAMPED quantity. Refitting it here
-# from the per-ride CSV is the gate: it catches the clamped/unclamped mix-up that
-# produced three wrong readings while this entry was being written.
-e45 = parse_csv("e45_ridelevel.paper.csv")
-# Compare `half` NUMERICALLY: the CSV writer formats every non-string as a float,
-# so the column holds "0.00000"/"1.00000" and a string test against "0" silently
-# selects nothing. Third filter-matched-nothing bug in this section; numeric
-# comparison is robust to either format.
-_fit = [r for r in e45 if num(r, "half") < 0.5 and is_finite(num(r, "d_meas"))]
-_out = [r for r in e45 if num(r, "half") >= 0.5 and is_finite(num(r, "d_meas"))]
-if not _fit or not _out:
-    print(f"E45 split: fit={len(_fit)} out={len(_out)} — a filter matched nothing GATE-FAIL")
-    failed = True
-else:
-    _k = median([num(r, "d_meas") * num(r, "s_bar") for r in _fit])
-    _ok = abs(_k - 0.0051) <= 0.0002
-    print(f"E45 eq.(8) k = {_k:.4f} (n_fit={len(_fit)})"
-          + (" GATE-OK" if _ok else " GATE-FAIL(exp 0.0051)"))
-    if not _ok:
-        failed = True
-    # eq. (8) must return the frozen 0.13 at the calibration corpus's typical descent
-    # Tolerance tightened to +/-0.001 and the expectation corrected to 0.130.
-    # At +/-0.004 this gate PASSED while the article printed 0.131 — a number
-    # derived from the ROUNDED k (0.0051/0.039 = 0.1308) rather than the fitted
-    # one (0.00506/0.039 = 0.1297). A gate whose tolerance exceeds the rounding
-    # precision of the claim cannot defend that claim.
-    # Anchored on D1's MEASURED median descent grade, recomputed here. The
-    # previous version used 3.9% — which is the grade at which eq. (8) exactly
-    # equals 0.13, i.e. reverse-engineered from the desired output and then
-    # described in the article as "D1's typical descent". D1's median is 3.80%.
-    _d1s = [num(r, "s_bar") for r in e45 if r.get("group") == "D1"
-            and is_finite(num(r, "s_bar"))]
-    _at = _k / median(_d1s) if _d1s else float("nan")
-    _ok = bool(_d1s) and abs(_at - 0.133) <= 0.002
-    print(f"E45 eq.(8) at D1's median s̄={100*median(_d1s):.2f}%: {_at:.4f} "
-          f"(article claims 0.133)"
-          + (" GATE-OK" if _ok else " GATE-FAIL(exp 0.133)"))
-    if not _ok:
-        failed = True
-    # held-out: eq. (8) beats the best single constant, and by the published margin
-    _apr = median([num(r, "d_meas") for r in _fit])
-    _eg = median([abs(_k / num(r, "s_bar") - num(r, "d_meas")) for r in _out
-                  if num(r, "s_bar") > 0])
-    _ea = median([abs(_apr - num(r, "d_meas")) for r in _out])
-    _w = sum(1 for r in _out if num(r, "s_bar") > 0
-             and abs(_k / num(r, "s_bar") - num(r, "d_meas")) < abs(_apr - num(r, "d_meas")))
-    _l = sum(1 for r in _out if num(r, "s_bar") > 0
-             and abs(_k / num(r, "s_bar") - num(r, "d_meas")) > abs(_apr - num(r, "d_meas")))
-    _ok = (abs(_eg - 0.055) <= 0.003 and abs(_ea - 0.067) <= 0.003
-           and _w == 344 and sign_p(_w, _l) <= 1e-4)
-    print(f"E45 held-out: eq.(8) {_eg:.4f} vs constant {_ea:.4f}, wins {_w}/{_w + _l}, "
-          f"p={sign_p(_w, _l):.1e}"
-          + (" GATE-OK" if _ok else " GATE-FAIL(exp 0.055/0.067/344)"))
-    if not _ok:
-        failed = True
-    # The RANGE the contest covers, not just its result. 3.2.1 now claims eps_2
-    # beats eps_0 "in that regime and not gentler terrain"; this gate fails if a
-    # rerun ever admits a ride below 3%, which would silently widen the claim.
-    _sb = sorted(num(r, "s_bar") for r in e45 if is_finite(num(r, "s_bar")))
-    _ok = bool(_sb) and _sb[0] >= 0.0299 and 0.09 <= _sb[-1] <= 0.10
-    print(f"E45 tested range: s̄ = {100*_sb[0]:.2f}%–{100*_sb[-1]:.2f}%, "
-          f"{sum(1 for x in _sb if x < 0.03)} rides below 3%"
-          + (" GATE-OK" if _ok else " GATE-FAIL(exp 3.00-9.69%, none below 3%)"))
-    if not _ok:
-        failed = True
-    # the scope figure the article leans on: half the rides fall BELOW the 3% regime
-    # The article's scope figure is about the evaluation behind TABLE 3, i.e.
-    # D2-D5 (1,366 rides), NOT all nine corpora scored in Entry 45 (2,155, which
-    # adds D1 and 745 rides of an external deposit this paper never introduces).
-    # The first version of this gate used 2155 and so certified 52% when the
-    # article's own claim needs 69% — a mismatched denominator the gate could not
-    # see because it hardcoded the same wrong one.
-    _t3 = [r for r in e45 if r.get("group") in ("D2", "D3", "D4", "D5")]
-    _t3n = 1366
-    _share = 1 - len(_t3) / _t3n
-    _ok = 0.66 <= _share <= 0.71
-    print(f"E45 scope (Table 3 corpora): {len(_t3)} of {_t3n} at s̄>=3% -> "
-          f"{100*_share:.0f}% below the regime threshold"
-          + (" GATE-OK" if _ok else " GATE-FAIL(exp ~69%)"))
-    if not _ok:
-        failed = True
-
-# ---------- 3k. D6 in Tables 5-6, and the D3-D6 pools (Entry 43) ----------
-sec("3k")
-print("\n== D6 in Tables 5-6 + the D3-D6 pools ==")
-_ski = parse_csv("skc_invert.csv")
-_D6R = ["user_1", "user_2", "user_3", "user_5"]
-_skist = [[r for r in _ski if r.get("rider") == u] for u in _D6R]
-if not all(_skist):
-    print("E43 skc_invert strata: EMPTY GATE-FAIL")
-    failed = True
-else:
-    # Table 5 = Entry-33 segment CdA (the _t5 columns); Table 6 = regime-consistent.
-    for _lab, _c, _ea, _eci in (
-            ("E43 T5/D6 F3·ε_d", "f3_d_t5", 4.3, (3.8, 4.5)),
-            ("E43 T5/D6 F3·ε_f", "f3_f_t5", 5.4, (5.0, 6.0)),
-            ("E43 T5/D6 F4·ε_f", "f4_f_t5", 4.6, (4.2, 5.0)),
-            ("E43 T5/D6 simulation", "canon_d_t5", 4.2, (3.9, 4.4)),
-            ("E43 T6/D6 F3·ε_d", "f3_d", 3.0, (2.7, 3.3)),
-            ("E43 T6/D6 F3·ε_f", "f3_f", 6.7, (6.4, 7.0)),
-            ("E43 T6/D6 F4·ε_f", "f4_f", 2.5, (2.3, 2.7)),
-            ("E43 T6/D6 simulation", "canon_d", 1.6, (1.5, 1.8))):
-        strat_report(_lab, [col(s_, _c) for s_ in _skist], _ea, _eci)
-
-# The D3-D6 pools: SEVEN rider strata, because for D3-D5 one corpus is one rider
-# and D6 contributes four. Mixing conventions (three corpus strata plus D6 as a
-# fourth) would understate D6's within-corpus variance.
-_d6c = [r for r in d6 if r.get("dataOK", "true") == "true"]
-_d6cst = [[r for r in _d6c if r.get("rider") == u] for u in _D6R]
-_br3 = [[r for r in pp if r.get("dataOK", "true") == "true"],
-        [r for r in jm if r.get("dataOK", "true") == "true"],
-        [r for r in dl if r.get("dataOK", "true") == "true"]]
-_pri = parse_csv("perride_invert.csv")
-_brP = [[r for r in _pri if r.get("corpus") == c] for c in ("ppaz", "jaam", "danlessa")]
-_brE = [[r for r in e35 if r.get("corpus") == c] for c in ("ppaz", "jaam", "danlessa")]
-for _tab, _br, _d6s, _rows in (
-        ("T3", _br3, _d6cst, [("F3·ε_d", "sm_geom", "f3_d", 4.9, (4.7, 5.1)),
-                              ("F4·ε_d", "pm_geom", "f4_d", 5.3, (5.0, 5.6)),
-                              ("F3·ε_f", "sm_0.20", "f3_f", 8.0, (7.6, 8.3)),
-                              ("F4·ε_f", "pm_0.20", "f4_f", 5.3, (5.1, 5.6)),
-                              ("simulation", "canon_d", "canon_d", 4.8, (4.6, 5.1))]),
-        ("T5", _brP, _skist, [("F3·ε_d", "f3_d", "f3_d_t5", 5.5, (5.2, 5.7)),
-                              ("F3·ε_f", "f3_f", "f3_f_t5", 4.4, (4.1, 4.7)),
-                              ("F4·ε_f", "f4_f", "f4_f_t5", 5.2, (5.0, 5.5)),
-                              ("simulation", "canon_d", "canon_d_t5", 5.5, (5.2, 5.7))]),
-        ("T6", _brE, _skist, [("F3·ε_d", "f3_d_reg", "f3_d", 3.5, (3.4, 3.6)),
-                              ("F3·ε_f", "f3_f_reg", "f3_f", 5.7, (5.4, 5.9)),
-                              ("F4·ε_f", "f4_f_reg", "f4_f", 3.7, (3.5, 3.9)),
-                              ("simulation", "canon_reg", "canon_d", 2.7, (2.6, 2.9))])):
-    for _lab, _cbr, _cd6, _ea, _eci in _rows:
-        _strata = [col(x, _cbr) for x in _br] + [col(x, _cd6) for x in _d6s]
-        strat_report(f"E43 {_tab} D3-D6 {_lab}", _strata, _ea, _eci)
-
-# ---------- 4. Time model, P. Paz (§8.8 primary endpoint) ----------
-sec("4")
-# Target = tMovBin, exactly as time_compare's scoreboard() scores it.
-print("\n== Time model, P. Paz (§8.8 primary endpoint) ==")
-tm = [r for r in parse_csv("time_comparison.csv") if r.get("corpus") == "ppaz"]
-
-
-def t_delta(r: dict, c: str) -> float:
-    return 100 * (num(r, c) - num(r, "tMovBin")) / num(r, "tMovBin")
-
-
-report("T1b full (frozen)", [x for x in (t_delta(r, "T1b_pred") for r in tm) if is_finite(x)], 6.6, 3.8, expect_ci=(5.9, 7.2))
-report("T0 naive x/v_f", [x for x in (t_delta(r, "T0_pred") for r in tm) if is_finite(x)], 7.6, None, expect_ci=(7.0, 8.5))
-_tw = sum(1 for r in tm if is_finite(t_delta(r, "T1b_pred")) and is_finite(t_delta(r, "T0_pred"))
-          and abs(t_delta(r, "T1b_pred")) < abs(t_delta(r, "T0_pred")))
-_tl = sum(1 for r in tm if is_finite(t_delta(r, "T1b_pred")) and is_finite(t_delta(r, "T0_pred"))
-          and abs(t_delta(r, "T1b_pred")) > abs(t_delta(r, "T0_pred")))
-_tp = sign_p(_tw, _tl)
-_ok = _tw == 243 and abs(_tp - 0.012) <= 0.001
-print(f"PAIRED T1b vs T0: {_tw}/{_tw + _tl}, p={to_fixed(_tp, 4)}"
-      + (" GATE-OK" if _ok else " GATE-FAIL(exp 243/433 p=0.012)"))
-if not _ok:
-    failed = True
-
-# ---------------------------------------------------------------- 3l. Entry 47
-sec("3l")
-# Deficit-form selection. The contest is RE-DERIVED here from the per-ride CSV
-# rather than compared against transcribed numbers: the gate refits all four
-# forms and re-applies the DeltaBIC < 2 -> fewest-parameters rule, so a change in
-# the fitting code fails the gate instead of quietly moving the champion.
-# Populations are counted, never asserted.
-#
-# Each ride is packed ONCE into a numeric tuple; re-parsing CSV strings inside a
-# 15M-iteration fit loop made this section slower than the whole rest of the
-# battery. The 2-parameter form is fitted on a coarser grid than the harness
-# uses -- that can only OVERstate its BIC, never promote it, and it trails the
-# champion by >= 4.2 in every arm.
-print("\n== Deficit-form selection (Entry 47, journal only — nothing published moves) ==")
-
-_e47 = parse_csv("e47_formselect.csv")
-
-
-def _e47f(r: dict, k: str) -> float:
-    try:
-        return float(r[k])
-    except (KeyError, ValueError):
-        return float("nan")
-
-
-def _e47_pack(arm: str, calib: bool) -> list[tuple]:
-    """(eps_coast, E0, E1, emp, s_bar, phi, dmeas) per surviving ride."""
-    out = []
-    for r in _e47:
-        if (r["group"] in ("D1", "D2")) != calib:
-            continue
-        sb = _e47f(r, arm + "_sbar_cells")
-        e0 = _e47f(r, arm + "_E0")
-        if not (is_finite(sb) and sb >= 0.03 and is_finite(e0)):
-            continue
-        out.append((_e47f(r, arm + "_eps_coast"), e0, _e47f(r, arm + "_E1"),
-                    _e47f(r, "emp"), _e47f(r, arm + "_s_bar"),
-                    _e47f(r, arm + "_phi"), _e47f(r, arm + "_dmeas")))
-    return out
-
-
-# form id -> (name, npar, bounds, delta(row, q))
-_E47_FORMS = [
-    ("eps0_frozen", 0, [], lambda t, q: 0.13),
-    ("eps0_fit",    1, [(0.0, 0.60)], lambda t, q: q[0]),
-    ("eps2",        1, [(0.0, 0.05)], lambda t, q: q[0] / t[4]),
-    ("eps3",        2, [(-0.30, 0.60), (-1.0, 1.0)], lambda t, q: q[0] + q[1] * t[5]),
-]
-
-
-def _e47_sad(pk, fn, q, space="energy") -> float:
-    tot = 0.0
-    for t in pk:
-        if space == "deficit":
-            if not is_finite(t[6]):
-                continue
-            tot += abs(t[6] - fn(t, q))
-        else:
-            eps = t[0] - fn(t, q)
-            tot += abs(100.0 * ((t[1] + (t[2] - t[1]) * eps) / 1000 - t[3]) / t[3])
-    return tot
-
-
-def _e47_fit(pk, fn, npar, bounds, space="energy"):
-    if npar == 0:
-        return ()
-    lo = [b[0] for b in bounds]
-    hi = [b[1] for b in bounds]
-    ng, passes = (240, 4) if npar == 1 else (40, 3)
-    bq, bv = None, float("inf")
-    for _ in range(passes):
-        st = [(hi[i] - lo[i]) / ng for i in range(npar)]
-        cand = ([(lo[0] + i * st[0],) for i in range(ng + 1)] if npar == 1 else
-                [(lo[0] + i * st[0], lo[1] + j * st[1])
-                 for i in range(ng + 1) for j in range(ng + 1)])
-        for q in cand:
-            v = _e47_sad(pk, fn, q, space)
-            if v < bv - 1e-12:
-                bq, bv = q, v
-        lo = [max(bounds[i][0], bq[i] - st[i]) for i in range(npar)]
-        hi = [min(bounds[i][1], bq[i] + st[i]) for i in range(npar)]
-    return bq
-
-
-def _e47_contest(pk) -> tuple[str, dict]:
-    res = {}
-    n = len(pk)
-    for name, npar, bounds, fn in _E47_FORMS:
-        q = _e47_fit(pk, fn, npar, bounds)
-        rs = []
-        for t in pk:
-            eps = t[0] - fn(t, q)
-            rs.append(100.0 * ((t[1] + (t[2] - t[1]) * eps) / 1000 - t[3]) / t[3])
-        b = sum(abs(v) for v in rs) / n
-        res[name] = {"q": q, "npar": npar, "med": median([abs(v) for v in rs]),
-                     "bic": 2 * n * math.log(2 * b) + 2 * n + npar * math.log(n),
-                     "aic": 2 * n * math.log(2 * b) + 2 * n + 2 * npar}
-    lo = min(v["bic"] for v in res.values())
-    tied = [(k, v) for k, v in res.items() if v["bic"] - lo < 2.0]
-    return min(tied, key=lambda kv: (kv[1]["npar"], kv[1]["bic"] - lo))[0], res
-
-
-def _e47_aic_champ(res: dict) -> str:
-    """The same parsimony rule under AIC — reported, never used to select."""
-    lo = min(v["aic"] for v in res.values())
-    tied = [(k, v) for k, v in res.items() if v["aic"] - lo < 2.0]
-    return min(tied, key=lambda kv: (kv[1]["npar"], kv[1]["aic"] - lo))[0]
-
-
-_e47_exp = {
-    (True,  "ag"): (48, "eps0_frozen", 9.17),
-    (True,  "fr"): (48, "eps0_frozen", 6.72),
-    (False, "ag"): (990, "eps2", 4.21),
-    (False, "fr"): (990, "eps2", 4.94),
-}
-for (_calib, _arm), (_en, _ech, _emed) in _e47_exp.items():
-    _pk = _e47_pack(_arm, _calib)
-    _ch, _res = _e47_contest(_pk)
-    _med = _res["eps0_frozen"]["med"]
-    _ok = len(_pk) == _en and _ch == _ech and abs(_med - _emed) <= 0.02
-    _tag = ("calibration D1uD2" if _calib else "in-sample D3-D6") + f" · {_arm}"
-    _ach = _e47_aic_champ(_res)
-    print(f"  {_tag:<28} |O|={len(_pk):>4} champion {_ch:<12} "
-          f"eps0 med {to_fixed(_med, 2)}  [AIC would pick {_ach}]"
-          + (" GATE-OK" if _ok else f" GATE-FAIL(exp n={_en} {_ech} {_emed})"))
-    if not _ok:
-        failed = True
-
-# dBIC = 128.8, quoted in section 3.2.2 as the in-sample arm's margin for eps_2
-# over the frozen constant. Recomputed, not transcribed.
-_pk_ag_all = _e47_pack("ag", False)
-_, _res_ag_all = _e47_contest(_pk_ag_all)
-_dbic = _res_ag_all["eps0_frozen"]["bic"] - _res_ag_all["eps2"]["bic"]
-_ok = abs(_dbic - 128.8) <= 0.5
-print(f"  in-sample dBIC, eps2 over frozen eps0: {to_fixed(_dbic, 1)}"
-      + (" GATE-OK" if _ok else " GATE-FAIL(exp 128.8)"))
-if not _ok:
-    failed = True
-
-# The population must equal Entry 45's, ride for ride, or sigma has drifted.
-_n_all = len(_e47_pack("ag", True)) + len(_e47_pack("ag", False))
-_ok = _n_all == 1038
-print(f"  population vs Entry 45: {_n_all}"
-      + (" GATE-OK" if _ok else " GATE-FAIL(exp 1038)"))
-if not _ok:
-    failed = True
-
-# The finding that matters most: fitting delta on ENERGY does not recover the
-# published constants; fitting it on the DEFICIT does. If this stops holding,
-# section 1.3.2's physical reading of delta needs revisiting.
-_pk = _e47_pack("ag", False)
-_c_dev = _e47_fit(_pk, lambda t, q: q[0], 1, [(0.0, 0.60)], "deficit")[0]
-_k_dev = _e47_fit(_pk, lambda t, q: q[0] / t[4], 1, [(0.0, 0.05)], "deficit")[0]
-_c_en = _e47_fit(_pk, lambda t, q: q[0], 1, [(0.0, 0.60)])[0]
-_ok = (abs(_c_dev - 0.1339) <= 0.002 and abs(_k_dev - 0.0052) <= 0.0002
-       and _c_en < 0.5 * _c_dev)
-print(f"  deficit-space refit: c={to_fixed(_c_dev, 4)} (pub 0.13) "
-      f"k={to_fixed(_k_dev, 4)} (pub 0.0051); energy-space c={to_fixed(_c_en, 4)}"
-      + (" GATE-OK" if _ok else " GATE-FAIL(exp 0.1339/0.0052, energy < half)"))
-if not _ok:
-    failed = True
-
-
-# ---------------------------------------------------------------- 3m. Entry 46
-sec("3m")
-# The regime switch. Two things are gated: the four arm medians as published in
-# the journal, and — the finding — that the sub-3% verdict REVERSES between
-# parameter classes, with the near-unbiased choice being the opposite one in
-# each. If that reversal ever disappears, the reading of section 3.3 changes and
-# the journal entry is wrong. Recomputed from the per-ride CSVs, not transcribed.
-print("\n== Regime switch (Entry 46, journal only — no published column moves) ==")
-
-_e46 = parse_csv("e46_switch.csv")
-_ARMS46 = ("const_unsw", "const_sw", "grade_unsw", "grade_sw")
-_n46 = len(_e46)
-_lo46 = sum(1 for r in _e46 if r.get("real") == "false")
-_ok = _n46 == 2141 and _lo46 == 1103
-print(f"  population: {_n46} rides, {_lo46} below the 3% gate"
-      + (" GATE-OK" if _ok else " GATE-FAIL(exp 2141/1103)"))
-if not _ok:
-    failed = True
-
-_exp46 = {"const_unsw": 5.08, "const_sw": 5.62, "grade_unsw": 4.83, "grade_sw": 5.57}
-for _a in _ARMS46:
-    _m = median([abs(float(r[_a])) for r in _e46 if is_finite(float(r[_a]))])
-    _ok = abs(_m - _exp46[_a]) <= 0.02
-    print(f"    {_a:<12} med |D%| {to_fixed(_m, 2)}"
-          + (" GATE-OK" if _ok else f" GATE-FAIL(exp {_exp46[_a]})"))
-    if not _ok:
-        failed = True
-
-# The reversal, recomputed from Entry 47's per-ride table under BOTH classes.
-_e47r = parse_csv("e47_formselect.csv")
-
-
-def _e46_cells(pfx: str) -> tuple[float, float, float, float]:
-    """(eps_d acc, eps_d bias, eps_f acc, eps_f bias) on the sub-3% rides."""
-    dd, df = [], []
-    for r in _e47r:
-        try:
-            e0, e1 = float(r[pfx + "_E0"]), float(r[pfx + "_E1"])
-            emp, sb = float(r["emp"]), float(r[pfx + "_sbar_cells"])
-            ec = float(r[pfx + "_eps_coast"])
-        except (KeyError, ValueError):
-            continue
-        if not (emp > 0 and 0 < sb < 0.03):
-            continue
-        for eps, acc in ((ec - 0.13, dd), (0.20, df)):
-            acc.append(100.0 * ((e0 + (e1 - e0) * eps) / 1000 - emp) / emp)
-    return (median([abs(v) for v in dd]), median(dd),
-            median([abs(v) for v in df]), median(df))
-
-
-_ag = _e46_cells("ag")
-_fr = _e46_cells("fr")
-# frozen priors: eps_d is the near-unbiased one; inverted physics: eps_f is.
-_ok = (abs(_ag[1]) < 1.0 and _ag[3] > 4.0        # ag: eps_d unbiased, eps_f badly biased
-       and _fr[1] < -3.0 and abs(_fr[3]) < 1.0)  # fr: the other way round
-print(f"  sub-3% bias reversal: P_a,g eps_d {to_fixed(_ag[1], 2)} / eps_f {to_fixed(_ag[3], 2)}"
-      f"  ·  P_f,r eps_d {to_fixed(_fr[1], 2)} / eps_f {to_fixed(_fr[3], 2)}"
-      + (" GATE-OK" if _ok else " GATE-FAIL(exp +0.28/+5.90 and -4.64/+0.11)"))
-if not _ok:
-    failed = True
-
-
-# Numbers §3.2.2 prints that were NOT gated when first written (found while
-# auditing state 0's exit for A1 — Entry 32's lesson restated: the un-gated
-# numbers are where the rot is). Three additions:
-#   the P_f,r switch pair 5.51 -> 4.12, the applied eps_d median 0.544 below the
-#   gate, and (in section 3l) the dBIC = 128.8 the article quotes.
-
-
-def _e46_arm_medians(pfx: str) -> dict:
-    """Median |D%| per arm over ALL rides, recomputed from the per-ride table."""
-    out: dict = {}
-    for arm in ("const_unsw", "const_sw"):
-        vals = []
-        for r in _e47r:
-            try:
-                e0, e1 = float(r[pfx + "_E0"]), float(r[pfx + "_E1"])
-                emp, sb = float(r["emp"]), float(r[pfx + "_sbar_cells"])
-                ec = float(r[pfx + "_eps_coast"])
-            except (KeyError, ValueError):
-                continue
-            if not (emp > 0 and sb > 0):
-                continue
-            eps = 0.20 if (arm == "const_sw" and sb < 0.03) else ec - 0.13
-            vals.append(abs(100.0 * ((e0 + (e1 - e0) * eps) / 1000 - emp) / emp))
-        out[arm] = median(vals)
-    return out
-
-
-_fr_arms = _e46_arm_medians("fr")
-_ok = (abs(_fr_arms["const_unsw"] - 5.51) <= 0.02
-       and abs(_fr_arms["const_sw"] - 4.12) <= 0.02)
-print(f"  P_f,r switch pair: {to_fixed(_fr_arms['const_unsw'], 2)} -> "
-      f"{to_fixed(_fr_arms['const_sw'], 2)}"
-      + (" GATE-OK" if _ok else " GATE-FAIL(exp 5.51 -> 4.12)"))
-if not _ok:
-    failed = True
-
-_eps_lo = median([float(r["const_unsw_eps"]) for r in _e46
-                  if r.get("real") == "false" and is_finite(float(r["const_unsw_eps"]))])
-_ok = abs(_eps_lo - 0.544) <= 0.002
-print(f"  median eps_d APPLIED below the 3% gate: {to_fixed(_eps_lo, 3)} (vs eps_f = 0.20)"
-      + (" GATE-OK" if _ok else " GATE-FAIL(exp 0.544)"))
-if not _ok:
-    failed = True
-
-# ---------------------------------------------------------------- 3n. Entry 48
-sec("3n")
-# TOST equivalence. Gates every registered row's d, 90% CI and verdict, AND the
-# population parity that makes them comparable to the published brackets: each
-# comparison's n and its med_law/med_sim against the medians the paper prints.
-# A drifted population would silently change d without changing any verdict.
-print("\n== TOST equivalence (Entry 48, margin ±1.0 pp, seed 44) ==")
-
-_e48 = parse_csv("e48_equiv.csv")
-# comparison -> (n, med_law, med_sim, d, lo, hi, verdict)
-_E48_EXP = {
-    "D1 informed · F3": (44, 3.54, 5.15, -1.61, -3.34, 0.33, "inconclusive"),
-    "D1 blind · F3": (44, 8.17, 8.37, -0.20, -2.14, 1.70, "inconclusive"),
-    "D1 blind · F4": (44, 7.63, 8.37, -0.74, -2.17, 2.72, "inconclusive"),
-    "D2 frozen · F3": (62, 7.71, 6.63, 1.08, -0.04, 2.18, "inconclusive"),
-    "D2 frozen · F4": (62, 6.45, 6.63, -0.19, -1.98, 1.59, "inconclusive"),
-    "D3 · F3": (441, 5.76, 6.76, -1.00, -1.56, -0.63, "inconclusive"),
-    "D4 · F3": (219, 5.49, 5.44, 0.04, -0.61, 0.43, "equivalent"),
-    "D5 · F3": (621, 6.18, 6.14, 0.04, -0.33, 0.47, "equivalent"),
-    "POOL D3+D4 · F3": (660, 5.63, 6.26, -0.63, -0.90, -0.33, "equivalent"),
-    "POOL D3-D5 · F3": (1281, 5.90, 6.23, -0.32, -0.55, -0.07, "equivalent"),
-}
-_seen48 = 0
-for _r in _e48:
-    _c = _r["comparison"]
-    if _c not in _E48_EXP:
-        print(f"  UNREGISTERED ROW {_c} GATE-FAIL")
-        failed = True
-        continue
-    _seen48 += 1
-    _n, _ml, _ms, _d, _lo, _hi, _v = _E48_EXP[_c]
-    _gn = int(_r["n"])
-    _g = [float(_r[k]) for k in ("med_law", "med_sim", "d", "ci90_lo", "ci90_hi")]
-    _ok = (_gn == _n and _r["verdict"] == _v
-           and abs(_g[0] - _ml) <= 0.01 and abs(_g[1] - _ms) <= 0.01
-           and abs(_g[2] - _d) <= 0.01
-           and abs(_g[3] - _lo) <= 0.01 and abs(_g[4] - _hi) <= 0.01
-           and int(_r["unpaired_dropped"]) == 0)
-    # the verdict must also FOLLOW from the CI, not merely be recorded
-    _derived = ("equivalent" if _g[3] >= -1.0 and _g[4] <= 1.0
-                else "fail-high" if _g[3] > 1.0
-                else "fail-low" if _g[4] < -1.0 else "inconclusive")
-    if _derived != _r["verdict"]:
-        _ok = False
-    print(f"  {_c:<20} n={_gn:>5} d={to_fixed(_g[2], 2):>6} "
-          f"[{to_fixed(_g[3], 2)}, {to_fixed(_g[4], 2)}] {_r['verdict']:<13}"
-          + (" GATE-OK" if _ok else f" GATE-FAIL(exp {_d} [{_lo}, {_hi}] {_v})"))
-    if not _ok:
-        failed = True
-
-_ok = _seen48 == len(_E48_EXP)
-print(f"  registered rows present: {_seen48}/{len(_E48_EXP)}"
-      + (" GATE-OK" if _ok else " GATE-FAIL"))
-if not _ok:
-    failed = True
-
-# The finding: no row is outside the margin, and every inconclusive row except
-# D2 is inconclusive on the side where the LAW IS BETTER (d < 0). If that ever
-# flips, the reading in Entry 48 and section 3.1 is wrong.
-_bad = [r for r in _e48 if str(r["verdict"]).startswith("fail")]
-_inc_worse = [r["comparison"] for r in _e48
-              if r["verdict"] == "inconclusive" and float(r["d"]) > 0]
-_ok = not _bad and _inc_worse == ["D2 frozen · F3"]
-print(f"  none outside margin ({len(_bad)}); inconclusive-on-the-worse-side: "
-      f"{_inc_worse or 'none'}"
-      + (" GATE-OK" if _ok else " GATE-FAIL(exp only D2 frozen · F3)"))
-if not _ok:
-    failed = True
-
-
-# ---------------------------------------------------------------- 3o. Entry 49
-sec("3o")
-# The affine deficit. Gates the fitted k1 and, more importantly, the ORDERING
-# claims the journal entry rests on — that under P_f,r the zero-parameter frozen
-# constant beats both one-parameter rivals and the two-parameter affine form on
-# held-out error, and that only the 14-parameter arm leaves the physical interval.
-# Numbers alone would not catch a reordering; the comparisons are asserted.
-print("\n== Affine deficit (Entry 49, journal only — delta_5 does not enter the paper) ==")
-
-_e49 = {(r["scope"], r["form"]): r for r in parse_csv("e49_affine.csv")}
-
-
-def _e49f(scope: str, form: str, key: str) -> float:
-    try:
-        return float(_e49[(scope, form)][key])
-    except (KeyError, ValueError):
-        return float("nan")
-
-
-# k1 of the global affine fit, parsed from the params string it was printed with
-_k1_fr = float(_e49[("fr-gated", "delta5 global")]["params"].split(",")[0])
-_k1_ag = float(_e49[("ag-gated", "delta5 global")]["params"].split(",")[0])
-_ok = abs(_k1_fr - 0.9223) <= 0.005 and abs(_k1_ag - 0.7145) <= 0.005 and _k1_fr > 0
-print(f"  global k1: P_f,r {to_fixed(_k1_fr, 4)} · P_a,g {to_fixed(_k1_ag, 4)}  (P1: k1 > 0)"
-      + (" GATE-OK" if _ok else " GATE-FAIL(exp 0.9223 / 0.7145)"))
-if not _ok:
-    failed = True
-
-# delta_5 NESTS the flat constant at k1 = 1, so the honest comparison is against
-# that, not against eps_0. An earlier version of this gate asserted the slope
-# (1 - k1) was below 0.15 — certifying "the fit nearly deletes the geometry",
-# a point-estimate reading whose 95% CI is [-1.73, +0.54]. The claim was
-# withdrawn and this gate now asserts the identified result instead.
-_flat = _e49f("fr-gated", "eps flat fitted", "params_num") if False else float(
-    _e49[("fr-gated", "eps flat fitted")]["params"])
-_ok = (abs(_flat - 0.3444) <= 0.002
-       and _e49f("fr-gated", "eps flat fitted", "bic")
-       < _e49f("fr-gated", "delta5 global", "bic"))
-print(f"  the affine form is dominated by the flat constant it nests: "
-      f"flat eps {to_fixed(_flat, 4)} (1 par, BIC "
-      f"{to_fixed(_e49f('fr-gated', 'eps flat fitted', 'bic'), 0)}) beats delta5 global "
-      f"(2 par, BIC {to_fixed(_e49f('fr-gated', 'delta5 global', 'bic'), 0)})"
-      + (" GATE-OK" if _ok else " GATE-FAIL(exp flat 0.3444 and lower BIC)"))
-if not failed and not _ok:
-    failed = True
-elif not _ok:
-    failed = True
-
-# the ordering the entry rests on, under the INTENDED parameter class
-_h_frozen = _e49f("fr-gated", "eps0 frozen", "held")
-_h_global = _e49f("fr-gated", "delta5 global", "held")
-_h_eps2 = _e49f("fr-gated", "eps2 k/s_bar", "held")
-_h_refit = _e49f("fr-gated", "eps0 refit", "held")
-_b_frozen = _e49f("fr-gated", "eps0 frozen", "signed")
-_ok = (_h_frozen < _h_global and _h_frozen < _h_eps2 and _h_frozen < _h_refit
-       and abs(_b_frozen) < 0.5 and abs(_h_frozen - 4.94) <= 0.02)
-print(f"  P_f,r held-out: frozen eps0 {to_fixed(_h_frozen, 2)} beats global "
-      f"{to_fixed(_h_global, 2)}, eps2 {to_fixed(_h_eps2, 2)}, refit "
-      f"{to_fixed(_h_refit, 2)}; bias {to_fixed(_b_frozen, 2)}"
-      + (" GATE-OK" if _ok else " GATE-FAIL(zero-parameter incumbent must win)"))
-if not _ok:
-    failed = True
-
-# BIC and held-out disagree — the entry says so explicitly, so gate it
-_ok = (_e49f("fr-gated", "eps0 frozen", "bic")
-       > _e49f("fr-gated", "delta5 global", "bic")) and _h_frozen < _h_global
-print("  BIC and held-out disagree on frozen eps0 (worst BIC, best held-out of the cheap forms)"
-      + (" GATE-OK" if _ok else " GATE-FAIL"))
-if not _ok:
-    failed = True
-
-# only the 14-parameter arm leaves [0, 1]
-_out_per = _e49f("fr-gated", "delta5 per rider", "frac_eps_out")
-_out_rest = [_e49f("fr-gated", f, "frac_eps_out")
-             for f in ("eps0 frozen", "eps0 refit", "eps2 k/s_bar", "delta5 global")]
-_ok = _out_per > 0 and all(v == 0 for v in _out_rest)
-print(f"  only the per-rider arm leaves [0,1]: {to_fixed(100 * _out_per, 1)}% vs "
-      f"{', '.join(to_fixed(100 * v, 1) for v in _out_rest)}%"
-      + (" GATE-OK" if _ok else " GATE-FAIL"))
-if not _ok:
-    failed = True
-
-
 # ---------------------------------------------------------------- 3p. Entry 50
 # Sensitivity decomposition. Gates the shares section 3.2 prints, and the ORDERING
 # the section's argument rests on: eps below every physical parameter, and the
@@ -1653,6 +548,68 @@ if not _ok:
     failed = True
 _ok = int(_e52.get("n_test", 0)) == 305 and int(_e52.get("n_train", 0)) == 1734
 print("  split is 1,734 / 305" + (" GATE-OK" if _ok else " GATE-FAIL"))
+if not _ok:
+    failed = True
+
+
+
+
+# ---------------------------------------------------------- 3r. Entry 54
+# The paper's one hypothesis (section 1.3): eps is a property of cycling, not
+# of a rider. Fit on ONE rider's training rides, scored on every OTHER rider's
+# held-out rides -- a different person AND rides withheld from selection.
+sec("3r")
+print("\n== Entry 54 — leave-one-rider-out transfer of eps ==")
+_t = parse_csv(os.path.join(RESULTS, "e54_transfer.csv"))
+_all = [r for r in _t if r["donor"] == "ALL"]
+if not _all:
+    print("  e54_transfer.csv MISSING its summary row — run e54_transfer.py  GATE-FAIL")
+    failed = True
+else:
+    _pen = parse_float(_all[0]["med_abs"])
+    _lo = parse_float(_all[0]["pooled_med_abs"])
+    _hi = parse_float(_all[0]["own_best_med_abs"])
+    _ok = abs(_pen - 0.5) <= 0.11
+    print(f"  transfer penalty {to_fixed(_pen, 3)} pp [{to_fixed(_lo, 3)}, {to_fixed(_hi, 3)}]"
+          f"  (expect 0.5)" + (" GATE-OK" if _ok else " GATE-FAIL"))
+    if not _ok:
+        failed = True
+    # the hypothesis itself: the penalty must sit inside the registered margin
+    _ok = abs(_pen) < 1.0 and abs(_hi) < 1.0
+    print("  penalty inside the registered +/-1.0 pp margin"
+          + (" GATE-OK" if _ok else " GATE-FAIL — section 1.3's hypothesis would be refuted"))
+    if not _ok:
+        failed = True
+_donors = sorted({r["donor"] for r in _t if r["donor"] != "ALL"})
+_eps = [parse_float([r for r in _t if r["donor"] == d][0]["donor_eps"]) for d in _donors]
+_ok = len(_donors) == 6 and (max(_eps) - min(_eps)) >= 0.15
+print(f"  {len(_donors)} donors, eps span {to_fixed(max(_eps) - min(_eps), 3)}"
+      + (" GATE-OK" if _ok else " GATE-FAIL"))
+if not _ok:
+    failed = True
+
+
+
+# ---------------------------------------------------------- 3s. Entry 56
+# Paper 1's Table 4: every constant priced on one loss-inflation scale. The two
+# the METHOD supplies must rank LAST -- that ordering is the table's argument,
+# so it is gated rather than merely printed.
+sec("3s")
+print("\n== Entry 56 — structural-parameter sensitivity (paper Table 4) ==")
+_s = {r["parameter"].strip('"'): parse_float(r["loss_inflation_pct"])
+      for r in parse_csv(os.path.join(RESULTS, "e56_struct.csv"))}
+for _k, _want in (("tau (F3 deadband)", 0.2), ("c (F4 scalar)", 0.1),
+                  ("eps (F3, for reference)", 2.9), ("eps (F4, for reference)", 4.7)):
+    _v = _s.get(_k, NAN)
+    _ok = abs(_v - _want) <= 0.11
+    print(f"  {_k:<28} {to_fixed(_v, 2):>7}%  (expect {_want})"
+          + (" GATE-OK" if _ok else " GATE-FAIL"))
+    if not _ok:
+        failed = True
+_ok = (_s.get("tau (F3 deadband)", 9e9) < _s.get("eps (F3, for reference)", 0)
+       and _s.get("c (F4 scalar)", 9e9) < _s.get("eps (F4, for reference)", 0))
+print("  tau and c rank below eps — the method's constants are the cheapest"
+      + (" GATE-OK" if _ok else " GATE-FAIL"))
 if not _ok:
     failed = True
 
