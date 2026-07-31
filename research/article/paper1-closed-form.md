@@ -424,12 +424,12 @@ F3 wins, and the two criteria agree ([Table 2](#tab2)). It is the only form insi
 
 **Table 2.** Form selection on $D_\mathrm{train}$ ($n = 1{,}734$, D3–D6, per-ride inverted constants). *CV* is the mean absolute log ratio under repeated stratified $5$-fold cross-validation, $\pm$ its standard error over the 20 fold scores; every parameter is refitted within each fold. *1-SE* marks forms within one standard error of the best. $k$ counts globally fitted parameters. Lineage: $I = (D_3..D_6,\ P_{f,r})$, $T \in \{F_1..F_4\}$, $O$ = `e52_split.csv`.
 
-| form | CV | 1-SE | AIC | fitted | $k$ |
-|---|--:|:--:|--:|--:|--:|
-| F1 | 0.07397 ± 0.00191 | | −3157.7 | $\varepsilon = 0.681$ | 1 |
-| F2 | 0.06427 ± 0.00188 | | −3642.1 | $\varepsilon = 0.461$ | 1 |
-| **F3** | **0.05561 ± 0.00182** | ✓ | **−4142.7** | $\varepsilon = 0.294$, $\tau = 6$ m | 2 |
-| F4 | 0.06372 ± 0.00232 | | −3700.0 | $\varepsilon = 0.404$, $c = 1.18$ m/km | 2 |
+| form | CV | 1-SE | AIC | fitted $\varepsilon$ [95% CI] | other | $k$ |
+|---|--:|:--:|--:|--:|--:|--:|
+| F1 | 0.07113 ± 0.00186 | | −3284.9 | 0.683 [0.672, 0.700] | — | 1 |
+| F2 | 0.06306 ± 0.00181 | | −3697.9 | 0.462 [0.457, 0.469] | — | 1 |
+| **F3** | **0.05406 ± 0.00178** | ✓ | **−4230.9** | **0.294** [0.285, 0.304] | $\tau$ = 6 m [4.5, 6.6] | 2 |
+| F4 | 0.06286 ± 0.00224 | | −3722.1 | 0.409 [0.399, 0.417] | $c$ = 1.10 m/km | 2 |
 
 Two results in that table matter beyond the ranking. **F3 and F4 are the same correction approached from opposite ends** — both undo the ascent inflation that elevation noise produces, F3 point-wise by filtering the profile, F4 in aggregate by discounting the climb term — and both are supported here, with F4's scalar fitting to $c = 1.18$ m/km. That was not true under a weaker aero estimator, where $c$ collapsed to 0.03 and F4 degenerated to F2 (lab journal, Entry 55); the climb-fraction term earns its place only once the drag area is measured rather than assumed, because otherwise the aero error it would correct has already been absorbed elsewhere. **And $\tau$ refits to 6 m** from the training half alone. Neither constant is delicate: [§3.2](#3.2) shows both are the least consequential parameters in the model.
 
@@ -459,6 +459,29 @@ The per-ride inversion runs before the split, as data preparation. The held-out 
 
 One exposure is inherent to a random split and is reported rather than assumed away: **82% of held-out rides** <!--@c-e52.twin--> have a same-rider training ride within 5% on distance and 10% on ascent. A random draw was preferred to a chronological one because splitting on time confounds model error with drift in fitness, equipment and season; the cost is that these figures should be read as repeat-route errors, and a genuinely novel route can be expected to be harder.
 
+#### 3.1.5 Does the constant travel?
+
+[§1.3](#1.3) puts one hypothesis in two halves. Both are tested here, and they answer differently.
+
+**Between riders who share a landscape, ε travels for free.** Fitting it on a *single* rider's training rides and scoring it on six others' held-out rides — a different person, and rides withheld from selection — costs a median **0.05 pp** [0.03, 0.08] against the constant fitted on everyone. That is two orders of magnitude inside the ±1.0 pp margin registered in advance as the threshold for mattering. Donor identity is not irrelevant — the per-rider optima span 0.215 to 0.470 — but the spread across *recipients* (2.85 pp) exceeds the spread across *donors* (1.62 pp), so who you are matters more than whose constant you borrow.
+
+**Between landscapes it does not.** Fitted separately, the São Paulo corpora want $\varepsilon = 0.239$ and the European deposit $0.371$ ([Table 5](#tab5)). Ignoring that costs **0.82 pp** on D3–D5 and **0.92 pp** on D6 — an order of magnitude more than the between-rider penalty, and larger than any other effect measured in this paper.
+
+<a id="tab5"></a>
+
+**Table 5.** Regional pools against a single pool, held-out rides, scored once. *A* uses one $\varepsilon$ for everything; *B* keeps the pooled form and deadband and fits $\varepsilon$ per region; *C* selects form, deadband and $\varepsilon$ independently inside each region. Cells: median $\lvert\Delta\%\rvert$ [95% CI] · median signed $\Delta\%$. Lineage: $O$ = `e60_regional.csv`.
+
+| region | A · one pool | B · regional $\varepsilon$ | C · regional selection |
+|---|--:|--:|--:|
+| D3–D5, São Paulo ($n$ = 194) | 3.67 [3.22, 4.20] · **−1.31** | **2.85**<!--@c-e60.br--> [2.23, 3.55] · −0.30 | 2.82 [2.46, 3.84] · −0.24 |
+| D6, Europe ($n$ = 111) | 2.65 [2.15, 3.17] · **+1.95** | **1.73**<!--@c-e60.eu--> [1.27, 2.30] · +0.04 | 1.61 [1.31, 1.82] · −0.19 |
+
+**The signed column is the sharper evidence.** Under one pool the regions are biased in *opposite* directions, −1.31 against +1.95. That is the signature of a compromise constant, not of noise, and it cancels in any pooled average — an accuracy figure alone would have hidden it. Regional $\varepsilon$ removes both (−0.30, +0.04).
+
+**What differs between the landscapes is ε and essentially nothing else.** Selecting form and deadband independently per region (column C) buys a further 0.03 pp and 0.12 pp, and **both regions select F3**. One law, one form, one deadband, two constants — which is precisely the second half of [§1.3](#1.3)'s hypothesis: a new landscape needs a number re-fitted, not a model re-derived.
+
+Two caveats travel with this. Two landscapes are two data points, so the *values* are measurements rather than a table a reader can look their own terrain up in; [§4.4.3](#4.4.3) sets out what turning them into one would require. And the totals-only form does not split the same way — F4 wants $\varepsilon = 0.431$ on D3–D5 against 0.370 on D6, reversing the ordering, and carries the landscape dependence in its scalar $c$ (0.68 against 1.65) instead. The clean statement above holds for F3.
+
 ### 3.2 What the error is made of
 
 | form | $S_T(m)$ | $S_T(C_dA)$ | $S_T(C_{rr})$ | $S_T(\varepsilon)$ | median $\lvert\Delta\%\rvert$ over the box |
@@ -478,19 +501,19 @@ Route-level energy therefore identifies the flat resistance, not its division in
 
 <a id="tab4"></a>
 
-**Table 4.** Cost of getting each constant wrong: the percentage increase in cross-validation loss when it is moved $\pm 10\%$ off its fitted value, worse side reported, on the training half under the physics of [§2.2](#2.2). Loss inflation rather than a derivative, because each parameter sits at a minimum where the derivative vanishes by construction. The last column gives the penalty at a *grossly* wrong value, which is the number that matters for the two the method supplies. Lineage: $O$ = `e56_struct.csv`.
+**Table 4.** Cost of getting each constant wrong: the percentage increase in cross-validation loss when it is moved $\pm 10\%$ off its fitted value, worse side reported, on the training half under the physics of [§2.2](#2.2). Loss inflation rather than a derivative, because each parameter sits at a minimum where the derivative vanishes by construction. *Tolerable range* inverts the question — the multiplier at which the loss inflates by 50%, i.e. how much error a constant can absorb before it costs something. The last column gives the penalty at a *grossly* wrong value, which is the number that matters for the two the method supplies. Lineage: $O$ = `e56_struct.csv`.
 
-| constant | supplied by | fitted | cost at ±10% | cost if badly wrong |
-|---|---|--:|--:|---|
-| $C_dA$ | the ride | per ride | **46.3%** | — |
-| $C_{rr}$ | prior / the ride | 0.008 | 18.9% | — |
-| $m$ | the ride | per ride | 12.2% | — |
-| $\varepsilon$ (F4) | **this paper** | 0.404 | 4.7% | 8.7% at $\varepsilon = 0$ |
-| $\varepsilon$ (F3) | **this paper** | 0.294 | 2.9% | — |
-| $\tau$ | **this paper** | 6 m | **0.2%** | **77.3%** at $\tau = 0$ |
-| $c$ | **this paper** | 1.18 m/km | **0.1%** | **21.7%** at $c = 3$ |
+| constant | supplied by | fitted | cost at ±10% | tolerable range | cost if badly wrong |
+|---|---|--:|--:|:--:|---|
+| $C_dA$ | the ride | per ride | **46.9%** | 0.89–1.10× | — |
+| $C_{rr}$ | rider median / the ride | per rider | 21.1% | 0.82–1.17× | — |
+| $m$ | the ride / rider median | per ride | 12.6% | 0.75–1.23× | — |
+| $\varepsilon$ (F4) | **this paper** | 0.409 | 3.3% | — | 8.7% at $\varepsilon = 0$ |
+| $\varepsilon$ (F3) | **this paper** | 0.294 | **1.1%** | **0.22–1.79×** | — |
+| $\tau$ | **this paper** | 6 m | **0.2%** | — | **77.3%** at $\tau = 0$ |
+| $c$ | **this paper** | 1.10 m/km | **0.1%** | — | **21.7%** at $c = 3$ |
 
-**The method's own constants are the cheapest to get slightly wrong and among the dearest to omit.** At $\pm 10\%$ the deadband and the scalar cost 0.2% and 0.1% — roughly twenty times less than $\varepsilon$ and two hundred times less than drag area. But the flatness is local, not global: dropping the deadband entirely costs 77.3%, and using $c = 3$ m/km, a value earlier work adopted from a barometric noise rate, costs 21.7%. Both halves have to travel together, because the first alone would read as licence to skip the filter.
+**The method's own constants are the cheapest to get slightly wrong and among the dearest to omit.** Read across the tolerance column first: drag area must be right to about $\pm 10\%$, mass to $\pm 25\%$, and $\varepsilon$ may be wrong by a factor of four downward or nearly double upward before it costs as much — the same ordering, in the units a user actually works in. At $\pm 10\%$ the deadband and the scalar cost 0.2% and 0.1% — roughly twenty times less than $\varepsilon$ and two hundred times less than drag area. But the flatness is local, not global: dropping the deadband entirely costs 77.3%, and using $c = 3$ m/km, a value earlier work adopted from a barometric noise rate, costs 21.7%. Both halves have to travel together, because the first alone would read as licence to skip the filter.
 
 This is also why $\tau$ can be quoted as a round 6 m without apology. Anywhere in 4–8 m costs under 2.5%, so the exact value is immaterial while its presence is not — and it explains why the fitted optimum moved from 2 m to 6 m when the drag estimator changed (lab journal, Entry 55) without that shift mattering: it travelled through a basin where the loss barely varies.
 

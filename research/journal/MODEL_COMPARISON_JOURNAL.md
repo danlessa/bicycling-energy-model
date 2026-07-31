@@ -272,6 +272,40 @@ which it means, and §1.3's hypothesis needs restating as the narrower and defen
 $\varepsilon$ is a property of a **riding context**, stable across riders who share one, and it
 is measured here in two contexts rather than assumed universal.
 
+### Findings
+
+| region | A one pool | B regional ε | C regional chain |
+|---|--:|--:|--:|
+| **D3–D5** ($n$ = 194) | 3.67 [3.22, 4.20] · **−1.31** | **2.85** [2.23, 3.55] · −0.30 | 2.82 [2.46, 3.84] · −0.24 |
+| **D6** ($n$ = 111) | 2.65 [2.15, 3.17] · **+1.95** | **1.73** [1.27, 2.30] · +0.04 | 1.61 [1.31, 1.82] · −0.19 |
+
+**P1 confirmed.** Regional $\varepsilon$ improves the held-out error by **0.82 pp** on D3–D5 and
+**0.92 pp** on D6, bracketing the registered 0.6–1.0. D6's gain is decisive (74/109,
+$p = 0.0002$); D3–D5's is the same size but not significant alone (105/189, $p = 0.15$).
+
+**P2 confirmed, and it is the load-bearing result.** Selecting the form and $\tau$ independently
+inside each region (arm C) buys only a further 0.03 pp on D3–D5 and 0.12 pp on D6, and **both
+regions select F3**. So the landscapes differ in $\varepsilon$ and in essentially nothing else:
+one law, one form, one deadband, two constants. That is the difference between re-fitting a
+number and re-deriving a model, and it is what §1.3's second clause claims.
+
+**The bias is the sharper evidence.** Under one pool the two regions are biased in *opposite
+directions* — −1.31 on D3–D5 against +1.95 on D6 — which is the signature of a compromise
+constant rather than of noise. Regional $\varepsilon$ removes both (−0.30 and +0.04). An
+accuracy figure alone would have understated this; the signed pair is what shows the single
+constant is not merely imprecise but systematically wrong in each region, in a way that cancels
+in the pooled average.
+
+**P3 refuted.** F4 does not split the same way — it wants $\varepsilon = 0.431$ on D3–D5 against
+0.370 on D6, *reversing* F3's ordering, and its regional held-out errors (3.44, 2.32) are worse
+than F3's (2.82, 1.61). The totals-only form absorbs the landscape difference into its scalar
+$c$ instead (0.68 against 1.65), which is consistent with $c$ and the deadband being the same
+correction from opposite ends (Entry 55) — but it means the clean "one form, two constants"
+statement holds for F3 and not for F4. **The paper must therefore report the regional split on
+F3 and say that F4's totals-only route carries the landscape dependence in a different place.**
+
+**P4 untested** — the within-region leave-one-rider-out check has not been run.
+
 ### The research direction this opens
 
 *(Danilo: "It may be that epsilon can be tabulated against landscape classes through simulations

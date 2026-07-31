@@ -152,3 +152,17 @@
   cito:citesAsEvidence dg:o_ppaz, dg:o_jaam, dg:o_danlessa, dg:o_skc ;
   prov:wasDerivedFrom claims:assert12 ;
   rdfs:comment "The paper's one hypothesis (section 1.3). Strict transfer: a different person AND rides already held out from selection" .
+
+<#c-e60.br> a schema:Claim ;
+  schema:text "regional eps on D3-D5 gives 2.85 [2.23, 3.55] held-out, against 3.67 for the single pool" ;
+  dcterms:type "out-of-sample" ; pc:value 2.85 ; pc:gateSection "3t" ;
+  cito:citesAsEvidence dg:o_ppaz, dg:o_jaam, dg:o_danlessa ;
+  prov:wasDerivedFrom claims:assert12 ;
+  rdfs:comment "Entry 60. The signed pair matters more than the accuracy: one pool biases the two regions in opposite directions (-1.31 vs +1.95), which cancels in any pooled average" .
+
+<#c-e60.eu> a schema:Claim ;
+  schema:text "regional eps on D6 gives 1.73 [1.27, 2.30] held-out, against 2.65 for the single pool" ;
+  dcterms:type "out-of-sample" ; pc:value 1.73 ; pc:gateSection "3t" ;
+  cito:citesAsEvidence dg:o_skc ;
+  prov:wasDerivedFrom claims:assert12 ;
+  rdfs:comment "Entry 60. Decisive on the paired test (74/109, p = 0.0002) where the Sao Paulo half is the same size but not individually significant" .

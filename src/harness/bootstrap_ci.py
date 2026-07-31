@@ -20,6 +20,7 @@ research/scripts/check_paper_stats.py asserts the correspondence both ways:
   3q  the A-chain: selection and held-out error (Entries 52/55, paper 1 §3.1)
   3r  leave-one-rider-out transfer (Entry 54, paper 1 §1.3 — its hypothesis)
   3s  structural-parameter sensitivity (Entry 56, paper 1 Table 4)
+  3t  regional eps pools (Entry 60, paper 1 Table 5)
 
 Reads ONLY per-ride CSVs already written by the other harnesses — no engine
 runs, no FIT parsing. Every published median is reproduced as a GATE before its
@@ -609,6 +610,48 @@ for _k, _want in (("tau (F3 deadband)", 0.2), ("c (F4 scalar)", 0.1),
 _ok = (_s.get("tau (F3 deadband)", 9e9) < _s.get("eps (F3, for reference)", 0)
        and _s.get("c (F4 scalar)", 9e9) < _s.get("eps (F4, for reference)", 0))
 print("  tau and c rank below eps — the method's constants are the cheapest"
+      + (" GATE-OK" if _ok else " GATE-FAIL"))
+if not _ok:
+    failed = True
+
+
+# ---------------------------------------------------------- 3t. Entry 60
+# The regional split. Gated on both the accuracy and the SIGNED pair, because
+# the argument is that one pool biases the two regions in opposite directions
+# -- a fact an accuracy-only gate would not protect.
+sec("3t")
+print("\n== Entry 60 — regional eps pools (paper Table 5) ==")
+_e60 = {}
+for _r in parse_csv(os.path.join(RESULTS, "e60_regional.csv")):
+    _e60[(_r["region"].strip('"'), _r["arm"].strip('"'))] = _r
+_BRK, _EUK = "D3-D5 (São Paulo)", "D6 (Europe)"
+for _reg, _arm, _w_abs, _w_sg in ((_BRK, "A one pool", 3.67, -1.31),
+                                  (_BRK, "B regional eps", 2.85, -0.30),
+                                  (_EUK, "A one pool", 2.65, 1.95),
+                                  (_EUK, "B regional eps", 1.73, 0.04)):
+    _r = _e60.get((_reg, _arm))
+    if _r is None:
+        print(f"  {_reg} / {_arm}: MISSING — run e60_regional.py  GATE-FAIL")
+        failed = True
+        continue
+    _a, _s = parse_float(_r["test_med_abs"]), parse_float(_r["test_med_signed"])
+    _ok = abs(_a - _w_abs) <= 0.11 and abs(_s - _w_sg) <= 0.11
+    print(f"  {_reg.split()[0]:<6} {_arm:<16} {to_fixed(_a, 2):>6} / {to_fixed(_s, 2):>6}"
+          f"  (expect {_w_abs} / {_w_sg})" + (" GATE-OK" if _ok else " GATE-FAIL"))
+    if not _ok:
+        failed = True
+# the argument itself: opposite-signed bias under one pool, removed by two
+_b = parse_float(_e60[(_BRK, "A one pool")]["test_med_signed"])
+_e = parse_float(_e60[(_EUK, "A one pool")]["test_med_signed"])
+_ok = _b < 0 < _e
+print("  one pool biases the two regions in OPPOSITE directions"
+      + (" GATE-OK" if _ok else " GATE-FAIL"))
+if not _ok:
+    failed = True
+_b2 = abs(parse_float(_e60[(_BRK, "B regional eps")]["test_med_signed"]))
+_e2 = abs(parse_float(_e60[(_EUK, "B regional eps")]["test_med_signed"]))
+_ok = _b2 < 0.5 and _e2 < 0.5
+print("  regional eps removes both biases (|signed| < 0.5)"
       + (" GATE-OK" if _ok else " GATE-FAIL"))
 if not _ok:
     failed = True
