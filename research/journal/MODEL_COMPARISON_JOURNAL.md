@@ -221,6 +221,96 @@ what the other rows *mean* without producing a per-ride table of their own.
 
 ---
 
+## 2026-07-31 — Entry 55: the regime-consistent aero as the default — segment vs regime CdA, side by side
+
+**Lineage** — $I$: $(D_3..D_6, P_{f,r})$ under two aero estimators · $T$: $\{F_1..F_4, F_\mathrm{base}\}$ · $O$: `e52_split.csv` vs `e52_split.reg.csv` · $S$: Entry 52's §3.1 and §3.2 results, reproduced under each
+
+*Prompt (Danilo): "Reproduce the results 3.1 and 3.2 by using the regime-consistent CdA. Let's
+compare them against the segment one side by side. If is bias and error reducing, then I would
+argue for just using the regime-consistent as the default."*
+
+### The two estimators
+
+Both take $\hat m$ and $\hat C_{rr}$ from the same cascade ([§2.2](#2.2)); they differ only in
+$C_dA$.
+
+- **seg** — `invert_physics` step 6: a work balance on each qualifying **flat segment**,
+  length-weighted by $1/(1+\sigma_h)$. Needs a segment; falls back to 0.40 when none qualifies.
+- **reg** — $C_dA^{\mathrm{reg}} = (k_\mathrm{eff} P_\mathrm{flat}/v_\mathrm{meas} - C_{rr}\hat m g)\,/\,(\tfrac{1}{2}\rho v_\mathrm{rel}^2)$, from `e35_residual.py` arm B. Needs **no segment**, and is derived at the **measured** flat speed, so it closes by construction the gap between the speed $C_dA$ is inferred at and the $v_f$ the model evaluates at.
+
+The `reg` arm falls back to the segment value rather than to the prior, so it is never worse
+informed than `seg`.
+
+**Availability.** $C_dA$ sits at the 0.400 fallback on **27%** of rides under `seg` and **3%**
+under `reg` (2,039 rides). The rail §2.2 has to report is largely a property of the estimator,
+not of the data.
+
+### Results, side by side
+
+| | seg | reg |
+|---|--:|--:|
+| CV of the winner (mean $\lvert\log\rvert$) | 0.07323 | **0.05561** |
+| selected $\varepsilon$ | 0.2879 | 0.2937 |
+| selected $\tau$ | 2 m | 6 m |
+| **F3 test** med $\lvert\Delta\%\rvert$ | 3.98 [3.51, 4.54] | **3.39** [3.03, 3.69] |
+| **F3 test** signed bias | −1.06 [−1.56, −0.37] | **+0.06** [−0.27, 0.92] |
+| F4 test | 4.20 [3.52, 4.74] | **2.85** [2.40, 3.50] |
+| F2 test | 4.23 [3.55, 4.72] | 3.21 [2.64, 3.86] |
+| $F_\mathrm{base}$ test | 5.71 | **3.05** |
+| $F_\mathrm{base}$ signed bias | −3.85 | **−0.03** |
+
+**Both of Danilo's criteria are met**: error falls (3.98 → 3.39) and bias is essentially
+eliminated (−1.06 → +0.06, CI now straddling zero). Cross-validation improves by 24%, and CV and
+AIC still agree on $F_3$.
+
+### The result that matters most is $F_\mathrm{base}$'s
+
+Entry 52 found the simulation carrying a −3.85% bias concentrated in the three São Paulo corpora,
+and attributed it to the parameter protocol rather than to the dynamics: constants fitted under
+quasi-steady conditions, then used across transients. **That diagnosis is now confirmed by
+intervention.** Swapping only the aero estimator moves $F_\mathrm{base}$'s bias from −3.08% to
+−0.01% overall, and per corpus:
+
+| | D3 | D4 | D5 | u1 | u2 | u3 |
+|---|--:|--:|--:|--:|--:|--:|
+| seg | −4.2 | −5.0 | −3.7 | −0.3 | −3.9 | +2.0 |
+| reg | −0.9 | −2.3 | +0.3 | +1.6 | −0.3 | +0.8 |
+
+The São Paulo effect disappears. Nothing about the simulation changed; only the speed at which
+its drag coefficient was inferred. The bias was never evidence about forward dynamics.
+
+**And the paper's central claim becomes clean.** Under `seg`, the closed form beat the simulation
+190/305 ($p < 10^{-4}$) — a win Entry 52 already declined to claim as better physics. Under `reg`
+it is **149/305, $p = 0.73$**: a coin flip. That is *parity*, which is what the paper actually
+argues for, demonstrated rather than inferred from a comparator handicapped by its own inputs.
+
+### Two things to carry forward honestly
+
+**Selection and the test half disagree about $F_4$.** $F_3$ wins CV decisively (0.0556 vs
+0.0637) and is alone within 1 SE, but on the held-out rides $F_4$ scores 2.85 against $F_3$'s
+3.39, with overlapping intervals. The registered protocol makes CV binding and it stays binding —
+choosing $F_4$ post hoc because it won the test half is exactly the error the split exists to
+prevent — but the disagreement is real and belongs in the paper rather than in a footnote.
+Notably $F_4$'s $c$ fits to **1.18** here against 0.03 under `seg`, so with a better aero the
+climb-fraction term stops being redundant.
+
+**$\tau$ triples, 2 m → 6 m.** Entry 52 found $\tau$ refitting to exactly its historical 2 m and
+concluded the frozen value was benign. That conclusion was conditional on the aero estimator, and
+the condition was not stated. With `reg` the optimum moves to 6 m, which says the deadband was
+partly compensating for aero error — the same double-correction pattern Entries 52 and 46 found
+between $\varepsilon$, $k_m$ and the frozen constants.
+
+### Consequence for the sensitivity result
+
+$C_dA$ becomes *more* dominant, not less: loss inflation 21.6% → **46.3%**, while $\varepsilon$
+falls 8.5% → **2.9%** and ranks last in both arms. Entry 50's conclusion is unchanged and
+strengthened — with a better-measured aero, the deficit matters even less by comparison.
+
+### Recommendation
+
+**Adopt `reg` as the default** and re-baseline §3.1 and §3.2 onto it. `seg` is retained as the
+sensitivity arm, since the pair is the evidence for the $\tau$ and $F_4$ observations above.
+
 ## 2026-07-31 — Entry 54: can one rider's ε serve the rest? — leave-one-rider-out transfer — pre-registration
 
 **Lineage** — $I$: $(D_3..D_6, P_{f,r})$ · $T$: $F_3$ at $\tau = 2$ m, one flat $\varepsilon$ · $O$: `e54_transfer.csv` · $S$: the accuracy cost of calibrating on one person instead of seven

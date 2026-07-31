@@ -44,7 +44,8 @@ from bicycling_energy_model import (approximate, build_profile, canonical,
                                     deadband, empirical_kj,
                                     extract_regime_powers, is_finite,
                                     overall_mean_power, resample_profile)
-from bicycling_energy_model.engines import flat_eq_speed
+from bicycling_energy_model.engines import G, flat_eq_speed
+from bicycling_energy_model.regime import measured_flat_speed
 from bicycling_energy_model.jsfmt import to_fixed
 
 from perride_invert import (CLIMB_THR, DESC_THR, ENGINE_DX, KEFF, RESULTS, RHO,
@@ -53,6 +54,12 @@ from perride_invert import (CLIMB_THR, DESC_THR, ENGINE_DX, KEFF, RESULTS, RHO,
 from e44_scurve import corpus_rides
 
 SMOKE = bool(os.environ.get("E52_SMOKE"))
+# Entry 55: which aero estimator feeds the physics. "seg" is invert_physics's
+# CdA from flat SEGMENTS (the default, what Entries 52/54 used); "reg" is the
+# regime-consistent CdA, derived at the MEASURED flat speed so it closes the
+# v_f gap by construction, and needing no qualifying segment.
+AERO = os.environ.get("E52_AERO", "seg")
+CDA_RANGE = (0.10, 1.00)
 CHECK: list[float] = []   # build-time cache-vs-engine deviations
 CANON_FAIL: list[str] = []   # F_base failures, counted rather than swallowed
 C_PUB = 3.0                      # F4's published climb-fraction constant
@@ -110,7 +117,20 @@ def one_ride(pts, label, group, m_logged) -> dict | None:
     if inv is None:
         return None
 
-    p = {"m": inv["m_hat"], "Crr": inv["crr_hat"], "CdA": inv["cda_hat"],
+    cda, cda_src = inv["cda_hat"], inv.get("cda_src", "")
+    if AERO == "reg":
+        # CdA_reg = (keff*P_flat/v_meas - Crr*m*g) / (rho/2 * v_rel^2), the
+        # e35_residual arm-B estimator. Falls back to the segment value rather
+        # than to the prior, so this arm is never WORSE informed than "seg".
+        v_meas = measured_flat_speed(pts)
+        if v_meas and v_meas > 2.0 and flat > 20:
+            v_rel = v_meas + wind
+            den = 0.5 * RHO * v_rel * abs(v_rel)
+            if den > 0:
+                c = (KEFF * flat / v_meas - inv["crr_hat"] * inv["m_hat"] * G) / den
+                if CDA_RANGE[0] <= c <= CDA_RANGE[1]:
+                    cda, cda_src = c, "regime"
+    p = {"m": inv["m_hat"], "Crr": inv["crr_hat"], "CdA": cda,
          "rho": RHO, "keff": KEFF, "wind": wind, "vmax": VMAX, "vstart": VSTART}
     pw = {"climb": p_climb, "flat": flat,
           "descent": rp["descent"]["mean"] if rp["descent"]["mean"] is not None else 0,
@@ -124,7 +144,7 @@ def one_ride(pts, label, group, m_logged) -> dict | None:
     row = {"group": group, "ride": label, "date": "", "emp": emp,
            "m_hat": inv["m_hat"], "m_src": inv.get("m_src", ""),
            "crr_hat": inv["crr_hat"], "crr_src": inv.get("crr_src", ""),
-           "cda_hat": inv["cda_hat"], "cda_src": inv.get("cda_src", ""),
+           "cda_hat": cda, "cda_src": cda_src,
            "wind_ms": wind, "vf_kmh": vf * 3.6}
 
     # --- the two-point cache: eps = 0 and eps = 1 pin every form
@@ -249,7 +269,7 @@ def main() -> None:
         for msg, n in Counter(CANON_FAIL).most_common(3):
             print(f"    {n:>5}x  {msg[:96]}")
 
-    out = os.path.join(RESULTS, "e52_aggregates" + (".SMOKE" if SMOKE else "") + ".csv")
+    out = os.path.join(RESULTS, "e52_aggregates" + ("" if AERO == "seg" else "." + AERO) + (".SMOKE" if SMOKE else "") + ".csv")
     with open(out, "w", encoding="utf-8", newline="") as fh:
         w = csv.DictWriter(fh, fieldnames=COLS, extrasaction="ignore")
         w.writeheader()

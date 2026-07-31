@@ -43,7 +43,7 @@ sys.path.insert(0, HERE)
 from bicycling_energy_model import is_finite
 from bicycling_energy_model.jsfmt import to_fixed
 
-from e52_build import C_PUB, FORMS, GROUPS, NPAR, TAU_GRID, TAU_PUB_I, e_form
+from e52_build import AERO, C_PUB, FORMS, GROUPS, NPAR, TAU_GRID, TAU_PUB_I, e_form
 from perride_invert import RESULTS
 from skc_compare import boot_ci_strat, med_of, sign_p
 
@@ -75,7 +75,7 @@ def mulberry32(seed: int):
 
 
 def load() -> list[dict]:
-    path = os.path.join(RESULTS, "e52_aggregates" + (".SMOKE" if SMOKE else "") + ".csv")
+    path = os.path.join(RESULTS, "e52_aggregates" + ("" if AERO == "seg" else "." + AERO) + (".SMOKE" if SMOKE else "") + ".csv")
     rows = []
     with open(path, encoding="utf-8") as fh:
         for r in csv.DictReader(fh):
@@ -405,7 +405,7 @@ def main() -> None:
         print(f"    P3 — closed form closer than F_base on {win}/{win + los}, "
               f"sign test p = {to_fixed(sign_p(win, los), 4)}")
 
-    out = os.path.join(RESULTS, "e52_split" + (".SMOKE" if SMOKE else "") + ".csv")
+    out = os.path.join(RESULTS, "e52_split" + ("" if AERO == "seg" else "." + AERO) + (".SMOKE" if SMOKE else "") + ".csv")
     with open(out, "w", encoding="utf-8") as fh:
         fh.write("form,npar,cv,cv_se,aic,eps,c,tau,test_med_abs,test_med_signed,winner\n")
         for f in FORMS:
@@ -418,7 +418,7 @@ def main() -> None:
                      f"{1 if f == w['form'] else 0}\n")
     # summary row set: the numbers the gate battery re-derives and the article
     # cites. Written here so a published claim traces to a file, not a console log.
-    summ = os.path.join(RESULTS, "e52_summary" + (".SMOKE" if SMOKE else "") + ".csv")
+    summ = os.path.join(RESULTS, "e52_summary" + ("" if AERO == "seg" else "." + AERO) + (".SMOKE" if SMOKE else "") + ".csv")
     with open(summ, "w", encoding="utf-8") as fh:
         fh.write("key,value\n")
         fh.write(f"f3_test_med_abs,{to_fixed(res[w['form']]['med_abs'], 4)}\n")
