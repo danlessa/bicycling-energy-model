@@ -300,6 +300,53 @@ $\varepsilon$ can in principle be predicted from geometry. If **P1 fails** — n
 sign — then Entry 60's split is rider-driven, §3.1.5's two pools are fitting a confound, and the
 paper must say so.
 
+### Findings
+
+Two-level full factorial, $2^6 = 64$ combinations over 30 real route geometries per region, with
+**every free parameter of every form fitted jointly** — $\varepsilon$ for F1/F2, $(\varepsilon,
+\tau)$ for F3, $(\varepsilon, c)$ for F4.
+
+| form | D3–D5 | D6 | gap |
+|---|--:|--:|--:|
+| F1 | 0.680 | 0.653 | −0.027 |
+| F2 | 0.498 | 0.471 | −0.027 |
+| **F3** | **0.277** | **0.403** | **+0.125** |
+| F4 | 0.288 | 0.380 | +0.092 |
+
+**P1 confirmed, and more strongly than registered.** With the *same synthetic rider* over both
+regions' geometries, F3 shows a **+0.125** gap against Entry 60's empirical **+0.133**. The
+terrain alone reproduces **94%** of the regional difference. **P2 is therefore refuted in the
+informative direction**: the synthetic gap was predicted to be *smaller* because behaviour could
+no longer contribute, and it is barely smaller at all — which says behaviour was contributing
+almost nothing to begin with. **The regional $\varepsilon$ split is landscape, not people**, and
+§3.1.5's two pools are measuring terrain rather than a rider confound.
+
+**The first pass understated this, and the reason is a bug worth recording.** It pinned F4's
+scalar at the published $c = 3.0$ m/km — the same class of error as Entry 54's frozen $\tau$,
+and one Entry 55 had already measured as costing 21.7% of the loss. Under that constraint F4
+showed a *negative* gap (−0.019) and F3's was only +0.084, which supported a "the split is
+F3-specific, suspect the deadband" reading that was simply wrong. With $c$ fitted, **F4 splits
+positively too** and the two forms agree. A held parameter does not merely add noise; it can
+invert a conclusion.
+
+**The jointly fitted structurals separate cleanly.** $\tau$ comes out at **4 m in both regions**,
+while F4's $c$ differs sharply — **3.02 on D3–D5 against 1.84 on D6**. The point-wise filter is
+region-invariant and the aggregate proxy is not, which is what Entry 55's "same correction from
+opposite ends" account predicts: $c$ has to absorb a geometry difference that $\tau$ handles
+directly.
+
+**P3 refuted, and the prediction's reasoning was wrong rather than the result.** $\varepsilon$
+*falls* with $k_\mathrm{descent}$ (0.336 → 0.307). The registration argued a rider pedalling on
+descents "recovers more" — they *spend* more, so the closed form needs a *smaller* refund to
+match. **P4's stated direction was also wrong but its mechanism is confirmed**: $\varepsilon$
+*rises* with $P_\mathrm{flat}$ (0.283 → 0.433), which is what the registration's own justification
+implied (the ceiling $\min(1, (\alpha/\beta)/s)$ grows with $v_f$) even though the sentence said
+"falls". §4.4.2's mechanism gets its first test under known physics and passes.
+
+**Scope.** Sixty routes and one synthetic rider family are not a landscape-class table; they
+establish that such a table is *possible*, which is what §4.4.3 sets out. The full $3^6$ grid
+over 200 routes remains unrun at an estimated 10.2 hours.
+
 ## 2026-07-31 — Entry 60: ε has a regional structure — separate pools for D3–D5 and D6
 
 **Lineage** — $I$: $(D_3..D_5, P_{f,r}^{\mathrm{rider}})$ and $(D_6, \cdot)$ · $T$: $F_3$ at $\tau = 6$ m · $O$: `e60_regional.csv` · $S$: two constants instead of one, and what the single one was costing

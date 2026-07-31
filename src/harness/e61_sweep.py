@@ -47,17 +47,34 @@ from perride_invert import (CLIMB_THR, DESC_THR, ENGINE_DX, KEFF, RESULTS, RHO,
 from skc_compare import med_of
 
 SEED = 53
-N_COMBO = int(os.environ.get("E61_COMBOS", "24"))
-N_ROUTES = int(os.environ.get("E61_ROUTES", "100"))     # per region
-TAU = 6.0                                               # the shipped deadband
+N_COMBO = int(os.environ.get("E61_COMBOS", "64"))
+N_ROUTES = int(os.environ.get("E61_ROUTES", "30"))      # per region
+# tau is HELD at the value fitted on real data, not swept: the question is what
+# geometry implies about eps, and letting the deadband float per region would
+# confound the two. c is NOT held -- it is fitted jointly with eps below,
+# because F4 is a two-parameter form and pinning c at the published 3.0 m/km
+# (which Entry 55 measured as costing 21.7% of the loss) would have made F4's
+# regional row an artefact of a known-bad constant.
+# NOTHING is held fixed: each form's own free parameters are fitted jointly --
+# F3 gets (eps, tau), F4 gets (eps, c). tau cannot be fitted from cached
+# components because it changes the PROFILE, so each grid value needs its own
+# approximate() pass. Holding c at the published 3.0 m/km, as the first version
+# did, would have made F4's regional row an artefact of a constant Entry 55
+# measured as costing 21.7% of the loss.
+TAU_SWEEP = (0.0, 2.0, 4.0, 6.0, 8.0, 12.0)
 BR = {"D3", "D4", "D5"}
 
-CRR = (0.004, 0.008, 0.012)      # 0.0012 in the prompt read as 0.012 (Entry 61)
-CDA = (0.30, 0.40, 0.50)
-MASS = (70.0, 85.0, 100.0)
-PFLAT = (50.0, 100.0, 200.0)
-KCLIMB = (1.0, 1.5, 2.0)
-KDESC = (0.0, 0.1, 0.5)
+# Two-level full factorial (Danilo's revision): 2^6 = 64 combinations, every
+# marginal effect balanced by construction -- better for the P3/P4 behaviour
+# questions than a random subsample of the 3-level grid, and cheap enough to
+# run whole. Crr given as [0.04, 0.08] is read as [0.004, 0.008]: 0.04 is an
+# order of magnitude above any road rolling coefficient.
+CRR = (0.004, 0.008)
+CDA = (0.30, 0.40)
+MASS = (75.0, 90.0)
+PFLAT = (75.0, 150.0)
+KCLIMB = (1.0, 2.0)
+KDESC = (0.0, 0.5)
 
 
 def routes():
@@ -87,6 +104,86 @@ def combos():
             for d in PFLAT for e in KCLIMB for f in KDESC]
     rnd = random.Random(SEED)
     return grid if N_COMBO >= len(grid) else rnd.sample(grid, N_COMBO)
+
+
+def fit_eps2(comp) -> tuple:
+    """Fit (eps, c) jointly for F4. comp rows are
+    (roll, aero, climb, recov1, x_km, hplus, truth) in kJ / m."""
+    import math
+
+    def loss(e, c):
+        s, n = 0.0, 0
+        for roll, aero, climb, rec1, xkm, hp, t in comp:
+            km = max(0.0, 1.0 - c * xkm / hp) if hp > 0 else 1.0
+            v = roll + aero + km * (climb + e * rec1)
+            if v > 0 and t > 0:
+                s += abs(math.log(v / t))
+                n += 1
+        return s / n if n else float("inf")
+
+    elo, ehi, clo, chi = -0.2, 1.0, 0.0, 6.0
+    be, bc = 0.2, 1.0
+    for _ in range(4):
+        es = [elo + i * (ehi - elo) / 30 for i in range(31)]
+        cs = [clo + i * (chi - clo) / 30 for i in range(31)]
+        be, bc = min(((e, c) for e in es for c in cs), key=lambda q: loss(*q))
+        de, dc = (ehi - elo) / 30, (chi - clo) / 30
+        elo, ehi = be - de, be + de
+        clo, chi = max(0.0, bc - dc), bc + dc
+    return be, bc
+
+
+def _eps_min(rows_e0e1) -> tuple:
+    """(eps, loss) minimising mean |log| for a list of (E0, E1, truth)."""
+    import math
+
+    def loss(e):
+        s, n = 0.0, 0
+        for e0, e1, t in rows_e0e1:
+            v = e0 + e * (e1 - e0)
+            if v > 0 and t > 0:
+                s += abs(math.log(v / t))
+                n += 1
+        return s / n if n else float("inf")
+    lo, hi, best = -0.2, 1.0, 0.2
+    for _ in range(5):
+        step = (hi - lo) / 200
+        best = min((lo + i * step for i in range(201)), key=loss)
+        lo, hi = best - step, best + step
+    return best, loss(best)
+
+
+def fit_eps_tau(by_tau: dict) -> tuple:
+    """F3: joint (eps, tau) over the tau grid. by_tau[tau] = [(E0,E1,truth)]."""
+    best = None
+    for tau, rows_ in by_tau.items():
+        e, l = _eps_min(rows_)
+        if best is None or l < best[2]:
+            best = (e, tau, l)
+    return best[0], best[1]
+
+
+def fit_eps_c(comp) -> tuple:
+    """F4: joint (eps, c). comp = (roll, aero, climb, recov1, x_km, hplus, truth)."""
+    import math
+
+    def loss(e, c):
+        s, n = 0.0, 0
+        for roll, aero, climb, rec1, xkm, hp, t in comp:
+            km = max(0.0, 1.0 - c * xkm / hp) if hp > 0 else 1.0
+            v = roll + aero + km * (climb + e * rec1)
+            if v > 0 and t > 0:
+                s += abs(math.log(v / t))
+                n += 1
+        return s / n if n else float("inf")
+    elo, ehi, clo, chi, be, bc = -0.2, 1.0, 0.0, 6.0, 0.2, 1.0
+    for _ in range(4):
+        es = [elo + i * (ehi - elo) / 30 for i in range(31)]
+        cs = [clo + i * (chi - clo) / 30 for i in range(31)]
+        be, bc = min(((e, c) for e in es for c in cs), key=lambda q: loss(*q))
+        de, dc = (ehi - elo) / 30, (chi - clo) / 30
+        elo, ehi, clo, chi = be - de, be + de, max(0.0, bc - dc), bc + dc
+    return be, bc
 
 
 def fit_eps(pairs) -> float:
@@ -130,7 +227,8 @@ def main() -> None:
         opt = {"climbAeroMode": "zero", "climbThr": CLIMB_THR,
                "descThr": DESC_THR, "climbPower": pw["climb"]}
         for reg in ("BR", "EU"):
-            pairs = {f: [] for f in ("F1", "F2", "F3", "F4")}
+            pairs = {f: [] for f in ("F1", "F2", "F4")}
+            f3_by_tau = {t: [] for t in TAU_SWEEP}
             for prof in rr[reg]:
                 try:
                     truth = canonical(prof, pw, p)["legE"] / 1000.0
@@ -138,26 +236,38 @@ def main() -> None:
                     continue
                 if not (is_finite(truth) and truth > 0):
                     continue
-                profS = {"x": prof["x"], "h": deadband(prof["h"], TAU)}
-                for f, pr, mode in (("F1", prof, "off"), ("F2", prof, "zero"),
-                                    ("F3", profS, "zero")):
+                for f, mode in (("F1", "off"), ("F2", "zero")):
                     o = dict(opt, climbAeroMode=mode)
-                    a0 = approximate(pr, p, vf, 0.0, o)
-                    a1 = approximate(pr, p, vf, 1.0, o)
+                    a0 = approximate(prof, p, vf, 0.0, o)
+                    a1 = approximate(prof, p, vf, 1.0, o)
                     pairs[f].append((a0["E"] / 1000, a1["E"] / 1000, truth))
+                for tau in TAU_SWEEP:
+                    ps = {"x": prof["x"], "h": deadband(prof["h"], tau)}
+                    o = dict(opt, climbAeroMode="zero")
+                    a0 = approximate(ps, p, vf, 0.0, o)
+                    a1 = approximate(ps, p, vf, 1.0, o)
+                    f3_by_tau[tau].append((a0["E"] / 1000, a1["E"] / 1000, truth))
                 a0 = approximate(prof, p, vf, 0.0, opt)
                 a1 = approximate(prof, p, vf, 1.0, opt)
-                km = (max(0.0, 1 - C_PUB * (prof["x"][-1] / 1000) / a0["hplus"])
-                      if a0["hplus"] > 0 else 1.0)
-                e0 = (a0["roll"] + a0["aero"] + km * a0["climb"]) / 1000
-                e1 = e0 + km * a1["recov"] / 1000
-                pairs["F4"].append((e0, e1, truth))
-            for f, pr in pairs.items():
-                if len(pr) >= 10:
-                    rows.append({"combo": ci, "region": reg, "form": f,
-                                 "crr": crr, "cda": cda, "m": m, "pflat": pf,
-                                 "kclimb": kc, "kdesc": kd, "eps": fit_eps(pr),
-                                 "n": len(pr)})
+                pairs["F4"].append((a0["roll"] / 1000, a0["aero"] / 1000,
+                                    a0["climb"] / 1000, a1["recov"] / 1000,
+                                    prof["x"][-1] / 1000, a0["hplus"], truth))
+            fits = {}
+            for f in ("F1", "F2"):
+                if len(pairs[f]) >= 10:
+                    fits[f] = (_eps_min(pairs[f])[0], float("nan"), float("nan"))
+            if len(f3_by_tau[TAU_SWEEP[0]]) >= 10:
+                e3, t3 = fit_eps_tau(f3_by_tau)
+                fits["F3"] = (e3, float("nan"), t3)
+            if len(pairs["F4"]) >= 10:
+                e4, c4 = fit_eps_c(pairs["F4"])
+                fits["F4"] = (e4, c4, float("nan"))
+            for f, (e_hat, c_hat, t_hat) in fits.items():
+                rows.append({"combo": ci, "region": reg, "form": f,
+                             "crr": crr, "cda": cda, "m": m, "pflat": pf,
+                             "kclimb": kc, "kdesc": kd, "eps": e_hat,
+                             "c": c_hat, "tau": t_hat,
+                             "n": len(f3_by_tau[TAU_SWEEP[0]]) if f == "F3" else len(pairs[f])})
         if (ci + 1) % 4 == 0:
             print(f"  {ci + 1}/{len(grid)} combinations done", flush=True)
 
@@ -172,15 +282,26 @@ def main() -> None:
         e = med(lambda r, f=f: r["form"] == f and r["region"] == "EU")
         print(f"    {f:<6} {to_fixed(b, 4):>12} {to_fixed(e, 4):>10} {to_fixed(e - b, 4):>8}")
 
-    print(f"\n  F3 eps against the swept behaviour (P3, P4)")
+    print(f"\n  jointly fitted structural parameters (nothing held)")
+    for reg in ("BR", "EU"):
+        t3 = [r["tau"] for r in rows if r["form"] == "F3" and r["region"] == reg
+              and is_finite(r["tau"])]
+        c4 = [r["c"] for r in rows if r["form"] == "F4" and r["region"] == reg
+              and is_finite(r["c"])]
+        print(f"    {reg}:  F3 tau median {to_fixed(med_of(t3), 2) if t3 else '—':>6} m"
+              f"    F4 c median {to_fixed(med_of(c4), 3) if c4 else '—':>7} m/km")
+
+    print(f"\n  F3 eps against every swept factor (P3, P4) — full factorial, so each")
+    print(f"  column is a balanced marginal over all other factors")
     for name, key, vals in (("k_descent", "kdesc", KDESC), ("P_flat", "pflat", PFLAT),
-                            ("k_climb", "kclimb", KCLIMB)):
+                            ("k_climb", "kclimb", KCLIMB), ("CdA", "cda", CDA),
+                            ("Crr", "crr", CRR), ("m", "m", MASS)):
         cells = [med(lambda r, k=key, v=v: r["form"] == "F3" and r[k] == v) for v in vals]
         print(f"    {name:<10} " + "  ".join(f"{v:>5}: {to_fixed(c, 4)}"
                                              for v, c in zip(vals, cells)))
 
     path = os.path.join(RESULTS, "e61_sweep.csv")
-    cols = ["combo", "region", "form", "crr", "cda", "m", "pflat", "kclimb", "kdesc", "eps", "n"]
+    cols = ["combo", "region", "form", "crr", "cda", "m", "pflat", "kclimb", "kdesc", "eps", "c", "tau", "n"]
     with open(path, "w", encoding="utf-8") as fh:
         fh.write(",".join(cols) + "\n")
         for r in rows:
