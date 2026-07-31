@@ -304,20 +304,33 @@ from that fold's training part only, exactly as every other free parameter.
   it is expected to show that the label overstates the fit: $C_{rr}$ is the 0.008 prior on 77%
   of rides, $C_dA$ the 0.400 rail on 26%, both genuinely inverted on 15%.
 - **A.4** — repeated stratified $k$-fold on $D_\mathrm{train}$ (stratified by rider), fitting
-  and scoring F1–F4. **Loss: mean $|\Delta\%|$** *(amendment 3, replacing RMSE)*. RMSE on kJ
-  is dominated by long rides; RMSE on $\Delta\%$ is outlier-driven on corpora with known bad
-  power traces; and either breaks continuity with the median $|\Delta\%|$ that all 293 gates
-  and every published number use. MASE was considered and rejected — its denominator is a
-  naive one-step forecast, which has no meaning for a cross-sectional ride set, so it would
-  require inventing and defending a benchmark. Mean $|\Delta\%|$ is scale-free and $L^1$-robust
-  with no new concept. Noted once in the paper: percentage error is asymmetric (bounded at
-  $-100\%$, unbounded above), which tilts fitting slightly toward under-prediction.
-- **A.5** — select by CV score under the **1-SE rule** *(amendment 4, replacing AIC)*. With
-  $n \approx 1{,}700$ and forms one parameter apart, AIC's penalty of 2 is negligible beside
-  the log-likelihood gap, so AIC would simply pick the best-fitting form and deliver no
-  parsimony — and it would leave two criteria with no tie-break. Entry 47's BIC-under-Laplace
-  selection is cited as independent corroboration rather than re-run here. The simplest form
-  within one standard error of the best wins.
+  and scoring F1–F4. **Loss: mean $|\log(\hat E / E)|$** *(amendment 3, replacing RMSE)*, the
+  symmetric log-ratio error. RMSE on kJ is dominated by long rides; RMSE on $\Delta\%$ is
+  outlier-driven on corpora with known bad power traces; and either breaks continuity with the
+  median $|\Delta\%|$ that all 293 gates and every published number use. MASE was considered
+  and rejected — its denominator is a naive one-step forecast, meaningless for a
+  cross-sectional ride set, so it would require inventing and defending a benchmark. Mean
+  $|\Delta\%|$ was the first choice and was rejected in turn for **asymmetry**: percentage
+  error is bounded at $-100\%$ and unbounded above, so it prices over- and under-prediction
+  differently and tilts fitting toward under-prediction. The log ratio is scale-free,
+  $L^1$-robust and symmetric — over- and under-prediction by the same factor cost the same —
+  at the price of one unfamiliar unit, which the paper converts back to $\Delta\%$ when
+  reporting. **Reporting stays median $|\Delta\%|$**; only the fitting and CV loss changes.
+- **A.5** — select by **CV score, binding**, with **AIC computed and reported beside it**
+  *(amendment 4, revised after Danilo's objection that the forms are all simple and AIC is
+  philosophically the better criterion)*. The objection is fair on parsimony, but the two are
+  not independent criteria to weigh: **AIC is an asymptotic approximation to leave-one-out CV**
+  (Stone 1977), so running both alongside A.4's $k$-fold is the shortcut and the direct
+  measurement of the same quantity, not corroboration from two directions. Which to make
+  binding is settled by precedent in this journal rather than by philosophy — **Entry 49**
+  found B′, a ten-parameter form that BIC endorsed decisively ($\Delta$BIC $= -64.7$, on
+  strictly better in-sample fit) and whose held-out win rate was 255 of 514, $p = 0.89$, a coin
+  flip. That entry concluded *"the held-out score is primary here and the information criterion
+  is corroboration"*, and AIC's $2k$ penalty is **weaker** than the $k\ln n$ that already
+  failed there ($2$ vs $7.4$ per parameter at $n \approx 1{,}700$). Entry 52 keeps that rule.
+  AIC is still computed and published per form: where it agrees with CV the selection is
+  unarguable, and where it disagrees Entry 49 says which to trust. The **1-SE rule** breaks CV
+  ties toward the simpler form.
 - **A.6** — refit the selected form on all of $D_\mathrm{train}$.
 - **A.7** — sensitivity of the selected form over $(m, C_dA, C_{rr}, \varepsilon)$, reusing
   Entry 50's decomposition, with the boxes taken from **A.3's measured dispersion** rather
@@ -343,6 +356,8 @@ not enter A.4's selection.
   the same rides under a different split.
 - **P5** — the CV spread across F1–F4 is small enough that the 1-SE rule binds, i.e. form
   choice matters less than the parameter uncertainty A.7 measures.
+- **P6** — CV and AIC select the **same** form. If they disagree, Entry 49's precedent governs
+  and the disagreement is itself reported as a result.
 
 ### Gate
 
