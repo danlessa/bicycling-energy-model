@@ -191,7 +191,7 @@ flowchart LR
     P1["1 · parse
     FIT → per-second points"]
     P2["2 · geometry
-    resample 5 m · deadband τ = 2 m →
+    resample 5 m · deadband τ = 6 m →
     x, x_flat, h±, h̃±, 30 m descent cells"]
     P3["3 · per-ride rates
     regime powers → v_f (flat balance);
