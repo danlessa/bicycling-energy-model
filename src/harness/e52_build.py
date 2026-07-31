@@ -54,15 +54,16 @@ from e44_scurve import corpus_rides
 
 SMOKE = bool(os.environ.get("E52_SMOKE"))
 CHECK: list[float] = []   # build-time cache-vs-engine deviations
+CANON_FAIL: list[str] = []   # F_base failures, counted rather than swallowed
 C_PUB = 3.0                      # F4's published climb-fraction constant
 GROUPS = ("D3", "D4", "D5", "D6-user_1", "D6-user_2", "D6-user_3", "D6-user_5")
 ANCHOR_KEY = {"D3": "ppaz", "D4": "jaam", "D5": "danlessa"}
 
-COLS = ["group", "ride", "date", "emp",
-        "m_hat", "m_src", "crr_hat", "crr_src", "cda_hat", "cda_src", "wind_ms",
-        "f1_E0", "f1_E1", "f2_E0", "f2_E1", "f3_E0", "f3_E1",
-        "a2_roll", "a2_aero", "a2_climb", "a2_recov1",
-        "x_m", "hplus", "hminus", "vf_kmh", "canon_kj"]
+COLS = (["group", "ride", "date", "emp",
+         "m_hat", "m_src", "crr_hat", "crr_src", "cda_hat", "cda_src", "wind_ms"]
+        + [f"{t}_{k}" for t in ("f1", "f2", "f3")
+           for k in ("roll", "aero", "climb", "recov1")]
+        + ["x_m", "hplus", "hminus", "vf_kmh", "canon_kj"])
 
 
 def one_ride(pts, label, group, m_logged) -> dict | None:
@@ -103,7 +104,9 @@ def one_ride(pts, label, group, m_logged) -> dict | None:
 
     p = {"m": inv["m_hat"], "Crr": inv["crr_hat"], "CdA": inv["cda_hat"],
          "rho": RHO, "keff": KEFF, "wind": wind, "vmax": VMAX, "vstart": VSTART}
-    pw = {"flat": flat, "climb": p_climb}
+    pw = {"climb": p_climb, "flat": flat,
+          "descent": rp["descent"]["mean"] if rp["descent"]["mean"] is not None else 0,
+          "climbThr": CLIMB_THR, "descThr": DESC_THR}
     vf = flat_eq_speed(flat, p)
     if not (is_finite(vf) and vf > 0):
         return None
@@ -121,11 +124,15 @@ def one_ride(pts, label, group, m_logged) -> dict | None:
                             ("f3", (profS, "zero"))):
         a0 = approximate(pr, p, vf, 0.0, opt(mode))
         a1 = approximate(pr, p, vf, 1.0, opt(mode))
-        row[f"{tag}_E0"], row[f"{tag}_E1"] = a0["E"], a1["E"]
+        # Components, not just the E0/E1 pair: the decomposition invariant
+        # roll + aero + climb + recov == E makes these exactly equivalent, and
+        # storing them is what lets A.7 perturb a term for EVERY form. Caching
+        # only E0/E1 silently gave F1-F3 a zero elasticity, since the
+        # perturbation had nothing to act on.
+        row[f"{tag}_roll"], row[f"{tag}_aero"] = a0["roll"], a0["aero"]
+        row[f"{tag}_climb"] = a0["climb"]
+        row[f"{tag}_recov1"] = a1["recov"]      # recov at eps = 1
         if tag == "f2":
-            row["a2_roll"], row["a2_aero"] = a0["roll"], a0["aero"]
-            row["a2_climb"] = a0["climb"]
-            row["a2_recov1"] = a1["recov"]      # recov at eps = 1
             row["hplus"], row["hminus"] = a0["hplus"], a0["hminus"]
     row["x_m"] = prof["x"][-1] - prof["x"][0]
 
@@ -139,7 +146,8 @@ def one_ride(pts, label, group, m_logged) -> dict | None:
                                 ("f3", (profS, "zero"))):
             for eps in (0.2, 0.37, 0.85):
                 want = approximate(pr, p, vf, eps, opt(mode))["E"]
-                got = row[tag + "_E0"] + eps * (row[tag + "_E1"] - row[tag + "_E0"])
+                got = (row[tag + "_roll"] + row[tag + "_aero"]
+                       + row[tag + "_climb"] + eps * row[tag + "_recov1"])
                 if want:
                     worst = max(worst, abs(got - want) / abs(want))
         for eps in (0.2, 0.37):
@@ -152,9 +160,13 @@ def one_ride(pts, label, group, m_logged) -> dict | None:
                 worst = max(worst, abs(got - want) / abs(want))
         CHECK.append(worst)
 
+    # F_base, the comparator. A bare `except` here silently produced nan on all
+    # 2,039 rides and left P3 unanswerable, so the failure is counted and
+    # surfaced instead of swallowed.
     try:
         row["canon_kj"] = canonical(prof, pw, p)["legE"] / 1000
-    except Exception:
+    except Exception as exc:
+        CANON_FAIL.append(repr(exc))
         row["canon_kj"] = float("nan")
     return row
 
@@ -168,12 +180,13 @@ def e_form(r: dict, form: str, eps: float, c: float = C_PUB) -> float:
     """Energy in kJ for one ride under one form at (eps, c)."""
     if form in ("F1", "F2", "F3"):
         k = {"F1": "f1", "F2": "f2", "F3": "f3"}[form]
-        return (r[k + "_E0"] + eps * (r[k + "_E1"] - r[k + "_E0"])) / 1000
+        return (r[k + "_roll"] + r[k + "_aero"] + r[k + "_climb"]
+                + eps * r[k + "_recov1"]) / 1000
     if form == "F4":
         km = 1.0 - c * (r["x_m"] / 1000.0) / r["hplus"] if r["hplus"] > 0 else 1.0
         km = km if km > 0 else 0.0
-        return (r["a2_roll"] + r["a2_aero"]
-                + km * (r["a2_climb"] + eps * r["a2_recov1"])) / 1000
+        return (r["f2_roll"] + r["f2_aero"]
+                + km * (r["f2_climb"] + eps * r["f2_recov1"])) / 1000
     raise ValueError(form)
 
 
@@ -219,6 +232,11 @@ def main() -> None:
     print(f"\n  {len(rows)} rides cached of {sum(seen.values())} seen")
 
     ok = verify()
+    if CANON_FAIL:
+        from collections import Counter
+        print(f"\n  F_base (canonical) failed on {len(CANON_FAIL)} rides:")
+        for msg, n in Counter(CANON_FAIL).most_common(3):
+            print(f"    {n:>5}x  {msg[:96]}")
 
     out = os.path.join(RESULTS, "e52_aggregates" + (".SMOKE" if SMOKE else "") + ".csv")
     with open(out, "w", encoding="utf-8", newline="") as fh:
