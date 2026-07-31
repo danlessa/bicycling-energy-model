@@ -221,6 +221,71 @@ what the other rows *mean* without producing a per-ride table of their own.
 
 ---
 
+## 2026-07-31 — Entry 54: can one rider's ε serve the rest? — leave-one-rider-out transfer — pre-registration
+
+**Lineage** — $I$: $(D_3..D_6, P_{f,r})$ · $T$: $F_3$ at $\tau = 2$ m, one flat $\varepsilon$ · $O$: `e54_transfer.csv` · $S$: the accuracy cost of calibrating on one person instead of seven
+
+*Prompt (Danilo), on paper 1 §1.3: "H1 is a goal. H2 we can drop it. H3: we can test that as
+an additional validation test. Let's scope that experiment of fitting eps against a single
+rider, and testing against the others."*
+
+### Why this is the paper's one real hypothesis
+
+Entry 52 fitted $\varepsilon = 0.288$ on 1,734 rides drawn from all seven riders, so every
+rider contributed to the constant that is then scored on all seven. That is legitimate for
+measuring the *form's* accuracy — the held-out rides chose neither the form nor the constant —
+but it cannot answer the question a reader actually has: **if I take the published number, does
+it work for me, given I contributed nothing to it?**
+
+The deployment case depends entirely on the answer. A single published $\varepsilon$ serves any
+user only if $\varepsilon$ is a property of cycling. If it is a property of the rider, the law
+needs a calibration session per person, and paper 2's planner use case and paper 3's routing
+cost both inherit that requirement. Entry 51 already found per-corpus optima spanning
+**0.186–0.445**, which is wide enough that the question cannot be waved through.
+
+### Design
+
+Seven riders: D3, D4, D5, and D6's user_1, user_2, user_3, user_5.
+
+- **Donor.** For each rider $r$, fit the flat $\varepsilon$ on **$r$'s training-half rides
+  alone**, by the same loss Entry 52 used (mean $|\log(\hat E/E)|$), at the selected form
+  $F_3$ with $\tau = 2$ m fixed. Training-half only, so the recipients' held-out rides stay
+  untouched.
+- **Recipients.** Score that $\varepsilon$ on **every other rider's test-half rides** — never
+  the donor's own. This is a strict transfer: a different person, and rides held out from
+  Entry 52's selection as well.
+- **Comparators**, on the same recipient rides: Entry 52's pooled $\varepsilon = 0.288$, which
+  is the number the paper would publish; and each recipient's *own* best $\varepsilon$, which
+  is the unreachable ceiling. The three together price what a published constant costs against
+  a personal calibration.
+- **Report** the $7 \times 7$ donor–recipient matrix of median $|\Delta\%|$, its row and column
+  margins, and the pooled transfer penalty with a stratified bootstrap CI (seed 49; 42/43
+  published, 44 TOST, 45 E49, 46 E50, 47 E51, 48 E52).
+
+Second-order, like Entries 46 and 51: it reads Entry 52's cache, since $F_3$ is linear in
+$\varepsilon$ and the two-point components pin the whole family exactly.
+
+### Registered predictions
+
+- **P1** — donor $\varepsilon$ values span at least 0.15 in absolute width, consistent with
+  Entry 51's 0.186–0.445 per-corpus range.
+- **P2** — **the hypothesis under test.** The median transfer penalty — a single donor's
+  $\varepsilon$ against the pooled one, on the same recipients — is **under 1.0 pp**, the
+  margin Entry 48 registered as the threshold below which a difference changes no decision.
+  Above 1.0 pp the transfer claim fails and §1.3's hypothesis is refuted.
+- **P3** — the worst donor is D6-user_1. Entry 51 put its own optimum at 0.445, the extreme of
+  the range, and Entry 43 flagged its implied mass as outside the registered window.
+- **P4** — the penalty is asymmetric: donors with extreme $\varepsilon$ hurt recipients more
+  than extreme recipients are hurt by a middling donor, because the loss is flat near its
+  optimum and steep away from it.
+
+### What refutation would mean, stated in advance
+
+If P2 fails, the paper does **not** get to publish a single $\varepsilon$ as a universal
+constant. The honest fallback is to publish it as a *default with a stated transfer cost*, and
+to say plainly that a per-rider calibration is worth that much accuracy — which is a weaker but
+still usable result, and materially changes what paper 2 can assume.
+
 ## 2026-07-30 — Entry 52: one protocol, one split — retiring $P_{a,g}$ and selecting the form on held-out rides — pre-registration
 
 **Lineage** — $I$: $(D_3..D_6, P_{f,r})$ · $T$: $\{F_1, F_2, F_3, F_4, F_\mathrm{base}\}$ · $O$: `e52_split.csv` · $S$: the shipped form, its $\varepsilon$, and a test-half error for both

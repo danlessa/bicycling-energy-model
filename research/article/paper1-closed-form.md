@@ -155,13 +155,15 @@ The family's physical ingredients are well validated, but only below the route s
 
 ### 1.3 Aim, hypotheses, and scope
 
-**The aim of this study** is to test whether the closed form above accounts for the measured mechanical energy of real rides as well as a full simulation does. Three hypotheses, each tested against measured power:
+**The aim of this study** is to establish that the closed form above accounts for the measured mechanical energy of real rides as well as a full forward simulation does, at a cost that a spreadsheet or a per-edge routing cost can bear. That is a goal rather than a hypothesis: it is what the paper sets out to build, and [§3.1](#3.1) reports how far it gets.
 
-1. **Attribution.** The closed form's error is not diffuse: the two corrected mechanisms — the climb-aero over-charge and ascent noise — account for almost all of it, and the corrected law reaches statistical parity with the forward simulation it approximates ([§3.1](#3.1)).
-2. **Calibration.** On genuine descents (mean descent grade ≥ 3%), the gap between the coasting ideal and riders' measured descent balances is a single constant, not a function of the route ([§3.2](#3.2)).
-3. **Transfer.** Calibrated on one rider and frozen, the energy law and the descent-recovery constant carry to independent riders' complete histories; whether the dynamic estimator's ($\varepsilon_d$) extra accuracy over a single flat constant also carries is part of the test ([§3.1](#3.1)).
+One claim in the construction *is* a hypothesis, because it can fail cleanly and the whole proposal depends on it:
 
-One scope statement applies throughout: each ride is evaluated with its own measured power inputs, and mass is the one per-rider input — logged on the calibration corpus, implied from each independent rider's own climbing data, generic on the urban corpus ([§2.4](#2.4)). Our accuracy figures therefore measure the **consistency of the energy accounting** — whether the law maps a route's geometry and a rider's effort onto the measured energy — not blind route prediction, which would additionally require predicting the rider's power.
+> **Transfer.** The descent-recovery constant $\varepsilon$ is a property of cycling rather than of a rider. Fitted on one person's rides and carried unchanged to people who took no part in fitting it, it should cost little accuracy against a constant fitted on everyone.
+
+If that holds, a single published number serves any user. If it fails, $\varepsilon$ is a per-rider calibration, the law needs one measurement session per person before it can be used, and the deployment case in [§4.1](#4.1) largely collapses. [§3.1.4](#3.1.4) tests it directly, by fitting $\varepsilon$ on each rider alone and scoring it on the other six.
+
+One scope statement applies throughout: each ride is evaluated with its own measured power inputs, and the physical constants are inverted from each ride's own telemetry ([§2.2](#2.2)). Our accuracy figures therefore measure the **consistency of the energy accounting** — whether the law maps a route's geometry and a rider's effort onto the measured energy — not blind route prediction, which would additionally require predicting the rider's power.
 
 ## 2. Methods
 
