@@ -412,6 +412,16 @@ does matter and parsimony never arbitrated.
 
 #### Two things the run exposed that the registration did not anticipate
 
+*(Corrected 2026-07-31, while rewriting §4.1.2: the framing below is right about the
+mechanism but overstates the verdict. F4's $c$ is in **m/km**, and the article's recipe step 3
+— "subtract 3 m per km" — IS F4's scalar. $c = 3$ was not arbitrary: it is the barometric
+noise rate §2.4 measures on D1 (3.1 m/km). D3–D6's elevation arrives already smoothed by the
+recording platforms (D6's rate is 1.2 m/km), so fitting $c \to 0.03$ there says the correction
+is **inapplicable to pre-smoothed input**, not that it is wrong — which is exactly what the
+recipe's own proviso, "skip this step if your source already smooths", already said. The
+double-correction reading stands; the "harmful at its published value" phrasing does not, since
+the published value was never meant for this input.)*
+
 **F4's damping and F3's deadband are the same correction from opposite ends, and only one
 survives.** $k_m = \max(0, 1 - c\,x_{km}/h_+)$ is a *route-level* proxy for what the
 deadband does *point-wise*: both exist to undo $h_+$ inflation from elevation noise. The

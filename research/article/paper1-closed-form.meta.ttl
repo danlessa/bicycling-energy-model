@@ -17,6 +17,17 @@
 #      claims are still fully described here and can be re-anchored — which is
 #      why every claim carries schema:text.
 #
+# RETIRED 2026-07-31, with the frozen protocol (P_a,g). The claims below left
+# the paper when sections 3.1, 2.3.3, 3.4.3 and 4.3.1-4.3.3 were removed:
+#   d1.blind.f3.med, d1.f1.uncorrected.med, d1.f2.split.med, d1.parity.signtest,
+#   d2.f3.med, d2.tost.worse, e46.ag.switched.med, e46.eps_applied.sub3
+# plus pool34.sim.med, pool35.f3d.med and d6.f3f.collapse earlier. They are not
+# withdrawn as findings -- each remains in the lab journal with its entry -- but
+# they are no longer ARTICLE claims, because the protocol that produced them is
+# no longer a protocol the paper runs. Entry 50 is the reason: eps carries ~7% of
+# the error variance, so a frozen-constant result measured how wrong the assumed
+# constants were rather than how good the law is.
+#
 # Validate: python3 -c "import rdflib; rdflib.Graph().parse('research/article/paper1-closed-form.meta.ttl')"
 # Checked by research/scripts/check_paper_stats.py
 
@@ -39,109 +50,19 @@
   rdfs:comment "The only corpus sharing no rider, country, terrain, device or model-selection history" ;
   pc:preRegistered true .
 
-<#c-e46.ag.switched.med> a schema:Claim ;
-  schema:text "Applying section 3.3's regime switch under frozen priors moves the pooled median 5.08 -> 5.62" ;
-  dcterms:type "in-sample" ;
-  pc:value 5.62 ;
-  pc:gateSection "3m" ;
-  cito:citesAsEvidence dg:o_e46 ;
-  prov:wasDerivedFrom claims:assert46 ;
-  rdfs:comment "The switch makes the FROZEN grid worse; under per-ride inverted physics it makes it better. The bias column adjudicates" ;
-  pc:preRegistered true .
-
-<#c-e46.eps_applied.sub3> a schema:Claim ;
-  schema:text "Median eps_d actually applied below the 3% gate is 0.544, against eps_f = 0.20" ;
-  dcterms:type "in-sample" ;
-  pc:value 0.544 ;
-  pc:gateSection "3m" ;
-  cito:citesAsEvidence dg:o_e46 ;
-  prov:wasDerivedFrom claims:assert46 ;
-  rdfs:comment "Why the frozen sub-threshold cells are accurate BY CANCELLATION rather than by fit" ;
-  pc:preRegistered true .
-
-<#c-d1.f3.informed.med> a schema:Claim ;
-  schema:text "F3 median |D%| 3.5 [2.0, 5.6] on D1 under condition-informed per-ride parameters" ;
-  dcterms:type "calibration" ;
-  pc:value 3.5 ;
-  pc:gateSection "1" ;
-  cito:citesAsEvidence dg:o_model_comparison ;
-  rdfs:comment "The CALIBRATION ceiling, not a transfer result: every tunable was fixed on this corpus and the informed run additionally hand-chose a per-ride epsilon" .
-
-<#c-pool34.f3d.med> a schema:Claim ;
-  schema:text "F3 eps_d median |D%| 5.6 [5.2, 6.2] on the D3+D4 transfer pool, n = 660" ;
-  dcterms:type "out-of-sample" ;
-  pc:value 5.6 ;
-  pc:gateSection "3c" ;
-  cito:citesAsEvidence dg:o_ppaz, dg:o_jaam ;
-  prov:wasDerivedFrom claims:assert12 ;
-  rdfs:comment "THE headline transfer figure. Neither corpus took part in any model selection" .
-
-<#c-pool34.tost> a schema:Claim ;
-  schema:text "TOST 90% CI of the median difference, law minus simulation: [-0.90, -0.33] pp, inside the +/-1.0 margin" ;
-  dcterms:type "out-of-sample" ;
-  pc:value -0.63 ;
-  pc:gateSection "3n" ;
-  cito:citesAsEvidence dg:o_e48 ;
-  prov:wasDerivedFrom claims:assert48 ;
-  rdfs:comment "Formal equivalence, not a failure to reject; the interval sits on the side where the law is better" ;
-  pc:preRegistered true .
 
 
-<#c-d1.f4.informed.med> a schema:Claim ;
-  schema:text "F4 median |D%| 5.9 on D1, condition-informed parameters" ;
-  dcterms:type "calibration" ;
-  pc:value 5.9 ;
-  pc:gateSection "1" ;
-  cito:citesAsEvidence dg:o_model_comparison .
 
-<#c-d1.sim.informed.med> a schema:Claim ;
-  schema:text "Forward simulation median |D%| 5.2 on D1, same informed parameters" ;
-  dcterms:type "calibration" ;
-  pc:value 5.2 ;
-  pc:gateSection "1" ;
-  cito:citesAsEvidence dg:o_model_comparison .
 
-<#c-d1.f1.uncorrected.med> a schema:Claim ;
-  schema:text "Uncorrected F1 median |D%| 19.1 on D1 - the baseline the two corrections act on" ;
-  dcterms:type "calibration" ;
-  pc:value 19.1 ;
-  pc:gateSection "1" ;
-  cito:citesAsEvidence dg:o_model_comparison .
 
-<#c-d1.f2.split.med> a schema:Claim ;
-  schema:text "F2, aero gated off climbs only, median |D%| 8.6" ;
-  dcterms:type "calibration" ;
-  pc:value 8.6 ;
-  pc:gateSection "1" ;
-  cito:citesAsEvidence dg:o_model_comparison .
 
-<#c-d1.parity.signtest> a schema:Claim ;
-  schema:text "Paired sign test law vs simulation on D1, p = 0.65 - no detectable difference" ;
-  dcterms:type "calibration" ;
-  pc:value 0.65 ;
-  pc:gateSection "1" ;
-  cito:citesAsEvidence dg:o_model_comparison .
 
-<#c-d1.blind.f3.med> a schema:Claim ;
-  schema:text "F3 median |D%| 8.2 on D1 under the FROZEN protocol - the blind coherence check" ;
-  dcterms:type "calibration" ;
-  pc:value 8.2 ;
-  pc:gateSection "1b" ;
-  cito:citesAsEvidence dg:o_longoes_frozen .
 
-<#c-d2.f3.med> a schema:Claim ;
-  schema:text "F3 eps_d median |D%| 7.7 on the urban corpus, nothing refit" ;
-  dcterms:type "out-of-sample" ;
-  pc:value 7.7 ;
-  pc:gateSection "2" ;
-  cito:citesAsEvidence dg:o_censo .
 
-<#c-d2.tost.worse> a schema:Claim ;
-  schema:text "D2 is the one parity claim TOST declines to support: CI [-0.04, +2.18] allows the law being 2.2 pp worse" ;
-  dcterms:type "out-of-sample" ;
-  pc:value 1.08 ;
-  pc:gateSection "3n" ;
-  cito:citesAsEvidence dg:o_e48 .
+
+
+
+
 
 
 
@@ -223,3 +144,12 @@
   cito:citesAsEvidence dg:o_ppaz, dg:o_jaam, dg:o_danlessa, dg:o_skc ;
   prov:wasDerivedFrom claims:assert12 ;
   rdfs:comment "The exposure a random split carries, measured rather than assumed away. 3.98 is a repeat-route error" .
+
+<#c-e52.f3.med.abs> a schema:Claim ;
+  schema:text "F3 median |D%| 3.98 [3.51, 4.54] on the held-out half of D3-D6, n = 305 (abstract restatement)" ;
+  dcterms:type "out-of-sample" ;
+  pc:value 3.98 ;
+  pc:gateSection "3q" ;
+  cito:citesAsEvidence dg:o_ppaz, dg:o_jaam, dg:o_danlessa, dg:o_skc ;
+  prov:wasDerivedFrom claims:assert12 ;
+  rdfs:comment "Same statistic as c-e52.f3.med, anchored separately because the abstract prints it independently of section 3.3 and a human drafter may rewrite either without the other" .
