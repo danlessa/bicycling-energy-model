@@ -221,6 +221,88 @@ what the other rows *mean* without producing a per-ride table of their own.
 
 ---
 
+## 2026-07-31 — Entry 56: how much do the STRUCTURAL parameters matter? — τ and c beside the physics
+
+**Lineage** — $I$: $(D_3..D_6, P_{f,r}^{\mathrm{reg}})$ · $T$: $F_3$ (τ) and $F_4$ (c) · $O$: `e56_struct.csv` · $S$: a companion to §3.2's physical-parameter table, on the same scale
+
+*Prompt (Danilo): "Can we have a companion table on 3.2 that compares the deadband and the c
+sensitivity too? Create a new entry to compute that and act on it."*
+
+### Why it is worth its own table
+
+§3.2 prices the four constants a **user supplies** — $m$, $C_dA$, $C_{rr}$, $\varepsilon$ — and
+finds $C_dA$ dominant and $\varepsilon$ last. It says nothing about the two constants the
+**method** supplies: the deadband $\tau$ and F4's scalar $c$. Those are the numbers this paper
+publishes and a user inherits without choosing, so their sensitivity is the paper's own exposure
+rather than the user's, and it answers a different question: *how precisely do these have to be
+stated?*
+
+There is direct reason to ask. Entry 55 found $\tau$ moving from 2 m to 6 m purely because the
+aero estimator changed, and F4's $c$ moving from 0.03 to 1.18 for the same reason. Both are
+therefore entangled with the physics rather than free-standing, and a reader entitled to ask how
+much that matters currently has no answer.
+
+### Design
+
+Same metric as §3.2's table, so the two can be read side by side: **loss inflation** — the
+percentage increase in the cross-validation loss when a parameter is moved off its fitted
+optimum by $\pm 10\%$, reporting the worse side. Loss inflation rather than a derivative,
+because each parameter sits at a minimum where the derivative is ~0 by construction (the error
+Entry 52's first A.7 made).
+
+$\tau$ is cached on a grid, so $\pm 10\%$ of the fitted 6 m is not available at the current
+spacing. The grid is refined to include the $\pm 10\%$ and $\pm 25\%$ neighbours of the
+plausible optima rather than interpolating, since the loss is quadratic near its minimum and a
+linear interpolation would understate the curvature it is meant to measure.
+
+Reported for both, plus the full loss profile over each parameter's range, which shows whether a
+parameter is sharply peaked or nearly flat — more informative than one number and the thing a
+user needs to know before deviating from the published value.
+
+### Registered expectations
+
+- **E1** — $\tau$ is *flatter* than $C_dA$: the deadband corrects a second-order term, aero a
+  first-order one.
+- **E2** — $c$ is sharper than $\tau$, since Entry 55 showed a wrong $c$ (0.03 vs 1.18) costing
+  a third of F4's score while a wrong $\tau$ (2 vs 6 m) cost far less.
+- **E3** — both rank below $C_dA$ and above $\varepsilon$, placing the method's own constants in
+  the middle of the budget: worth stating precisely, not worth agonising over.
+
+### Findings
+
+| parameter | fitted | loss inflation at ±10% |
+|---|--:|--:|
+| $C_dA$ | per ride | **46.3%** |
+| $C_{rr}$ | per ride | 18.9% |
+| $m$ | per ride | 12.2% |
+| $\varepsilon$ (F4) | 0.404 | 4.7% |
+| $\varepsilon$ (F3) | 0.294 | 2.9% |
+| **$\tau$** (F3 deadband) | **6 m** | **0.2%** |
+| **$c$** (F4 scalar) | **1.18 m/km** | **0.1%** |
+
+**E1 confirmed** — $\tau$ is far flatter than $C_dA$ (0.2% against 46.3%). **E2 refuted** — $c$
+is not sharper than $\tau$; at 0.1% against 0.2% they are indistinguishable, both essentially
+flat. **E3 refuted, and this is the finding**: the two constants the *method* supplies are not
+in the middle of the error budget, they are at the **bottom** of it — about 20× less consequential
+than $\varepsilon$ and 200× less than $C_dA$.
+
+**But local flatness is not global indifference, and the profiles are what the paper should
+show.** $\tau$ costs 0.2% at ±10% and **77.3%** at $\tau = 0$; $c$ costs 0.1% at ±10% and
+**21.7%** at $c = 3$, the value earlier work used. So the honest statement has two halves that
+must travel together: *these constants need to be roughly right, and then their precision stops
+mattering.* A reader who wants $\tau = 5$ or $7$ instead of 6 loses nothing measurable; a reader
+who omits the deadband loses three quarters of the model's advantage.
+
+That resolves the discomfort Entry 55 raised. $\tau$ moving 2 m → 6 m when the aero estimator
+changed looked alarming, but the interval 4–8 m spans 2.3% to 1.2% of loss inflation: the optimum
+moved through a region where the loss barely varies, so the *shift* was real and its *cost* was
+never material. The same holds for $c$ at 0.03 vs 1.18 — both sit inside the flat basin, which is
+why fitting it freely under the segment aero drove it to a boundary without much penalty.
+
+**Consequence for the paper.** The behavioural constants are safe to publish as round numbers,
+and the sensitivity table should carry both the ±10% column and the profile, since the first
+alone would invite a reader to conclude the deadband is optional.
+
 ## 2026-07-31 — Entry 55: the regime-consistent aero as the default — segment vs regime CdA, side by side
 
 **Lineage** — $I$: $(D_3..D_6, P_{f,r})$ under two aero estimators · $T$: $\{F_1..F_4, F_\mathrm{base}\}$ · $O$: `e52_split.csv` vs `e52_split.reg.csv` · $S$: Entry 52's §3.1 and §3.2 results, reproduced under each

@@ -54,11 +54,14 @@ from perride_invert import (CLIMB_THR, DESC_THR, ENGINE_DX, KEFF, RESULTS, RHO,
 from e44_scurve import corpus_rides
 
 SMOKE = bool(os.environ.get("E52_SMOKE"))
-# Entry 55: which aero estimator feeds the physics. "seg" is invert_physics's
-# CdA from flat SEGMENTS (the default, what Entries 52/54 used); "reg" is the
-# regime-consistent CdA, derived at the MEASURED flat speed so it closes the
-# v_f gap by construction, and needing no qualifying segment.
-AERO = os.environ.get("E52_AERO", "seg")
+# Entry 55: which aero estimator feeds the physics. "reg" is the DEFAULT since
+# Entry 55 -- the regime-consistent CdA, derived at the MEASURED flat speed so
+# it closes the v_f gap by construction and needs no qualifying segment; it
+# lowers both error and bias and drops the CdA fallback rate from 27% to 3%.
+# "seg" is invert_physics's CdA from flat SEGMENTS, what Entries 52/54 used;
+# retained as the sensitivity arm because the pair is the evidence for Entry
+# 55's tau and F4 observations.
+AERO = os.environ.get("E52_AERO", "reg")
 CDA_RANGE = (0.10, 1.00)
 CHECK: list[float] = []   # build-time cache-vs-engine deviations
 CANON_FAIL: list[str] = []   # F_base failures, counted rather than swallowed
@@ -68,7 +71,11 @@ C_PUB = 3.0                      # F4's published climb-fraction constant
 # OUTSIDE the chain on rides now in the test half. Caching a grid lets A.4 refit
 # it per fold like every other parameter. tau = 0 is a no-op deadband, so
 # F3(tau=0) must reproduce F2 exactly -- an internal check, not an assumption.
-TAU_GRID = (0.0, 0.5, 1.0, 2.0, 3.0, 4.0, 6.0, 8.0, 12.0)
+# Refined for Entry 56: carries the +/-10% and +/-25% neighbours of the
+# plausible optima (2 m under the segment aero, 6 m under the regime one) so a
+# loss-inflation figure is exact rather than interpolated across a coarse grid.
+TAU_GRID = (0.0, 0.5, 1.0, 1.5, 1.8, 2.0, 2.2, 2.5, 3.0, 4.0, 4.5, 5.4,
+            6.0, 6.6, 7.5, 8.0, 12.0)
 TAU_PUB_I = TAU_GRID.index(2.0)
 GROUPS = ("D3", "D4", "D5", "D6-user_1", "D6-user_2", "D6-user_3", "D6-user_5")
 ANCHOR_KEY = {"D3": "ppaz", "D4": "jaam", "D5": "danlessa"}
@@ -269,7 +276,7 @@ def main() -> None:
         for msg, n in Counter(CANON_FAIL).most_common(3):
             print(f"    {n:>5}x  {msg[:96]}")
 
-    out = os.path.join(RESULTS, "e52_aggregates" + ("" if AERO == "seg" else "." + AERO) + (".SMOKE" if SMOKE else "") + ".csv")
+    out = os.path.join(RESULTS, "e52_aggregates" + ("" if AERO == "reg" else "." + AERO) + (".SMOKE" if SMOKE else "") + ".csv")
     with open(out, "w", encoding="utf-8", newline="") as fh:
         w = csv.DictWriter(fh, fieldnames=COLS, extrasaction="ignore")
         w.writeheader()

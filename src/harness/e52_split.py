@@ -75,7 +75,7 @@ def mulberry32(seed: int):
 
 
 def load() -> list[dict]:
-    path = os.path.join(RESULTS, "e52_aggregates" + ("" if AERO == "seg" else "." + AERO) + (".SMOKE" if SMOKE else "") + ".csv")
+    path = os.path.join(RESULTS, "e52_aggregates" + ("" if AERO == "reg" else "." + AERO) + (".SMOKE" if SMOKE else "") + ".csv")
     rows = []
     with open(path, encoding="utf-8") as fh:
         for r in csv.DictReader(fh):
@@ -405,7 +405,7 @@ def main() -> None:
         print(f"    P3 — closed form closer than F_base on {win}/{win + los}, "
               f"sign test p = {to_fixed(sign_p(win, los), 4)}")
 
-    out = os.path.join(RESULTS, "e52_split" + ("" if AERO == "seg" else "." + AERO) + (".SMOKE" if SMOKE else "") + ".csv")
+    out = os.path.join(RESULTS, "e52_split" + ("" if AERO == "reg" else "." + AERO) + (".SMOKE" if SMOKE else "") + ".csv")
     with open(out, "w", encoding="utf-8") as fh:
         fh.write("form,npar,cv,cv_se,aic,eps,c,tau,test_med_abs,test_med_signed,winner\n")
         for f in FORMS:
@@ -418,7 +418,7 @@ def main() -> None:
                      f"{1 if f == w['form'] else 0}\n")
     # summary row set: the numbers the gate battery re-derives and the article
     # cites. Written here so a published claim traces to a file, not a console log.
-    summ = os.path.join(RESULTS, "e52_summary" + ("" if AERO == "seg" else "." + AERO) + (".SMOKE" if SMOKE else "") + ".csv")
+    summ = os.path.join(RESULTS, "e52_summary" + ("" if AERO == "reg" else "." + AERO) + (".SMOKE" if SMOKE else "") + ".csv")
     with open(summ, "w", encoding="utf-8") as fh:
         fh.write("key,value\n")
         fh.write(f"f3_test_med_abs,{to_fixed(res[w['form']]['med_abs'], 4)}\n")
@@ -432,6 +432,11 @@ def main() -> None:
             fh.write(f"fbase_test_med_abs,{to_fixed(med_of([abs(v) for v in ce]), 4)}\n")
             fh.write(f"fbase_test_med_signed,{to_fixed(med_of(ce), 4)}\n")
         fh.write(f"twin_pct,{to_fixed(100 * hit / ntest, 4)}\n")
+        # F4 too: the paper ships BOTH the profile form (F3) and the
+        # totals-only form (F4), so both need a gated number.
+        for f in FORMS:
+            fh.write(f"{f.lower()}_test_med_abs,{to_fixed(res[f]['med_abs'], 4)}\n")
+            fh.write(f"{f.lower()}_test_med_signed,{to_fixed(res[f]['med_signed'], 4)}\n")
     print(f"\nwrote {os.path.basename(out)} and {os.path.basename(summ)}")
 
 
