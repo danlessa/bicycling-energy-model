@@ -365,6 +365,152 @@ The entry lands only if A.5 is written out **before** any $D_\mathrm{test}$ stat
 computed, enforced by construction: the test-scoring routine refuses to run until the
 validation winner has been serialised.
 
+### Findings
+
+Run on 2,039 rides of D3–D6 (`e52_build.py` → `e52_aggregates.csv`, then
+`e52_split.py` → `e52_split.csv`). A.1 held out 305 rides, 15% of each corpus;
+A.2 unified the remaining 1,734.
+
+**A.3 — what $P_{f,r}$ actually contains** (train half), confirming the registration's
+warning rather than discovering it:
+
+| constant | 5th | median | 95th | at the prior/rail |
+|---|--:|--:|--:|--:|
+| $\hat m$ (kg) | 66.98 | 74.70 | 101.9 | — |
+| $\hat C_dA$ | 0.1675 | 0.365 | 0.4907 | **27%** at 0.400 |
+| $\hat C_{rr}$ | 0.006627 | 0.008 | 0.01058 | **77%** at 0.008 |
+
+**A.4/A.5 — F3 wins, and CV and AIC agree.** Loss is mean $|\log(\hat E/E)|$; every
+free parameter is refitted inside each of the $5\times4$ folds.
+
+| form | CV | 1-SE band | AIC | fitted | $k$ |
+|---|--:|:--:|--:|--:|--:|
+| F1 | 0.08394 ± 0.00174 | out | −2718.9 | ε = 0.5960 | 1 |
+| F2 | 0.07669 ± 0.00180 | out | −3032.0 | ε = 0.3936 | 1 |
+| **F3** | **0.07316 ± 0.00184** | **in** | **−3194.8** | **ε = 0.2879** | 1 |
+| F4 | 0.07771 ± 0.00196 | out | −3030.9 | ε = 0.3924, c = 0.03 | 2 |
+
+**A.8 — $D_\mathrm{test}$, scored once** ($n = 305$):
+
+| model | med $|\Delta\%|$ | signed |
+|---|--:|--:|
+| **F3 (winner)** | **3.98 [3.51, 4.54]** | −1.06 [−1.56, −0.37] |
+| F4 | 4.20 [3.52, 4.74] | −0.58 [−1.19, 0.05] |
+| F2 | 4.23 [3.55, 4.72] | −0.57 [−1.19, 0.06] |
+| F1 | 4.79 [4.03, 5.46] | 0.12 [−0.72, 1.33] |
+| $F_\mathrm{base}$ (comparator) | 5.71 [5.13, 6.42] | −3.85 [−4.47, −3.02] |
+
+ε refits to 0.2879 on train against 0.2550 on the test half's own optimum — close
+enough that the constant is identified rather than an artefact of which rides were drawn.
+
+**Predictions: P1, P3, P4, P6 confirmed; P2 and P5 refuted.** P2 registered
+ε ∈ [0.20, 0.26] and it came out **0.2879**, above the band — Entry 51's 0.228 was fitted
+under median $|\Delta\%|$, and the symmetric log-ratio loss adopted here penalises
+under-prediction harder, which pushes ε up. The loss change, not the data, moved it. P5
+registered that the 1-SE rule would bind; **only F3 sits inside the band**, so form choice
+does matter and parsimony never arbitrated.
+
+#### Two things the run exposed that the registration did not anticipate
+
+**F4's climb-fraction term is not merely unsupported — at its published value it is
+harmful.** Fitted freely, $c \to 0.03$, which sets $k_m \approx 1$ and reproduces F2
+*exactly* (train loss 0.07661 for both, to five figures). At the shipped $c = 3$ the loss is
+**0.10189**, a third worse than F2. So F4's convenient shape is convenient because it
+degenerates: the data buys its way out of the damping term entirely. Anything that ships F4
+should ship it as F2 and say so.
+
+**The deadband τ is a hidden parameter the chain never fitted.** F3 *is* F2 evaluated on a
+deadbanded profile, so the whole F3-over-F2 gain (0.07316 vs 0.07669) is τ's doing — and τ
+is frozen at `TAU_SMOOTH = 2` m, selected back in Entry 5 on data overlapping D3–D6. It is
+therefore fitted **outside** the chain, on rides now sitting in $D_\mathrm{test}$: exactly
+the leak amendment 1 removed from F2's and F4's parameters, missed because τ hides in the
+profile rather than in a form's signature. **F3's margin over F2 should be read as an upper
+bound until τ is refitted per fold.** Doing that makes F3 a two-parameter form (ε, τ),
+which changes the parsimony picture against F1/F2 — and it needs a τ-grid in the cache,
+since the current build stores F3's components at one τ only.
+
+#### $F_\mathrm{base}$ is worst, and that is the finding rather than an anomaly
+
+The comparator loses on every corpus, but the bias is **not** uniform — it is a São Paulo
+effect:
+
+| | signed | med $|\Delta\%|$ |
+|---|--:|--:|
+| D3 / D4 / D5 (São Paulo) | −4.21 / −4.96 / −3.68 | 5.6–7.1 |
+| D6-user_1 / _3 / _5 (Europe) | −0.29 / **+2.05** / −1.91 | 3.2–3.8 |
+| D6-user_2 | −3.90 | 4.76 |
+
+On a D6-heavy sample of 119 rides $F_\mathrm{base}$ is essentially **unbiased (+0.04%)**,
+with simulated time at 0.994× actual, so the simulation is not mistimed and the deficit is
+not a dynamics failure.
+
+**The mechanism is the inversion protocol, not forward dynamics.** `invert_physics` fits
+$\hat m, \hat C_{rr}, \hat C_dA$ on *sustained climb and flat segments* — quasi-steady
+conditions — and $F_\mathrm{base}$ then applies them across the whole ride. Everything the
+steady segments exclude (accelerations, stops, transients) is what goes missing, which
+predicts the sign, the near-constant magnitude, and the corpus split, since São Paulo urban
+riding has far more of it than European road riding. A **diagnostic** confirms the shape: a
+single scalar λ fitted on train removes most of the bias (5.71 → 4.34, −3.85 → −1.01) at
+λ = 1.0295, i.e. $k_\mathrm{eff}$ 0.98 → 0.952. A near-multiplicative correction fitting
+this well says the deficit is systematic and efficiency-like, not route-dependent.
+
+**λ stays a diagnostic and does not become a model arm.** It was considered as a fairness
+correction — $F_\mathrm{base}$ has no *global* free parameter while F1–F4 each have one —
+and rejected, for a reason that survives the arithmetic: with λ the comparison becomes
+3.98 vs 4.34, **164/305, $p = 0.21$**, and P3's significance evaporates. But
+$F_\mathrm{base}$ is not disadvantaged to begin with. It carries **three per-ride constants**
+inverted from the ride's own power, and it uses the route with **dynamic coupling** —
+velocity propagating between segments — where the closed form is a single stateless pass.
+It has strictly the richer input. Adding a parameter to compensate a handicap that does not
+exist is baseline-tuning, and it would cost the article a paragraph defending
+$k_\mathrm{eff} = 0.952$ in a paper that is not about drivetrains (Danilo's objection, and
+it is right).
+
+**So the claim is restated rather than the model rescored.** P3 is confirmed as registered,
+but "the closed form beats the simulation" would attribute a protocol artefact to physics.
+The defensible statement is the stronger one anyway: *a stateless closed form matches a
+state-coupled forward simulation that has more information and more per-ride freedom* —
+an equivalence claim, testable with Entry 48's TOST machinery.
+
+#### The honest caveat, printed with the result
+
+**82% of test rides (249/305) have a same-rider train ride within 5% distance and 10%
+ascent.** The random split was chosen deliberately over a chronological one, because time
+confounds model error with fitness, equipment and seasonal drift — this is the exposure that
+choice carries, and 3.98 should be read as a *repeat-route* error, not a new-route one.
+
+#### Three defects found while running it
+
+Each would have shipped a plausible-looking wrong number.
+
+1. `verify()` compared `e_form`'s F4 against the expression `e_form` itself computes, so it
+   could only ever return zero. It now checks the cache against **fresh** `approximate()`
+   calls at ε values neither endpoint used: 2.2e-16 over 300 rides, and the build refuses to
+   write a cache missing 1e-9.
+2. A.7 reported every constant's elasticity as exactly **0.000**, because `e_form` read the
+   $E_0/E_1$ pair while the perturbation moved component columns. The cache now stores
+   roll/aero/climb/recov per form — equivalent by the decomposition invariant — so a term
+   can actually be perturbed.
+3. A bare `except` turned a missing-argument `TypeError` from `canonical()` into `nan` on all
+   2,039 rides, leaving P3 silently unanswerable. `pw` now carries descent/climbThr/descThr,
+   and $F_\mathrm{base}$ failures are counted and printed.
+
+A.7 also changed what it measures. The elasticity column was a central difference around a
+**fitted** ε, which is ~0 by construction, and it ranked $C_dA$ — the most damaging constant
+— at 0.023 purely because its penalty is symmetric. Reported as loss inflation and ranked:
+$C_dA$ **21.6%**, $m$ 9.7%, $C_{rr}$ 8.7%, **ε last at 8.5%**. That corroborates Entry 50's
+Sobol result ($S_T(\varepsilon) = 0.070$) by an independent route, and a third time in the
+λ diagnostic: F3's advantage over a calibrated $F_\mathrm{base}$ is 0.36 pp and not
+significant, so what ε buys over a plain efficiency rescale is small.
+
+#### Registered follow-ups
+
+- **Refit τ per fold** and re-run A.4/A.5. Until then F3's margin over F2 is an upper bound.
+- **Segment-coverage test**: $F_\mathrm{base}$'s per-ride deficit should scale with the
+  fraction of ride distance *outside* the segments `invert_physics` used. Computable from
+  `find_segments` on cached inputs, no new data.
+- **Restate P3 as equivalence** under Entry 48's TOST, rather than as a win.
+
 ## 2026-07-30 — Entry 51: the replacement flat constant — train/test on D3–D6 under $P_{f,r}$ — pre-registration
 
 **Lineage** — $I$: $(D_3..D_6, P_{a,g} \cdot P_{f,r}(m, C_{rr}, C_dA))$ · $T$: $F_3$ with a flat $\varepsilon$ · $O$: `e51_flatconst.csv` · $S$: the value paper 1 would ship, and an honest error for it
