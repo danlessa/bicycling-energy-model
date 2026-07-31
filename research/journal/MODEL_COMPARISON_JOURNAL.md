@@ -283,7 +283,14 @@ inline). **D1 and D2 do not appear: they are re-processings of D5 rides** — ma
 measured kJ puts 87% of D2 and 43% of D1 inside D5, against a 1–14% coincidence baseline
 against other corpora. They are therefore not an external check and not independent data;
 they survive in the paper as a historical scope note about the assumed-constant era, and
-every corpus total that summed D1..D6 double-counted by ~80–100 rides.
+**that entry also claimed every corpus total summing D1..D6 double-counted by
+~80–100 rides. That was wrong and is withdrawn (2026-07-31).** Paper 1 already
+de-duplicated: it reports 2,025 *unique* rides against 2,127 ride-evaluations and
+states the reason inline — D1 is contained in D5, and 58 of D2's 62 rides are the
+author's recordings also in D5. The overlap was documented before this entry
+rediscovered it. What stands is the consequence for Entry 52: D1 and D2 cannot
+serve as an independent no-calibration check, because they are the same rider's
+rides under an older protocol.
 
 **Preliminary.** F2's $x_\mathrm{flat}$ and F4's $c$ are **not** estimated up front.
 *(Amendment 1.)* Estimating them before the split would let those two forms enter selection
