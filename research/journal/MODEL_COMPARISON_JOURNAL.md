@@ -412,12 +412,26 @@ does matter and parsimony never arbitrated.
 
 #### Two things the run exposed that the registration did not anticipate
 
-**F4's climb-fraction term is not merely unsupported — at its published value it is
-harmful.** Fitted freely, $c \to 0.03$, which sets $k_m \approx 1$ and reproduces F2
-*exactly* (train loss 0.07661 for both, to five figures). At the shipped $c = 3$ the loss is
-**0.10189**, a third worse than F2. So F4's convenient shape is convenient because it
-degenerates: the data buys its way out of the damping term entirely. Anything that ships F4
-should ship it as F2 and say so.
+**F4's damping and F3's deadband are the same correction from opposite ends, and only one
+survives.** $k_m = \max(0, 1 - c\,x_{km}/h_+)$ is a *route-level* proxy for what the
+deadband does *point-wise*: both exist to undo $h_+$ inflation from elevation noise. The
+published $c = 3$ was tuned to match — on a typical 40 km ride with 400 m of ascent,
+$k_m = 1 - 3(40)/400 = 0.70$, a 30% cut, against the 26.3% of the raw climb term that
+$\tau = 2$ m actually removes (median over 2,028 rides). So the comparison is not
+good-form-vs-broken-form; it is **point-wise correction vs aggregate proxy**, and the
+point-wise one wins: F3 0.07316 against F2 0.07669, while $c$ is driven to **0.03**,
+reproducing F2 exactly (0.07661 for both). At the shipped $c = 3$ the loss is **0.10189**, a
+third worse.
+
+**Why the fit keeps one and rejects the other — the inversion already absorbed the scale.**
+$\hat m$ is inverted from those same climbs, so an $h_+$ inflated by 26% returns an $\hat m$
+about 26% lower, leaving $\hat m g h_+$ matching the measured climb energy. $k_m$ is a *pure
+scale factor*, so applying it on top **double-corrects** — which is precisely why $c = 3$ is
+harmful rather than merely useless, and why the fit runs to zero. The deadband is not a scale
+factor: it changes which segments clear `climbThr`, altering the climb/descent split and the
+aero gating. That is a **shape** correction, and the inversion cannot absorb it. The
+prediction this implies is testable and unregistered: under $P_{a,g}$, where no inversion
+absorbs anything, $c$ should *not* collapse to zero.
 
 **The deadband τ is a hidden parameter the chain never fitted.** F3 *is* F2 evaluated on a
 deadbanded profile, so the whole F3-over-F2 gain (0.07316 vs 0.07669) is τ's doing — and τ
