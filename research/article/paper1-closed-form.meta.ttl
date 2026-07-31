@@ -145,9 +145,9 @@
   rdfs:comment "The TOTALS-ONLY form, and the one the recipe is built on. Reported beside F3 because the two need different inputs, not because one is better -- their intervals overlap and both biases contain zero" .
 
 <#c-e54.transfer> a schema:Claim ;
-  schema:text "fitting eps on one rider and scoring it on the other six costs 0.5 pp of median |D%|, inside the registered 1.0 pp margin" ;
+  schema:text "fitting eps on one rider and scoring it on the other six who share its context costs 0.05 pp of median |D%|, inside the registered 1.0 pp margin" ;
   dcterms:type "out-of-sample" ;
-  pc:value 0.5 ;
+  pc:value 0.05 ;
   pc:gateSection "3r" ;
   cito:citesAsEvidence dg:o_ppaz, dg:o_jaam, dg:o_danlessa, dg:o_skc ;
   prov:wasDerivedFrom claims:assert12 ;

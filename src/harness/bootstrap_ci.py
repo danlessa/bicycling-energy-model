@@ -569,9 +569,9 @@ else:
     _pen = parse_float(_all[0]["med_abs"])
     _lo = parse_float(_all[0]["pooled_med_abs"])
     _hi = parse_float(_all[0]["own_best_med_abs"])
-    _ok = abs(_pen - 0.5) <= 0.11
+    _ok = abs(_pen - 0.05) <= 0.11
     print(f"  transfer penalty {to_fixed(_pen, 3)} pp [{to_fixed(_lo, 3)}, {to_fixed(_hi, 3)}]"
-          f"  (expect 0.5)" + (" GATE-OK" if _ok else " GATE-FAIL"))
+          f"  (expect 0.05)" + (" GATE-OK" if _ok else " GATE-FAIL"))
     if not _ok:
         failed = True
     # the hypothesis itself: the penalty must sit inside the registered margin
