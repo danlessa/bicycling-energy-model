@@ -19,6 +19,8 @@
 #
 # RETIRED 2026-07-31, with the frozen protocol (P_a,g). The claims below left
 # the paper when sections 3.1, 2.3.3, 3.4.3 and 4.3.1-4.3.3 were removed:
+#   pool.regime.f3d and pool.regime.sim went with section 3.3 (per-ride physics
+#   results) when it was dropped as duplicating 2.2's method statement.
 #   d1.blind.f3.med, d1.f1.uncorrected.med, d1.f2.split.med, d1.parity.signtest,
 #   d2.f3.med, d2.tost.worse, e46.ag.switched.med, e46.eps_applied.sub3
 # plus pool34.sim.med, pool35.f3d.med and d6.f3f.collapse earlier. They are not
@@ -67,19 +69,7 @@
 
 
 
-<#c-pool.regime.f3d> a schema:Claim ;
-  schema:text "Under regime-consistent per-ride aero the pool reaches 3.9 - partially in-sample per ride by construction" ;
-  dcterms:type "in-sample" ;
-  pc:value 3.9 ;
-  pc:gateSection "3e" ;
-  cito:citesAsEvidence dg:o_perride_invert .
 
-<#c-pool.regime.sim> a schema:Claim ;
-  schema:text "Simulation under the same per-ride physics, 4.0 - the pairing restored" ;
-  dcterms:type "in-sample" ;
-  pc:value 4.0 ;
-  pc:gateSection "3e" ;
-  cito:citesAsEvidence dg:o_perride_invert .
 
 
 <#c-e50.eps.share> a schema:Claim ;
