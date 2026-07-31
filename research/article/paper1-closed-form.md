@@ -55,7 +55,7 @@ Descent recovery has a geometry (the recovery ceiling) and a habit (the deficit)
 
 <a id="terminology"></a>
 
-Symbols used throughout; grades are percent in the text, fractions in formulas; "—" in the unit column marks dimensionless quantities; corpus labels D3–D6 are defined in [Table 1](#tab1). Display equations are numbered (1)–(6) in the main text and (A1)–(A9) in the appendix; the four model forms are named and tagged F1–F4.
+Symbols used throughout; grades are percent in the text, fractions in formulas; "—" in the unit column marks dimensionless quantities; corpus labels D3–D6 are defined in [Table 1](#tab1). Display equations are numbered (1)–(7) in the main text and (A1)–(A9) in the appendix; the four model forms are named and tagged F1–F4.
 
 Notation rule — aggregation scopes: a physical parameter or measurement carries its scope as a subscript — $_t$ instant, $_i$ local (30 m cell), $_r$ ride, $_p$ person, $_c$ corpus. On variables the scope sits in the subscript ($s_i$, $h_{-,i}$); on functions it enters through the argument (the recovery ceiling). E.g. $C_{dA,r}$ is one ride's aero, $C_{dA,p}$ one person's fitted aero. A **bare parameter symbol is a frozen constant** (the value column below). Two declared exemptions: letter subscripts that are *names*, not scopes ($\alpha_r$ rolling, $\alpha_a$ aero, $v_f$ flat, $\varepsilon_d$/$\varepsilon_f$ variants, $k_{\mathrm{eff}}$); and the geometry and energy symbols ($E$, $x$, $h_\pm$, …), which are ride-level by definition, with their scope stated in the table. The four physical constants below carry their frozen-protocol values; the informed calibration run judged them per ride ([§2.4](#2.4)). The *value* column gives the constant used, or the variable's scope: **person**, **ride**, **local** (along the route), **instant** (per second).
 
@@ -238,7 +238,7 @@ flowchart LR
 
 ### 2.1 The reference simulation and the shared-constants design
 
-The reference is given by eq. (3) — a distance-marching forward integration of the standard cycling power balance [Martin et al. 1998; di Prampero et al. 1979]:
+The reference is given by eq. (4) — a distance-marching forward integration of the standard cycling power balance [Martin et al. 1998; di Prampero et al. 1979]:
 
 $$m\,v\,\frac{dv}{dx'} = \frac{k_{\mathrm{eff}}\,P}{v} - C_{rr}\,m g \cos\theta - \tfrac{1}{2}\rho\,C_dA\,(v + w)^2 - m g \sin\theta, \tag{3}
 $$
@@ -255,23 +255,31 @@ Both engines need three constants per ride — system mass $m$, rolling coeffici
 
 #### 2.2.1 The cascade
 
-Each ride is segmented into **strict climbs** (grade $\geq 2\%$ throughout, $\geq 40$ m of gain) and **strict in-band flats** ($\geq 1$ km), with transients clipped and a segment kept only if it is well-behaved: no braking events, power present for $\geq 90\%$ of samples, no stops. Three estimates are then taken in a fixed order, each consuming the previous one:
+Each ride is segmented into **strict climbs** (grade $\geq 2\%$ throughout, $\geq 40$ m of gain) and **strict in-band flats** ($\geq 1$ km), with transients clipped and a segment kept only if it is well-behaved: no braking events, power present for $\geq 90\%$ of samples, no stops.
+
+The climb threshold is the one choice with a derivation behind it. The ratio $\alpha/\beta$ is the grade at which gravity's contribution equals the *entire* flat resistance,
+
+$$\frac{\alpha}{\beta} \;=\; C_{rr} + \frac{\tfrac{1}{2}\rho\,C_dA\,v_f^2}{m g}\ , \tag{4}$$
+
+the same quantity that sets the recovery ceiling in [Appendix A](#appendix-a). At this study's constants it falls between 1.8% and 2.2% across the flat speeds these corpora actually ride at, so a $2\%$ threshold admits exactly those segments where gravity carries at least half the load — which is the condition under which mass is identifiable from a climb at all. **The remaining thresholds are heuristics.** The 40 m gain, the 1 km flat length and the 90% power-coverage requirement were chosen to exclude segments too short or too gappy to integrate reliably; they are not derived, and we report them as the tuning choices they are rather than dress them up. Their influence is bounded by the fallback rates in [§2.2.2](#2.2.2): a threshold that rejects too much shows up there as a fallback, not as a silent bias.
+
+Three estimates are then taken in a fixed order, each consuming the previous one:
 
 1. **$\hat m$ from a temporally spread subset of the climbs.** On a sustained climb $\beta h_+$ dominates the balance, so mass is the best-identified of the three.
-2. **$\hat C_{rr}$ from the *remaining* climbs**, at the prior $C_dA$. The subsets are deliberately disjoint: on any single climb $m g \sin\theta$ and $C_{rr} m g \cos\theta$ both scale with $m$, so estimating both from the same segment is collinear by construction. Splitting the segments breaks that.
+2. **$\hat C_{rr}$ from the *remaining* climbs**, at the prior $C_dA$. The split is by count and by position: $\lceil n/3 \rceil$ climbs (at least two) go to mass and the other two thirds to $C_{rr}$, with the mass subset chosen for maximum **temporal spread** — the first and last climbs, then repeatedly the one farthest from every climb already chosen. Two things motivate that. The subsets must be **disjoint**, because on any single climb $m g \sin\theta$ and $C_{rr} m g \cos\theta$ both scale with $m$ and differ only by $\sin\theta$ against $C_{rr}\cos\theta$, so estimating both from the same segment is collinear by construction. And the mass subset must be **spread across the ride**, so that a single stretch — a headwind leg, a change of position, the last hour of a long day — cannot set the constant that scales the dominant climb term. The one-third/two-thirds asymmetry gives the weaker signal the larger sample: on a climb, $C_{rr}$ is the small residual left after gravity, whereas mass is what gravity is measuring. One thing the rule does **not** do is sort by gradient, and it arguably should: mass is best identified on the steepest climbs and $C_{rr}$ on the shallowest, so a grade-ordered split would give each estimator its most favourable segments. As implemented the two subsets are statistically indistinguishable in gradient (median 6.6% against 6.5%), where a grade-ordered split would hand mass 7.5%. We report this as a known and untested inefficiency rather than a correction, since changing it would move every downstream number.
 3. **$\hat C_dA$ from the ride's own flat regime.** Aerodynamic loss dominates on the flat, so $C_dA$ is read from the flat-regime power $P_{\mathrm{flat}}$ at the **measured** flat speed $v_{\mathrm{meas}}$:
 
-$$\hat C_dA = \frac{k_{\mathrm{eff}} P_{\mathrm{flat}} / v_{\mathrm{meas}} - C_{rr}\,\hat m g}{\tfrac{1}{2}\rho\,v_{\mathrm{rel}}^2}\ ,\qquad v_{\mathrm{rel}} = v_{\mathrm{meas}} + w. \tag{4}$$
+$$\hat C_dA = \frac{k_{\mathrm{eff}} P_{\mathrm{flat}} / v_{\mathrm{meas}} - C_{rr}\,\hat m g}{\tfrac{1}{2}\rho\,v_{\mathrm{rel}}^2}\ ,\qquad v_{\mathrm{rel}} = v_{\mathrm{meas}} + w. \tag{5}$$
 
    Two properties matter. It needs **no qualifying segment**, only that the ride has a flat regime at all, so it returns a value where a segment-based estimator would fall back. And it is evaluated at the speed the ride was actually ridden at, which is the same speed the closed form later evaluates $\alpha_a$ at — a segment-based estimate is inferred at one speed and used at another, and that inconsistency is not small ([§3.1.3](#3.1.3)).
 
-Head/tailwind is zero for round trips and half the historical daily ground wind projected on the net bearing otherwise. A field with no qualifying segment falls back to its prior — $C_{rr} = 0.008$, $C_dA = 0.40$ — and the fallback is flagged rather than silent.
+Head/tailwind is zero for round trips — where the out-and-back legs cancel to first order — and otherwise **half** the historical daily ground wind, projected on the net bearing. The halving is a heuristic with a physical motivation but no calibration behind it: reported wind is a 10 m meteorological value while a rider sits near 1.5 m in rougher air, and a daily mean applied to a multi-hour ride averages over shifts in both speed and direction. Both effects point the same way and neither fixes the factor at 0.5. [§4.3.3](#4.3.3) prices what the wind treatment as a whole costs. A field with no qualifying segment falls back to its prior — $C_{rr} = 0.008$, $C_dA = 0.40$ — and the fallback is flagged rather than silent.
 
 #### 2.2.2 How often it actually inverts
 
-The fallbacks are not rare, and reporting their rate is the honest description of what "per-ride fitted physics" means in this paper. Across the 2,039 rides of D3–D6, **$C_{rr}$ carries the 0.008 prior on 77%** of rides, while **$C_dA$ is measured on 97%** — it falls back on 3%. The aero estimator of eq. (4) is why: an earlier segment-based one fell back on 26%, and replacing it removed most of that gap (lab journal, Entry 55). Mass is the constant that is really identified per ride, and it is near-constant within a rider — one D6 rider's inter-quartile range spans 99.9 to 99.9 kg.
+The fallbacks are not rare, and reporting their rate is the honest description of what "per-ride fitted physics" means in this paper. Across the 2,039 rides of D3–D6, **$C_{rr}$ carries the 0.008 prior on 77%** of rides, while **$C_dA$ is measured on 97%** — it falls back on 3%. The aero estimator of eq. (5) is why: an earlier segment-based one fell back on 26%, and replacing it removed most of that gap (lab journal, Entry 55). Mass sits between the two: it is inverted from the ride's own climbs on 31% of rides, taken from a marginal set of climbs on a further 19%, and otherwise falls back to a **per-rider** anchor rather than a generic prior. So mass is always rider-specific but only sometimes ride-specific — a distinction the phrase *fitted per ride* elides. It is in any case near-constant within a rider: one D6 rider's inter-quartile range spans 99.9 to 99.9 kg, which is why the rider-level fallback costs little.
 
-So the parameter class this paper calls fitted-per-ride is, for most rides, *inverted mass and drag area with an assumed rolling coefficient*. Since mass scales the dominant climb term directly ($\beta = mg/k_{\mathrm{eff}}$) and $C_dA$ dominates the flat one, the two that are measured are the two that matter most ([§3.2](#3.2)); results that turn on $C_{rr}$ should be read with the rate above in mind.
+So the parameter class this paper calls fitted-per-ride is, for most rides, *a per-rider mass and a per-ride drag area with an assumed rolling coefficient*. Since mass scales the dominant climb term directly ($\beta = mg/k_{\mathrm{eff}}$) and $C_dA$ dominates the flat one, the two that are measured are the two that matter most ([§3.2](#3.2)); results that turn on $C_{rr}$ should be read with the rate above in mind.
 
 #### 2.2.3 What route-level energy can and cannot identify
 
@@ -441,7 +449,7 @@ Two results in that table matter beyond the ranking. **F3 and F4 are the same co
 
 **The simulation and the closed form are indistinguishable.** $F_\mathrm{base}$ reads 3.05% with a bias of −0.03%, and against the selected form the paired sign test gives 149 of 305, $p = 0.73$ — a coin flip. This is the paper's central claim and it is a claim of *parity*, not of superiority: a single stateless pass reproduces a state-coupled simulation that has strictly more information, since $F_\mathrm{base}$ walks the same profile with velocity propagating between segments and reads the same per-ride constants. What the closed form discards was not paying for itself.
 
-That parity is visible only under a consistent parameter protocol. Under a segment-based aero estimator the simulation carried a −3.85% bias concentrated in the São Paulo corpora, and the closed form appeared to *beat* it, 190 of 305 at $p < 10^{-4}$. Replacing the estimator with eq. (4) — changing nothing about the simulation itself, only the speed at which its drag area was inferred — moved that bias to −0.03% and the contest to a tie (lab journal, Entry 55). The apparent win was an artefact of feeding the comparator constants measured at one speed and used at another.
+That parity is visible only under a consistent parameter protocol. Under a segment-based aero estimator the simulation carried a −3.85% bias concentrated in the São Paulo corpora, and the closed form appeared to *beat* it, 190 of 305 at $p < 10^{-4}$. Replacing the estimator with eq. (5) — changing nothing about the simulation itself, only the speed at which its drag area was inferred — moved that bias to −0.03% and the contest to a tie (lab journal, Entry 55). The apparent win was an artefact of feeding the comparator constants measured at one speed and used at another.
 
 #### 3.1.4 What the split does and does not establish
 
@@ -530,7 +538,7 @@ For a rider of total system mass $m$ (rider + bike + gear, kg) and flat cruising
 > 5. Rolling: $6.0 \times 25{,}000 = 150$ kJ. Aero ($x_{\mathrm{flat}} = 0.8 \times 25 = 20$ km): $4.9 \times 20{,}000 = 98$ kJ. Climb: $0.749 \times 125 = 94$ kJ. Descent refund: $0.20 \times 0.749 \times 125 = 19$ kJ.
 > 6. **Total: $150 + 98 + 94 - 19 \approx 320$ kJ — roughly 320 kcal of food.**
 >
-> (Same route in open mountains: the software estimator, eq. (6), typically reads $\varepsilon_d \approx 0.3$–0.5 there and grows the refund accordingly; the hand estimate with $\varepsilon_f = 0.20$ stands as a conservative floor on the refund.)
+> (Same route in open mountains: the software estimator, eq. (7), typically reads $\varepsilon_d \approx 0.3$–0.5 there and grows the refund accordingly; the hand estimate with $\varepsilon_f = 0.20$ stands as a conservative floor on the refund.)
 
 #### 4.1.3 What the descent term means
 
@@ -599,13 +607,13 @@ This paper treats $\varepsilon$ as a calibrated constant because that is what it
 
 **The geometry.** Setting the leg term of the per-segment balance to zero — a rider who freewheels — gives a *coasting limit*, the largest fraction of a descent's potential energy that can be recovered:
 
-$$\varepsilon_{\mathrm{coast}}(s) \;=\; \min\!\left(1,\ \frac{\alpha/\beta}{s}\right) \tag{5}$$
+$$\varepsilon_{\mathrm{coast}}(s) \;=\; \min\!\left(1,\ \frac{\alpha/\beta}{s}\right) \tag{6}$$
 
 It is parameter-free given $\alpha$ and $\beta$, and it breaks at the flat-resistance grade $s_* = \alpha/\beta$: below it a descent cannot even pay its own rolling and drag, above it the surplus is recovered in proportion to $s_*/s$. Drop-weighting it over a route's descent cells gives a route-level ceiling from geometry alone.
 
 **The behaviour.** Measured recovery sits below that ceiling by a *coasting deficit* $\delta$, and the deficit has an exact reading: from the same balance,
 
-$$\delta \;=\; \frac{E_{\mathrm{legs},-}}{\beta\,h_-} \tag{6}$$
+$$\delta \;=\; \frac{E_{\mathrm{legs},-}}{\beta\,h_-} \tag{7}$$
 
 the descent pedalling energy over the scaled drop. So the deficit is not a fudge but a measurement of how much riders pedal downhill — and because $E_{\mathrm{legs},-}$ is a *product* of how often and how hard, the choice of functional form for $\delta$ is a claim about pedalling **occupancy** rather than effort. Braking cannot explain it: brakes dissipate gravity's share of the ledger, never the legs', so no amount of braking pushes $\varepsilon$ below the coasting floor.
 
