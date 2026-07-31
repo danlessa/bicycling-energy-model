@@ -221,6 +221,302 @@ what the other rows *mean* without producing a per-ride table of their own.
 
 ---
 
+## 2026-07-31 — Entry 60: ε has a regional structure — separate pools for D3–D5 and D6
+
+**Lineage** — $I$: $(D_3..D_5, P_{f,r}^{\mathrm{rider}})$ and $(D_6, \cdot)$ · $T$: $F_3$ at $\tau = 6$ m · $O$: `e60_regional.csv` · $S$: two constants instead of one, and what the single one was costing
+
+*Prompt (Danilo): "Looking at the last results, it seems that eps ~0.23 on brazil, and eps ~0.40
+on europe" — then "I think we should do separate pools for D3-D5 and D6 given that are different
+geographical regions."*
+
+### The observation
+
+Entry 54's corrected per-rider optima sort by continent almost perfectly:
+
+| Brazil | | | Europe | | |
+|---|---|---|---|---|---|
+| D5 0.215 | D3 0.249 | D4 0.314 | u3 0.295 | u2 0.391 | u1 0.470 |
+
+Fitted as two pools on the training half: **Brazil 0.2385, Europe 0.3712**, a gap of **0.133**.
+The single pooled constant is 0.2939, between them and close to neither.
+
+### What one constant was costing
+
+Held-out, F3 at the fitted $\tau$:
+
+| test set | own regional $\varepsilon$ | pooled $\varepsilon$ | cost of pooling |
+|---|--:|--:|--:|
+| D3–D5 ($n$ = 194) | 2.848 | 3.667 | **0.82 pp** |
+| D6 ($n$ = 111) | 1.726 | 2.646 | **0.92 pp** |
+
+Europe's gain is decisive (own closer on 74/109, $p < 0.001$); Brazil's is not significant on its
+own (105/189, $p = 0.15$) but points the same way and is the same size.
+
+**0.85 pp is large in this paper's terms** — bigger than Entry 55's aero fix (0.6 pp) and an
+order of magnitude bigger than Entries 56–59's effects. It was invisible until now because
+Entry 54 averaged over donor–recipient pairs, mixing within-region transfers (cheap) with
+cross-region ones (expensive), and the median pair came out unaffected.
+
+### The decision, and the claim it costs
+
+**Two pools ship.** The regions differ in terrain regime — São Paulo's descents are short and
+interrupted by traffic, D6's are Alpine and Catalan and sustained — and $\varepsilon$ is exactly
+the fraction of descent potential a rider recovers, so a genuine difference is expected rather
+than surprising.
+
+But this **contradicts §1.3's hypothesis as currently written**. That section claims
+$\varepsilon$ is "a property of cycling rather than of a rider", and Entry 54 supported it with a
+0.047 pp transfer penalty. Both statements survive only under a careful reading: transfer between
+*riders within a region* is free, transfer *across regions* costs 0.85 pp. The paper must say
+which it means, and §1.3's hypothesis needs restating as the narrower and defensible claim —
+$\varepsilon$ is a property of a **riding context**, stable across riders who share one, and it
+is measured here in two contexts rather than assumed universal.
+
+### Registered before running the full chain
+
+- **P1** — the two-pool arm improves held-out error by 0.6–1.0 pp over the single pool.
+- **P2** — the gap survives the full selection chain, i.e. the regional split is not an artefact
+  of holding $\tau$ and the form fixed at the pooled fit's choices.
+- **P3** — F4 shows the same split, with a comparable gap.
+- **P4** — within each region, the leave-one-rider-out penalty stays inside the 1.0 pp margin, so
+  the transfer claim survives once it is scoped to a region.
+
+## 2026-07-31 — Entry 59: fitting ε to serve a rider, not to minimise total ride error
+
+**Lineage** — $I$: $(D_3..D_6, P_{f,r}^{\mathrm{rider}})$ · $T$: $F_1..F_4$ under three pooling objectives · $O$: `e59_pooling.csv` · $S$: the shipped $\varepsilon$ and the held-out error it earns
+
+*Prompt (Danilo), on Entry 54's transfer penalty coming out negative: "isn't that
+counter-intuitive given the pooled one was trained on all?"*
+
+### The observation that forced it
+
+Entry 54 found a *single donor's* $\varepsilon$ beating the pooled constant on recipients it had
+never seen, by 0.55 pp. That should be impossible if the pooled fit is doing its job. Checking
+the per-rider optima explains it and raises a larger problem:
+
+| D3 | D4 | D5 | u1 | u2 | u3 | **pooled fit** |
+|--:|--:|--:|--:|--:|--:|--:|
+| 0.338 | 0.404 | 0.348 | 0.519 | 0.430 | 0.313 | **0.294** |
+
+**Every rider's optimum lies above the pooled fit.** That is not a weighting compromise — a
+convex compromise lands *between* the subgroup optima, never below all of them. It arises
+because the per-ride log-ratio losses are asymmetric, so the minimiser of the mean over 1,734
+rides is not the minimiser of the typical rider's error.
+
+The cost is not small. On held-out rides the rider-median $\varepsilon = 0.376$ scores **2.90**
+against the pooled 0.294's **3.34** — 0.44 pp, larger than the gain from Entry 55's aero fix.
+
+### Why the objective is wrong, not the estimate
+
+$\varepsilon$ is published to serve **a rider**. The ride-weighted fit answers a different
+question — which single constant minimises total error across this particular collection of
+rides — and lets D3 and D5's 916 training rides outvote the other four riders. A corpus with
+more of one person's commutes would move the published constant, which is a property of the
+sampling rather than of cycling. That is the wrong estimand for a number a stranger is meant to
+adopt.
+
+### Design
+
+Three pooling objectives, fitted on the training half, selected by the same cross-validation,
+scored once on the held-out half:
+
+- **A — ride-weighted** (the incumbent): minimise the mean of $\lvert\log(\hat E/E)\rvert$ over
+  rides.
+- **B — rider-weighted**: minimise the mean **over riders** of each rider's own mean loss, so
+  every rider counts once regardless of how many rides they contributed.
+- **C — rider-median**: the median of the per-rider optima. A two-stage estimator, robust to one
+  atypical rider, and the one Entry 54's donor experiment implicitly sampled.
+
+Run for all four forms, since if the effect is real it should not be peculiar to $F_3$.
+
+### Registered predictions
+
+- **P1** — B and C both beat A on held-out error. This is the hypothesis; A is the incumbent and
+  has no reason to win if the estimand argument is right.
+- **P2** — the improvement is **0.3–0.6 pp**, bracketing the 0.44 pp seen in the diagnostic.
+- **P3** — the selected $\varepsilon$ rises to **0.35–0.40**, from 0.294.
+- **P4** — the same ordering holds for $F_4$, the totals-only form.
+- **P5** — B and C land within 0.03 of each other. If they diverge, one rider is dominating the
+  mean and the median is the safer publication.
+
+### What refutation would mean
+
+If A wins, the ride-weighted fit is defensible after all and Entry 54's negative penalty needs
+another explanation. If B and C win but by under 0.1 pp, the estimand argument stands on
+principle while the practical difference does not, and the paper should say so rather than
+re-baseline for nothing.
+
+### Findings — refuted, and the reason is a bug this entry existed to chase
+
+| form | A ride-weighted | B rider-weighted | C rider-median |
+|---|--:|--:|--:|
+| F1 | 4.03 | 3.99 (−0.04) | 4.46 (+0.43) |
+| F2 | 3.21 | 3.15 (−0.06) | 3.13 (−0.08) |
+| **F3** | **3.24** | 3.16 (−0.08) | 3.14 (−0.10) |
+| F4 | **2.86** | 3.05 (+0.18) | 3.03 (+0.16) |
+
+**P1 partially refuted, P2 refuted.** The rider-pooled objectives win on F2 and F3 by 0.06–0.10
+pp and *lose* on F4 by 0.16–0.18; no paired test approaches significance ($p$ = 0.06, 0.95, 0.69,
+0.12). The registered 0.3–0.6 pp improvement does not exist. **P4 refuted** — F4 reverses.
+**P3 refuted**: the selected $\varepsilon$ moves to 0.314–0.340, not 0.35–0.40.
+
+**Why the diagnostic promised 0.44 pp and the experiment delivered 0.08.** The diagnostic ran
+through `e54_transfer.fit_eps`, which passed `TAU_PUB_I` — the *published default* deadband of
+2 m — while the selected form uses the fitted 6 m. Every per-rider optimum in it was therefore
+computed under a deadband the paper does not ship, which inflated them (0.313–0.519, median
+0.376) and made the pooled 0.294 look badly placed. At the correct $\tau$ the per-rider optima
+are 0.215–0.470 with a median near 0.30, and they **bracket** the pooled fit instead of sitting
+entirely above it. The paradox dissolves: there was never a Simpson-style effect, only a
+parameter mismatch.
+
+Entry 54 is corrected and re-run: its transfer penalty is **+0.047 pp [0.033, 0.084]**, near
+zero and positive, replacing the −0.55 pp that prompted this entry. Its P3 flips too — the worst
+donor is D6-user_2, not D6-user_1.
+
+**What stands.** The estimand argument is untouched: $\varepsilon$ is published to serve a rider,
+so rider-weighting is the better-motivated objective, and a corpus carrying more of one person's
+commutes should not move a universal constant. What the data now says is that on *this* corpus
+the two objectives are worth 0.1 pp and disagree about sign across forms, so the paper keeps the
+ride-weighted fit — the incumbent, and the one every other number is built on — and records that
+the choice was tested rather than assumed.
+
+## 2026-07-31 — Entry 58: intervals for the fitted parameters, and the breaking points
+
+**Lineage** — $I$: $(D_3..D_6, P_{f,r}^{\mathrm{rider}})$ · $T$: $F_1..F_4$ · $O$: `e58_intervals.csv` · $S$: Table 2's parameters with CIs, and the tolerance on each constant
+
+*Prompt (Danilo): "What's the 95% CI on the fitted params on table 2?" · "same thing on table 4"
+· "on A.7 for curiosity sake: can we also estimate what would be the lower and upper parameter
+value that would generate a 50% loss inflation?"*
+
+Stratified bootstrap over training rides, resampled within rider, refitting on each replicate;
+percentile CIs, seed 50, $B = 400$. The closed form is linear in $\varepsilon$, so a replicate's
+whole grid evaluates as one matrix product — the pure-Python fit takes 9 s and would have made
+400 replicates a 45-minute run per form.
+
+### Fitted parameters
+
+| form | parameter | fitted | 95% CI |
+|---|---|--:|---|
+| F1 | $\varepsilon$ | 0.683 | [0.672, 0.700] |
+| F2 | $\varepsilon$ | 0.462 | [0.457, 0.469] |
+| **F3** | $\varepsilon$ | **0.294** | **[0.285, 0.304]** |
+| F4 | $\varepsilon$ | 0.409 | [0.399, 0.417] |
+| F3 | $\tau$ | 6 m | [4.5, 6.6] — grid-valued; 6 m wins 54% of replicates |
+
+### How wrong is materially wrong
+
+The multiplier at which the cross-validation loss inflates by 50%, which answers the inverse of
+A.7's question — not *what does a 10% error cost* but *how much error is affordable*:
+
+| constant | tolerable range |
+|---|---|
+| $C_dA$ | **0.89× to 1.10×** |
+| $C_{rr}$ | 0.82× to 1.17× |
+| $m$ | 0.75× to 1.23× |
+| $\varepsilon$ | **0.22× to 1.79×** |
+
+Drag area must be right to about $\pm 10\%$; the descent constant may be wrong by a factor of
+four downward or nearly double upward before it costs as much. That is the same ordering Entries
+50 and 56 found, expressed in the units a user actually has to work in.
+
+### Two bugs found by building it, both in code that was already producing published numbers
+
+**The loss silently changed its population with $\varepsilon$.** `logratio` skipped rides whose
+predicted energy was non-positive (`if e > 0`). Since $E(\varepsilon) = A + \varepsilon B$ with
+$B < 0$, raising $\varepsilon$ pushes rides below zero and *removes their penalty* — the
+optimiser was partly rewarded for making badly-fitting rides disappear. The population is now
+fixed once, excluding the 6 rides of 1,734 that can go non-positive anywhere in the search
+range. Effect on the fitted $\varepsilon$: 0.2918 → 0.2939. Small, but a bias with a direction
+rather than noise.
+
+**A cache keyed on `id()` returned answers for the wrong row.** The fixed-population check was
+memoised on `id(r)`, and the sensitivity analyses build throwaway per-ride dicts with a
+perturbed component. CPython recycles those ids, so a stale entry answered for a different
+ride. It made every physical parameter's breaking point read exactly 1.00×. Removed; the two
+calls it saved were never worth it.
+
+## 2026-07-31 — Entry 57: rider-median fallbacks — removing the global priors without dropping rides
+
+**Lineage** — $I$: $(D_3..D_6, P_{f,r}^{\mathrm{rider}})$ · $T$: $\{F_1..F_4, F_\mathrm{base}\}$ · $O$: `e52_split.rider.csv` · $S$: Entry 55's results under a fallback that is never a global constant
+
+*Prompt (Danilo): "When on inverted-physics mode, the fallback should be dropped rather than
+used." — then, on being shown that dropping costs 78% of rides and selects the hilly ones:
+"what if the fallback is a rider average?"*
+
+### The problem, and why dropping was not the answer
+
+The parameter class called *fitted per ride* is honest only where the inversion succeeds. It
+does not succeed everywhere: $C_{rr}$ falls back to the global prior 0.008 on **77%** of rides,
+mass to a per-rider anchor on **51%**, $C_dA$ to 0.40 on **3%**. A ride carrying 0.008 is not
+fitted; it is assumed, wearing a fitted label.
+
+The first remedy considered was to **drop** those rides. Measurement killed it: requiring all
+three genuinely inverted leaves **455 of 2,039**, and the survivors are not a random subset —
+median ascent **17.8 m/km against 8.4** for the dropped, because a ride only yields a $C_{rr}$
+estimate when it has climbs to spare. Since $\varepsilon$ multiplies $h_-$, selecting on
+climb-richness selects on precisely the covariate $\varepsilon$ governs: the constant would be
+fitted on the hilly rides and applied to the flat ones excluded from fitting it. It would also
+leave D4 with 22 rides and D6-user_5 with 4, breaking the stratified split.
+
+### The design
+
+Replace each global prior with **that rider's own median** over the rides where the quantity
+*was* inverted. Every constant then originates in the rider's own telemetry, no ride is dropped,
+and no selection is applied. It is partial pooling: ride-level where the ride can support it,
+rider-level where it cannot — the direction Entry 53 pointed to after the joint linear estimator
+failed.
+
+Two disciplines:
+
+- **Train-only.** Rider medians are computed over the **training half alone** and then applied to
+  both halves. Otherwise a held-out ride would help set the constant used to predict it.
+- **Sufficiency.** Every rider has at least four inverted $C_{rr}$ values (4 to 150), so every
+  median exists. Where one did not, the global prior would remain and be flagged.
+
+The rider medians are not the prior: they span **0.0070 to 0.0096** for $C_{rr}$, so replacing
+0.008 everywhere moves most rides.
+
+### Registered predictions
+
+- **P1** — held-out error improves or is unchanged; it should not worsen, since a rider median
+  is strictly better informed than a global constant.
+- **P2** — the improvement is *small*, under 0.3 pp. Entry 56 put $C_{rr}$'s loss inflation at
+  18.9% for a ±10% error, and the rider medians sit within about ±20% of 0.008, so the
+  correction is real but bounded.
+- **P3** — the selected $\varepsilon$ moves by less than 0.02. It absorbs whatever the physics
+  leaves behind, so a better-specified $C_{rr}$ should shift it slightly toward zero at most.
+- **P4** — D4 and D6-user_2 benefit most: their rider medians (0.0096, 0.0076) are farthest from
+  the 0.008 prior they were previously assigned.
+
+### Findings
+
+**No ride touches a global prior any more.** `crr_src` is `rider` on 1,570 and `inverted` on 469;
+`cda_src` is `regime` on 1,975, `rider` on 51, `inverted` on 13; mass is `rider` on 1,034 and
+ride-level on 1,005. Every constant in the study now originates in the rider's own telemetry, and
+all 2,039 rides are retained.
+
+| | before (global priors) | after (rider medians) |
+|---|--:|--:|
+| CV of the winner | 0.05561 | **0.05406** |
+| F3 held-out med $\lvert\Delta\%\rvert$ | 3.39 [3.03, 3.69] | **3.24** [2.75, 3.50] |
+| F3 held-out bias | +0.06 | **+0.07** |
+| F4 held-out | 2.85 | 2.86 |
+| $F_\mathrm{base}$ held-out | 3.05 / −0.03 | **3.19 / −0.10** |
+| closed form vs $F_\mathrm{base}$ | 149/305, $p = 0.73$ | **152/305, $p = 1.00$** |
+| selected $\varepsilon$ | 0.2937 | 0.2939 |
+
+**P1 confirmed** (error improves, 0.15 pp). **P2 confirmed** (0.15 pp, under the registered 0.3).
+**P3 confirmed** ($\varepsilon$ moves 0.0002, far under 0.02). **P4** untested — the per-rider
+attribution was not separated.
+
+The rider medians are genuinely rider-specific rather than a repackaged prior: $C_{rr}$ spans
+0.0065 to 0.0096 across the seven, against the 0.008 they all previously took.
+
+**The incidental result is the best one.** Against the comparator the paired test now reads
+**152 of 305, $p = 1.00$** — the closed form and the forward simulation are indistinguishable to
+the precision of the test. Paper 1's central claim is parity, and this is as clean a
+demonstration of it as the data can give.
+
 ## 2026-07-31 — Entry 56: how much do the STRUCTURAL parameters matter? — τ and c beside the physics
 
 **Lineage** — $I$: $(D_3..D_6, P_{f,r}^{\mathrm{reg}})$ · $T$: $F_3$ (τ) and $F_4$ (c) · $O$: `e56_struct.csv` · $S$: a companion to §3.2's physical-parameter table, on the same scale

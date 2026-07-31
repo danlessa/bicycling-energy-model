@@ -10,7 +10,7 @@ number, having contributed nothing to it, does it work for me?
 DESIGN, as registered (MODEL_COMPARISON_JOURNAL.md, Entry 54):
   donor      for each rider r, fit the flat eps on r's TRAINING-half rides
              alone, same loss as Entry 52 (mean |log(Ehat/E)|), at the selected
-             form F3 with tau = 2 m fixed.
+             form F3 at its FITTED tau.
   recipients score that eps on every OTHER rider's TEST-half rides. Strict
              transfer: a different person, and rides already held out from
              Entry 52's selection.
@@ -44,30 +44,62 @@ sys.path.insert(0, HERE)
 from bicycling_energy_model.jsfmt import to_fixed
 
 import e52_split as S
-from e52_build import GROUPS, TAU_PUB_I
+from e52_build import GROUPS, TAU_GRID
 from perride_invert import RESULTS
 from skc_compare import boot_ci_strat, med_of
 
 SEED = 49
-EPS_POOLED = 0.2879        # Entry 52's selected constant
+
+
+def _pooled_eps() -> float:
+    """The pooled constant, READ from e52_summary.csv rather than hardcoded.
+
+    It was a literal (0.2879) and went stale the moment Entry 55 changed the
+    aero estimator, silently comparing every donor against a constant the paper
+    no longer ships. A comparator that can drift out of date is a bug waiting
+    for a re-baseline.
+    """
+    with open(os.path.join(RESULTS, "e52_summary.csv"), encoding="utf-8") as fh:
+        for line in fh:
+            k, _, v = line.partition(",")
+            if k == "eps":
+                return float(v)
+    raise SystemExit("e52_summary.csv has no eps — run e52_split.py first")
+
+
+EPS_POOLED = _pooled_eps()
 MARGIN_PP = 1.0            # Entry 48's registered relevance margin
 FORM = "F3"
+# tau must be the FITTED one, not the published default. It was TAU_PUB_I (2 m)
+# while the selected form uses 6 m, so every per-rider optimum in this entry was
+# computed under a deadband the paper does not ship -- which inflated the
+# per-rider optima and made the pooled constant look badly placed (Entry 59).
+_TI = None
+
+
+def _ti() -> int:
+    global _TI
+    if _TI is None:
+        rows = S.load()
+        train, _ = S.split(rows)
+        _TI = S.fit(train, FORM)[2]
+    return _TI
 
 
 def fit_eps(rows) -> float:
-    """The flat eps minimising Entry 52's loss on `rows`, tau fixed at 2 m."""
+    """The flat eps minimising Entry 52's loss on `rows`, at the fitted tau."""
     lo, hi = S.EPS_BOUNDS
     best = 0.2
     for _ in range(5):
         step = (hi - lo) / 200
         cand = [lo + i * step for i in range(201)]
-        best = min(cand, key=lambda e: S.cv_loss(rows, FORM, e, S.C_PUB, TAU_PUB_I))
+        best = min(cand, key=lambda e: S.cv_loss(rows, FORM, e, S.C_PUB, _ti()))
         lo, hi = best - step, best + step
     return best
 
 
 def err(rows, eps) -> list[float]:
-    return [abs(v) for v in S.pct(rows, FORM, eps, S.C_PUB, TAU_PUB_I)]
+    return [abs(v) for v in S.pct(rows, FORM, eps, S.C_PUB, _ti())]
 
 
 def main() -> None:

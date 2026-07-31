@@ -62,6 +62,26 @@ SMOKE = bool(os.environ.get("E52_SMOKE"))
 # retained as the sensitivity arm because the pair is the evidence for Entry
 # 55's tau and F4 observations.
 AERO = os.environ.get("E52_AERO", "reg")
+# Entry 57: where a per-ride inversion fails, fall back to that RIDER's median
+# over their training rides rather than to a global prior -- so every constant
+# originates in the rider's own telemetry and no ride has to be dropped.
+# "prior" restores the old behaviour as the sensitivity arm.
+FALLBACK = os.environ.get("E52_FALLBACK", "rider")
+
+
+def _rider_fallbacks() -> dict:
+    path = os.path.join(RESULTS, "e52_rider_fallback.csv")
+    if FALLBACK != "rider" or not os.path.exists(path):
+        return {}
+    out = {}
+    with open(path, encoding="utf-8") as fh:
+        for r in csv.DictReader(fh):
+            out[r["group"]] = {k: float(r[k]) for k in ("m_hat", "crr_hat", "cda_hat")
+                               if r.get(k)}
+    return out
+
+
+RIDER_FB = _rider_fallbacks()
 CDA_RANGE = (0.10, 1.00)
 CHECK: list[float] = []   # build-time cache-vs-engine deviations
 CANON_FAIL: list[str] = []   # F_base failures, counted rather than swallowed
@@ -123,6 +143,13 @@ def one_ride(pts, label, group, m_logged) -> dict | None:
     inv = invert_physics(prof, wb_climbs, wb_flats, ANCHOR_KEY.get(group), m_logged)
     if inv is None:
         return None
+    # Entry 57: swap any global prior for this rider's own median. Applied
+    # BEFORE the energies are computed, so the substituted constant propagates
+    # through v_f and every component rather than being patched on afterwards.
+    _fb = RIDER_FB.get(group, {})
+    for _v, _s in (("m_hat", "m_src"), ("crr_hat", "crr_src"), ("cda_hat", "cda_src")):
+        if inv.get(_s) == "fallback" and _v in _fb:
+            inv[_v], inv[_s] = _fb[_v], "rider"
 
     cda, cda_src = inv["cda_hat"], inv.get("cda_src", "")
     if AERO == "reg":
@@ -276,7 +303,7 @@ def main() -> None:
         for msg, n in Counter(CANON_FAIL).most_common(3):
             print(f"    {n:>5}x  {msg[:96]}")
 
-    out = os.path.join(RESULTS, "e52_aggregates" + ("" if AERO == "reg" else "." + AERO) + (".SMOKE" if SMOKE else "") + ".csv")
+    out = os.path.join(RESULTS, "e52_aggregates" + ("" if AERO == "reg" else "." + AERO) + ("" if FALLBACK == "rider" else "." + FALLBACK) + (".SMOKE" if SMOKE else "") + ".csv")
     with open(out, "w", encoding="utf-8", newline="") as fh:
         w = csv.DictWriter(fh, fieldnames=COLS, extrasaction="ignore")
         w.writeheader()

@@ -43,7 +43,7 @@ sys.path.insert(0, HERE)
 from bicycling_energy_model import is_finite
 from bicycling_energy_model.jsfmt import to_fixed
 
-from e52_build import AERO, C_PUB, FORMS, GROUPS, NPAR, TAU_GRID, TAU_PUB_I, e_form
+from e52_build import AERO, FALLBACK, C_PUB, FORMS, GROUPS, NPAR, TAU_GRID, TAU_PUB_I, e_form
 from perride_invert import RESULTS
 from skc_compare import boot_ci_strat, med_of, sign_p
 
@@ -75,7 +75,7 @@ def mulberry32(seed: int):
 
 
 def load() -> list[dict]:
-    path = os.path.join(RESULTS, "e52_aggregates" + ("" if AERO == "reg" else "." + AERO) + (".SMOKE" if SMOKE else "") + ".csv")
+    path = os.path.join(RESULTS, "e52_aggregates" + ("" if AERO == "reg" else "." + AERO) + ("" if FALLBACK == "rider" else "." + FALLBACK) + (".SMOKE" if SMOKE else "") + ".csv")
     rows = []
     with open(path, encoding="utf-8") as fh:
         for r in csv.DictReader(fh):
@@ -93,13 +93,36 @@ def load() -> list[dict]:
 # --------------------------------------------------------------- the losses
 
 def logratio(rows, form, eps, c=C_PUB, ti=TAU_PUB_I) -> list[float]:
-    """|log(Ehat/E)| per ride — the FITTING loss (symmetric, scale-free)."""
+    """|log(Ehat/E)| per ride — the FITTING loss (symmetric, scale-free).
+
+    THE POPULATION IS FIXED, not filtered per eps. Since E(eps) = A + eps*B with
+    B < 0, raising eps drives some rides' predicted energy non-positive; the
+    first version of this function skipped those (`if e > 0`), which quietly
+    changed the population the mean was taken over as eps moved AND rewarded the
+    optimiser for making a badly-fitting ride vanish. A ride that a form can
+    push to zero energy is excluded ONCE, for every eps, so the loss compares
+    like with like. On F3 that is 6 rides of 1,734 and moves the fitted eps by
+    0.002 -- small, but it was a bias with a direction rather than noise.
+    """
     out = []
     for r in rows:
+        if not _usable(r, form, c, ti):
+            continue
         e = e_form(r, form, eps, c, ti)
-        if e > 0:
-            out.append(abs(math.log(e / r["emp"])))
+        out.append(abs(math.log(e / r["emp"])) if e > 0 else float("inf"))
     return out
+
+
+def _usable(r: dict, form: str, c: float, ti: int) -> bool:
+    """Is this ride's predicted energy positive across the WHOLE eps range?
+
+    NOT memoised on id(r). An earlier version was, and it was wrong: the
+    sensitivity analyses build throwaway per-ride dicts with a perturbed
+    component, CPython recycles their ids, and a stale entry then answered for
+    a different row. The two e_form calls are cheap beside everything else.
+    """
+    return (e_form(r, form, EPS_BOUNDS[0], c, ti) > 0
+            and e_form(r, form, EPS_BOUNDS[1], c, ti) > 0)
 
 
 def pct(rows, form, eps, c=C_PUB, ti=TAU_PUB_I) -> list[float]:
@@ -405,7 +428,7 @@ def main() -> None:
         print(f"    P3 — closed form closer than F_base on {win}/{win + los}, "
               f"sign test p = {to_fixed(sign_p(win, los), 4)}")
 
-    out = os.path.join(RESULTS, "e52_split" + ("" if AERO == "reg" else "." + AERO) + (".SMOKE" if SMOKE else "") + ".csv")
+    out = os.path.join(RESULTS, "e52_split" + ("" if AERO == "reg" else "." + AERO) + ("" if FALLBACK == "rider" else "." + FALLBACK) + (".SMOKE" if SMOKE else "") + ".csv")
     with open(out, "w", encoding="utf-8") as fh:
         fh.write("form,npar,cv,cv_se,aic,eps,c,tau,test_med_abs,test_med_signed,winner\n")
         for f in FORMS:
@@ -418,7 +441,7 @@ def main() -> None:
                      f"{1 if f == w['form'] else 0}\n")
     # summary row set: the numbers the gate battery re-derives and the article
     # cites. Written here so a published claim traces to a file, not a console log.
-    summ = os.path.join(RESULTS, "e52_summary" + ("" if AERO == "reg" else "." + AERO) + (".SMOKE" if SMOKE else "") + ".csv")
+    summ = os.path.join(RESULTS, "e52_summary" + ("" if AERO == "reg" else "." + AERO) + ("" if FALLBACK == "rider" else "." + FALLBACK) + (".SMOKE" if SMOKE else "") + ".csv")
     with open(summ, "w", encoding="utf-8") as fh:
         fh.write("key,value\n")
         fh.write(f"f3_test_med_abs,{to_fixed(res[w['form']]['med_abs'], 4)}\n")
