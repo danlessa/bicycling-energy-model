@@ -48,6 +48,13 @@ from skc_compare import med_of
 
 SEED = 53
 N_COMBO = int(os.environ.get("E61_COMBOS", "64"))
+# When FULL=1 the 3-level grid is swept instead of the 2-level one: 3^6 = 729
+# combinations. The RAW per-route simulation is dumped alongside the fits so
+# any later re-analysis -- a different loss, a different form, a landscape
+# descriptor -- can be done without re-running canonical, which is what costs
+# the hours. Rows are flushed per combination, so an interrupted run leaves
+# usable data rather than nothing.
+FULL = bool(os.environ.get("E61_FULL"))
 N_ROUTES = int(os.environ.get("E61_ROUTES", "30"))      # per region
 # tau is HELD at the value fitted on real data, not swept: the question is what
 # geometry implies about eps, and letting the deadband float per region would
@@ -69,12 +76,20 @@ BR = {"D3", "D4", "D5"}
 # questions than a random subsample of the 3-level grid, and cheap enough to
 # run whole. Crr given as [0.04, 0.08] is read as [0.004, 0.008]: 0.04 is an
 # order of magnitude above any road rolling coefficient.
-CRR = (0.004, 0.008)
-CDA = (0.30, 0.40)
-MASS = (75.0, 90.0)
-PFLAT = (75.0, 150.0)
-KCLIMB = (1.0, 2.0)
-KDESC = (0.0, 0.5)
+if FULL:
+    CRR = (0.004, 0.008, 0.012)
+    CDA = (0.30, 0.40, 0.50)
+    MASS = (70.0, 85.0, 100.0)
+    PFLAT = (50.0, 100.0, 200.0)
+    KCLIMB = (1.0, 1.5, 2.0)
+    KDESC = (0.0, 0.1, 0.5)
+else:
+    CRR = (0.004, 0.008)
+    CDA = (0.30, 0.40)
+    MASS = (75.0, 90.0)
+    PFLAT = (75.0, 150.0)
+    KCLIMB = (1.0, 2.0)
+    KDESC = (0.0, 0.5)
 
 
 def routes():
@@ -216,6 +231,19 @@ def main() -> None:
     print(f"  ~{len(grid) * (len(rr['BR']) + len(rr['EU'])) * 0.252 / 60:.0f} min of canonical\n")
 
     rows = []
+    raw_path = os.path.join(RESULTS, "e61_raw" + (".full" if FULL else "") + ".csv")
+    raw_cols = (["combo", "region", "route", "crr", "cda", "m", "pflat", "kclimb",
+                 "kdesc", "vf", "truth_kj", "f1_e0", "f1_e1", "f2_e0", "f2_e1",
+                 "f4_roll", "f4_aero", "f4_climb", "f4_recov1", "f4_xkm", "f4_hplus"]
+                + [f"f3t{t}_e{j}" for t in TAU_SWEEP for j in (0, 1)])
+    raw = open(raw_path, "w", encoding="utf-8")
+    raw.write(",".join(raw_cols) + "\n")
+    fit_path = os.path.join(RESULTS, "e61_sweep" + (".full" if FULL else "") + ".csv")
+    fit_cols = ["combo", "region", "form", "crr", "cda", "m", "pflat", "kclimb",
+                "kdesc", "eps", "c", "tau", "n"]
+    fitf = open(fit_path, "w", encoding="utf-8")
+    fitf.write(",".join(fit_cols) + "\n")
+
     for ci, (crr, cda, m, pf, kc, kd) in enumerate(grid):
         p = {"m": m, "Crr": crr, "CdA": cda, "rho": RHO, "keff": KEFF,
              "wind": 0.0, "vmax": VMAX, "vstart": VSTART}
@@ -229,7 +257,7 @@ def main() -> None:
         for reg in ("BR", "EU"):
             pairs = {f: [] for f in ("F1", "F2", "F4")}
             f3_by_tau = {t: [] for t in TAU_SWEEP}
-            for prof in rr[reg]:
+            for ri, prof in enumerate(rr[reg]):
                 try:
                     truth = canonical(prof, pw, p)["legE"] / 1000.0
                 except Exception:
@@ -252,6 +280,13 @@ def main() -> None:
                 pairs["F4"].append((a0["roll"] / 1000, a0["aero"] / 1000,
                                     a0["climb"] / 1000, a1["recov"] / 1000,
                                     prof["x"][-1] / 1000, a0["hplus"], truth))
+                _f1, _f2 = pairs["F1"][-1], pairs["F2"][-1]
+                _vals = [ci, reg, ri, crr, cda, m, pf, kc, kd, f"{vf:.6f}",
+                         f"{truth:.6f}", f"{_f1[0]:.6f}", f"{_f1[1]:.6f}",
+                         f"{_f2[0]:.6f}", f"{_f2[1]:.6f}"] + \
+                        [f"{x:.6f}" for x in pairs["F4"][-1][:6]] + \
+                        [f"{f3_by_tau[t][-1][j]:.6f}" for t in TAU_SWEEP for j in (0, 1)]
+                raw.write(",".join(str(v) for v in _vals) + "\n")
             fits = {}
             for f in ("F1", "F2"):
                 if len(pairs[f]) >= 10:
@@ -268,6 +303,11 @@ def main() -> None:
                              "kclimb": kc, "kdesc": kd, "eps": e_hat,
                              "c": c_hat, "tau": t_hat,
                              "n": len(f3_by_tau[TAU_SWEEP[0]]) if f == "F3" else len(pairs[f])})
+        for r in rows[-8:]:
+            if r["combo"] == ci:
+                fitf.write(",".join(str(r[c]) for c in fit_cols) + "\n")
+        raw.flush()
+        fitf.flush()
         if (ci + 1) % 4 == 0:
             print(f"  {ci + 1}/{len(grid)} combinations done", flush=True)
 
@@ -300,13 +340,11 @@ def main() -> None:
         print(f"    {name:<10} " + "  ".join(f"{v:>5}: {to_fixed(c, 4)}"
                                              for v, c in zip(vals, cells)))
 
-    path = os.path.join(RESULTS, "e61_sweep.csv")
-    cols = ["combo", "region", "form", "crr", "cda", "m", "pflat", "kclimb", "kdesc", "eps", "c", "tau", "n"]
-    with open(path, "w", encoding="utf-8") as fh:
-        fh.write(",".join(cols) + "\n")
-        for r in rows:
-            fh.write(",".join(str(r[c]) for c in cols) + "\n")
-    print(f"\nwrote {os.path.basename(path)}  ({len(rows)} rows)")
+    raw.close()
+    fitf.close()
+    print(f"\nwrote {os.path.basename(fit_path)} ({len(rows)} fits)"
+          f" and {os.path.basename(raw_path)} (raw per-route simulation,"
+          f" re-fittable without re-running canonical)")
 
 
 if __name__ == "__main__":
