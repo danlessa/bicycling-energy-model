@@ -272,6 +272,30 @@ which it means, and §1.3's hypothesis needs restating as the narrower and defen
 $\varepsilon$ is a property of a **riding context**, stable across riders who share one, and it
 is measured here in two contexts rather than assumed universal.
 
+### The research direction this opens
+
+*(Danilo: "It may be that epsilon can be tabulated against landscape classes through simulations
++ empirical validation. This can be a research next step.")*
+
+Two landscapes give two values, which is not a theory. The step that would make it one is to
+**tabulate $\varepsilon$ against landscape classes** rather than re-fit it per corpus. The
+mechanism already predicts the direction: $\varepsilon_{\mathrm{coast}}(s) = \min(1,
+(\alpha/\beta)/s)$ falls as descents steepen, so a landscape's $\varepsilon$ should depend on
+its *distribution* of descent grades and lengths — São Paulo's short interrupted drops against
+D6's sustained Alpine and Catalan ones.
+
+Both halves are needed. **Simulation** can sweep terrain far beyond the two landscapes measured
+here, and the forward model is already the instrument, since it computes recovery from first
+principles rather than from a fitted constant — but it inherits assumptions about braking and
+coasting that are exactly what $\varepsilon$ exists to absorb. **Empirical validation** on more
+corpora is what turns a predicted table into a usable one, and the requirement is more *places*,
+not more rides.
+
+The binding constraint is that the class descriptor must be **computable from a map**: a planner
+picking $\varepsilon$ has terrain and no power meter, so a classification needing ridden data to
+assign a route would answer the wrong question. Recorded in paper 1 §4.4.3 as future work, and a
+candidate scope for a later paper.
+
 ### Registered before running the full chain
 
 - **P1** — the two-pool arm improves held-out error by 0.6–1.0 pp over the single pool.
