@@ -1623,11 +1623,13 @@ except OSError:
     print("  e52_summary.csv MISSING — run src/harness/e52_split.py  GATE-FAIL")
     failed = True
 
-for _k, _want, _lbl in (("f3_test_med_abs", 3.98, "F3 test med|D%|"),
-                        ("f3_test_med_signed", -1.06, "F3 test signed"),
-                        ("fbase_test_med_abs", 5.71, "F_base test med|D%|"),
-                        ("fbase_test_med_signed", -3.85, "F_base test signed"),
-                        ("eps", 0.288, "selected eps"),
+for _k, _want, _lbl in (("f3_test_med_abs", 3.39, "F3 test med|D%|"),
+                        ("f3_test_med_signed", 0.06, "F3 test signed"),
+                        ("f4_test_med_abs", 2.85, "F4 test med|D%|"),
+                        ("f4_test_med_signed", -0.24, "F4 test signed"),
+                        ("fbase_test_med_abs", 3.05, "F_base test med|D%|"),
+                        ("fbase_test_med_signed", -0.03, "F_base test signed"),
+                        ("eps", 0.294, "selected eps"),
                         ("twin_pct", 82.0, "twin exposure %")):
     try:
         _v = float(_e52.get(_k, "nan"))
@@ -1645,8 +1647,8 @@ _ok = _e52.get("winner") == "F3"
 print("  winner is F3" + (" GATE-OK" if _ok else f" GATE-FAIL({_e52.get('winner')})"))
 if not _ok:
     failed = True
-_ok = abs(float(_e52.get("tau", "nan") or "nan") - 2.0) < 1e-9
-print("  tau refits to 2 m" + (" GATE-OK" if _ok else " GATE-FAIL"))
+_ok = abs(float(_e52.get("tau", "nan") or "nan") - 6.0) < 1e-9
+print("  tau refits to 6 m" + (" GATE-OK" if _ok else " GATE-FAIL"))
 if not _ok:
     failed = True
 _ok = int(_e52.get("n_test", 0)) == 305 and int(_e52.get("n_train", 0)) == 1734

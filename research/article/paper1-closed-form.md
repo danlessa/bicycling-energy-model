@@ -23,7 +23,7 @@
 
 **Methods.** We test four models built on one three-term closed form, $E \approx \alpha\,x + \beta\,(h_+ - \varepsilon\,h_-)$ — flat rate $\alpha$, climbing rate $\beta$, refunded fraction $\varepsilon$ — against the power-meter energy $\int P\,dt$ of 2,025 unique rides (2,127 evaluations; six corpora, three São Paulo riders and four European). The reference is a forward-dynamics simulation [Martin et al. 1998] on the same constants per ride, so gaps are modelling error; both engines read the ride's measured power, so accuracy means consistency of the energy accounting, not blind prediction. The calibration corpus uses condition-informed per-ride parameters and is re-run blind as a check; every other corpus is blind under one shared literature-typical set, mass being the only per-rider input. All behavioural constants are calibrated once and frozen, and the refund's deficit is treated as a function whose form is decided empirically, on held-out halves.
 
-**Results.** Selected by cross-validation on the training half and scored once on rides used neither to fit its constant nor to choose its form, the proposed form reproduces 305 held-out rides to **3.98% [3.51, 4.54] median error**<!--@c-e52.f3.med.abs--> with a bias of −1.06% [−1.56, −0.37] — the headline. The forward simulation, carried as a comparator on the same rides, reads 5.71% [5.13, 6.42]; the closed form is therefore not worse than a state-coupled simulation that has strictly more information, since the simulation also walks the full profile with velocity propagating between segments and reads the same per-ride constants. The gap should not be read as the closed form being better physics: the simulation's bias is concentrated in the three São Paulo corpora and traces to its constants being fitted on sustained segments whose transients it then meets at run time. Cross-validation and AIC select the same form independently. Its descent constant refits to $\varepsilon = 0.288$ against 0.255 on the held-out half's own optimum, so the constant is identified rather than an artefact of the draw; the deadband recovers 2 m from the training half rather than inheriting it. For the descent term we hold $\varepsilon$ as a calibrated constant. A Sobol decomposition of the prediction error over the constants a user supplies shows why: $\varepsilon$ accounts for 7% of the variance against 55% for drag area and 46% for mass, and $C_dA$ and $C_{rr}$ prove not to be separately identified by route-level energy — their sum is determined two to three times better than either part, so improving one alone can make an estimate worse. $\varepsilon$ does admit a mechanistic decomposition into a geometric ceiling and a behavioural shortfall, set out as a research programme rather than a result of this paper. One exposure is reported rather than assumed away: 82% of held-out rides have a same-rider training ride within 5% on distance and 10% on ascent, so the figure is a repeat-route error.
+**Results.** Selected by cross-validation on the training half and scored once on rides used neither to fit its constant nor to choose its form, the proposed form reproduces 305 held-out rides to **3.39% [3.03, 3.69] median error**<!--@c-e52.f3.med.abs--> with a bias of **+0.06%** [−0.27, 0.92], and its totals-only variant — needing distance and ascent alone — to 2.85% [2.40, 3.50]. The forward simulation, carried as a comparator on the same rides, reads 3.05% [2.71, 3.44] at −0.03% bias, and a paired test against the closed form gives 149 of 305, $p = 0.73$: the two are **indistinguishable**. That is the paper's claim — parity, not superiority — and it is the stronger reading, because the simulation walks the same profile with velocity propagating between segments and reads the same per-ride constants, so it has strictly more information and converts none of it into accuracy. Cross-validation and AIC select the same form independently. Its descent constant refits to $\varepsilon = 0.294$ against 0.255 on the held-out half's own optimum, so the constant is identified rather than an artefact of the draw; the deadband is recovered from the training half rather than inherited. Fitted on **one** rider and carried to the other six, that constant costs 0.5 pp of accuracy, inside the margin registered as the threshold for mattering — so a single published number serves a rider who contributed nothing to it. For the descent term we hold $\varepsilon$ as a calibrated constant. A Sobol decomposition of the prediction error over the constants a user supplies shows why: $\varepsilon$ accounts for 7% of the variance against 55% for drag area and 46% for mass, and $C_dA$ and $C_{rr}$ prove not to be separately identified by route-level energy — their sum is determined two to three times better than either part, so improving one alone can make an estimate worse. $\varepsilon$ does admit a mechanistic decomposition into a geometric ceiling and a behavioural shortfall, set out as a research programme rather than a result of this paper. One exposure is reported rather than assumed away: 82% of held-out rides have a same-rider training ride within 5% on distance and 10% on ascent, so the figure is a repeat-route error.
 
 **Scope.** Seven riders, all on conventional road bicycles with power meters; the behavioural constants are calibrated at a 30 m elevation scale and paired with an assumed $\rho\,C_dA$. Whether the descent-recovery constant holds for utility commuters, e-bikes, cargo bikes or recumbents is untested, and the transfer claim rests on two independent riders plus four external ones — a thin base for a behavioural constant, and the limit most likely to bind in deployment ([§4.3.1](#4.3.1)).
 
@@ -55,7 +55,7 @@ Descent recovery has a geometry (the recovery ceiling) and a habit (the deficit)
 
 <a id="terminology"></a>
 
-Symbols used throughout; grades are percent in the text, fractions in formulas; "—" in the unit column marks dimensionless quantities; corpus labels D3–D6 are defined in [Table 1](#tab1). Display equations are numbered (1)–(8) in the main text and (A1)–(A9) in the appendix; the four model forms are named and tagged F1–F4.
+Symbols used throughout; grades are percent in the text, fractions in formulas; "—" in the unit column marks dimensionless quantities; corpus labels D3–D6 are defined in [Table 1](#tab1). Display equations are numbered (1)–(6) in the main text and (A1)–(A9) in the appendix; the four model forms are named and tagged F1–F4.
 
 Notation rule — aggregation scopes: a physical parameter or measurement carries its scope as a subscript — $_t$ instant, $_i$ local (30 m cell), $_r$ ride, $_p$ person, $_c$ corpus. On variables the scope sits in the subscript ($s_i$, $h_{-,i}$); on functions it enters through the argument (the recovery ceiling). E.g. $C_{dA,r}$ is one ride's aero, $C_{dA,p}$ one person's fitted aero. A **bare parameter symbol is a frozen constant** (the value column below). Two declared exemptions: letter subscripts that are *names*, not scopes ($\alpha_r$ rolling, $\alpha_a$ aero, $v_f$ flat, $\varepsilon_d$/$\varepsilon_f$ variants, $k_{\mathrm{eff}}$); and the geometry and energy symbols ($E$, $x$, $h_\pm$, …), which are ride-level by definition, with their scope stated in the table. The four physical constants below carry their frozen-protocol values; the informed calibration run judged them per ride ([§2.4](#2.4)). The *value* column gives the constant used, or the variable's scope: **person**, **ride**, **local** (along the route), **instant** (per second).
 
@@ -238,9 +238,9 @@ flowchart LR
 
 ### 2.1 The reference simulation and the shared-constants design
 
-The reference is given by eq. (6) — a distance-marching forward integration of the standard cycling power balance [Martin et al. 1998; di Prampero et al. 1979]:
+The reference is given by eq. (3) — a distance-marching forward integration of the standard cycling power balance [Martin et al. 1998; di Prampero et al. 1979]:
 
-$$m\,v\,\frac{dv}{dx'} = \frac{k_{\mathrm{eff}}\,P}{v} - C_{rr}\,m g \cos\theta - \tfrac{1}{2}\rho\,C_dA\,(v + w)^2 - m g \sin\theta, \tag{6}
+$$m\,v\,\frac{dv}{dx'} = \frac{k_{\mathrm{eff}}\,P}{v} - C_{rr}\,m g \cos\theta - \tfrac{1}{2}\rho\,C_dA\,(v + w)^2 - m g \sin\theta, \tag{3}
 $$
 
 with pedal power $P$ per grade regime extracted from each ride's own power stream, signed relative wind $w$, and a safe-speed brake cap on descents. The integrator uses a semi-implicit kinetic-energy update that conserves energy to machine precision (the identity $k_{\mathrm{eff}} E_{\mathrm{legs}} = \Delta KE + W_{rr} + W_{\mathrm{aero}} + W_{\mathrm{grav}} + W_{\mathrm{brake}}$ is asserted per ride to $\leq 10^{-6}$ relative).
@@ -259,15 +259,19 @@ Each ride is segmented into **strict climbs** (grade $\geq 2\%$ throughout, $\ge
 
 1. **$\hat m$ from a temporally spread subset of the climbs.** On a sustained climb $\beta h_+$ dominates the balance, so mass is the best-identified of the three.
 2. **$\hat C_{rr}$ from the *remaining* climbs**, at the prior $C_dA$. The subsets are deliberately disjoint: on any single climb $m g \sin\theta$ and $C_{rr} m g \cos\theta$ both scale with $m$, so estimating both from the same segment is collinear by construction. Splitting the segments breaks that.
-3. **$\hat C_dA$ from the flats**, where aerodynamic loss dominates.
+3. **$\hat C_dA$ from the ride's own flat regime.** Aerodynamic loss dominates on the flat, so $C_dA$ is read from the flat-regime power $P_{\mathrm{flat}}$ at the **measured** flat speed $v_{\mathrm{meas}}$:
+
+$$\hat C_dA = \frac{k_{\mathrm{eff}} P_{\mathrm{flat}} / v_{\mathrm{meas}} - C_{rr}\,\hat m g}{\tfrac{1}{2}\rho\,v_{\mathrm{rel}}^2}\ ,\qquad v_{\mathrm{rel}} = v_{\mathrm{meas}} + w. \tag{4}$$
+
+   Two properties matter. It needs **no qualifying segment**, only that the ride has a flat regime at all, so it returns a value where a segment-based estimator would fall back. And it is evaluated at the speed the ride was actually ridden at, which is the same speed the closed form later evaluates $\alpha_a$ at — a segment-based estimate is inferred at one speed and used at another, and that inconsistency is not small ([§3.1.3](#3.1.3)).
 
 Head/tailwind is zero for round trips and half the historical daily ground wind projected on the net bearing otherwise. A field with no qualifying segment falls back to its prior — $C_{rr} = 0.008$, $C_dA = 0.40$ — and the fallback is flagged rather than silent.
 
 #### 2.2.2 How often it actually inverts
 
-The fallbacks are not rare, and reporting their rate is the honest description of what "per-ride fitted physics" means in this paper. Across the 2,028 rides of D3–D6, **$C_{rr}$ carries the 0.008 prior on 77%** and **$C_dA$ the 0.40 fallback on 26%**; both were genuinely inverted on only **15%**. Mass is the constant that is really identified per ride, and it is near-constant within a rider — one D6 rider's inter-quartile range spans 99.9 to 99.9 kg.
+The fallbacks are not rare, and reporting their rate is the honest description of what "per-ride fitted physics" means in this paper. Across the 2,039 rides of D3–D6, **$C_{rr}$ carries the 0.008 prior on 77%** of rides, while **$C_dA$ is measured on 97%** — it falls back on 3%. The aero estimator of eq. (4) is why: an earlier segment-based one fell back on 26%, and replacing it removed most of that gap (lab journal, Entry 55). Mass is the constant that is really identified per ride, and it is near-constant within a rider — one D6 rider's inter-quartile range spans 99.9 to 99.9 kg.
 
-So the parameter class this paper calls fitted-per-ride is, for most rides, *inverted mass with assumed resistances*. Since mass scales the dominant climb term directly ($\beta = mg/k_{\mathrm{eff}}$), that is the high-value part; but the label overstates the fit, and results that turn on $C_{rr}$ or $C_dA$ should be read with the rates above in mind.
+So the parameter class this paper calls fitted-per-ride is, for most rides, *inverted mass and drag area with an assumed rolling coefficient*. Since mass scales the dominant climb term directly ($\beta = mg/k_{\mathrm{eff}}$) and $C_dA$ dominates the flat one, the two that are measured are the two that matter most ([§3.2](#3.2)); results that turn on $C_{rr}$ should be read with the rate above in mind.
 
 #### 2.2.3 What route-level energy can and cannot identify
 
@@ -412,12 +416,12 @@ F3 wins, and the two criteria agree ([Table 2](#tab2)). It is the only form insi
 
 | form | CV | 1-SE | AIC | fitted | $k$ |
 |---|--:|:--:|--:|--:|--:|
-| F1 | 0.08394 ± 0.00174 | | −2718.9 | $\varepsilon = 0.596$ | 1 |
-| F2 | 0.07669 ± 0.00180 | | −3032.0 | $\varepsilon = 0.394$ | 1 |
-| **F3** | **0.07323 ± 0.00184** | ✓ | **−3192.8** | $\varepsilon = 0.288$, $\tau = 2$ m | 2 |
-| F4 | 0.07771 ± 0.00196 | | −3030.9 | $\varepsilon = 0.392$, $c = 0.03$ | 2 |
+| F1 | 0.07397 ± 0.00191 | | −3157.7 | $\varepsilon = 0.681$ | 1 |
+| F2 | 0.06427 ± 0.00188 | | −3642.1 | $\varepsilon = 0.461$ | 1 |
+| **F3** | **0.05561 ± 0.00182** | ✓ | **−4142.7** | $\varepsilon = 0.294$, $\tau = 6$ m | 2 |
+| F4 | 0.06372 ± 0.00232 | | −3700.0 | $\varepsilon = 0.404$, $c = 1.18$ m/km | 2 |
 
-Two results in that table matter beyond the ranking. **F4's climb-fraction damping is not supported**: fitted freely, $c \to 0.03$, which sets its multiplier to unity and reproduces F2 exactly, and at the value used in earlier work ($c = 3$) the score degrades by a third. F4 and F3 are the same correction attempted from opposite ends — both undo the ascent inflation that elevation noise produces, F4 in aggregate and F3 point-wise — and only the point-wise one survives. The reason is that the per-ride inversion has already absorbed the *scale* part of that inflation into $\hat m$, so an aggregate multiplier double-corrects, whereas the deadband alters which segments clear the climb threshold and is therefore a *shape* correction the inversion cannot absorb. **And $\tau$ refits to 2 m**, the value used throughout the earlier literature and in §2.4, recovered here from the training half alone rather than assumed.
+Two results in that table matter beyond the ranking. **F3 and F4 are the same correction approached from opposite ends** — both undo the ascent inflation that elevation noise produces, F3 point-wise by filtering the profile, F4 in aggregate by discounting the climb term — and both are supported here, with F4's scalar fitting to $c = 1.18$ m/km. That was not true under a weaker aero estimator, where $c$ collapsed to 0.03 and F4 degenerated to F2 (lab journal, Entry 55); the climb-fraction term earns its place only once the drag area is measured rather than assumed, because otherwise the aero error it would correct has already been absorbed elsewhere. **And $\tau$ refits to 6 m** from the training half alone. Neither constant is delicate: [§3.2](#3.2) shows both are the least consequential parameters in the model.
 
 #### 3.1.3 Held-out error
 
@@ -427,21 +431,23 @@ Two results in that table matter beyond the ranking. **F4's climb-fraction dampi
 
 | model | error | bias |
 |---|--:|--:|
-| **F3** (selected) | **3.98** <!--@c-e52.f3.med--> [3.51, 4.54] | −1.06 <!--@c-e52.f3.bias--> [−1.56, −0.37] |
-| F4 | 4.20 [3.52, 4.74] | −0.58 [−1.19, 0.05] |
-| F2 | 4.23 [3.55, 4.72] | −0.57 [−1.19, 0.06] |
-| F1 | 4.79 [4.03, 5.46] | 0.12 [−0.72, 1.33] |
-| $F_\mathrm{base}$ (comparator) | 5.71 <!--@c-e52.fbase.med--> [5.13, 6.42] | −3.85 [−4.47, −3.02] |
+| **F3** (profile form, selected) | **3.39** <!--@c-e52.f3.med--> [3.03, 3.69] | **+0.06** <!--@c-e52.f3.bias--> [−0.27, 0.92] |
+| **F4** (totals only) | **2.85** <!--@c-e52.f4.med--> [2.40, 3.50] | −0.24 [−0.78, 0.47] |
+| F2 | 3.21 [2.64, 3.86] | +0.23 [−0.24, 1.02] |
+| F1 | 4.23 [3.72, 4.87] | +1.48 [0.71, 2.25] |
+| $F_\mathrm{base}$ (comparator) | 3.05 <!--@c-e52.fbase.med--> [2.71, 3.44] | −0.03 [−0.44, 0.55] |
 
-The selected form reaches **3.98% median absolute error** on rides used neither to fit $\varepsilon$ nor to choose the form, with a bias of −1.06%. The descent constant refits to $\varepsilon = 0.288$ <!--@c-e52.eps--> on the training half against 0.255 on the test half's own optimum, so the constant is identified rather than an artefact of which rides were drawn.
+**Two forms are reported because two are useful.** F3 takes the elevation profile and filters it; F4 needs only route totals and is the form the recipe in [§4.1.2](#4.1.2) is built on. On rides used neither to fit $\varepsilon$ nor to choose the form, F3 reaches **3.39% median absolute error** with a bias of **+0.06%**, and F4 **2.85%** with −0.24%. Their intervals overlap and both biases contain zero, so the choice between them is one of available inputs rather than accuracy: if you have the profile, filter it; if you have only distance and ascent, the totals form costs nothing measurable. Cross-validation selects F3 and that selection is binding here, but F4's better showing on the held-out half is reported rather than suppressed — with $n = 305$ the difference is inside the noise the split was sized to resolve. The descent constant refits to $\varepsilon = 0.294$ <!--@c-e52.eps--> on the training half against 0.255 on the test half's own optimum, so it is identified rather than an artefact of which rides were drawn.
 
-$F_\mathrm{base}$ is the least accurate entry, and the gap is **not** evidence that the closed form is better physics. Its bias is concentrated in the three São Paulo corpora (−3.7 to −5.0%) and largely absent from the European rider set (−0.3 to +2.1%), and on a European-weighted subsample it is unbiased at +0.04% with simulated duration at 0.994 of actual. The mechanism is the parameter protocol rather than the dynamics: the inversion fits the constants on *sustained* climb and flat segments, and the simulation then applies them across the accelerations and stops those segments exclude — which is far more of a São Paulo ride than a European one. The defensible reading is therefore an equivalence: a single stateless pass reproduces a state-coupled simulation that has strictly more information, since $F_\mathrm{base}$ also uses the full profile with velocity propagating between segments and the same three per-ride constants.
+**The simulation and the closed form are indistinguishable.** $F_\mathrm{base}$ reads 3.05% with a bias of −0.03%, and against the selected form the paired sign test gives 149 of 305, $p = 0.73$ — a coin flip. This is the paper's central claim and it is a claim of *parity*, not of superiority: a single stateless pass reproduces a state-coupled simulation that has strictly more information, since $F_\mathrm{base}$ walks the same profile with velocity propagating between segments and reads the same per-ride constants. What the closed form discards was not paying for itself.
+
+That parity is visible only under a consistent parameter protocol. Under a segment-based aero estimator the simulation carried a −3.85% bias concentrated in the São Paulo corpora, and the closed form appeared to *beat* it, 190 of 305 at $p < 10^{-4}$. Replacing the estimator with eq. (4) — changing nothing about the simulation itself, only the speed at which its drag area was inferred — moved that bias to −0.03% and the contest to a tie (lab journal, Entry 55). The apparent win was an artefact of feeding the comparator constants measured at one speed and used at another.
 
 #### 3.1.4 What the split does and does not establish
 
 The per-ride inversion runs before the split, as data preparation. The held-out half therefore establishes that **the functional form and a universal $\varepsilon$ transfer** to rides used to choose neither — a statement about model structure. It does not establish prediction from geometry alone, which would require constants a planner can obtain without the ride, and is outside this paper's scope (§4.3).
 
-One exposure is inherent to a random split and is reported rather than assumed away: **82% of held-out rides** <!--@c-e52.twin--> have a same-rider training ride within 5% on distance and 10% on ascent. A random draw was preferred to a chronological one because splitting on time confounds model error with drift in fitness, equipment and season; the cost is that 3.98% should be read as a repeat-route error, and a genuinely novel route can be expected to be harder.
+One exposure is inherent to a random split and is reported rather than assumed away: **82% of held-out rides** <!--@c-e52.twin--> have a same-rider training ride within 5% on distance and 10% on ascent. A random draw was preferred to a chronological one because splitting on time confounds model error with drift in fitness, equipment and season; the cost is that these figures should be read as repeat-route errors, and a genuinely novel route can be expected to be harder.
 
 ### 3.2 What the error is made of
 
@@ -458,9 +464,27 @@ One exposure is inherent to a random split and is reported rather than assumed a
 
 Route-level energy therefore identifies the flat resistance, not its division into rolling and aerodynamic shares. Two consequences for use follow. A reader who improves one of the two while leaving the other at its prior moves along a ridge rather than toward the truth, and can end up worse — the same shape of trap as improving one constant while another absorbs the error. And the apparent imprecision of the per-ride inversion in $C_{rr}$ ([§2.2](#2.2)) is not a defect of the method but a consequence of the quantity not being separately identifiable from route-level energy.
 
-**What this licenses about $\varepsilon$.** The descent term is unambiguously real — setting $\varepsilon = 0$ over-predicts every corpus — but its *value* is a seventh of the error budget. This paper therefore treats $\varepsilon$ as a calibrated constant and leaves the question of its functional form, which has a mechanistic answer, to [§4.4.2](#4.4.2).
+**How precisely must the published constants be stated?** The decomposition above prices what a *user* supplies. [Table 4](#tab4) prices, on a single common scale, everything the model reads — including the two constants this paper publishes and a user simply inherits, the deadband $\tau$ and F4's scalar $c$.
 
-<a id="3.1"></a>
+<a id="tab4"></a>
+
+**Table 4.** Cost of getting each constant wrong: the percentage increase in cross-validation loss when it is moved $\pm 10\%$ off its fitted value, worse side reported, on the training half under the physics of [§2.2](#2.2). Loss inflation rather than a derivative, because each parameter sits at a minimum where the derivative vanishes by construction. The last column gives the penalty at a *grossly* wrong value, which is the number that matters for the two the method supplies. Lineage: $O$ = `e56_struct.csv`.
+
+| constant | supplied by | fitted | cost at ±10% | cost if badly wrong |
+|---|---|--:|--:|---|
+| $C_dA$ | the ride | per ride | **46.3%** | — |
+| $C_{rr}$ | prior / the ride | 0.008 | 18.9% | — |
+| $m$ | the ride | per ride | 12.2% | — |
+| $\varepsilon$ (F4) | **this paper** | 0.404 | 4.7% | 8.7% at $\varepsilon = 0$ |
+| $\varepsilon$ (F3) | **this paper** | 0.294 | 2.9% | — |
+| $\tau$ | **this paper** | 6 m | **0.2%** | **77.3%** at $\tau = 0$ |
+| $c$ | **this paper** | 1.18 m/km | **0.1%** | **21.7%** at $c = 3$ |
+
+**The method's own constants are the cheapest to get slightly wrong and among the dearest to omit.** At $\pm 10\%$ the deadband and the scalar cost 0.2% and 0.1% — roughly twenty times less than $\varepsilon$ and two hundred times less than drag area. But the flatness is local, not global: dropping the deadband entirely costs 77.3%, and using $c = 3$ m/km, a value earlier work adopted from a barometric noise rate, costs 21.7%. Both halves have to travel together, because the first alone would read as licence to skip the filter.
+
+This is also why $\tau$ can be quoted as a round 6 m without apology. Anywhere in 4–8 m costs under 2.5%, so the exact value is immaterial while its presence is not — and it explains why the fitted optimum moved from 2 m to 6 m when the drag estimator changed (lab journal, Entry 55) without that shift mattering: it travelled through a basin where the loss barely varies.
+
+**What this licenses about $\varepsilon$.** The descent term is unambiguously real — setting $\varepsilon = 0$ over-predicts every corpus — but its *value* is a seventh of the error budget. This paper therefore treats $\varepsilon$ as a calibrated constant and leaves the question of its functional form, which has a mechanistic answer, to [§4.4.2](#4.4.2).
 
 ## 4. Discussion
 
@@ -489,7 +513,7 @@ For a rider of total system mass $m$ (rider + bike + gear, kg) and flat cruising
 >    **With a known wind**, replace $v_f$ by $v_f + w$ inside $\alpha_a$ only ($w > 0$ head, $w < 0$ tail) — the aero term already carries the relative-air speed, so no other term changes. The cost is quadratic and asymmetric: at $v_f$ = 20 km/h a 10 km/h headwind more than doubles $\alpha_a$ while the matching tailwind removes about three quarters of it, so an out-and-back in wind costs more than the still-air round trip. Use the component along your heading; on a route that turns, apply it per leg. All frozen results in this paper set $w = 0$, so this is a recipe affordance rather than a validated correction — [§4.3.3](#4.3.3) states what that omission costs.
 > 2. **If you know your flat power $P$ instead of your cruising speed** (the power you hold on a flat stretch — not the whole-ride average, which mixes climbs and coasting zeros): $v_f$ is the speed at which flat power balances, $P = (\alpha_r + \alpha_a(v_f))\,v_f$ — the same anchor the study uses to match the two models ([§2.1](#2.1)). Guess-and-check converges in two or three tries because $P$ grows steeply with speed; see the worked example. As anchors, at the step-1 defaults with a 75 kg system: 50 W → 16.6 km/h, 100 W → 23.2 km/h, 150 W → 27.6 km/h, 200 W → 31.1 km/h (a few kg of mass barely moves these — drag dominates the flat balance).
 > 3. **Correct the elevation totals**: subtract 3 m per km of route from both $h_+$ and $h_-$ — a rate measured on barometric ride recordings; DEM/map-derived profiles need their own, larger rate ([§2.5](#2.5)), and skip this step if your source already smooths.
->    *What the deployed router uses today:* Simujaules evaluates a grade-local $\varepsilon$ per edge with the **frozen $\varepsilon_0 = 0.13$**, not eq. (8). That is deliberate rather than lagging: a pre-registered selection on the calibration corpora, by BIC under a Laplace likelihood and under two parameter classes, returned $\varepsilon_0$ in both arms, while eq. (8) wins only on the evaluation corpora — 48 calibration rides cannot resolve what 990 evaluation rides can, and only the calibration side is licensed to choose what ships (lab journal, Entry 47).
+>    *What the deployed router uses today:* Simujaules evaluates a grade-local $\varepsilon$ per edge with the **frozen $\varepsilon_0 = 0.13$**, not the grade-inverse deficit form. That is deliberate rather than lagging: a pre-registered selection on the calibration corpora, by BIC under a Laplace likelihood and under two parameter classes, returned $\varepsilon_0$ in both arms, while the grade-inverse form wins only on the evaluation corpora — 48 calibration rides cannot resolve what 990 evaluation rides can, and only the calibration side is licensed to choose what ships (lab journal, Entry 47).
 > 4. **Choose $\varepsilon$**: use the flat constant. It is one number for the whole route, it is what the error budget justifies ([§3.2](#3.2)), and it makes the per-edge cost additive without qualification. A geometry-derived alternative exists and is reported in the tables as $\varepsilon_d$; it wins on real descents under assumed physics and loses under fitted physics or gentle terrain, which is why it is discussed as future work ([§4.4.2](#4.4.2)) rather than recommended here.
 > 5. **Sum**: $E = \alpha_r x + \alpha_a x_{\mathrm{flat}} + \beta h_+ - \varepsilon\,\beta h_-$. The climbing-distance share is the recipe's fourth route input: read it from the profile if you have one, or use $\boldsymbol{x_{\mathrm{flat}} \approx 0.8\,x}$ as a rolling-terrain default (the calibration corpus's median ride climbs for 21% of its distance).
 >
@@ -506,7 +530,7 @@ For a rider of total system mass $m$ (rider + bike + gear, kg) and flat cruising
 > 5. Rolling: $6.0 \times 25{,}000 = 150$ kJ. Aero ($x_{\mathrm{flat}} = 0.8 \times 25 = 20$ km): $4.9 \times 20{,}000 = 98$ kJ. Climb: $0.749 \times 125 = 94$ kJ. Descent refund: $0.20 \times 0.749 \times 125 = 19$ kJ.
 > 6. **Total: $150 + 98 + 94 - 19 \approx 320$ kJ — roughly 320 kcal of food.**
 >
-> (Same route in open mountains: the software estimator, eq. (5), typically reads $\varepsilon_d \approx 0.3$–0.5 there and grows the refund accordingly; the hand estimate with $\varepsilon_f = 0.20$ stands as a conservative floor on the refund.)
+> (Same route in open mountains: the software estimator, eq. (6), typically reads $\varepsilon_d \approx 0.3$–0.5 there and grows the refund accordingly; the hand estimate with $\varepsilon_f = 0.20$ stands as a conservative floor on the refund.)
 
 #### 4.1.3 What the descent term means
 
@@ -575,13 +599,13 @@ This paper treats $\varepsilon$ as a calibrated constant because that is what it
 
 **The geometry.** Setting the leg term of the per-segment balance to zero — a rider who freewheels — gives a *coasting limit*, the largest fraction of a descent's potential energy that can be recovered:
 
-$$\varepsilon_{\mathrm{coast}}(s) \;=\; \min\!\left(1,\ \frac{\alpha/\beta}{s}\right) \tag{4}$$
+$$\varepsilon_{\mathrm{coast}}(s) \;=\; \min\!\left(1,\ \frac{\alpha/\beta}{s}\right) \tag{5}$$
 
 It is parameter-free given $\alpha$ and $\beta$, and it breaks at the flat-resistance grade $s_* = \alpha/\beta$: below it a descent cannot even pay its own rolling and drag, above it the surplus is recovered in proportion to $s_*/s$. Drop-weighting it over a route's descent cells gives a route-level ceiling from geometry alone.
 
 **The behaviour.** Measured recovery sits below that ceiling by a *coasting deficit* $\delta$, and the deficit has an exact reading: from the same balance,
 
-$$\delta \;=\; \frac{E_{\mathrm{legs},-}}{\beta\,h_-} \tag{5}$$
+$$\delta \;=\; \frac{E_{\mathrm{legs},-}}{\beta\,h_-} \tag{6}$$
 
 the descent pedalling energy over the scaled drop. So the deficit is not a fudge but a measurement of how much riders pedal downhill — and because $E_{\mathrm{legs},-}$ is a *product* of how often and how hard, the choice of functional form for $\delta$ is a claim about pedalling **occupancy** rather than effort. Braking cannot explain it: brakes dissipate gravity's share of the ledger, never the legs', so no amount of braking pushes $\varepsilon$ below the coasting floor.
 
@@ -609,7 +633,7 @@ Closing the gap between accounting consistency and true route forecasting requir
 
 ## 5. Conclusions
 
-Across seven riders and the 2,039 evaluated rides of D3–D6, a closed form with a handful of physical constants and two calibrated numbers accounts for the measured mechanical energy of real routes as well as a forward simulation does. On the held-out half — 305 rides used neither to fit the descent constant nor to select the form — it reads **3.98% [3.51, 4.54] median error** with a bias of −1.06% [−1.56, −0.37], against the simulation's 5.71% [5.13, 6.42] on the same rides. The comparison favours the closed form, but the defensible claim is the weaker and more interesting one: a single stateless pass matches a state-coupled simulation that walks the same profile with velocity carried between segments and reads the same per-ride constants, so the structure the closed form discards was not paying for itself. Cross-validation and AIC agree on the form; the descent constant is identified across halves (0.288 against 0.255) and the deadband recovers its 2 m from the training data. What the evaluation establishes is that the functional form and one universal constant transfer to rides that chose neither — a statement about model structure, not about predicting a route nobody has ridden, which needs constants a planner can obtain without the ride and is left to the sequel.
+Across seven riders and the 2,039 evaluated rides of D3–D6, a closed form with a handful of physical constants and two calibrated numbers accounts for the measured mechanical energy of real routes as well as a forward simulation does. On the held-out half — 305 rides used neither to fit the descent constant nor to select the form — it reads **3.39% [3.03, 3.69] median error** with a bias of **+0.06%**, and its totals-only variant 2.85%, against the simulation's 3.05% at −0.03%. A paired test separates none of them: 149 of 305, $p = 0.73$. The claim is therefore parity rather than advantage, which is the more interesting result — a single stateless pass matches a state-coupled simulation that walks the same profile with velocity carried between segments and reads the same per-ride constants, so the structure the closed form discards was not paying for itself. Cross-validation and AIC agree on the form; the descent constant is identified across halves (0.294 against 0.255), transfers between riders at a cost of 0.5 pp, and the deadband is recovered from the training data rather than assumed. What the evaluation establishes is that the functional form and one universal constant transfer to rides that chose neither — a statement about model structure, not about predicting a route nobody has ridden, which needs constants a planner can obtain without the ride and is left to the sequel.
 
 Its two historical failure modes are identified and cheap to fix: gate the aero term off climbs, and subtract ≈ 3 m of phantom ascent per kilometre. Descent recovery, the term the literature leaves unspecified, decomposes into a parameter-free geometry — the recovery ceiling $\min(1,(\alpha/\beta)/s)$ — and a single behavioural constant, the descent-recovery constant: $\varepsilon_0 = 0.13$ at the literature priors and the 30 m sampling scale, 0.12–0.19 across plausible physics. The deficit's *recurrence* across riders, positive throughout the plausible region of the sensitivity sweep, is the study's most portable empirical fact; its *value* is conditional, and travels only with its priors and scale. The law runs per-edge in a router at the sampling scale it was calibrated on, and runs on paper for everyone else. What it does not yet do is predict a ride before it is ridden — that requires a power model and a pre-registered blind test, and is the natural next step.
 
