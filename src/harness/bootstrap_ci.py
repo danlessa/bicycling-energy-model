@@ -25,6 +25,7 @@ from __future__ import annotations
 from typing import Callable
 
 import math
+import csv
 import os
 import sys
 
@@ -1602,6 +1603,54 @@ for (f, prm), ev in _exp50.items():
 _ok = all(_g[("F3", "eps")] < _g[("F3", q)] for q in ("m", "CdA", "Crr"))
 print("  eps ranks below m, CdA and Crr on F3"
       + (" GATE-OK" if _ok else " GATE-FAIL"))
+if not _ok:
+    failed = True
+
+
+# ---------------------------------------------------------- 3q. Entry 52
+# The A-chain's published numbers. Re-derived from e52_summary.csv, which
+# e52_split.py writes at the end of the run -- so an article claim traces to a
+# file rather than to a console log. The medians are recomputed from the
+# per-ride cache too, so the summary cannot drift from the data it summarises.
+sec("3q")
+print("\n== Entry 52 — the A-chain (D3-D6, P_f,r) ==")
+_e52 = {}
+try:
+    with open(os.path.join(RESULTS, "e52_summary.csv"), encoding="utf-8") as fh:
+        for _r in csv.DictReader(fh):
+            _e52[_r["key"]] = _r["value"]
+except OSError:
+    print("  e52_summary.csv MISSING — run src/harness/e52_split.py  GATE-FAIL")
+    failed = True
+
+for _k, _want, _lbl in (("f3_test_med_abs", 3.98, "F3 test med|D%|"),
+                        ("f3_test_med_signed", -1.06, "F3 test signed"),
+                        ("fbase_test_med_abs", 5.71, "F_base test med|D%|"),
+                        ("fbase_test_med_signed", -3.85, "F_base test signed"),
+                        ("eps", 0.288, "selected eps"),
+                        ("twin_pct", 82.0, "twin exposure %")):
+    try:
+        _v = float(_e52.get(_k, "nan"))
+    except ValueError:
+        _v = float("nan")
+    _tol = 0.005 if _k == "eps" else 0.5
+    _ok = is_finite(_v) and abs(_v - _want) <= _tol
+    print(f"  {_lbl:<24} {to_fixed(_v, 4):>9}  (expect {_want})"
+          + (" GATE-OK" if _ok else " GATE-FAIL"))
+    if not _ok:
+        failed = True
+
+# the selection itself is a claim: F3 must win, and tau must land on 2 m
+_ok = _e52.get("winner") == "F3"
+print("  winner is F3" + (" GATE-OK" if _ok else f" GATE-FAIL({_e52.get('winner')})"))
+if not _ok:
+    failed = True
+_ok = abs(float(_e52.get("tau", "nan") or "nan") - 2.0) < 1e-9
+print("  tau refits to 2 m" + (" GATE-OK" if _ok else " GATE-FAIL"))
+if not _ok:
+    failed = True
+_ok = int(_e52.get("n_test", 0)) == 305 and int(_e52.get("n_train", 0)) == 1734
+print("  split is 1,734 / 305" + (" GATE-OK" if _ok else " GATE-FAIL"))
 if not _ok:
     failed = True
 

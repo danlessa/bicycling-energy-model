@@ -446,47 +446,54 @@ Route-level energy therefore identifies the flat resistance, not its division in
 
 <a id="3.3"></a>
 
-### 3.3 Transfer: what survives being frozen and carried to other riders
+### 3.3 Form selection and held-out error under a single protocol
 
-#### 3.3.1 The frozen grid
+#### 3.3.1 The chain
 
-With every behavioural constant frozen ($\varepsilon_0$ and $c$ from D1, $\varepsilon_f$ from D2), the energy law reproduces two independent riders' full histories to 3.5–5.8% median error with the regime-appropriate $\varepsilon$ — F3 with $\varepsilon_d$ on the open-road rider (5.8), with $\varepsilon_f$ on the gentle-terrain rider (3.5) ([Table 3](#tab3)).
+All 2,039 rides of D3–D6 carry per-ride inverted constants (§2.3.3). Fifteen per cent of each corpus was held out at random under a fixed seed, giving $n_\mathrm{test} = 305$ against $n_\mathrm{train} = 1{,}734$; the held-out half was scored once, at the end. Forms F1–F4 were fitted and compared by repeated stratified $5$-fold cross-validation ($4$ repeats, folds stratified by rider), with **every** free parameter refitted inside each fold — $\varepsilon$ for all four, the deadband $\tau$ for F3, and the climb-fraction constant $c$ for F4. Fitting minimises the mean absolute log ratio $\overline{\lvert\log(\hat E/E)\rvert}$, which is symmetric in over- and under-prediction and scale-free; reported errors remain median $\lvert\Delta\%\rvert$ throughout, so every number stays comparable with the rest of the paper.
+
+The simulation $F_\mathrm{base}$ is carried through as a **comparator, not a contestant**: it has no globally fitted parameter and takes no part in selection.
+
+#### 3.3.2 Selection
+
+F3 wins, and the two criteria agree ([Table 3](#tab3)). It is the only form inside one standard error of the best cross-validated score, so the parsimony rule never arbitrates; AIC, computed independently under the Laplace likelihood matching the $L^1$ fitting loss, selects the same form.
 
 <a id="tab3"></a>
 
-**Table 3.** Frozen-constant results on every non-calibration corpus: the urban regime test (D2), the two independent riders (D3–D4, transfer), the author's full history (D5, in-sample machinery validation at scale), the four European riders (D6, external transfer), and the D3–D5 pool. All four form × ε combinations are frozen; best out-of-sample law per corpus in bold (starred in-sample cells excluded). The flat constant is ε_f = 0.20. Starred cells are in-sample: ε_f was selected on D2. D2 is excluded from the pool because 58 of its 62 rides are already in D5. † marks D5, the calibration rider's own history. Subcolumns: *error* = median $\lvert\Delta\%\rvert$, *bias* = median signed $\Delta\%$. Brackets are 95% CIs throughout; the pooled and D6 columns' are stratified bootstrap (rides resampled within each corpus — for D6, within each of its four riders — then pooled). **D6 is deliberately kept out of the D3–D5 pool**, which remains this paper's headline; a separate **D3–D6 pool** is reported beside it. Adding D6 *lowers* the pooled error — but only because D6 is the best-performing corpus, so that improvement measures the corpus mix, not the law. The two pools sit side by side so this is visible rather than absorbed. Pooled strata are the seven riders (D3, D4, D5, and D6's four individually), since for D3–D5 one corpus is one rider; F4 cells in the D3–D6 pool mix recording chains and inherit the non-transferable $c$ ([§2.4](#2.4)). D6's own F3·ε_d and simulation cells differ by 0.01 before rounding (3.16 vs 3.15). Signed medians print with ties-away rounding; the D5 simulation's exact signed median is +0.05. Lineage: $O = T^{\varepsilon}(D_2, P_{a,g})\,|\,\sigma$ and $T^{\varepsilon}(D_i, P_{a,g} \cdot P_{f,p}(m))\,|\,\sigma$ for $i \in \{3,4,5,6\}$, over $F_1$–$F_4$ and $F_{\mathrm{base}}$; $\sigma$ = parse + power + the per-corpus filters of [§2.3](#2.3). Column $n$ is $|O|$, not $|D|$ ([Table 1](#tab1)).
+**Table 3.** Form selection on $D_\mathrm{train}$ ($n = 1{,}734$, D3–D6, per-ride inverted constants). *CV* is the mean absolute log ratio under repeated stratified $5$-fold cross-validation, $\pm$ its standard error over the 20 fold scores; every parameter is refitted within each fold. *1-SE* marks forms within one standard error of the best. $k$ counts globally fitted parameters. Lineage: $I = (D_3..D_6,\ P_{f,r})$, $T \in \{F_1..F_4\}$, $O$ = `e52_split.csv`.
 
-<table>
-<thead>
-<tr><th rowspan="2">frozen model</th><th colspan="2">D2 · censo · 62</th><th colspan="2">D3 · P. Paz · 441</th><th colspan="2">D4 · JAAM · 219</th><th colspan="2">D5 · author · 621†</th><th colspan="2">D6 · Europe · 740</th><th colspan="2">D3–D5 · pooled · 1,281</th><th colspan="2">D3–D6 · pooled · 2,021</th></tr>
-<tr><th>error</th><th>bias</th><th>error</th><th>bias</th><th>error</th><th>bias</th><th>error</th><th>bias</th><th>error</th><th>bias</th><th>error</th><th>bias</th><th>error</th><th>bias</th></tr>
-</thead>
-<tbody>
-<tr><td>F3 · ε<sub>d</sub> (frozen ε<sub>0</sub>)</td><td>7.7 [6.0,9.3]</td><td>−5.1 [−7.6,−2.2]</td><td>5.8 [5.3,6.4]</td><td>+4.3 [+3.1,+4.9]</td><td>5.5 [4.4,6.4]</td><td>−4.7 [−5.7,−3.7]</td><td><strong>6.2</strong> [5.6,6.9]</td><td>−0.3 [−1.6,+0.6]</td><td><strong>3.2</strong> [2.9,3.5]</td><td>+2.0 [+1.6,+2.3]</td><td><strong>5.9</strong> [5.5,6.2]</td><td>+0.4 [−0.1,+1.1]</td><td>4.9 [4.7,5.1]</td><td>+1.3 [+0.9,+1.6]</td></tr>
-<tr><td>F4 · ε<sub>d</sub> (frozen ε<sub>0</sub>)</td><td><strong>6.4</strong> [4.8,8.6]</td><td>−3.4 [−4.9,−0.3]</td><td><strong>4.9</strong> [4.4,5.8]</td><td>+0.6 [−0.1,+1.3]</td><td>9.0 [7.9,9.7]</td><td>−8.4 [−9.5,−7.5]</td><td>7.1 [6.4,8.1]</td><td>−1.9 [−3.0,−1.4]</td><td>4.0 [3.8,4.4]</td><td>−2.2 [−2.6,−1.9]</td><td>6.6 [6.3,7.1]</td><td>−2.4 [−3.0,−1.9]</td><td>5.3 [5.0,5.6]</td><td>−2.3 [−2.7,−2.0]</td></tr>
-<tr><td>F3 · ε<sub>f</sub></td><td>4.7* [3.3,6.2]</td><td>−0.9 [−3.3,+1.1]</td><td>10.1 [9.3,10.7]</td><td>+10.0 [+8.8,+10.7]</td><td><strong>3.5</strong> [3.1,4.2]</td><td>+0.4 [−0.8,+1.2]</td><td>8.1 [7.3,8.7]</td><td>+5.6 [+4.1,+6.6]</td><td>8.5 [8.0,8.8]</td><td>+8.4 [+8.0,+8.7]</td><td>7.5 [7.0,8.0]</td><td>+5.9 [+5.2,+6.5]</td><td>8.0 [7.6,8.3]</td><td>+7.3 [+6.9,+7.6]</td></tr>
-<tr><td>F4 · ε<sub>f</sub></td><td>3.9* [3.2,6.1]</td><td>+1.0 [−1.6,+3.5]</td><td>6.8 [6.0,7.6]</td><td>+5.4 [+4.1,+6.6]</td><td>5.6 [4.8,6.4]</td><td>−4.3 [−5.0,−3.3]</td><td>6.9 [6.2,7.5]</td><td>+3.8 [+2.8,+5.0]</td><td>3.6 [3.2,3.9]</td><td>+2.6 [+2.3,+3.0]</td><td>6.6 [6.1,7.0]</td><td>+2.8 [+2.2,+3.5]</td><td>5.3 [5.1,5.6]</td><td>+2.7 [+2.4,+3.1]</td></tr>
-<tr><td>simulation</td><td>6.6 [4.7,8.7]</td><td>−3.5 [−6.4,−1.8]</td><td>6.8 [6.2,7.8]</td><td>+5.0 [+3.8,+5.9]</td><td>5.4 [4.9,6.1]</td><td>−5.0 [−5.8,−4.3]</td><td>6.1 [5.5,6.7]</td><td>+0.1 [−0.9,+0.9]</td><td>3.2 [2.9,3.3]</td><td>+2.0 [+1.7,+2.4]</td><td>6.2 [5.9,6.6]</td><td>+0.7 [+0.1,+1.3]</td><td>4.8 [4.6,5.1]</td><td>+1.4 [+1.1,+1.7]</td></tr>
-</tbody>
-</table>
+| form | CV | 1-SE | AIC | fitted | $k$ |
+|---|--:|:--:|--:|--:|--:|
+| F1 | 0.08394 ± 0.00174 | | −2718.9 | $\varepsilon = 0.596$ | 1 |
+| F2 | 0.07669 ± 0.00180 | | −3032.0 | $\varepsilon = 0.394$ | 1 |
+| **F3** | **0.07323 ± 0.00184** | ✓ | **−3192.8** | $\varepsilon = 0.288$, $\tau = 2$ m | 2 |
+| F4 | 0.07771 ± 0.00196 | | −3030.9 | $\varepsilon = 0.392$, $c = 0.03$ | 2 |
 
-<a id="fig8"></a>
+Two results in that table matter beyond the ranking. **F4's climb-fraction damping is not supported**: fitted freely, $c \to 0.03$, which sets its multiplier to unity and reproduces F2 exactly, and at the value used in earlier work ($c = 3$) the score degrades by a third. F4 and F3 are the same correction attempted from opposite ends — both undo the ascent inflation that elevation noise produces, F4 in aggregate and F3 point-wise — and only the point-wise one survives. The reason is that the per-ride inversion has already absorbed the *scale* part of that inflation into $\hat m$, so an aggregate multiplier double-corrects, whereas the deadband alters which segments clear the climb threshold and is therefore a *shape* correction the inversion cannot absorb. **And $\tau$ refits to 2 m**, the value used throughout the earlier literature and in §2.4, recovered here from the training half alone rather than assumed.
 
-![**Figure 8.** Table 3 as a slopegraph: median $\lvert\Delta\%\rvert$ per corpus for F3 under each $\varepsilon$ rule, with the simulation for reference (whiskers: 95% CIs; faint: F4; D2's $\varepsilon_f$ point is in-sample). The regime rule is the picture: the flat constant zigzags — best exactly where terrain is gentle or urban, worst on the open-road corpora — while the dynamic estimator stays level beside the simulation everywhere.](figs/fig8-regime-slopes.svg)
+#### 3.3.3 Held-out error
 
-The grid — and [Figure 8](#fig8), its one-glance version — matches the regime rule from [§3.2](#3.2): the dynamic estimator wins on the open-road rider (D3), the flat constant on the gentle-terrain rider (D4) — and adds a sharper observation: the form × $\varepsilon$ interaction is itself regime-dependent. F4 with $\varepsilon_d$ is the *best* cell on P. Paz (4.9, that corpus's best cell) and the *worst* on JAAM (9.0), where the scalar elevation correction and the dynamic estimator compound on gentle terrain. With the regime-appropriate $\varepsilon$, the law stays at or better than simulation parity on both riders.
+<a id="tab4"></a>
 
-Across the frozen transfer and scale corpora (D3–D5, [Table 3](#tab3)) the law holds at **3.5–6.2% median error** when the [§3.2](#3.2) regime rule picks the $\varepsilon$ variant; the frozen urban test sits at 6.4–7.7% (its flat constant being in-sample there), and the calibration corpus itself at 3.5% informed to 8.2% blind ([Table 2](#tab2)).
+**Table 4.** $D_\mathrm{test}$ ($n = 305$), scored once. *error* = median $\lvert\Delta\%\rvert$, *bias* = median signed $\Delta\%$; brackets are 95% stratified bootstrap CIs, rides resampled within rider. $F_\mathrm{base}$ is a comparator and did not take part in selection.
 
- Pooled over the transfer riders alone (D3+D4, $n = 660$; stratified bootstrap, rides resampled within each corpus), F3 with $\varepsilon_d$ reads **5.6%<!--@c-pool34.f3d.med--> [5.2, 6.2]** against the simulation's 6.3%<!--@c-pool34.sim.med--> [5.8, 6.8] (signed: +1.1 [+0.4, +1.7] vs +1.3 [+0.6, +2.0]) — the genuinely out-of-sample number.
+| model | error | bias |
+|---|--:|--:|
+| **F3** (selected) | **3.98** <!--@c-e52.f3.med--> [3.51, 4.54] | −1.06 <!--@c-e52.f3.bias--> [−1.56, −0.37] |
+| F4 | 4.20 [3.52, 4.74] | −0.58 [−1.19, 0.05] |
+| F2 | 4.23 [3.55, 4.72] | −0.57 [−1.19, 0.06] |
+| F1 | 4.79 [4.03, 5.46] | 0.12 [−0.72, 1.33] |
+| $F_\mathrm{base}$ (comparator) | 5.71 <!--@c-e52.fbase.med--> [5.13, 6.42] | −3.85 [−4.47, −3.02] |
 
- The two engines are **formally equivalent within $\pm 1.0$ pp** (TOST, 90% CI of the median difference [−0.90, −0.33]<!--@c-pool34.tost-->; Entry 48), and the interval lies wholly on the side favouring the closed form.
+The selected form reaches **3.98% median absolute error** on rides used neither to fit $\varepsilon$ nor to choose the form, with a bias of −1.06%. The descent constant refits to $\varepsilon = 0.288$ <!--@c-e52.eps--> on the training half against 0.255 on the test half's own optimum, so the constant is identified rather than an artefact of which rides were drawn.
 
- The D3–D5 pool is equivalent on the same margin ([−0.55, −0.07], $n = 1{,}281$). Adding D5 (the calibration rider's own history, in-sample for the machinery) gives the full-pool 5.9% [5.5, 6.2]<!--@c-pool35.f3d.med--> vs 6.2% [5.9, 6.6]. Per-ride allegiance splits across corpora — the law significantly closer on D3 (280/441, $p < 10^{-4}$), the simulation on D5 (351/621, $p = 0.0013$) — so the pooled tie is median parity, not per-ride equivalence.
+$F_\mathrm{base}$ is the least accurate entry, and the gap is **not** evidence that the closed form is better physics. Its bias is concentrated in the three São Paulo corpora (−3.7 to −5.0%) and largely absent from the European rider set (−0.3 to +2.1%), and on a European-weighted subsample it is unbiased at +0.04% with simulated duration at 0.994 of actual. The mechanism is the parameter protocol rather than the dynamics: the inversion fits the constants on *sustained* climb and flat segments, and the simulation then applies them across the accelerations and stops those segments exclude — which is far more of a São Paulo ride than a European one. The defensible reading is therefore an equivalence: a single stateless pass reproduces a state-coupled simulation that has strictly more information, since $F_\mathrm{base}$ also uses the full profile with velocity propagating between segments and the same three per-ride constants.
 
-**D6 is the test that shares nothing.** Its four riders have no country, terrain regime, recording device or model-selection history in common with the calibration corpus, and on its 740 rides F3 with $\varepsilon_d$ reads **3.2%** against the simulation's **3.2%** — 3.16 versus 3.15 before rounding, the closest parity anywhere in this study, with both biases near +2. Two of its columns are diagnostic rather than confirmatory. F3 with $\varepsilon_f$ collapses to 8.5%<!--@c-d6.f3f.collapse-->, as the [§3.2](#3.2) regime rule predicts for open-road riders on real descents. And F4 degrades to 4.0% with a $-2.2$ bias, because the scalar $c = 3$ m/km is calibrated for this study's recording chain and D6's is cleaner (1.2 m/km): the form is not failing, the *transferred constant* is, which is the sharpest available demonstration that $c$ is a property of the elevation source rather than of cycling ([§2.4](#2.4)).
+#### 3.3.4 What the split does and does not establish
 
-<a id="3.4"></a>
+The per-ride inversion runs before the split, as data preparation. The held-out half therefore establishes that **the functional form and a universal $\varepsilon$ transfer** to rides used to choose neither — a statement about model structure. It does not establish prediction from geometry alone, which would require constants a planner can obtain without the ride, and is outside this paper's scope (§4.3).
+
+One exposure is inherent to a random split and is reported rather than assumed away: **82% of held-out rides** <!--@c-e52.twin--> have a same-rider training ride within 5% on distance and 10% on ascent. A random draw was preferred to a chronological one because splitting on time confounds model error with drift in fitness, equipment and season; the cost is that 3.98% should be read as a repeat-route error, and a genuinely novel route can be expected to be harder.
 
 ### 3.4 Robustness
 

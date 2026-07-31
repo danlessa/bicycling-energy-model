@@ -416,7 +416,23 @@ def main() -> None:
                      f"{to_fixed(res[f]['med_abs'], 4)},"
                      f"{to_fixed(res[f]['med_signed'], 4)},"
                      f"{1 if f == w['form'] else 0}\n")
-    print(f"\nwrote {os.path.basename(out)}")
+    # summary row set: the numbers the gate battery re-derives and the article
+    # cites. Written here so a published claim traces to a file, not a console log.
+    summ = os.path.join(RESULTS, "e52_summary" + (".SMOKE" if SMOKE else "") + ".csv")
+    with open(summ, "w", encoding="utf-8") as fh:
+        fh.write("key,value\n")
+        fh.write(f"f3_test_med_abs,{to_fixed(res[w['form']]['med_abs'], 4)}\n")
+        fh.write(f"f3_test_med_signed,{to_fixed(res[w['form']]['med_signed'], 4)}\n")
+        fh.write(f"eps,{to_fixed(w['eps'], 4)}\n")
+        fh.write(f"tau,{w['tau']}\n")
+        fh.write(f"winner,{w['form']}\n")
+        fh.write(f"n_train,{len(train)}\n")
+        fh.write(f"n_test,{len(test)}\n")
+        if ce:
+            fh.write(f"fbase_test_med_abs,{to_fixed(med_of([abs(v) for v in ce]), 4)}\n")
+            fh.write(f"fbase_test_med_signed,{to_fixed(med_of(ce), 4)}\n")
+        fh.write(f"twin_pct,{to_fixed(100 * hit / ntest, 4)}\n")
+    print(f"\nwrote {os.path.basename(out)} and {os.path.basename(summ)}")
 
 
 if __name__ == "__main__":

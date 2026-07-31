@@ -143,26 +143,8 @@
   pc:gateSection "3n" ;
   cito:citesAsEvidence dg:o_e48 .
 
-<#c-pool34.sim.med> a schema:Claim ;
-  schema:text "Simulation median |D%| 6.3 on the same D3+D4 pool - the comparator for the headline" ;
-  dcterms:type "out-of-sample" ;
-  pc:value 6.3 ;
-  pc:gateSection "3c" ;
-  cito:citesAsEvidence dg:o_ppaz, dg:o_jaam .
 
-<#c-pool35.f3d.med> a schema:Claim ;
-  schema:text "Adding D5 gives 5.9; D5 is the calibration rider's own history, so this pool is not out-of-sample" ;
-  dcterms:type "in-sample" ;
-  pc:value 5.9 ;
-  pc:gateSection "3c" ;
-  cito:citesAsEvidence dg:o_ppaz, dg:o_jaam, dg:o_danlessa .
 
-<#c-d6.f3f.collapse> a schema:Claim ;
-  schema:text "The flat constant collapses on D6 where the dynamic estimator holds - the regime rule visible in one corpus" ;
-  dcterms:type "external" ;
-  pc:value 8.5 ;
-  pc:gateSection "3j" ;
-  cito:citesAsEvidence dg:o_skc .
 
 <#c-pool.regime.f3d> a schema:Claim ;
   schema:text "Under regime-consistent per-ride aero the pool reaches 3.9 - partially in-sample per ride by construction" ;
@@ -187,3 +169,57 @@
   cito:citesAsEvidence dg:o_e50 ;
   pc:preRegistered true ;
   rdfs:comment "The measurement that moved the deficit theory out of paper 1 and into section 4.4.2 as future work" .
+
+# ---------------------------------------------------------------------------
+# Entry 52 — the A-chain. One protocol (P_f,r), one random split of D3-D6,
+# forms selected by cross-validation on the training half and scored once on
+# the held-out 305. These replace the frozen-grid claims retired above, whose
+# prose went with section 3.3's rewrite: that section reported a protocol the
+# paper no longer runs, and Entry 50 showed why -- eps is ~7% of the error
+# variance, so a frozen-constant table measured how wrong the assumed constants
+# were rather than how good the law is.
+
+<#c-e52.f3.med> a schema:Claim ;
+  schema:text "F3 median |D%| 3.98 [3.51, 4.54] on the held-out half of D3-D6, n = 305" ;
+  dcterms:type "out-of-sample" ;
+  pc:value 3.98 ;
+  pc:gateSection "3q" ;
+  cito:citesAsEvidence dg:o_ppaz, dg:o_jaam, dg:o_danlessa, dg:o_skc ;
+  prov:wasDerivedFrom claims:assert12 ;
+  rdfs:comment "THE headline. Rides used neither to fit eps nor to choose the form. Held out in eps and form, NOT in the per-ride constants -- the inversion is data preparation and runs before the split" .
+
+<#c-e52.f3.bias> a schema:Claim ;
+  schema:text "F3 median signed D% -1.06 [-1.56, -0.37] on the held-out half of D3-D6" ;
+  dcterms:type "out-of-sample" ;
+  pc:value -1.06 ;
+  pc:gateSection "3q" ;
+  cito:citesAsEvidence dg:o_ppaz, dg:o_jaam, dg:o_danlessa, dg:o_skc ;
+  prov:wasDerivedFrom claims:assert12 ;
+  rdfs:comment "Paired with the accuracy figure per the house rule: accuracy alone hides bias cancellation" .
+
+<#c-e52.fbase.med> a schema:Claim ;
+  schema:text "F_base median |D%| 5.71 [5.13, 6.42] on the same held-out half, as a comparator outside selection" ;
+  dcterms:type "out-of-sample" ;
+  pc:value 5.71 ;
+  pc:gateSection "3q" ;
+  cito:citesAsEvidence dg:o_ppaz, dg:o_jaam, dg:o_danlessa, dg:o_skc ;
+  prov:wasDerivedFrom claims:assert12 ;
+  rdfs:comment "NOT a claim that the closed form is better physics. The gap is concentrated in the three Sao Paulo corpora and traces to the inversion fitting constants on sustained segments the simulation then leaves" .
+
+<#c-e52.eps> a schema:Claim ;
+  schema:text "the descent constant refits to eps = 0.288 on the training half, against 0.255 on the test half's own optimum" ;
+  dcterms:type "out-of-sample" ;
+  pc:value 0.288 ;
+  pc:gateSection "3q" ;
+  cito:citesAsEvidence dg:o_ppaz, dg:o_jaam, dg:o_danlessa, dg:o_skc ;
+  prov:wasDerivedFrom claims:assert12 ;
+  rdfs:comment "The two-way agreement is the identifiability check: the constant is a property of the data, not of which rides were drawn" .
+
+<#c-e52.twin> a schema:Claim ;
+  schema:text "82% of held-out rides have a same-rider training ride within 5% on distance and 10% on ascent" ;
+  dcterms:type "out-of-sample" ;
+  pc:value 82 ;
+  pc:gateSection "3q" ;
+  cito:citesAsEvidence dg:o_ppaz, dg:o_jaam, dg:o_danlessa, dg:o_skc ;
+  prov:wasDerivedFrom claims:assert12 ;
+  rdfs:comment "The exposure a random split carries, measured rather than assumed away. 3.98 is a repeat-route error" .
