@@ -115,10 +115,20 @@ def routes():
 
 
 def combos():
+    """The grid, subsampled only when explicitly asked.
+
+    E61_FULL now IMPLIES the whole grid: N_COMBO's default of 64 silently
+    sampled 64 of 729 on the first full-grid attempt, which finished in 23
+    minutes and looked like a completed run. A flag that quietly does an eighth
+    of what it says is worse than one that fails.
+    """
     grid = [(a, b, c, d, e, f) for a in CRR for b in CDA for c in MASS
             for d in PFLAT for e in KCLIMB for f in KDESC]
+    want = len(grid) if FULL else N_COMBO
+    if os.environ.get("E61_COMBOS"):
+        want = N_COMBO
     rnd = random.Random(SEED)
-    return grid if N_COMBO >= len(grid) else rnd.sample(grid, N_COMBO)
+    return grid if want >= len(grid) else rnd.sample(grid, want)
 
 
 def fit_eps2(comp) -> tuple:
