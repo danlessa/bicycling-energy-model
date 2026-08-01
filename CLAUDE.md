@@ -55,12 +55,37 @@ home of the *derivation* and the side-by-side comparison.
   classes. A **second-order** harness: it reads `e47_formselect.csv`'s per-ride
   E(ε=0)/E(ε=1) pair rather than re-parsing tracks, which is exact because
   `approximate` is linear in ε — so Entries 46 and 47 share a population by
-  construction), `e47_formselect.py` (Entry 47 — deficit-form selection by BIC under a Laplace
+  construction),
+  **the Entry 52–61 chain, now paper 1's spine**: `e52_build.py` (walks D3–D6
+  once and caches per-form energy components at every τ on a grid, so all
+  downstream fitting is exact arithmetic — `E52_AERO=seg|reg`,
+  `E52_FALLBACK=prior|rider`, defaults `reg`/`rider`; ~12 min, the only expensive
+  step) → `e52_split.py` (A.1–A.8: random 15% hold-out, repeated stratified
+  k-fold with **every** parameter refitted in-fold, CV binding with AIC reported,
+  one test scoring; `e52_summary.csv` is what the gates read) ·
+  `e54_transfer.py` (leave-one-rider-out) · `e56_struct.py` (τ and c
+  sensitivity) · `e57_rider_fallback.py` (per-rider medians replacing the global
+  priors) · `e58_intervals.py` (bootstrap CIs on fitted parameters + the
+  50%-loss breaking points; numpy) · `e59_pooling.py` (ride- vs rider-weighted
+  objectives — rider-weighting REFUTED) · `e60_regional.py` (per-landscape ε
+  pools) · `e61_sweep.py` (synthetic sweep over real geometries; `E61_FULL=1`
+  sweeps all 729 combinations in ~5.5 h and dumps `e61_raw.full.csv`, 145,800
+  rows of raw simulation, so any re-fit is arithmetic) · `e53_linear_invert.py`
+  (joint linear inversion — REFUTED, kept as the negative result),
+  `e47_formselect.py` (Entry 47 — deficit-form selection by BIC under a Laplace
   likelihood, on D1∪D2 under two parameter arms, plus the labelled in-sample
   D3–D6 arm; `E47_SMOKE=1`. Hosts `invert_physics`, extracted from
   `perride_invert.run_ride` so the per-ride inversion has exactly one copy),
-  `bootstrap_ci.py` (bootstrap CIs + paired sign tests for every published
-  median AND its 95% band — **the gate script**; exits non-zero on failure),
+  `bootstrap_ci.py` (**the gate script**; exits non-zero on failure). **Narrowed
+  2026-07-31 to only what the papers still claim** — 22 sections became 7, and a
+  full run is 4.5 min instead of 15. Surviving sections are keyed to
+  `pc:gateSection` in the article sidecars, and `check_paper_stats.py` asserts
+  the correspondence both ways: `1` corpus populations · `3i` elevation
+  substitution (paper 2) · `3p` Sobol shares (E50) · `3q` the A-chain (E52/55/57)
+  · `3r` rider transfer (E54) · `3s` structural sensitivity (E56) · `3t` regional
+  pools (E60). Sections for retired results were deleted with the prose they
+  served — a gate on a number nobody publishes is a slow test that fails for
+  reasons no reader sees,
   `longoes_frozen.py` (Entry 31; D1 under the frozen
   shared-constants protocol — the blind half of the paper's Table 2; the
   informed half stays `compare.py`), `param_sweep.py` (Entry 29; the pre-registered CdA × Crr × ρ sensitivity
@@ -216,6 +241,25 @@ mass-bug lesson; the implied masses in `regime_compare.py`'s `PHYS` and
 
 ## Invariants — easy to break, hard to notice
 
+- **A HELD parameter can invert a conclusion, not just add noise.** Three bugs of
+  this shape landed in one session, each in code already producing published
+  numbers: `e54_transfer` fitted at `TAU_PUB_I` (2 m) while the selected form
+  used 6 m, inflating every per-rider optimum and manufacturing a spurious case
+  for rider-weighted pooling; `e61_sweep` pinned F4's `c` at the published
+  3.0 m/km, flipping its regional gap negative and supporting a "the split is
+  F3-specific" reading that was wrong; and `e54`'s pooled comparator was a
+  hardcoded 0.2879 that went stale the moment the aero estimator changed.
+  **When a harness needs a fitted constant, read it from the producing CSV —
+  never a literal.**
+- **Never memoise on `id()`.** The sensitivity analyses build throwaway per-ride
+  dicts with one perturbed component; CPython recycles their ids, so a cache
+  keyed that way answers for the wrong row. It made every breaking point in
+  `e58_intervals` read exactly 1.00×.
+- **A loss must not change its population with the parameter.** `logratio` used
+  to skip rides whose predicted energy went non-positive, and since E(ε) falls
+  with ε that rewarded the optimiser for making badly-fitting rides vanish. The
+  population is fixed once across the whole search range.
+
 - **Canonical conserves energy; leg energy ≥ work done.** The identity
   `k_eff·legE = ΔKE + W_rr + W_aero + W_grav + W_brake` must hold, so on a climb
   `legE ≥ mg·h₊/k_eff`. Enforced by the **semi-implicit** KE update — a
@@ -264,6 +308,10 @@ were retired in the 2026-07 re-baseline; git history has them):
   (`src/bicycling_energy_model/`) and the applet. That is the only remaining
   duplication, and it is deliberate. For v2Edge, the deployed-cost mirror set is
   `r1d_v2_edge` (Python) + the applet + sampasimu's `energy-worker.js`.
+- **Paper 1's chain, in order**, after any engine or physics change:
+  `e52_build.py` → `e52_split.py` → `e57_rider_fallback.py` → `e52_build.py`
+  **again** (the rider fallbacks feed back into the cache) → `e54`/`e56`/`e58`/`e60`.
+  Then `bootstrap_ci.py` and `research/scripts/check_paper_stats.py`.
 - **Run the harnesses** (need the local gitignored tracks; scripts resolve
   paths relative to their own location — run from anywhere):
   `python3 src/harness/compare.py` prints the longões scoreboard **and** the
