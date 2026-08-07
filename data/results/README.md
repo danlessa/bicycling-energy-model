@@ -50,6 +50,7 @@ resolve their inputs and this directory relative to their own location).
 | `e48_equiv.csv` | `python3 src/harness/e48_equiv.py` (`E48_SMOKE=1`) | 48 (TOST equivalence, margin ±1.0 pp, seed 44) |
 | `e46_switch.csv` | `python3 src/harness/e46_switch.py` | 46 (regime switch, four arms; a **second-order** output — reads `e47_formselect.csv` rather than the tracks) |
 | `e47_formselect.csv` | `python3 src/harness/e47_formselect.py` (`E47_SMOKE=1`) | 47 (deficit-form selection; D1∪D2 calibration + the D3–D6 in-sample arm) |
+| `e63_tolls.csv`, `e63_split.csv` (+ `.E63_TAUN2p0` arm) | `python3 src/harness/e63_f5_kebuffer.py` (`E63_SMOKE=1`, `E63_TAUN=2.0`, `E63_DECOMP=1`, `E63_REBUILD=1`) | 63 (F5, the KE-buffer valley toll vs the fitted deadband; per-ride toll sums cached on the 12-arm v_b grid so every refit is arithmetic; joins `e52_aggregates.csv` by ride label) |
 
 `python3 src/harness/bootstrap_ci.py` (Entry 22) reads these CSVs and gates the
 article's published medians against them.

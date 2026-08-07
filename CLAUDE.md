@@ -76,6 +76,16 @@ home of the *derivation* and the side-by-side comparison.
   likelihood, on D1∪D2 under two parameter arms, plus the labelled in-sample
   D3–D6 arm; `E47_SMOKE=1`. Hosts `invert_physics`, extracted from
   `perride_invert.run_ride` so the per-ride inversion has exactly one copy),
+  `e63_f5_kebuffer.py` (Entry 63 — **F5**, the KE-buffer valley toll replacing
+  the deadband's fitted τ with a per-valley physics-computed cap
+  `min(D, H, h_KE − 2τ_n)`; runs Entry 52's A-chain verbatim on the E52 cache +
+  seed-48 split, so its F3/F4 rows must reproduce `e52_split.csv` to the digit —
+  that reproduction is the drift check. Per-ride toll sums cached on a 12-arm
+  v_b grid in `e63_tolls.csv`, downstream refits arithmetic; internal gate
+  F5(v_b=0) ≡ F3(τ_n) at 0 kJ. `E63_SMOKE=1`, `E63_TAUN=2.0` — env-suffixed
+  sensitivity arm, `E63_DECOMP=1` pinned-τ control only, `E63_REBUILD=1`.
+  Verdict: F5(τ_n=2) enters F3's 1-SE band; both arms rail v_b at ∞ — the cap
+  doesn't bind at these corpora's grades),
   `bootstrap_ci.py` (**the gate script**; exits non-zero on failure). **Narrowed
   2026-07-31 to only what the papers still claim** — 22 sections became 7, and a
   full run is 4.5 min instead of 15. Surviving sections are keyed to

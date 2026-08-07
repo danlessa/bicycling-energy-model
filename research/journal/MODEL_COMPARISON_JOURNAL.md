@@ -221,6 +221,150 @@ what the other rows *mean* without producing a per-ride table of their own.
 
 ---
 
+## 2026-08-07 — Entry 63: F5 — the KE-buffer valley toll, benchmarked against the fitted deadband
+
+**Lineage** — $I$: $(D_3..D_6, P_{f,r})$ via $O_{52}$ (`e52_aggregates.csv`, 2,039 rides)
+plus one fresh geometry walk · $T$: F5 (defined below) under Entry 52's A-chain, seed 48,
+with F3/F4 refitted through `e52_split`'s own code path · $O$: `e63_tolls.csv` (2,039),
+`e63_split.csv`, and the sensitivity arm `e63_tolls.E63_TAUN2p0.csv` /
+`e63_split.E63_TAUN2p0.csv` · $S$: the CV and held-out comparison against F3/F4.
+
+*Prompt (Danilo), closing a derivation thread that began with "how much time (and distance)
+after the descent until he gets to within 10% of v_f again?": "I even wonder if n·h_KE isn't
+being the deadband itself. Either we should use one, or another" → "Can we create F5, which
+uses n·h_KE instead of the deadband? Let's benchmark and see how it compares to F3 and F4."*
+
+### From recovery length to a form
+
+The thread's derivation, in three steps. (1) Linearising the flat power balance about $v_f$
+gives a **recovery length** $L_{\mathrm{rec}} = m v_f^2 / (C_{rr} m g + 3\cdot\tfrac12\rho
+C_dA\, v_f^2)$ — ≈ 92 m at the shared constants, confirmed by the canonical engine (a
+simulated 5% descent at 100 W takes 260 m / 30 s to re-enter ±10% of $v_f$, with e-folding
+94 m vs 91.5 predicted). (2) The KE carried out of a descent foot is a computable height,
+$h_{KE} = (v_e^2 - v_c^2)/2g$ — Entry 37's suspension travel, now with the entry/exit speeds
+made explicit: $v_e = \min(v_b, \max(v_t(s_-), v_f))$ from the descent's terminal speed and
+the brake cap, $v_c$ the next climb's quasi-steady speed. (3) The backlash deadband, traced
+through one oscillation, annihilates swings under $2\tau$ peak-to-peak and counts every
+surviving swing short by exactly $2\tau$ — a **fixed-cap, unconditional version of the same
+physics**: features below the buffer are momentum shuttle, every surviving valley forfeits
+one buffer. Matching the two ledgers even predicts $2\tau(1-\varepsilon) \approx h_{KE}$,
+i.e. $\tau^* \approx$ 4–5 m — bracketing the A-chain's fitted 6 m from the physics side.
+F5 is that identification taken literally: keep a small deadband for what is genuinely
+measurement noise, and replace the rest of $\tau$'s job with a per-valley computed toll.
+
+### The form
+
+On the $\tau_n$-deadbanded profile, enumerate the alternating monotone swings; at every
+descent→climb valley (drop $D$ at mean grade $s_-$, rise $H$ at $s_+$) charge
+
+$$T = \sum_{\mathrm{valleys}} \min\!\big(D,\ H,\ \max(0,\ h_{KE} - 2\tau_n)\big),
+\qquad E_5 = E_3(\tau_n)\ \text{with}\ \tilde h_+ \mathrel{-}= T,\ \tilde h_- \mathrel{-}= T.$$
+
+The $v_c \le v_e$ clamp makes a descent-into-flat valley toll **zero** automatically — a
+run-out collects the buffer against the α bill, so the credit survives; only a real climb
+transfers it. The surgery is exact because `approximate` returns `climb` $= \beta h_+$ and
+`recov1` $= -\beta h_-$ identically, so subtracting $\beta T$ from one and adding it to the
+other IS evaluating F3($\tau_n$) on the tolled totals; linearity in ε is untouched, so the
+E52 two-point cache still pins the family. Free parameters $(\varepsilon, v_b)$ — the same
+count as F3's $(\varepsilon, \tau)$; $v_b$ searched on a 12-arm grid cached per ride, so
+every downstream refit is arithmetic. Gate: the $v_b = 0$ arm zeroes every toll, and
+F5($v_b{=}0$) reproduces F3($\tau_n$) to **0.000 kJ** on all 2,039 rides.
+
+### Protocol
+
+Entry 52's A-chain, unchanged and shared by construction: same cache, same seed-48
+85/15 split, same repeated stratified 5-fold × 4 with every parameter refitted in-fold,
+same loss. F3/F4 run through `e52_split`'s own `fit()` — and their rows **reproduce
+`e52_split.csv` to the printed digit** (CV 0.05406/0.06286, test 3.24/2.86), which is the
+drift check. Two arms: the canonical $\tau_n = 0.5$ m and the sensitivity arm
+$\tau_n = 2.0$ m (A.4's jitter-motivated floor; env-suffixed outputs). Each arm also runs a
+**decomposition control** — F3 with τ *pinned* at the arm's floor, ε refitted in-fold, CV
+only (never scored on test) — so the toll's contribution is separable from the filter's.
+
+### Results (train CV = mean |log(Ê/E)|, 20 fold scores; test scored once, n = 305)
+
+| arm | CV | test med\|Δ%\| [95% CI] | test signed [95% CI] |
+|---|--:|--:|--:|
+| F2 (no filter; Entry 52) | 0.06306 ± 0.00186 | 3.21 | +0.14 |
+| F3, τ pinned 0.5 m (control) | 0.06012 ± 0.00188 | — | — |
+| **F5, $\tau_n$ = 0.5 m** | 0.05791 ± 0.00184 | 3.27 [2.63, 3.81] | +0.33 [−0.24, 0.80] |
+| F3, τ pinned 2.0 m (control) | 0.05625 ± 0.00187 | — | — |
+| **F5, $\tau_n$ = 2.0 m** | **0.05576 ± 0.00185** | **3.05 [2.55, 3.52]** | +0.41 [−0.09, 0.86] |
+| F3, τ fitted (6 m) — winner | 0.05406 ± 0.00180 | 3.24 [2.75, 3.50] | +0.07 [−0.31, 0.70] |
+| F4 (totals-only) | 0.06286 ± 0.00199 | 2.86 [2.58, 3.39] | −0.40 [−0.73, 0.14] |
+
+Both F5 arms fitted $\varepsilon$ between F2's and F3's (0.400 / 0.363) and both fitted
+$v_b$ **to the grid rail (999 km/h — never brake)**.
+
+### Reading
+
+**The toll is real signal at both floors.** F5 beats its pinned-τ control by 0.0022 at the
+0.5 m floor and 0.0005 at the 2 m floor — the physics term earns CV that the shared filter
+does not explain. Decomposing the F2→F3(fitted) gap (0.0090): the 0.5 m filter alone buys
+33%, +toll → 57%; the 2 m filter alone buys 76%, +toll → **81%**; the fitted τ = 6 m holds
+the last 19%. **At the jitter floor, F5 is the first form ever to enter F3's 1-SE band**
+(0.05576 vs threshold 0.05586) and posts the best held-out median of the three profile
+forms (3.05 vs 3.24), all CIs overlapping. The winner under the chain's registered rule
+stays **F3** — equal parameter count, lower CV — but the question the thread asked ("is the
+deadband the KE term?") now has a measured answer: **mostly, yes** — four fifths of what
+the fitted deadband achieves is reproduced by jitter filtering plus a parameter-free
+valley toll, and the unexplained fifth is the part of τ = 6 m's removal that neither
+mechanism accounts for (candidates: quasi-steady misses on short descents, entry speeds
+above $v_f$, correlated altimeter error surviving 2 m).
+
+**The rail at $v_b$ = 999 is a finding, not a fit.** At these corpora's descent grades
+(terminal ≈ 42 km/h at 5%), a brake cap almost never binds, and where terrain is steep the
+$\min(D, H)$ amplitude caps dominate — so the cap parameter has nothing to do and the
+optimiser uses it as a toll-scale knob, pushing it to the boundary. The operative content
+of F5 on this corpus is the **terminal-speed valley toll**; the deployable variant would
+freeze $v_b \equiv \infty$ and carry **one** fitted parameter (ε). Claiming that parameter
+count honestly requires a fresh registered arm (the grid was searched here, so this entry's
+rows say NPAR = 2).
+
+### Relation to Entries 37–40
+
+This entry completes that thread rather than contradicting it. Entry 39's registered next
+step was per-rider τ tied to $v_f^2/2g$ *as a prediction*; F5 is that prediction taken
+per-valley instead of per-rider, with the entry speed upgraded from $v_f$ to
+$\max(v_t(s_-), v_f)$ — which is why its buffer (≈ 5–9 m at terminal entry) can do work
+the 2–3.5 m of Entry 38/39 could not. Entry 40's null — momentum recycling is
+sub-resolution — was about the **roller band** (amplitudes between τ and $h_{KE}$, RES
+medians 0.03–0.5% of E); F5's toll mass sits at **major valley feet**, where
+$\min(D, H, \cdot)$ saturates at the buffer, a population Entry 40 never measured. Both
+results stand: negligible in the band, measurable at the feet.
+
+### Caveats
+
+Quasi-steady $v_e$ overestimates the buffer on short steep descents (bounded by the
+amplitude caps, unquantified beyond that). Wind is zero corpus-wide (inherited from the
+iterator, uniform across forms). $v_b$ is one global constant searched on a grid — the
+thread's own point that it varies by rider and terrain is untested here; the honest
+upgrade is not a finer fit but **measurement** (a per-ride descent-speed quantile from the
+telemetry the corpora already carry, moving $v_b$ into the same per-rider class as
+$\hat m$/$\hat C_dA$/$\hat C_{rr}$). The $\tau_n = 2$ arm scored the test half once under
+the sensitivity-arm precedent (Entry 55's `AERO=seg`), so the test set has now been seen by
+one extra registered estimator. The toll walk assumes `e52_aggregates.csv` is current —
+`e63_f5_kebuffer.py` joins on its ride labels and inherits its inversions verbatim.
+
+### Registered next steps (if the thread continues)
+
+(1) A frozen-$v_b{=}\infty$, one-parameter F5 arm — if its CV holds at ≈ 0.0558 it wins the
+1-SE rule outright, which would make the *form selection* story "physics toll replaces the
+fitted filter parameter". (2) Measured per-ride $v_b$, as above — falsifiable without new
+parameters. (3) The E54-style leave-one-rider-out contest F5-vs-F3: a fitted τ absorbs the
+calibration corpus's behaviour mix, a computed toll should transfer better — that, not
+pooled CV, is where the mechanistic form would earn its keep. (4) Entry 39's cross-corpus
+prediction, now sharpened: $\tau^* \approx \tau_{\mathrm{noise}} + h_{KE}/2(1-\varepsilon)$
+should track descent behaviour (D6 vs the urban corpora).
+
+Instrument: [`e63_f5_kebuffer.py`](../../src/harness/e63_f5_kebuffer.py) (`E63_SMOKE=1`,
+`E63_TAUN=2.0` env-suffixed arm, `E63_DECOMP=1` control-only mode, `E63_REBUILD=1`);
+outputs `e63_tolls*.csv` (2,039 rides × 12 $v_b$ arms), `e63_split*.csv`. Gates: cache
+reproduces the engine (via E52), F5($v_b{=}0$) ≡ F3($\tau_n$) at 0 kJ, F3/F4 rows
+reproduce `e52_split.csv`.
+
+---
+
 ## 2026-07-31 — Entry 61: does the regional ε gap survive when behaviour is held fixed? — a synthetic sweep
 
 **Lineage** — $I$: (200 real route geometries from $D_3..D_5$ and $D_6$, synthetic physics) · $T$: $F_\mathrm{base}$ to generate, $F_1..F_4$ to fit · $O$: `e61_sweep.csv` · $S$: ε pooled by region under known physics
