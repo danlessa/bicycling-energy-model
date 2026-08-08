@@ -226,9 +226,27 @@ shrinks exactly as the ledger's other lines get their own terms.
 
 ---
 
+## 6. Status: the causal chain, validated (Entries 63–69)
+
+This note's purpose — stated after the fact by its commissioning prompt — is to
+*demonstrate the causal connection from the canonical model to the closed form,
+with the causal sources of ε and the deadband clearly described*. As of Entries
+63–69 each link is not just derived but experimentally validated on 2,039 rides:
+the KE toll built from the branch fixed points carries 53% of the F2→F3 gap on
+its own and 82% with a noise floor; the floor's scale is *measured* (closure-pair
+drift, no DTM, no fitting) and the measured pin matches the fitted filter's
+accuracy with zero chosen constants while transferring across riders best of the
+family (p = 0.0001); the deadband's remaining fitted share is positively
+characterised as absorption — non-stationary, non-geometric, non-transferable —
+rather than physics. E50's variance decomposition frames why this program was
+never about accuracy: ε's share of the error budget is small, so its value is
+explanatory — the demonstration that nothing in the closed form is a bolted-on
+fudge. F3 stays the pragmatic form; F5 is the derivation's witness.
+
 *Pointers: `original_notes.md` (the closed form's spec); paper 1 Appendix
 A.1–A.6 (the ledger, ceiling and bounds); Entry 13 (the time dual and the
 $\varepsilon \leftrightarrow k_-$ bridge); Entries 37–40 (the suspension
-reading, τ-sweeps, and the roller-band null); Entries 63–64 (+ amendment)
-(recovery length, F5/F5f/F5m, the toll-filter overlap decomposition);
-`src/harness/e63_f5_kebuffer.py` (the F5 instrument).*
+reading, τ-sweeps, and the roller-band null); Entries 63–69 (recovery length,
+F5/F5f/F5m/F5p, the toll-filter overlap, the drift probe, the residual
+decomposition, the frontier collapse); `src/harness/e63_f5_kebuffer.py`,
+`e66_driftprobe.py`, `e67_residual.py`, `e69_frontier.py` (the instruments).*

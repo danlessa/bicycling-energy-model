@@ -173,6 +173,8 @@ changed. See Entry 11.)*
   [`epsilon-origin.md`](../notes/epsilon-origin.md)) — this commit
 - **Entry 68** (the τ_n sweep — F5f's floor is load-bearing; the `E63_F5FCV=1` mode in
   [`e63_f5_kebuffer.py`](../../src/harness/e63_f5_kebuffer.py)) — this commit
+- **Entry 69** (the frontier collapses; F5p, the measured-pin form, matches F3 and
+  transfers best — [`e69_frontier.py`](../../src/harness/e69_frontier.py)) — this commit
 ---
 
 ## Data traceability
@@ -195,6 +197,7 @@ counted from its CSV rather than asserted, is [`research/data-graph.ttl`](../dat
 
 | entry | $I = (D, P)$ | $T$ | $O$ (rows) | $S$ |
 |--:|---|---|---|---|
+| 69 | the e52 cache + toll walks {1.8..4.5} + `e66_drift.csv` pins | F5p and the F5f rungs under CV / LORO / aging | `e69_pins.csv` (7), `e69_frontier.csv` (5), `e69_loro.csv` (7), `e69_aging.csv` (6) | F5p matches F3's CV with zero chosen constants and transfers best (p = 0.0001) |
 | 68 | the e52 cache + eight toll walks over the $\tau_n$ grid | F5f fold-CV + pinned-τ control per floor | `e63_tolls.E63_TAUN*.csv` (2,039 each; summary console-borne, ~2 min/arm) | CV($\tau_n$) monotone to the F3 anchor; the floor needs a measured pin |
 | 67 | the e52 cache + e63 tolls, train half | B: signature correlations; C: early/late refits + the aging test | `e67_signature.csv` (1,732), `e67_stability.csv` (6) | transferable share of the deadband's unique ~25 pp ≈ 0 |
 | 66 | $(D_3..D_6)$ raw records (geo re-parse) | closure-pair drift statistics | `e66_drift.csv` (2,039; 1,663 with ≥ 10 pairs) | drift real (2.8 m, 3.4 m/h); the τ = 6 benefit is drift-blind |
@@ -266,6 +269,112 @@ Entries with no $O$ are reviews, registrations, imported notes or refactors — 
 what the other rows *mean* without producing a per-ride table of their own.
 
 ---
+
+---
+
+## 2026-08-07 — Entry 69: the frontier collapses — the measured pin matches the fitted filter and beats it everywhere it counts
+
+**Lineage** — $I$: the e52 cache + toll walks at $\tau_n \in \{1.8, 2.2, 3, 4, 4.5\}$
+(new: 1.8/2.2/4.0) + `e66_drift.csv` for the pins · $T$: F5p (below) and the F5f rungs
+under CV / LORO / aging, F3 refit per donor set and per half throughout · $O$:
+`e69_pins.csv` (7), `e69_frontier.csv` (5 forms), `e69_loro.csv` (7),
+`e69_aging.csv` (6); cross-checked by the standalone `e63_loro.E63_TAUN{3p0,4p5}.csv`
+and `e67_stability.E63_TAUN{3p0,4p5}.csv` runs, which e69's own loops reproduce
+digit-for-digit · $S$: the frontier table.
+
+*Prompt (Danilo): "let's do it" — Entry 68's two registered follow-ups.* **F5p** is the
+per-corpus-pinned form: each rider group's noise floor is its median measured
+closure-drift (Entry 66) snapped to the τ grid — D3 → 3, D4 → 1.8, D5 → 2.2,
+D6-user_1 → 4, user_2 → 4.5, user_3 → 3, user_5 → 4 (ties round up) — with the toll at
+that floor, $v_b$ frozen at never-brake, and ε the *only* fitted parameter. The pin is
+parameter-class telemetry (a noise scale, like $\hat m$), not fitted on energy targets.
+
+### The frontier (CV: train, ε in-fold; LORO: donors' train → recipient's test half; aging: late half under early constants)
+
+| form | CV | LORO vs F3, per-ride med [95% CI] | aging med |
+|---|--:|--:|--:|
+| F3 (τ fitted; chain CSV) | 0.05406 ± 0.00180 | — | 0.00298 |
+| F5f@2 | 0.05567 ± 0.00183 | −0.06 [−0.19, +0.01], p = 0.27 | 0.00064 |
+| F5f@3 | 0.05488 ± 0.00181 | −0.07 [−0.17, +0.02], p = 0.17 | 0.00065 |
+| F5f@4.5 | 0.05419 ± 0.00179 | −0.03 [−0.07, +0.00], p = 0.23 | 0.00054 |
+| **F5p** | **0.05413 ± 0.00182** | **−0.27 [−0.50, −0.13], p = 0.0001** | 0.00078 |
+
+(The batch also filled three more Entry-68 curve points, all monotone-consistent:
+F5f CV 0.05586 / 0.05549 / 0.05435 at $\tau_n$ = 1.8 / 2.2 / 4.0.)
+
+### Findings
+
+**1. The predicted frontier does not exist — keepability is flat in the floor.**
+Entry 68 registered the prediction that aging worsens toward F3's as $\tau_n$ grows.
+It doesn't: 0.00064 / 0.00065 / 0.00054 across the rungs, ~5× better than F3's
+0.00298 everywhere, while CV improves monotonically. The LORO margins likewise stay on
+the toll side at every floor (shrinking at 4.5 only because F5f@4.5 nearly *is* F3, so
+the paired difference must vanish). **What ages badly in F3 is therefore not the
+removal magnitude but the τ refit itself** — the fitted threshold wandering per rider
+and per season (5/6 half-splits moved it, Entry 67). Any externally *fixed* floor is
+both accurate and keepable in-corpus; the harm is letting the data choose it.
+
+**2. The measured pin dominates.** F5p matches F3's in-pool CV within a third of a
+standard error — with zero chosen constants — ages ~4× better, and posts the
+strongest rider-transfer result of the entire program: per-ride median −0.27 pp
+[−0.50, −0.13] against F3, closer on 184/301 (sign p = 0.0001), with the largest gains
+where corpora differ most (D6-user_2: 2.18 → 1.31; D5: 5.07 → 4.45; D6-user_1:
+3.90 → 3.54). The mechanism is the design's point working: donors contribute only ε;
+the floor adapts to the *recipient's* measured noise without any fitting. D4 is the
+one dissent (2.21 → 2.34, and the worst ager under every variant) — the same rider
+whose mid-history break Entry 67 flagged; whatever changed there, no form in the
+family absorbs it gracefully.
+
+**3. The flat-basin law, named (Danilo's connection).** *Prompt: "this may relate to
+entry 50 which says that the eps is a minor contributor to the overall estimation
+accuracy."* It does, and the chain has now met the same principle four times:
+Entry 50 (ε's ~7% Sobol share), Entry 51 (the flat ε *beats* the dynamic estimator
+held-out), Entry 39 ("every basin is flat within CIs near its optimum"), and
+Entries 67–69 (fitted τ's in-pool edge over a fixed floor is 0.00013 — and that
+sliver is exactly what fails to transfer or persist). The link is basin flatness:
+**where the loss is locally flat, fitting harvests noise, and fitted noise is
+precisely what does not generalise** — E50 measures the variance-budget face of this,
+E67–69 the transfer face. The resulting doctrine for the family: parameters divide
+into *physical* (measured or inverted per rider — $\hat m$, $\hat C_dA$,
+$\hat C_{rr}$, $\hat v_b$, and now the drift-pinned $\hat\tau_n$), *structural*
+(derived — the toll), and **one fitted scalar** (ε), whose basin is flat enough that
+a corpus constant suffices. Everything else this model family ever fitted turned out,
+on inspection, to be absorbing.
+
+### Caveats
+
+D6-user_5's two-ride test half (the Entry-64 empirical-energy pathology) stays in
+every pooled statistic with negligible leverage. The pins are snapped to the cached τ
+grid (1.8–4.5 m span), and are measured corpus-wide including test rides — defensible
+as parameter-class telemetry, stated rather than hidden. No A.8 test-half scoring
+happened in this entry (CV is train-only; LORO's test-half use is the strict-transfer
+protocol Entries 54/64 established). The terrain axis remains untested: LORO holds
+out riders, not landscapes, and all Brazilian corpora share São Paulo's — a D6-style
+out-of-region corpus is where F5p's pin story would face its real test.
+
+Instrument: [`e69_frontier.py`](../../src/harness/e69_frontier.py) (`E69_SMOKE=1`;
+pins read from `e66_drift.csv`, never hardcoded; F3's chain CV read from
+`e63_split.E63_TAUN2p0.csv`; errors out listing any missing toll walk rather than
+tolling zero).
+
+### Addendum — what the F5 program was for (the closing reframe)
+
+*Prompt (Danilo): "In the end, given E50 results, I would say that our main goal with
+form 5 is to demonstrate the causal connection from the canonical model towards the
+closed form model, with the causal sources of epsilon and the deadband filter being
+clearly described."* Adopted as the program's reading. E50 guaranteed from the start
+that no ε-side refinement could buy headline accuracy (a ~7%-of-variance term cannot);
+what the Entry 63–69 contests could do — and did — is serve as the **validation
+instrument for a constructive proof**: the closed form is derivable from the canonical
+system's invariant structure with every term's origin identified, and each source,
+made explicit, carried its predicted share of the ledger. α, β by direct integration
+(A.1–A.2); ε enumerated into the coasting ceiling (a theorem), the KE boundary layers
+(recovery length, buffer), and the behavioural deficit; the deadband resolved into
+~⅞ KE-buffer physics + a measurable noise floor + a positively-characterised fitting
+residue; $v_b$ shown causally inert at these grades and measurable where it is not.
+F3 remains the pragmatic published form; **F5 is the derivation's witness** — the
+demonstration that nothing in the closed form is a bolted-on fudge. The narrative
+companion is `research/notes/epsilon-origin.md`.
 
 ---
 

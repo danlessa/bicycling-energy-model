@@ -124,6 +124,14 @@ home of the *derivation* and the side-by-side comparison.
   decaying 0.0047→0 — the floor is load-bearing, so F5f's one-parameter claim
   needs an external pin; the registered pin is E66's measured drift amplitude
   (median 2.8 m), making τ_n telemetry, per corpus, not a chosen constant),
+  `e69_frontier.py` (Entry 69 — the frontier COLLAPSES: keepability is flat
+  in the floor (aging ~0.0006 at τ_n = 2/3/4.5 vs F3's 0.0030), so F3's
+  non-keepable share is the τ REFIT, not the removal size. **F5p** — floor
+  pinned per corpus by measured drift from `e66_drift.csv`, v_b frozen, ε the
+  only fitted parameter — matches F3's CV (0.05413 vs 0.05406) and posts the
+  program's best rider transfer (−0.27 pp vs F3, p = 0.0001). Pins read from
+  the producing CSV, never hardcoded; F3's CV read from the chain CSV; the
+  flat-basin law named: E39/E50/E51/E67-69 are the same principle. `E69_SMOKE=1`),
   `bootstrap_ci.py` (**the gate script**; exits non-zero on failure). **Narrowed
   2026-07-31 to only what the papers still claim** — 22 sections became 7, and a
   full run is 4.5 min instead of 15. Surviving sections are keyed to

@@ -52,7 +52,11 @@ SMOKE = bool(os.environ.get("E67_SMOKE"))
 if SMOKE:
     os.environ["E52_SMOKE"] = "1"
 # the F5f comparator lives at the tau_n = 2 arm — pin the e63 module there
-# BEFORE importing it (its TAU_N/TI_N/TOLLS_CSV are module constants)
+# BEFORE importing it (its TAU_N/TI_N/TOLLS_CSV are module constants).
+# Entry 69 runs this harness at OTHER arms (E63_TAUN=3.0/4.5, the frontier
+# map): an explicit arm suffixes this harness's outputs too, so a sensitivity
+# run can never overwrite the canonical Entry-67 CSVs (the repo rule).
+_ARM = os.environ.get("E63_TAUN")
 os.environ.setdefault("E63_TAUN", "2.0")
 
 from bicycling_energy_model.jsfmt import to_fixed  # noqa: E402
@@ -63,11 +67,12 @@ from e63_f5_kebuffer import (TAU_N as TAUN5, cv_loss5, fit_f5f,  # noqa: E402
                              join_tolls)
 from e66_driftprobe import eps_opt_f3, ranks, spearman  # noqa: E402
 from bicycling_energy_model.engines import G  # noqa: E402
+from bicycling_energy_model.util import env_suffix  # noqa: E402
 from perride_invert import KEFF, RESULTS  # noqa: E402
 from skc_compare import med_of  # noqa: E402
 
 TI_2, TI_6 = TAU_GRID.index(2.0), TAU_GRID.index(6.0)
-SUFF = ".SMOKE" if SMOKE else ""
+SUFF = (env_suffix("E63_TAUN") if _ARM else "") + (".SMOKE" if SMOKE else "")
 MIN_HALF = 5 if SMOKE else 20   # rides per half below which C's fits are noise
 
 

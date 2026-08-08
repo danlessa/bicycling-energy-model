@@ -56,6 +56,7 @@ resolve their inputs and this directory relative to their own location).
 | `e66_drift.csv` | `python3 src/harness/e66_driftprobe.py` (`E66_SMOKE=1`, `E66_REBUILD=1`) | 66 (closure-pair drift probe, no DTM; scalar drift stats per ride — the strong baro-drift attribution refuted, P1b ρ ≈ 0) |
 | `e67_signature.csv`, `e67_stability.csv` | `python3 src/harness/e67_residual.py` (`E67_SMOKE=1`) | 67 (the residual decomposed: coupling weak everywhere, τ\* non-stationary, F3's constants age ~4.7× worse than F5f's within riders — transferable-physics share of the deadband's unique ~25 pp ≈ 0) |
 | `e63_tolls.E63_TAUN{1p0,1p5,3p0,4p5,6p0}.csv` | `E63_TAUN=<x> E63_REBUILD=1 E63_F5FCV=1 python3 src/harness/e63_f5_kebuffer.py` | 68 (the τ_n sweep: F5f CV monotone to the F3 anchor, toll margin → 0; the floor needs a measured pin — E66's drift amplitude) |
+| `e69_{pins,frontier,loro,aging}.csv` (+ `e63_tolls.E63_TAUN{1p8,2p2,4p0}.csv` walks, `e63_loro`/`e67_*` `.E63_TAUN{3p0,4p5}` cross-checks) | `python3 src/harness/e69_frontier.py` (`E69_SMOKE=1`) | 69 (the frontier collapses: keepability flat in the floor — the harm is fitting τ, not its size; F5p, pinned per corpus by measured drift, matches F3's CV with zero chosen constants and transfers best, p = 0.0001) |
 
 `python3 src/harness/bootstrap_ci.py` (Entry 22) reads these CSVs and gates the
 article's published medians against them.
