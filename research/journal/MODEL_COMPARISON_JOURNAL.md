@@ -181,6 +181,9 @@ changed. See Entry 11.)*
   planner inputs — `E41_POP`/`E41_D6` modes in
   [`e41_dem_route.py`](../../src/harness/e41_dem_route.py) +
   [`e71_dem_pop.py`](../../src/harness/e71_dem_pop.py); gate section 3j) — this commit
+- **Entry 72** (paper 3's first tranche: edge-grain fidelity, the scale U, the valley
+  patch, the F4 comparators — [`e72_edgegrain.py`](../../src/harness/e72_edgegrain.py);
+  gate section 3k) — this commit
 ---
 
 ## Data traceability
@@ -203,6 +206,7 @@ counted from its CSV rather than asserted, is [`research/data-graph.ttl`](../dat
 
 | entry | $I = (D, P)$ | $T$ | $O$ (rows) | $S$ |
 |--:|---|---|---|---|
+| 72 | $(D_3..D_6, P_{f,r})$, own profiles | v2Edge at 5 pitches, twin, valley patch, F4 comparators | `e72_edgegrain.csv` (2,039) + `fig-p3-scale.svg` | fidelity +1.83 pp; U-minimum at 30 m; patch 3.29·−0.08; F4-pub 2.72 tops the table (gate 3k) |
 | 71 | D3–D5 (travel kept) + D6, the e41 MODE walk | seven arms × two protocols + τ-grid, toll, F5 per arm | `e41_dem_route.E41_POPp1_E41_D61.csv` (1,957; 1,834 primary), `e71_dem_pop.csv` | paper 2 re-based (gate 3j); c is sensor×terrain; F5 beats F3 on every DEM chain |
 | 70 | the e52 cache (train half) + `e66_drift.csv` | bare F3, τ pinned per grid point, ε refit, per rider | `e70_taucurves.csv` (9 pools × 17 τ) | basins rider-shaped; optima anti-track noise; u3 and pooled-EU at the RAIL |
 | 69 | the e52 cache + toll walks {1.8..4.5} + `e66_drift.csv` pins | F5p and the F5f rungs under CV / LORO / aging | `e69_pins.csv` (7), `e69_frontier.csv` (5), `e69_loro.csv` (7), `e69_aging.csv` (6) | F5p matches F3's CV with zero chosen constants and transfers best (p = 0.0001) |
@@ -277,6 +281,63 @@ Entries with no $O$ are reviews, registrations, imported notes or refactors — 
 what the other rows *mean* without producing a per-ride table of their own.
 
 ---
+
+---
+
+## 2026-08-08 — Entry 72: paper 3's first tranche — edge-grain fidelity, the scale U, and the valley patch at the deployed pitch
+
+**Lineage** — $I$: $(D_3..D_6, P_{f,r})$ via the A-chain cache, each ride's OWN
+recorded profile (no DEM error mixes in) · $T$: `r1d_v2_edge` (the router's Python
+reference) at pitches {5, 10, 30, 60, 90} m; its route-level twin F2·ε_geom at 5 m;
+the Entry-63 valley toll as a per-node term at 30 m · $O$: `e72_edgegrain.csv`
+(2,039) + `research/article/figs/fig-p3-scale.svg` (hand-emitted) · $S$: paper 3
+§3.1's table; gate section 3k; claim `a3.discretisation.fidelity` planned → 1.8.
+
+*Prompt (Danilo): "Can you generate the results, tables and figures for paper3? that
+will likely involve some experiments."*
+
+**R1 — fidelity (H1).** The edge-sum sits a median **+1.83 pp (med |gap| 1.84)**
+above its own route-level integral at 5 m — the grade-local ε and the per-edge clamp
+floor are the entire discretisation gap, and it is bias-shaped, not noise. That is
+the "stated bound" A3's core claim needed; `a3.divergence` (energy-vs-distance route
+frequency on a real network) stays honestly *planned* — it needs routing runs.
+
+**R2 — the scale U (H2).** med|Δ%| vs measured energy: 4.62 / 4.13 / **3.75** /
+3.96 / 4.15 at 5→90 m, bias +3.39 → +1.33 → −0.05 → −0.93. The minimum sits exactly
+at the deployed 30 m calibration scale; finer grids over-charge because the edge cost
+carries **no deadband** to eat jitter; the bias zero near 60 m is aliasing cancelling
+noise, not accuracy. E19–21's story, reproduced at ride grain in one curve
+(`fig-p3-scale.svg`).
+
+**R3 — the valley patch (H5 first look, NOT the pre-registered arm).** At 30 m,
+replacing k_s's scalar stand-in with the KE toll as a per-valley graph-node term
+(floor 0, never-brake; median toll 20.3 m/ride) takes the deployed cost from
+3.75 · +1.33 to **3.29 · −0.08**, closer on 1,131/2,038 (sign p < 10⁻⁴) — the
+Entry-71 route-grain result landing at edge grain, additive over the search and
+computable at graph build. H5's registered arm (floor pre-stated per chain) remains
+the condition for graduating this into the deployed cost.
+
+**R4 — the comparator rows (Danilo, mid-entry: "can't we use F4 …? note that
+article 1 recommends using a flat epsilon" · "the c constant on F4 can come from
+article 2").** Paper 1's published F4 (flat ε = 0.4094 with its jointly-fitted
+c = 1.104, both read from `e52_split.csv`) posts **2.72 · −0.35** — the strongest
+route-level number in the table, beating the deployed edge cost at its own scale AND
+the valley patch: F4-pub > patch > v2Edge@30 > twin. E51's flat-beats-dynamic lands
+at edge grain. The all-measured variant (ε_geom + article 2's measured c = 3.01,
+read from `e71_dem_pop.csv`) over-corrects to **5.66 · −3.80** — the (α, ε) bundle
+rule extends to (ε, c): individually-measured constants still travel in pairs.
+Locality caveat recorded in the paper: published F4's clamp needs route totals; its
+per-edge realisation is the unclamped β·c-per-metre discount, with its stated
+domain.
+
+Actions: paper 3 §3.1 rewritten from *planned* to measured (table + figure + the
+four verdicts, routing sections still planned); sidecar claim moved to
+`derived`/1.8/gate 3k; gate section 3k added (population, the 30 m and patch cells,
+the fidelity gap, the paired count, and the U-minimum ordering — all green;
+`check_paper_stats` 16 claims, 1 planned, 0 failing). Instrument:
+[`e72_edgegrain.py`](../../src/harness/e72_edgegrain.py) (`E72_SMOKE=1`; the toll is
+one algebra copy — e63's `ride_tolls` with the module floor set per call; one units
+bug caught in smoke: `r1d_v2_edge` returns kJ).
 
 ---
 

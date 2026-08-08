@@ -160,10 +160,58 @@ ride. The realisation is deployed in an open-source energy-field router
   failures). TODO: a paper-2 `bootstrap_ci`-style battery re-deriving every
   number this paper will publish.
 
-## 3. Results (planned)
+## 3. Results (first tranche measured — Entry 72; routing results still planned)
 
-- **3.1 Edge-sum vs ride-level law vs measurement** on D1 (and D2–D5 where
-  grid coverage allows). TODO — the central new computation.
+- **3.1 Edge-sum vs ride-level law vs measurement — MEASURED** [E72
+  `e72_edgegrain.py`, 2,039 rides of D3–D6 at the paper-1 A-chain physics,
+  each ride's own recorded profile so no DEM error mixes in]:
+
+  | arm (grid pitch) | med \|Δ%\| [95% CI] | signed [95% CI] |
+  |---|--:|--:|
+  | v2Edge @ 5 m | 4.62 [4.43, 4.93] | +3.39 [+3.08, +3.96] |
+  | v2Edge @ 10 m | 4.13 [3.92, 4.36] | +2.99 [+2.61, +3.36] |
+  | **v2Edge @ 30 m (deployed scale)** | **3.75 [3.53, 3.97]** | +1.33 [+1.09, +1.61] |
+  | v2Edge @ 60 m | 3.96 [3.73, 4.23] | −0.05 [−0.27, +0.16] |
+  | v2Edge @ 90 m | 4.15 [3.91, 4.37] | −0.93 [−1.11, −0.70] |
+  | route-level twin (F2 · ε_geom @ 5 m) | 4.31 [4.13, 4.54] | +1.25 [+0.96, +1.66] |
+  | valley patch @ 30 m (§3.3) | 3.29 [3.12, 3.50] | −0.08 [−0.34, +0.08] |
+  | **F4 as published** (paper 1: flat ε = 0.409 · c = 1.10) | **2.72 [2.58, 2.86]** | −0.35 [−0.51, −0.11] |
+  | F4 all-measured (ε_geom · article-2 c = 3.01) | 5.66 [5.42, 5.80] | −3.80 [−4.11, −3.50] |
+
+  **Fidelity (H1):** at 5 m the edge-sum sits a median **+1.83 pp
+  (med |gap| 1.8 pp)**<!--@c-a3.discretisation.fidelity--> above its own
+  route-level integral — the grade-local ε and the per-edge clamp floor,
+  which only bind on descents, are the entire discretisation gap, and it is
+  bias-shaped (systematically above), not noise. **Scale (H2):** the error
+  is U-shaped in grid pitch with its minimum exactly at the 30 m
+  calibration scale ([fig-p3-scale](figs/fig-p3-scale.svg)) — finer grids
+  over-charge because the edge cost carries *no deadband* to eat jitter
+  (+3.4% bias at 5 m), coarser grids under-resolve (−0.9% at 90 m); the
+  bias crosses zero near 60 m, which is *aliasing cancelling noise*, not
+  accuracy — the med|Δ%| there is already worse than at 30 m.
+  **The valley patch (H5, first look — not the pre-registered arm):** at the
+  deployed scale, replacing the scalar k_s stand-in with the Entry-63 KE
+  valley toll (per descent→climb node, floor 0, never-brake cap; median
+  toll 20.3 m/ride at 30 m) takes the deployed cost from 3.75 · +1.33 to
+  **3.29 · −0.08** — closer on 1,131 of 2,038 rides (sign p < 10⁻⁴). The
+  toll is a graph-node term: additive over the search, computable at
+  build time, no non-local pass.
+  **The comparator rows (Danilo's addition) reorder the hierarchy.** Paper
+  1's published F4 — one flat ε and its jointly-fitted c — is the strongest
+  route-level number in the table, beating the deployed edge cost at its own
+  calibration scale and the valley patch: F4-pub (2.72) > patch (3.29) >
+  v2Edge@30 (3.75) > twin (4.31). The flat-vs-dynamic lesson (paper 1's E51)
+  lands at edge grain: the grade-local ε machinery loses to one flat
+  constant. Two caveats travel with that reading. *Locality:* published F4
+  clamps k = max(0, 1 − c·x/h₊) at ROUTE level — not strictly an edge
+  weight; the per-edge realisation is the unclamped linearisation (subtract
+  β·c per metre from the gravity charge), valid where h₊ > c·x and
+  pathological on near-flat routes — so F4's row is a route-level benchmark,
+  not a drop-in edge cost. *Pairing:* the all-measured variant (ε_geom with
+  article 2's measured c = 3.01) over-corrects to −3.8% bias — each constant
+  individually principled, never calibrated jointly; the (α, ε) bundle rule
+  extends to (ε, c), and "measured" does not exempt a constant from
+  travelling with its pair.
 - **3.2 Scale dependence.** What [E19–E21] already show, promoted to results:
   constants drift with sampling interval; a 5 m DEM over-charges vs the 30 m
   calibration unless pre-smoothed (the Entry-20 σ anchors) or re-fitted;

@@ -149,6 +149,17 @@ home of the *derivation* and the side-by-side comparison.
   (c 1.26 vs 3.01 m/km); F5 beats F3 on EVERY DEM chain with the best floor
   at the chain's measured noise scale. Gate section 3j gates the re-based
   headline; 3i still guards the canonical walk),
+  `e72_edgegrain.py` (Entry 72 — paper 3 §3.1's first measured tranche:
+  v2Edge (`r1d_v2_edge` — NB returns kJ) summed over each ride's OWN profile
+  at pitches 5–90 m vs measured energy and vs its route-level twin
+  (F2·ε_geom). Verdicts: fidelity gap +1.83 pp at 5 m; error U-shaped with
+  the minimum exactly at the deployed 30 m; the Entry-63 valley patch takes
+  30 m from 3.75·+1.33 to 3.29·−0.08; paper 1's published F4 (flat ε + its
+  joint c, read from `e52_split.csv`) tops the whole table at 2.72·−0.35
+  while the all-measured (ε_geom, article-2 c) pairing over-corrects to
+  −3.8 — the bundle rule extends to (ε, c). Emits `fig-p3-scale.svg`
+  hand-drawn; gate section 3k; `a3.divergence` stays honestly planned
+  (needs real network routing). `E72_SMOKE=1`),
   `bootstrap_ci.py` (**the gate script**; exits non-zero on failure). **Narrowed
   2026-07-31 to only what the papers still claim** — 22 sections became 7, and a
   full run is 4.5 min instead of 15. Surviving sections are keyed to

@@ -533,6 +533,46 @@ print(f"E71 paired igc5: med {median(_d71):+.2f} pp, over-charges on "
 if not _ok:
     failed = True
 
+# -------- 3k. Edge-grain fidelity and scale (Entry 72, paper 3 §3.1)
+sec("3k")
+print("\n== Edge-grain fidelity and scale (Entry 72, paper 3) ==")
+e72 = parse_csv("e72_edgegrain.csv")
+_ok = len(e72) == 2039
+print(f"E72 population: n={len(e72)}" + (" GATE-OK" if _ok else " GATE-FAIL(exp 2039)"))
+if not _ok:
+    failed = True
+for _k, _ea, _es, _eci, _ecis in (
+        ("v2_d30", 3.75, 1.33, (3.53, 3.99), (1.08, 1.69)),
+        ("patch30", 3.29, -0.08, (3.12, 3.50), (-0.34, 0.08))):
+    report(f"E72 {_k}", [x for x in col(e72, _k) if is_finite(x)],
+           _ea, _es, expect_ci=_eci, expect_ci_signed=_ecis)
+_gap = [num(r, "v2_d5") - num(r, "route5") for r in e72
+        if is_finite(num(r, "v2_d5")) and is_finite(num(r, "route5"))]
+_ok = (abs(median([abs(x) for x in _gap]) - 1.84) <= 0.011
+       and abs(median(_gap) - 1.83) <= 0.011)
+print(f"E72 fidelity gap at 5 m: med|gap| {median([abs(x) for x in _gap]):.2f} pp, "
+      f"med {median(_gap):+.2f} pp"
+      + (" GATE-OK" if _ok else " GATE-FAIL(exp 1.84/+1.83)"))
+if not _ok:
+    failed = True
+_pw = sum(1 for r in e72 if is_finite(num(r, "patch30")) and is_finite(num(r, "v2_d30"))
+          and abs(num(r, "patch30")) < abs(num(r, "v2_d30")))
+_pl = sum(1 for r in e72 if is_finite(num(r, "patch30")) and is_finite(num(r, "v2_d30"))
+          and abs(num(r, "patch30")) > abs(num(r, "v2_d30")))
+_ok = _pw == 1131 and _pw + _pl == 2038
+print(f"E72 patch paired: closer on {_pw}/{_pw + _pl}"
+      + (" GATE-OK" if _ok else " GATE-FAIL(exp 1131/2038)"))
+if not _ok:
+    failed = True
+# the U-curve ordering paper 3 §3.1 argues from: 30 m is the med|Δ%| minimum
+_u = {d: median([abs(x) for x in col(e72, f"v2_d{d}") if is_finite(x)])
+      for d in (5, 10, 30, 60, 90)}
+_ok = _u[30] == min(_u.values())
+print(f"E72 scale minimum at 30 m: " + " ".join(f"{d}:{_u[d]:.2f}" for d in _u)
+      + (" GATE-OK" if _ok else " GATE-FAIL"))
+if not _ok:
+    failed = True
+
 # ---------------------------------------------------------------- 3p. Entry 50
 # Sensitivity decomposition. Gates the shares section 3.2 prints, and the ORDERING
 # the section's argument rests on: eps below every physical parameter, and the

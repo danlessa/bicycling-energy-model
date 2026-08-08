@@ -30,10 +30,13 @@
 @prefix claims:  <https://danlessa.github.io/bicycling-energy-model/claims#> .
 
 <#c-a3.discretisation.fidelity> a schema:Claim ;
-  schema:text "The per-edge cost agrees with the route-level integral within a stated bound" ;
-  dcterms:type "planned" ;
+  schema:text "The per-edge cost sits a median +1.8 pp above its own route-level integral at 5 m — the grade-local epsilon and the clamp floor are the entire discretisation gap" ;
+  dcterms:type "derived" ;
+  pc:value 1.8 ;
+  pc:gateSection "3k" ;
+  cito:citesAsEvidence dg:o_e72 ;
   prov:wasDerivedFrom claims:assert33 ;
-  rdfs:comment "A3's core claim. Whether it rests on Entries 19-21, 23, 25, 26 or needs its own registered experiment is the open scope decision (roadmap A3.1)" .
+  rdfs:comment "A3's core claim, first measured in Entry 72 on each ride's own profile (no DEM error); the scope decision of roadmap A3.1 resolved as: its own experiment, e72_edgegrain.py" .
 
 <#c-a3.divergence> a schema:Claim ;
   schema:text "How often, on a real network, the energy-optimal path departs from the distance-optimal one, and by how much" ;
