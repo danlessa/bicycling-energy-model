@@ -175,6 +175,8 @@ changed. See Entry 11.)*
   [`e63_f5_kebuffer.py`](../../src/harness/e63_f5_kebuffer.py)) — this commit
 - **Entry 69** (the frontier collapses; F5p, the measured-pin form, matches F3 and
   transfers best — [`e69_frontier.py`](../../src/harness/e69_frontier.py)) — this commit
+- **Entry 70** (the pinned-τ curves per rider — basins rider-shaped, optima anti-track
+  the noise, u3 at the rail — [`e70_taucurves.py`](../../src/harness/e70_taucurves.py)) — this commit
 ---
 
 ## Data traceability
@@ -197,6 +199,7 @@ counted from its CSV rather than asserted, is [`research/data-graph.ttl`](../dat
 
 | entry | $I = (D, P)$ | $T$ | $O$ (rows) | $S$ |
 |--:|---|---|---|---|
+| 70 | the e52 cache (train half) + `e66_drift.csv` | bare F3, τ pinned per grid point, ε refit, per rider | `e70_taucurves.csv` (9 pools × 17 τ) | basins rider-shaped; optima anti-track noise; u3 and pooled-EU at the RAIL |
 | 69 | the e52 cache + toll walks {1.8..4.5} + `e66_drift.csv` pins | F5p and the F5f rungs under CV / LORO / aging | `e69_pins.csv` (7), `e69_frontier.csv` (5), `e69_loro.csv` (7), `e69_aging.csv` (6) | F5p matches F3's CV with zero chosen constants and transfers best (p = 0.0001) |
 | 68 | the e52 cache + eight toll walks over the $\tau_n$ grid | F5f fold-CV + pinned-τ control per floor | `e63_tolls.E63_TAUN*.csv` (2,039 each; summary console-borne, ~2 min/arm) | CV($\tau_n$) monotone to the F3 anchor; the floor needs a measured pin |
 | 67 | the e52 cache + e63 tolls, train half | B: signature correlations; C: early/late refits + the aging test | `e67_signature.csv` (1,732), `e67_stability.csv` (6) | transferable share of the deadband's unique ~25 pp ≈ 0 |
@@ -269,6 +272,65 @@ Entries with no $O$ are reviews, registrations, imported notes or refactors — 
 what the other rows *mean* without producing a per-ride table of their own.
 
 ---
+
+---
+
+## 2026-08-08 — Entry 70: the pinned-τ curves, per rider — basins are rider-shaped, and the steep ones are the absorbers
+
+**Lineage** — $I$: the e52 cache (train half) + `e66_drift.csv` medians · $T$: bare F3
+with τ pinned at every grid point, ε refit per point, per rider group and per pooled
+region · $O$: `e70_taucurves.csv` (9 pools × 17 τ, long format) · $S$: the inflation
+table and the two RAIL flags.
+
+*Prompt (Danilo), on Entry 68's pooled curve: "How that would look for each individual
+rider? I wonder if there are regional differences on that curve" → "let's keep it".*
+Deliberately in-sample per group (train half, ε refit per point): the object is basin
+*shape*, not a generalisation estimate — Entries 66/67/69 already established these
+optima are bias-shaped, and this table is that finding made visible.
+
+### The table (% loss inflation vs each row's own best τ; RAIL = optimum at grid edge)
+
+| pool | n | 0.5 | 2 | 3 | 4.5 | 6 | 8 | 12 | drift | τ* |
+|---|--:|--:|--:|--:|--:|--:|--:|--:|--:|--:|
+| D3 | 375 | +13.9 | +5.0 | +1.9 | +0.2 | +0.4 | +2.8 | +7.6 | 2.8 | 5.4 |
+| D4 | 186 | +7.7 | +3.4 | +2.2 | +1.1 | +0.1 | 0.0 | +0.9 | 1.8 | 7.5 |
+| D5 | 541 | +26.3 | +13.9 | +9.2 | +4.7 | +1.7 | 0.0 | +2.4 | 2.2 | 8 |
+| D6-user_1 | 164 | +2.2 | +0.4 | +0.1 | +0.1 | +0.1 | +0.1 | +2.0 | 3.8 | 7.5 |
+| D6-user_2 | 294 | +3.0 | +0.7 | +0.2 | 0.0 | +0.2 | +0.5 | +2.2 | 4.4 | 4.5 |
+| D6-user_3 | 162 | +57.0 | +32.3 | +25.2 | +18.2 | +13.4 | +8.1 | **0.0** | 3.4 | **12 RAIL** |
+| SP pooled | 1102 | +20.5 | +9.4 | +5.5 | +2.1 | +0.3 | +0.1 | +3.3 | — | 7.5 |
+| EU pooled | 632 | +68.8 | +45.3 | +36.1 | +26.2 | +18.5 | +10.6 | **0.0** | — | **12 RAIL** |
+
+### Readings
+
+**The differences are rider-shaped, not regional.** The pooled EU curve looks
+dramatically steeper than SP, but that is one rider: D6-user_3's monotone fall to the
+grid rail dominates its pool, while user_1 and user_2 — also European — own the two
+*flattest* basins in the family (2–8 m within half a percent). A pooled curve inherits
+its steepest member; E59's pooling lesson, again.
+
+**The fitted optima anti-track the measured noise.** The highest-drift riders (u1/u2,
+3.8–4.4 m) are the ones for whom small τ is nearly free; the steep-curve riders (D5,
+u3) have unremarkable drift (2.2, 3.4 m) — Entry 66's anti-correlation, visible row by
+row. An in-pool τ* is not a noise estimate, and a curve that runs monotonically to the
+rail (u3) is the absorber signature in its purest form: the fit asking for unbounded
+removal to shave a standing bias.
+
+**On "is 2–3 m safe":** for two riders, *bare* F3 at 3 m is genuinely costly in-pool
+(D5 +9%, u3 +25%) — a universal bare small floor is not obviously safe. But Entry 69
+already showed the in-pool cost at the measured pins is largely the absorber
+complaining: with the toll alongside (F5p), every rider's out-of-rider transfer
+matched or beat fitted-6 F3 — including D5. The sliver a small pinned floor gives up
+in-pool is the part that was not going to travel.
+
+**The loose end, flagged:** D6-user_3's τ* has never been resolved inside the grid
+(12 m at the rail here, in Entry 64's per-rider table, and in its early/late halves).
+The steepest-terrain rider of the family (Entry 62's profile) with an unbounded
+appetite for removal deserves a diagnosis — what does its ledger systematically
+overpredict? — rather than a bigger filter.
+
+Instrument: [`e70_taucurves.py`](../../src/harness/e70_taucurves.py) (`E70_SMOKE=1`;
+pure cache arithmetic, no walks, no test rides; ~2 min).
 
 ---
 

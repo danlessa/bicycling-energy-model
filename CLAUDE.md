@@ -132,6 +132,11 @@ home of the *derivation* and the side-by-side comparison.
   program's best rider transfer (−0.27 pp vs F3, p = 0.0001). Pins read from
   the producing CSV, never hardcoded; F3's CV read from the chain CSV; the
   flat-basin law named: E39/E50/E51/E67-69 are the same principle. `E69_SMOKE=1`),
+  `e70_taucurves.py` (Entry 70 — pinned-τ loss curves per rider, pure cache
+  arithmetic: basins are rider-shaped not regional (pooled-EU's steepness is
+  one rider), in-pool optima ANTI-track measured drift, and D6-user_3 runs
+  monotonically to the 12 m grid RAIL — the absorber signature; flagged as
+  the open diagnosis. `E70_SMOKE=1`),
   `bootstrap_ci.py` (**the gate script**; exits non-zero on failure). **Narrowed
   2026-07-31 to only what the papers still claim** — 22 sections became 7, and a
   full run is 4.5 min instead of 15. Surviving sections are keyed to
