@@ -140,6 +140,37 @@ changed. See Entry 11.)*
   transfer-only pool, per-corpus allegiance sign tests, and the gate battery extended to the
   numbers the review caught un-gated — [`bootstrap_ci.py`](../../src/harness/bootstrap_ci.py)) — this commit
 
+- **Entries 43–45** (D6, the S-curve reopened, the ride-level ε₀ contest —
+  [`skc_compare.py`](../../src/harness/skc_compare.py), [`e44_scurve.py`](../../src/harness/e44_scurve.py),
+  [`e45_ridelevel.py`](../../src/harness/e45_ridelevel.py)) — `376cbb1` → `5d63d87`
+- **Entry 46** (the regime switch, [`e46_switch.py`](../../src/harness/e46_switch.py)) — `86debdf`
+- **Entry 47** (deficit-form selection + the I/T/O/S notation,
+  [`e47_formselect.py`](../../src/harness/e47_formselect.py)) — `fc8455a` → `d673cca`
+- **Entry 48** (TOST equivalence, [`e48_equiv.py`](../../src/harness/e48_equiv.py)) — `9684e77` → `ef04389`
+- **Entry 49** (the affine deficit, [`e49_affine.py`](../../src/harness/e49_affine.py)) — `bc5fbdf` → `c9790b6`
+- **Entry 50** (ε's variance share, [`e50_sensitivity.py`](../../src/harness/e50_sensitivity.py)) — `15d9f70` → `90e7c72`
+- **Entry 51** (the replacement flat constant, [`e51_flatconst.py`](../../src/harness/e51_flatconst.py)) — `31d4138` → `d52d1ad`
+- **Entry 52** (the A-chain: split, CV, select, test — [`e52_build.py`](../../src/harness/e52_build.py) +
+  [`e52_split.py`](../../src/harness/e52_split.py)) — `6e2e583` → `ab6ff1a`
+- **Entry 53** (joint linear inversion tested and REFUTED — no journal heading of its own; the
+  negative result lives in the commit and is cited by Entries 55/67,
+  [`e53_linear_invert.py`](../../src/harness/e53_linear_invert.py)) — `b1f16f4`
+- **Entry 54** (leave-one-rider-out ε transfer, [`e54_transfer.py`](../../src/harness/e54_transfer.py)) — `4b35cc4`
+- **Entry 55** (regime-consistent aero as default, the `E52_AERO` arms) — `570702a`
+- **Entry 56** (τ/c structural sensitivity, [`e56_struct.py`](../../src/harness/e56_struct.py)) — `7992962`
+- **Entries 57–59** (rider fallbacks, parameter intervals, pooling objectives —
+  [`e57_rider_fallback.py`](../../src/harness/e57_rider_fallback.py),
+  [`e58_intervals.py`](../../src/harness/e58_intervals.py),
+  [`e59_pooling.py`](../../src/harness/e59_pooling.py)) — `1f61fe6`
+- **Entry 60** (regional ε pools, [`e60_regional.py`](../../src/harness/e60_regional.py)) — `1f61fe6` → `ffb74e8`
+- **Entry 61** (the synthetic sweep, [`e61_sweep.py`](../../src/harness/e61_sweep.py)) — `b1b1c00` → `b087e79`
+- **Entry 63** (F5, the KE-buffer valley toll, [`e63_f5_kebuffer.py`](../../src/harness/e63_f5_kebuffer.py)) — `833aaa2`
+- **Entries 64–67** (F5f/F5m + LORO + τ* prediction; the rainflow and smoothing arms; the
+  closure-pair drift probe; the residual decomposition —
+  [`e63_f5_kebuffer.py`](../../src/harness/e63_f5_kebuffer.py) extensions,
+  [`e66_driftprobe.py`](../../src/harness/e66_driftprobe.py),
+  [`e67_residual.py`](../../src/harness/e67_residual.py), plus
+  [`epsilon-origin.md`](../notes/epsilon-origin.md)) — this commit
 ---
 
 ## Data traceability
@@ -162,6 +193,20 @@ counted from its CSV rather than asserted, is [`research/data-graph.ttl`](../dat
 
 | entry | $I = (D, P)$ | $T$ | $O$ (rows) | $S$ |
 |--:|---|---|---|---|
+| 67 | the e52 cache + e63 tolls, train half | B: signature correlations; C: early/late refits + the aging test | `e67_signature.csv` (1,732), `e67_stability.csv` (6) | transferable share of the deadband's unique ~25 pp ≈ 0 |
+| 66 | $(D_3..D_6)$ raw records (geo re-parse) | closure-pair drift statistics | `e66_drift.csv` (2,039; 1,663 with ≥ 10 pairs) | drift real (2.8 m, 3.4 m/h); the τ = 6 benefit is drift-blind |
+| 65 | $(D_3..D_6, P_{f,r})$ via $O_{52}$ | F5 family under rainflow / Gaussian σ = 15, $\tau_n$ = 0 | `e63_tolls.E63_TAUN0p0_E63_RAINFLOW1.csv`, `…_E63_SMOOTH15.csv` (2,039 each) | both fragmentation fixes fail; toll-alone holds 53% of the gap |
+| 64 | $(D_3..D_6, P_{f,r})$ via $O_{52}$ + measured $v_b$ | F5f/F5m under the A-chain; LORO; τ* prediction | `e63_loro.E63_TAUN2p0.csv` (7), `e63_taupred.E63_TAUN2p0.csv` (7) | F5f wins A.5; F5m transfers (p = 0.044); τ* ordering fails |
+| 63 | $(D_3..D_6, P_{f,r})$ via $O_{52}$ + one toll walk | F5 = F3($\tau_n$) + the per-valley KE toll | `e63_tolls.csv` (2,039) | F5($\tau_n$ = 2) enters F3's 1-SE band; $v_b$ rails at ∞ |
+| 61 | 200 real geometries, synthetic physics | $F_\mathrm{base}$ to generate, $F_1..F_4$ to fit | `e61_sweep.full.csv` (5,833), `e61_raw.full.csv` (145,800) | the regional ε split is terrain, not riders |
+| 60 | $(D_3..D_5, P_{f,r}^{\mathrm{rider}})$ and $(D_6, \cdot)$ | $F_3$ at τ = 6 m | `e60_regional.csv` (8) | per-landscape ε pools — two constants instead of one |
+| 59 | $(D_3..D_6, P_{f,r}^{\mathrm{rider}})$ | $F_1..F_4$ under three pooling objectives | `e59_pooling.csv` (12) | rider-weighting REFUTED; the ride-weighted ε ships |
+| 58 | $(D_3..D_6, P_{f,r}^{\mathrm{rider}})$ | $F_1..F_4$, bootstrap | `e58_intervals.csv` (10) | Table 2's parameters with CIs, and the breaking points |
+| 57 | $(D_3..D_6, P_{f,r}^{\mathrm{rider}})$ | family + $F_\mathrm{base}$, rider-median fallbacks | `e52_rider_fallback.csv` (7); the rider arm is today's default `e52_split.csv` | no constant originates outside the rider's own telemetry |
+| 56 | $(D_3..D_6, P_{f,r}^{\mathrm{reg}})$ | $F_3$ (τ) and $F_4$ (c) | `e56_struct.csv` (4) | the τ/c companion to §3.2's physical-parameter table |
+| 55 | $(D_3..D_6, P_{f,r})$, two aero estimators | $\{F_1..F_4, F_\mathrm{base}\}$ | `e52_split.csv` vs `e52_split.seg.csv` (4 each) | the regime-consistent aero becomes the default |
+| 54 | $(D_3..D_6, P_{f,r})$ | $F_3$ at τ = 2 m, one flat ε, leave-one-rider-out | `e54_transfer.csv` (31) | the accuracy cost of calibrating on one person |
+| 52 | $(D_3..D_6, P_{f,r})$ | $\{F_1..F_4, F_\mathrm{base}\}$, the A-chain | `e52_aggregates.csv` (2,039), `e52_split.csv` (4) | the shipped form, its ε, and a test-half error for both |
 | 51 | $(D_3..D_6, P_{a,g} \cdot P_{f,r})$ | $F_3$ with a flat ε, train/test | `e51_flatconst.csv` | the value paper 1 would ship, and its honest error |
 | 50 | $(D_3..D_6, P_{a,g} \cdot P_{f,r})$ | $F_{\mathrm{base}}$ under perturbation of $(m, C_dA, C_{rr}, \lambda)$ | `e50_sensitivity.csv` | does ε earn its density in paper 1? ($S_T > 0.50$ to keep it) |
 | 49 | $(D_3..D_6, P_{a,g} \cdot P_{f,r})$ via $O_{47}$ | $F_3^{\delta_5}$, affine in $\varepsilon_{\mathrm{coast}}$, global and per rider | `e49_affine.csv` — second-order | does the coasting limit need rescaling? |
@@ -218,6 +263,368 @@ Entries with no $O$ are reviews, registrations, imported notes or refactors — 
 what the other rows *mean* without producing a per-ride table of their own.
 
 ---
+
+---
+
+## 2026-08-07 — Entry 67: the residual decomposed — no transferable physics in the deadband's unique share
+
+**Lineage** — $I$: the e52 cache (train half) + the e63 tolls at $\tau_n$ = 2 · $T$: B,
+the absorber-signature correlations; C, within-rider early/late refits with an aging
+test · $O$: `e67_signature.csv` (1,732), `e67_stability.csv` (6 rider-halves) · $S$:
+the coupling table and the aging penalties.
+
+*Prompt (Danilo): "any way to break-down the residual so that we know what's
+transfearable physics-wise?" → "let's do B and C".* The question Entries 63–66 left:
+of the fitted deadband's unique ~25 pp, how much is structure that would travel (to a
+new rider, a new season) and how much is in-sample flexibility? Design B tests the
+only channel through which $\tau$ = 6 can beat $\tau$ = 2 once ε is refit per arm —
+the *coupling* $\rho(\delta, r)$ between a ride's removal effect at common ε (pure
+geometry) and its signed misfit — and asks where that coupling lives: within riders
+(a feature class; candidate physics) or between riders (bias soaked by a rider-blind
+knob; absorber). Design C splits each rider's train rides into early/late halves
+(activity order as chronology, stated as the proxy it is), refits (ε, τ*) and F5f's ε
+per half, and runs the **aging test**: score the late half with the rider's own
+early-half constants, F3 vs F5f, same loss as the CV — the form whose constants
+persist in time carries the transferable content.
+
+### B — every signature channel is weak; the benefit is diffuse
+
+Pooled coupling $\rho(\delta, r)$ = **+0.082**; within-rider median **+0.081**
+(five of six groups ≤ 0.11; D4 the outlier at 0.35); between-rider **−0.029**.
+Geometry covariates of the misfit within riders: removal/km +0.105, h₊/km +0.090.
+And $\rho(\mathrm{benefit}, \delta)$ = +0.048 — the τ = 6 gain is not even
+concentrated on removal-rich rides. Neither fingerprint appears: no feature class
+couples removable mass to misfit (physics), and no rider-level bias structure does
+either (the simple absorber picture). The deadband's advantage is *diffuse* — tiny,
+everywhere, explained by nothing measured. (B is blind by construction to a
+symmetric variance-reduction channel; C is not, and closes it below.)
+
+### C — τ* is not a rider property, and the deadband's content does not persist
+
+| rider | n/2 | τ*_early | τ*_late | aging F3 | aging F5f |
+|---|--:|--:|--:|--:|--:|
+| D3 | 187 | 6.6 | 5.4 | 0.00592 | 0.00485 |
+| D4 | 93 | 8.0 | 12.0 | 0.00821 | 0.01035 |
+| D5 | 270 | 12.0 | 6.6 | 0.00513 | **0.00084** |
+| D6-user_1 | 82 | 4.5 | 12.0 | 0.00049 | 0.00026 |
+| D6-user_2 | 147 | 5.4 | 3.0 | 0.00020 | 0.00028 |
+| D6-user_3 | 81 | 12.0 | 12.0 | 0.00082 | 0.00043 |
+
+**τ* moved in 5 of 6 riders**, and not by grid-neighbour amounts (4.5 → 12, 12 → 6.6).
+The aging penalties are the verdict: median **F3 0.00298 vs F5f 0.00064** — the
+deadbanded form's early constants serve the same rider's later rides ~4.7× worse
+than the toll form's, and F3's median in-time transfer penalty is nearly **twice its
+entire in-pool CV edge over F5f** (0.0016). Even within one person, whatever τ = 6
+was absorbing early does not persist late. F5f's near-zero aging is the positive
+finding of the pair: **ε + the computed toll are stationary within riders — they
+behave like physics.** (D4 is the one counterexample worth a flag: strong
+within-coupling, F5f aging worse than F3, and both ε's dropping hard early→late —
+something changed materially in that rider's history; a device or route-mix shift is
+the natural suspect.)
+
+### Verdict — the breakdown the question asked for
+
+Transferable-physics share of the deadband's unique ~25 pp: **≈ zero, on both axes
+now measured** — across riders (E64's LORO: the edge vanishes) and across time within
+riders (C: it doesn't survive its own rider's next season), with no geometric
+signature to model (B). The residual is *non-stationary misfit absorption*: the
+fitted amplitude threshold soaks whatever transient the ledger carries that month —
+device, season, route mix — which is also why no measurement-error mechanism could
+be pinned to it (E65–66) and why τ* tracks residual bias (E39). **What is
+transferable, physics-wise, is exactly F5f's content: ε plus the KE-buffer toll.**
+The chain's honest summary for paper 1, should this land there: F3 buys its last
+~18% of CV with a parameter that does not generalise beyond the pool it is fitted
+in; F5f is the form whose accuracy is all keepable.
+
+Instrument: [`e67_residual.py`](../../src/harness/e67_residual.py) (`E67_SMOKE=1`;
+pins the e63 module to the $\tau_n$ = 2 arm before import; no walks — pure cache
+arithmetic plus per-half refits). Train half only throughout; the test half was not
+touched.
+
+---
+
+## 2026-08-07 — Entry 66: the drift probe — Entry 65's attribution refuted at ride grain, and the deadband re-read as a bias absorber
+
+**Lineage** — $I$: $(D_3..D_6)$ raw records (lat/lon/alt/time re-parse; the pts cache
+keeps no geo) + the e52 cache + `e63_taupred` · $T$: closure-pair drift statistics per
+ride; rank correlations against the deadband's removal and benefit · $O$:
+`e66_drift.csv` (2,039 rows, scalar stats only — no geometry leaves the walk) · $S$:
+P1a/P1b/P1c below.
+
+*Prompt (Danilo): "can we make a experiment to test that?" then, against the DTM
+design, "using DTMs introduces other kinds of noise and sources of errors" → "Let's do
+S1".* The identification that needs no DTM: **drift is a function of time at a fixed
+place; terrain is a function of place** — so a ride that revisits a location measures
+its own drift (the surveyor's levelling-loop closure). Same-cell (10 m) point pairs
+≥ 10 min apart, per-cell 60 s downsampling and a 30-pair cap, |Δh| > 20 m dropped as
+grade-separated crossings, medians throughout. FABDEM bias, georeferencing and
+GPS-slope leakage are place-shaped and cancel from a same-place difference by
+construction.
+
+### Results (1,663 of 2,039 rides with ≥ 10 pairs; median 393 pairs/ride)
+
+**The drift is real and baro-sized**: median same-place disagreement **2.80 m**,
+median rate **3.38 m/h** — the amplitude-bounded, hours-scale signal Entry 65
+hypothesised, measured internally. But the attribution's predictions split:
+
+| prediction | statistic | verdict |
+|---|---|---|
+| P1a drift ↔ extra removal τ2→τ6 | ρ = +0.232; **+0.132 after length control** (removal/km; both variables grow with ride length: ρ(drift, km) = +0.19, ρ(removal, km) = +0.53) | weakly supported |
+| P1b drift ↔ per-ride τ6 benefit (loss drop, ε refit per arm, train n = 1,413) | **ρ = −0.009** | **null — refuted** |
+| P1c rider-level drift ↔ τ* | ρ = −0.491 (n = 7; D5, the τ* = 8 rider, has low drift 2.2 m; D6-user_2, τ* = 4.5, the highest at 4.4 m) | contradicted |
+| P3 virtual-ride control | vacuous — `iter_brazil` drops manufacturer 260, no synthetic-elevation rides in the chain | not testable |
+
+### Verdict — the strong attribution dies, and the thread's endpoint clarifies
+
+The 6 m deadband does remove *some* drift-shaped mass (P1a's residual +0.13), but its
+**accuracy advantage over the 2 m floor is completely blind to measured drift** (P1b),
+and riders with more drift do not prefer bigger τ (P1c). Entry 65's "the unique share
+is barometric drift" is refuted as stated. **S2 (the levelling-adjustment
+intervention) is deferred with a registered predicted-null**: its premise was that
+correcting drift would collapse τ* toward the jitter floor; P1b says the τ*
+preference does not live where the drift lives, so S2 would confirm, not decide.
+
+What survives the whole Entry 63–66 arc is a two-part decomposition of the F2→F3 gap:
+**~46–53 pp is genuine KE-buffer physics** (the toll reproduces it with one parameter,
+wins 1-SE selection at the 2 m floor, and transfers across riders), and **the
+deadband's unique ~25–29 pp is now best read not as measurement-error removal at all
+but as the model's cheapest flexible misfit absorber** — its benefit is uncorrelated
+with every measurement-error mechanism tested (fragmentation and white jitter in
+Entry 65, drift here), while per-rider τ* tracks residual bias (Entry 39) and the
+τ*-ordering prediction fails (Entry 64). A fitted amplitude threshold is one knob that
+can shave h̃₊ wherever the ledger runs hot, and the data uses it as exactly that.
+Paper-1 implication, if this thread ever lands there: F3's τ should be presented as a
+calibrated correction alongside ε, not as a physical filter; the physically-derived
+form is F5f, and its 82% is what the physics alone honestly buys.
+
+Instrument: [`e66_driftprobe.py`](../../src/harness/e66_driftprobe.py) (`E66_SMOKE=1`,
+`E66_REBUILD=1`; label parity with the e52 cache by replicating `corpus_rides`'
+counters; the record loader is a deliberate local copy — `param_fit.py` is a
+module-level script whose import runs Entry 15 and rewrites `param_fit.csv`, which it
+did once in this entry's smoke before the copy; the file is deterministic, the rewrite
+was verified benign). Output carries scalar statistics only — the repo is public and
+no ride geometry may leave the walk.
+
+---
+
+## 2026-08-07 — Entry 65: two rival fixes for the filterless gap both fail, and the deadband's unique share gets a name
+
+**Lineage** — $I$: $(D_3..D_6, P_{f,r})$ via $O_{52}$ + two fresh toll walks · $T$: the
+F5 family under (a) 4-point rainflow pairing on the raw profile and (b) Gaussian
+smoothing $\sigma$ = 15 m with simple pairing, both at $\tau_n = 0$; Entry 52's A-chain;
+the LORO contest · $O$: `e63_{tolls,split,loro}.E63_TAUN0p0_E63_RAINFLOW1.csv`,
+`e63_{tolls,split,loro}.E63_TAUN0p0_E63_SMOOTH15.csv` · $S$: two informative negatives
+and a re-attribution.
+
+*Prompt (Danilo): "> a rainflow-style hierarchical valley pairing — let's do that, I'm
+curious to see it" and "also do the gaussian smoothing experiment".* The Entry 64
+amendment left a suspect standing: quantization fragments raw descents, attenuating the
+foot amplitudes the toll caps on. These are the two rival designs that would confirm it —
+fix the *pairing* (rainflow: closed cycles tolled $\min(R, \mathrm{buffer})$
+innermost-first, flanks spliced so residue feet recover full amplitude; raw profile kept)
+or fix the *measurement* (Gaussian $\sigma$ = 15 m before enumeration, components
+recomputed on the smoothed profile and engine-checked to $2\times10^{-16}$; simple
+pairing kept). Both ran the full chain and LORO at seed 48/54.
+
+### Results (CV; gap = F2 0.06306 → F3-fitted 0.05406)
+
+| arm (all one-parameter F5f unless noted) | CV | share of gap |
+|---|--:|--:|
+| smoothing alone, toll off (σ = 15 control) | 0.06314 ± 0.00185 | **0% — inert** |
+| rainflow toll, raw profile | 0.05956 ± 0.00180 | 39% |
+| single-pass toll, raw (E64 amendment) | 0.05831 ± 0.00182 | 53% |
+| smoothing + toll | 0.05812 ± 0.00182 | 55% |
+| deadband τ = 2 pinned, no toll (control) | 0.05625 ± 0.00187 | 76% |
+| deadband τ_n = 2 + toll (E64, the best F5) | 0.05567 ± 0.00183 | 82% |
+
+A.8 test medians for both new arms sit at 3.05–3.29, indistinguishable from F3's 3.24;
+both LORO contests wash out (sign p = 0.60–1.0; the τ_n = 2 arm's F5m at p = 0.044
+remains the only significant transfer win, though smoothing+toll drives D5's donor bias
+from F3's −3.46% to +0.59% — overshooting zero).
+
+### Reading — three attributions settle
+
+**1. Fragmentation is exonerated.** Rainflow does exactly what it promises — feet
+re-merge to full amplitude — and *loses* 14 pp to the naive single-pass. The toll mass
+barely moved (T(∞) median ~20 → 22 m): even fragmented, the last raw fragment at a real
+foot was usually deeper than the 5–9 m buffer, so the amplitude cap was already binding
+on the *buffer*. Diagnostic in the fit itself: rainflow is the only arm where the grid
+$v_b$ ever left the 999 rail — it fitted **32 km/h**, the optimiser *shrinking* buffers
+to undo systematic over-tolling. The plausible over-toll: rainflow also closes
+dips-nested-in-climbs, where $v_e = \max(v_t, v_f)$ overestimates the buffer badly (a
+dip is entered at $v_c$, not $v_f$). Hierarchy without a per-context entry speed is
+worse than no hierarchy.
+
+**2. White jitter geometry is not the deadband's secret either.** A σ = 15 m Gaussian —
+which crushes 0.2 m quantization noise — is *inert on its own* (0.06314, at F2 within
+noise: the smoother trades removed jitter for real rounded-peak amplitude,
+$\sim|\Delta s|\,\sigma$ per reversal, and ε's refit absorbs the wash) and buys the toll
+only 2 pp over raw (53 → 55%).
+
+**3. The deadband's unique ~25 pp now has a positive characterisation.** What survives a
+15 m wavelength filter, cannot be KE-shuttled (too long for the buffer), yet is removed
+by an amplitude threshold at τ = 6 m regardless of wavelength? **Amplitude-bounded,
+long-wavelength elevation error — barometric drift** — plus whatever genuine
+long-wavelength relief rides in that band. The deadband's irreplaceable job is
+*amplitude-thresholded* removal, which neither a wavelength-based smoother nor a
+physics-capped toll imitates by construction. This also closes the loop on Entry 39
+(τ* tracks residual bias — drift is rider-device-shaped) and on the Entry 64 τ*-ordering
+failure. Falsifiable next: rides with barometric vs GPS-only elevation should show
+different fitted τ*, and a drift-model term (slow sinusoid amplitude fit per ride)
+should reproduce the deadband's unique share if the attribution is right.
+
+**Verdict.** F5f at $\tau_n = 2$ stands as the best variant of the family; the filterless
+program is closed — not because the toll failed (it holds its 53% with one parameter)
+but because the deadband's remainder is instrument-shaped, not physics-shaped, and a
+physics term should not be asked to absorb it.
+
+Instrument: [`e63_f5_kebuffer.py`](../../src/harness/e63_f5_kebuffer.py), modes
+`E63_RAINFLOW=1` (4-point rainflow, residue pass for macro valleys) and
+`E63_SMOOTH=<sigma m>` (Gaussian on the 5 m grid; sm components cached with a
+build-time engine check; the vb = 0 arm doubles as the smoothing-alone control).
+Gates green throughout (rainflow's F5($v_b{=}0$) ≡ F2 at 0 kJ; smoothed components
+2×10⁻¹⁶; F3/F4 reproduce `e52_split.csv` in both chains).
+
+---
+
+## 2026-08-07 — Entry 64: the toll wins selection, travels better, and its rider-grain τ prediction fails
+
+**Lineage** — $I$: $(D_3..D_6, P_{f,r})$ via $O_{52}$ + the Entry 63 toll walk rebuilt with a
+measured per-ride $v_b$ · $T$: F5f and F5m (below) under Entry 52's A-chain; the LORO
+transfer contest; the per-rider τ* table · $O$: `e63_split.E63_TAUN2p0.csv` (now 6 rows),
+`e63_loro.E63_TAUN2p0.csv` (7 recipients), `e63_taupred.E63_TAUN2p0.csv` (7 groups),
+`e63_tolls.E63_TAUN2p0.csv` (2,039, + `vb_meas_kmh`/`toll_vbm`) · $S$: the selection flip,
+the transfer margin, the failed ordering.
+
+*Prompt (Danilo): "let's do the next steps" — Entry 63's four registered follow-ups, run at
+the arm where F5 competes ($\tau_n$ = 2 m). All three instruments live in
+`e63_f5_kebuffer.py` (`E63_LORO=1`, `E63_TAUPRED=1`) so the F5 algebra keeps one copy.*
+
+### The two one-parameter forms
+
+**F5f** freezes $v_b$ at the never-brake arm *before* fitting — registered on Entry 63's
+observation that both arms railed there, so freezing removes a parameter the data already
+declined to use. **F5m** replaces the constant with telemetry: the ride's measured descent
+speed cap, defined as the time-weighted 95th-percentile moving speed over descent-graded
+30 m cells (measured_flat_speed's cells and gates, pointed downhill; $v_f$ fallback when a
+ride has no descent samples). Corpus median $\hat v_b$ = **46.5 km/h** (5th–95th:
+29.5–60.2) — above most urban terminal speeds, which is the rail of Entry 63 explained by
+measurement. Both forms fit only ε: NPAR = 1.
+
+### Results — selection (same A-chain, seed 48; CV = mean |log(Ê/E)|, 20 folds)
+
+| form | k | CV | 1-SE | AIC | test med\|Δ%\| [95% CI] | signed [95% CI] |
+|---|--:|--:|---|--:|--:|--:|
+| F3 (τ fitted, 6 m) | 2 | 0.05406 ± 0.00180 | in | **−4230.9** | 3.24 [2.75, 3.50] | +0.07 [−0.31, 0.70] |
+| F4 | 2 | 0.06286 ± 0.00199 | out | −3722.1 | 2.86 [2.58, 3.39] | −0.40 [−0.73, 0.14] |
+| F5 (grid $v_b$) | 2 | 0.05576 ± 0.00185 | in | −4126.4 | 3.05 [2.55, 3.52] | +0.41 [−0.09, 0.86] |
+| **F5f (frozen ∞)** | **1** | **0.05567 ± 0.00183** | **in** | −4128.4 | 3.05 [2.55, 3.52] | +0.41 [−0.09, 0.86] |
+| F5m (measured $\hat v_b$) | 1 | 0.05662 ± 0.00187 | out | −4070.1 | **2.93 [2.55, 3.36]** | +0.52 [−0.16, 0.82] |
+
+**F5f WINS A.5** — inside F3's 1-SE band (0.05567 vs threshold 0.05586) at one fitted
+parameter, so the registered 1-SE-toward-simpler rule now selects the physics toll over
+the fitted deadband: *the form-selection story is "computed toll replaces the fitted
+filter parameter."* Freezing also (slightly) beats searching — F5f's CV edges F5's,
+in-fold search over a rail being pure variance. AIC still prefers F3 and the entry says
+so; Entry 49's precedent governs (held-out/CV primary, information criterion reported).
+F5m sits just outside the band in-pool yet posts the best held-out median of the profile
+forms — a hint that its extra fidelity is real but rider-shaped, which is what the LORO
+contest tests directly.
+
+### Results — the LORO transfer contest
+
+Entry 54's strictness: every parameter fitted on six riders' train halves, scored on the
+seventh's test half. Per-ride paired |Δ%| differences, stratified CIs at seed 54:
+
+| recipient | n | F3 | F5f | F5m | F3 signed | F5m signed |
+|---|--:|--:|--:|--:|--:|--:|
+| D3 | 66 | 3.25 | 3.12 | 3.15 | −1.26 | −0.84 |
+| D4 | 33 | 2.21 | 2.43 | 2.51 | +0.04 | +0.33 |
+| D5 | 95 | 5.07 | 4.39 | **4.31** | −3.46 | **−1.93** |
+| D6-user_1 | 29 | 3.90 | 4.83 | 4.73 | +3.89 | +4.57 |
+| D6-user_2 | 52 | 2.18 | 1.95 | 1.83 | +2.18 | +1.83 |
+| D6-user_3 | 28 | 2.51 | 2.58 | 2.78 | −0.40 | −2.23 |
+| D6-user_5 | 2 | 114.7 | 114.2 | 114.0 | — | — |
+
+**F5m transfers better than F3: closer on 169/302 rides (sign p = 0.044), median per-ride
+difference −0.11 pp [−0.24, −0.00].** F5f shows the same direction without significance
+(−0.06 pp [−0.19, +0.01], p = 0.27). The largest single effect is exactly where the
+absorption argument predicted: D5 — the slowest rider ($v_f$ ≈ 21 km/h), most unlike the
+donors — has its donor-fitted bias nearly halved (−3.46% → −1.93%). D6-user_1 moves the
+other way (the toll widens their overprediction), so the gain is not uniform; it is
+concentrated in the rider the pooled constant serves worst. (D6-user_5's printed 114 is an n = 2 artefact: one healthy ride averaged with
+`D6-user_5#4`, a 32 km ride whose *measured* 271 kJ is implausibly low — F_base overshoots
+it by +227%, so the pathology is in the empirical energy, not any form. Flagged for
+follow-up; negligible leverage on the pooled statistics.)
+
+### Results — the τ* rider-grain prediction FAILS
+
+Per-group fitted τ* (train halves only) against $\tau_n + h_{KE}/(2(1-\varepsilon))$ with
+$h_{KE}$ from measured $\hat v_b$: **Spearman ρ = +0.055 on 7 groups — no rank agreement.**
+The *level* is right — τ* spans 4.5–12 m and the prediction spans 4.3–8.7 m, confirming
+Entry 63's matching argument that the fitted deadband sits at buffer scale, far above the
+2 m jitter floor — but the *ordering* across riders is not carried by $h_{KE}$. This is
+Entry 39's lesson holding under a sharper lens: per-rider τ* tracks residual bias wherever
+bias has τ-slope, and that contamination swamps a ~4 m spread in predicted buffer. The
+honest status of registered step (4): magnitude supported, rider-grain ordering refuted.
+
+### Multiplicity, stated plainly
+
+The seed-48 test half has now been scored by seven registered estimators across Entries
+52/63/64 (F1–F4, F5, F5f ≡ F5's numbers, F5m), and F5f's freeze was chosen after seeing
+Entry 63's rail — registered there, but a reader should weight the selection flip as
+CV-driven (train-only) with the test half corroborating, not as a fresh confirmatory
+result. A cleaner claim needs the one thing this chain cannot produce: new rides. The
+LORO result is the strongest piece precisely because its fits never saw the scored rides
+or riders.
+
+### Verdict
+
+The mechanistic form now (a) matches the fitted deadband under the chain's own selection
+rule with half the parameters, (b) beats it out-of-rider where behaviour differs most, and
+(c) fails to predict per-rider τ ordering — exactly the profile of a term that captures
+the dominant physics while a bias-shaped residue still leans on fitting. Deployment
+implication, unchanged from Entry 63 but now evidenced: geometry-only consumers (paper 2's
+planner profiles, the router) get F5f; telemetry-rich consumers get F5m's extra fidelity
+for free from data they already carry.
+
+### Amendment (same day) — the filterless arm: F5 without any deadband (τ_n = 0)
+
+*Prompt (Danilo): "Can we redo Entry64, but without deadband on F5? … eg. tau=0".* The
+unified reading taken to its end: at $\tau_n = 0$ the components are F2's (`f3t0` ≡ F2,
+gated at 0 kJ), the buffer keeps its full height, and the amplitude caps
+$\min(D, H, \cdot)$ must do the noise annihilation themselves — a 0.3 m jitter wiggle
+tolls at most its own amplitude. One mechanism, zero filters. It works at ~half strength:
+valleys/ride jump 14 → 252 and T(42) 0 → 19.3 m as the toll swallows jitter, and
+
+| quantity (CV, same protocol) | value | share of the F2→F3 gap (0.0090) |
+|---|--:|--:|
+| toll alone — F5f($\tau_n{=}0$) | 0.05831 ± 0.00182 | **53%** |
+| filter alone — F3(τ = 2 pinned) | 0.05625 ± 0.00187 | 76% |
+| both — F5f($\tau_n{=}2$) | 0.05567 ± 0.00183 | 82% |
+
+so the decomposition the thread conjectured ("the deadband IS n·h_KE") gets its number:
+**~46 pp of the gap is *shared* explained loss — seven eighths of everything the toll
+explains, the filter also explains** — with unique shares of ~29 pp (filter) and ~6 pp
+(toll). Consequences of removing the filter: F5f falls out of F3's 1-SE band (0.05831 vs
+threshold 0.05586; winner reverts to F3), and the LORO transfer significance dissolves
+(F5m: −0.04 pp [−0.43, +0.22], p = 0.77 — though D5's donor bias improves even further,
+−3.46% → −0.79%, D6-user_3 degrades −0.40% → −4.02%: per-rider variance up, significance
+gone). τ* ordering: ρ unchanged (+0.055) — the prediction's failure was never about the
+floor. The named suspect for the toll's missing strength stands as registered before the
+run: 0.2 m altimeter quantization *fragments* real descents into micro-swings on the raw
+5 m grid, attenuating true foot amplitudes while the toll's single-pass pairing cannot
+re-aggregate them — a rainflow-style hierarchical pairing is the design that would test
+it. Verdict: **the deadband is not redundant; F5f at $\tau_n = 2$ stays the best variant**,
+and the filterless arm's value is the attribution, not the form. Outputs:
+`e63_{tolls,split,loro,taupred}.E63_TAUN0p0.csv`.
+
+Instrument: [`e63_f5_kebuffer.py`](../../src/harness/e63_f5_kebuffer.py) as extended
+(`E63_LORO=1`, `E63_TAUPRED=1`; measured-$v_b$ columns require `E63_REBUILD=1` on old toll
+CSVs — the join refuses stale files rather than tolling zero). Outputs as in the lineage
+plus the amendment's `.E63_TAUN0p0` set; gates unchanged and green (F5($v_b{=}0$) ≡
+F3($\tau_n$) at 0 kJ — at $\tau_n = 0$ that comparator is F2 itself; F3/F4 reproduce
+`e52_split.csv`).
 
 ---
 

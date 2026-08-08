@@ -85,7 +85,40 @@ home of the *derivation* and the side-by-side comparison.
   F5(v_b=0) ≡ F3(τ_n) at 0 kJ. `E63_SMOKE=1`, `E63_TAUN=2.0` — env-suffixed
   sensitivity arm, `E63_DECOMP=1` pinned-τ control only, `E63_REBUILD=1`.
   Verdict: F5(τ_n=2) enters F3's 1-SE band; both arms rail v_b at ∞ — the cap
-  doesn't bind at these corpora's grades),
+  doesn't bind at these corpora's grades. Entry 64 (same file): **F5f** (v_b
+  frozen at never-brake, 1 parameter) WINS the A.5 selection under the 1-SE
+  rule; **F5m** (v_b measured per ride — 95th-pct descent speed, `toll_vbm`)
+  transfers better than F3 in the E54-style LORO contest (`E63_LORO=1`,
+  p = 0.044, seed 54); the per-rider τ* ordering prediction FAILS
+  (`E63_TAUPRED=1`, ρ ≈ 0.06) — magnitude right, ordering bias-contaminated.
+  AIC still prefers F3, stated per the Entry-49 precedent. The E64 amendment's
+  filterless arm (`E63_TAUN=0.0`) shows toll-alone recovers 53% of the F2→F3
+  gap vs filter-alone 76% and both 82% — ~46 pp shared, so filter and toll are
+  mostly the same term, but the deadband is NOT redundant: without it F5f
+  leaves the 1-SE band and the LORO significance dissolves. Entry 65 (same
+  file, modes `E63_RAINFLOW=1` and `E63_SMOOTH=<σ>`): both rival fragmentation
+  fixes FAIL — rainflow over-tolls (39%, the one arm where v_b left the rail,
+  fitting 32 km/h) and σ=15 smoothing is inert alone (0%) adding 2 pp with the
+  toll — so the deadband's unique ~25 pp was re-attributed to amplitude-bounded
+  long-wavelength elevation error (baro drift), which only amplitude-threshold
+  removal touches; the filterless program is closed, F5f(τ_n=2) stays best),
+  `e66_driftprobe.py` (Entry 66 — the closure-pair drift probe, no DTM:
+  same-place different-time pairs measure each ride's baro drift internally
+  (median 2.8 m, 3.4 m/h, 82% coverage). Entry 65's strong attribution
+  REFUTED: the deadband's τ6-over-τ2 benefit is drift-blind (ρ ≈ 0,
+  n = 1,413) — the unique share re-read as a fitted misfit absorber, not
+  measurement-error removal; S2 (drift correction) deferred with a registered
+  predicted-null. `E66_SMOKE=1`, `E66_REBUILD=1`. NB its record loader is a
+  local copy because **`param_fit.py` is NOT import-safe** — importing it
+  runs Entry 15 and rewrites `param_fit.csv`),
+  `e67_residual.py` (Entry 67 — the residual decomposed, B+C: the coupling
+  that lets τ=6 win is weak everywhere (pooled ρ ≈ 0.08, within ≈ 0.08,
+  between ≈ −0.03 — neither the physics nor the absorber fingerprint), τ* is
+  non-stationary (moved in 5/6 riders early→late) and F3's early-half
+  constants age ~4.7× worse than F5f's on the same rider's later rides —
+  the deadband's unique share carries ≈ zero transferable physics; F5f's
+  ε+toll are stationary. Train half only; `E67_SMOKE=1`; pins `E63_TAUN=2.0`
+  before importing the e63 module),
   `bootstrap_ci.py` (**the gate script**; exits non-zero on failure). **Narrowed
   2026-07-31 to only what the papers still claim** — 22 sections became 7, and a
   full run is 4.5 min instead of 15. Surviving sections are keyed to
@@ -137,7 +170,10 @@ home of the *derivation* and the side-by-side comparison.
   runnable cell demonstrates the wrong model).
 - `research/notes/` — `original_notes.md` (the derivations: the energy law and
   its `α, β, ε`; the coasting deficit ε₀; the climb-aero correction; the time
-  model and the `ε ↔ k₋` bridge), `claims.ttl` (machine-readable
+  model and the `ε ↔ k₋` bridge), `epsilon-origin.md` (how ε and the F1–F5
+  ladder fall out of the canonical dynamics — branch fixed points, the recovery
+  length, the KE buffer; the derivation note behind Entries 63–64),
+  `claims.ttl` (machine-readable
   claims–questions–evidence graph, widely-used vocabularies only — schema.org
   Claim/Question, CiTO, PROV-O/P-Plan, Dublin Core; validate with `rdflib`
   after editing), `claims-explorer.html` (generated — regenerate via
