@@ -478,6 +478,61 @@ for _arm, _ew, _en in (("igc5", 501, 943), ("igc5s30", 400, 935),
     if not _ok:
         failed = True
 
+# -------- 3j. Re-based elevation substitution (Entry 71: paper 1's population + D6)
+# Table 1 of the letter, re-based to D3-D5 (travel rides KEPT, igc arms absent
+# outside the survey) plus D6 against FABDEM + barometer. The deep sub-analyses
+# (h+ ratios, portal deck, anomaly-free secondary) stay gated on the canonical
+# walk above; this section gates only what the re-based table and headline quote.
+sec("3j")
+print("\n== Re-based elevation substitution (Entry 71: D3+D4+D5 · D6) ==")
+e71 = parse_csv("e41_dem_route.E41_POPp1_E41_D61.csv")
+_p71 = [r for r in e71 if num(r, "dataOK") == 1 and num(r, "g1_track") == 1
+        and num(r, "g2_valid") == 1]
+_sp71 = [r for r in _p71 if r.get("corpus") in ("ppaz", "jaam", "danlessa")]
+_d671 = [r for r in _p71 if r.get("corpus") == "skc"]
+_ok = len(_sp71) == 1164 and len(_d671) == 670
+print(f"E71 population: D3+D4+D5 n={len(_sp71)} · D6 n={len(_d671)}"
+      + (" GATE-OK" if _ok else " GATE-FAIL(exp 1164/670)"))
+if not _ok:
+    failed = True
+for _pool, _rows71, _arm, _ea, _es, _eci, _ecis in (
+        ("D3+D4+D5", _sp71, "own", 3.8, -1.9, (3.6, 4.1), (-2.3, -1.4)),
+        ("D3+D4+D5", _sp71, "igc5", 4.1, 0.3, (3.9, 4.4), (-0.2, 1.1)),
+        ("D3+D4+D5", _sp71, "igc5s10", 4.0, -0.4, (3.8, 4.3), (-0.9, -0.0)),
+        ("D3+D4+D5", _sp71, "igc5s30", 4.0, -1.8, (3.8, 4.2), (-2.1, -1.5)),
+        ("D3+D4+D5", _sp71, "igc30", 4.0, -0.3, (3.8, 4.2), (-0.9, 0.2)),
+        ("D3+D4+D5", _sp71, "fab5", 5.1, 4.3, (4.5, 6.0), (3.6, 4.8)),
+        ("D3+D4+D5", _sp71, "fab30", 4.5, 2.2, (4.0, 4.9), (1.7, 2.8)),
+        ("D6", _d671, "own", 3.4, 0.3, (3.1, 3.6), (-0.2, 0.7)),
+        ("D6", _d671, "fab5", 5.5, 5.3, (5.1, 5.9), (4.7, 5.8)),
+        ("D6", _d671, "fab30", 4.1, 3.2, (3.9, 4.5), (2.6, 3.7))):
+    report(f"E71 {_pool} {_arm}",
+           [x for x in col(_rows71, f"{_arm}_reg_f3d") if is_finite(x)],
+           _ea, _es, expect_ci=_eci, expect_ci_signed=_ecis)
+# the per-chain noise rates the re-based prescription column quotes
+for _rows71, _tag, _arm, _ec, _eci in (
+        (_sp71, "SP", "own", 3.01, (2.93, 3.10)),
+        (_sp71, "SP", "igc5", 4.90, (4.83, 4.95)),
+        (_sp71, "SP", "fab30", 7.44, (7.11, 7.75)),
+        (_sp71, "SP", "fab5", 10.15, (9.84, 10.60)),
+        (_d671, "D6", "own", 1.26, (1.19, 1.32)),
+        (_d671, "D6", "fab30", 5.61, (5.52, 5.68)),
+        (_d671, "D6", "fab5", 7.87, (7.64, 8.00))):
+    _cs = [(num(r, f"{_arm}_hplus") - num(r, f"{_arm}_hplus_t0")) / num(r, "km")
+           for r in _rows71 if num(r, "km") > 0
+           and is_finite(num(r, f"{_arm}_hplus_t0"))]
+    report(f"E71 c(t=2) {_tag} {_arm}", _cs, _ec, None, expect_ci=_eci)
+# the paired substitution cost the re-based prose quotes
+_d71 = [num(r, "igc5_reg_f3d") - num(r, "own_reg_f3d") for r in _sp71
+        if is_finite(num(r, "igc5_reg_f3d")) and is_finite(num(r, "own_reg_f3d"))]
+_w71 = sum(1 for x in _d71 if x > 0)
+_ok = abs(median(_d71) - 2.16) <= 0.011 and _w71 == 860 and len(_d71) == 1035
+print(f"E71 paired igc5: med {median(_d71):+.2f} pp, over-charges on "
+      f"{_w71}/{len(_d71)}"
+      + (" GATE-OK" if _ok else " GATE-FAIL(exp +2.16, 860/1035)"))
+if not _ok:
+    failed = True
+
 # ---------------------------------------------------------------- 3p. Entry 50
 # Sensitivity decomposition. Gates the shares section 3.2 prints, and the ORDERING
 # the section's argument rests on: eps below every physical parameter, and the

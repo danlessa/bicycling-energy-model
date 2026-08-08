@@ -177,6 +177,10 @@ changed. See Entry 11.)*
   transfers best — [`e69_frontier.py`](../../src/harness/e69_frontier.py)) — this commit
 - **Entry 70** (the pinned-τ curves per rider — basins rider-shaped, optima anti-track
   the noise, u3 at the rail — [`e70_taucurves.py`](../../src/harness/e70_taucurves.py)) — this commit
+- **Entry 71** (paper 2 re-based: D5 travel split, D6 vs FABDEM, c(τ) per chain, F5 on
+  planner inputs — `E41_POP`/`E41_D6` modes in
+  [`e41_dem_route.py`](../../src/harness/e41_dem_route.py) +
+  [`e71_dem_pop.py`](../../src/harness/e71_dem_pop.py); gate section 3j) — this commit
 ---
 
 ## Data traceability
@@ -199,6 +203,7 @@ counted from its CSV rather than asserted, is [`research/data-graph.ttl`](../dat
 
 | entry | $I = (D, P)$ | $T$ | $O$ (rows) | $S$ |
 |--:|---|---|---|---|
+| 71 | D3–D5 (travel kept) + D6, the e41 MODE walk | seven arms × two protocols + τ-grid, toll, F5 per arm | `e41_dem_route.E41_POPp1_E41_D61.csv` (1,957; 1,834 primary), `e71_dem_pop.csv` | paper 2 re-based (gate 3j); c is sensor×terrain; F5 beats F3 on every DEM chain |
 | 70 | the e52 cache (train half) + `e66_drift.csv` | bare F3, τ pinned per grid point, ε refit, per rider | `e70_taucurves.csv` (9 pools × 17 τ) | basins rider-shaped; optima anti-track noise; u3 and pooled-EU at the RAIL |
 | 69 | the e52 cache + toll walks {1.8..4.5} + `e66_drift.csv` pins | F5p and the F5f rungs under CV / LORO / aging | `e69_pins.csv` (7), `e69_frontier.csv` (5), `e69_loro.csv` (7), `e69_aging.csv` (6) | F5p matches F3's CV with zero chosen constants and transfers best (p = 0.0001) |
 | 68 | the e52 cache + eight toll walks over the $\tau_n$ grid | F5f fold-CV + pinned-τ control per floor | `e63_tolls.E63_TAUN*.csv` (2,039 each; summary console-borne, ~2 min/arm) | CV($\tau_n$) monotone to the F3 anchor; the floor needs a measured pin |
@@ -272,6 +277,79 @@ Entries with no $O$ are reviews, registrations, imported notes or refactors — 
 what the other rows *mean* without producing a per-ride table of their own.
 
 ---
+
+---
+
+## 2026-08-08 — Entry 71: paper 2 re-based — D5's travel rides, D6 against FABDEM, c(τ) per chain, and F5 on planner inputs
+
+**Lineage** — $I$: D3–D5 (travel rides KEPT) + D6, walked by `e41_dem_route.py` under the
+new MODE flags (`E41_POP=p1 E41_D6=1`) · $T$: the letter's seven arms × two protocols,
+plus per-arm τ-grid geometry, the Entry-63 valley toll (one algebra copy — e41 calls
+e63's `ride_tolls`), and F5 per arm per floor · $O$:
+`e41_dem_route.E41_POPp1_E41_D61.csv` (1,957 walked; 1,834 in the primary population)
+and `e71_dem_pop.csv` (`e71_dem_pop.py`) · $S$: the re-based Table 1, the c(τ) curves,
+the paired terrain split, F5-on-DEM.
+
+*Prompts (Danilo), in sequence: "Can we update Article 2 table 1 to use D3+D4+D5? And
+also have D6, although restricted to FABDEM and baro?" · "I meant D5 and D5*" — the
+full corpus vs the survey-covered subset · "how changing deadband filter values would
+affect the c constant" · "how would article forms F3, F4, F5 fare if the terrain came
+from article 2 inputs rather than the baro?" · the ruggedness/altitude question.*
+
+### Design
+
+The canonical e41 walk and its gates are untouched (env-suffixed everything). The MODE
+walk: paper 1's calibration population (D1/D2 excluded per Entry 52's registration),
+the bbox skip demoted to a per-ride `igc_ok` flag so D5's 84-primary travel rides stay
+(survey arms absent, not rides dropped), and D6 (670 primary) as a new corpus — FIT-only,
+arms own/fab5/fab30, physics from the A-chain cache (100% join, verified; wind 0 by that
+iterator's registration). FABDEM: 111 tiles touched, 106 served by the collective's own
+mirror (Europe included), 5 missing and handled per-ride. All numbers at inverted
+per-ride physics, held fixed across arms.
+
+### Results (primary population, F3 · ε_d · reg; full grids in `e71_dem_pop.csv`)
+
+**Re-based Table 1** — D3+D4+D5 (1,164): own 3.8·−1.9 · igc5 4.1·+0.3 · σ30 4.0·−1.8 ·
+fab30 4.5·+2.2 · fab5 5.1·+4.3. **D6 (670): own 3.4·+0.3 — the program's cleanest
+column — fab30 4.1·+3.2, fab5 5.5·+5.3**: FABDEM's Europe cost ≈ its São Paulo cost;
+the prescription transfers. **The within-rider terrain split**: D5* (445 covered) fab5
+5.7·+4.4 vs D5\D5* (84 travel) fab5 7.7·+6.4, paired over-charge +5.1 → +7.2 pp, while
+the same rider's barometer holds 4.7 — the letter's terrain caveat, measured at fixed
+person and instrument.
+
+**c(τ) per chain** (medians, m/km, τ = 2→6): baro SP 3.01→4.76; igc5 4.90→6.87; fab30
+7.44→10.82; fab5 10.15→14.60; **D6 baro 1.26→2.36** — European chains 2.4× cleaner than
+São Paulo's. With the per-corpus ruggedness correlations (ρ(c, h̃₊/km) = +0.25…+0.58
+within every corpus, canonical walk) and the ~9% air-density scaling 700 m predicts,
+the reading: **c is sensor noise convolved with terrain reversal structure** — jitter
+on sustained grades makes no removable reversals; rolling terrain converts the same
+sensor into removable mass and adds real momentum-payable micro-relief. Never inherit
+a c; measure the chain in its terrain.
+
+**F5 on planner inputs** (med|Δ%|, floors 2/3/4.5/6): on the barometer F5 ≈ F3
+(3.85 vs 3.85 at the 2 m floor — route-grain parity reproduced). On every DEM chain
+F5 beats F3, more the noisier the chain, best floor tracking the chain's noise scale:
+fab5 SP **5.06 → 3.67** (τ_n = 6); fab30 SP 4.54 → 3.90; D6 fab30 **4.14 → 2.76**;
+travel-ride fab5 7.66 → 4.58; and D6's barometer at 2.75 — the best cell in the
+program. Honesty note: this F3 carries the letter's frozen τ = 2 bundle, so part of
+F5's margin is floor-size (Entry 68's curve) — but the DEM-chain gains far exceed the
+route-grain floor effect, and the winning floors sit at each chain's measured noise
+scale. The measured-pin doctrine lands on paper 2's inputs; paper 3's H5 has its
+route-grain answer.
+
+### Actions taken (the number-moving protocol)
+
+Gate section **3j** added to `bootstrap_ci.py` (population, ten Table-1 cells, seven
+c(τ=2) rates, the paired swap cost — all green at full B; canonical 3i untouched and
+still green). Paper 2's abstract, §2.2, §2.3, Tables 1–2 and §5 re-based; sidecar
+claims `a2.swap.cost` (4.3 → 4.1) and `a2.noise.rate` (3.10 → 3.01) moved to 3j;
+`check_paper_stats` 16 claims, 0 failing. The deep sub-analyses (h₊ ratios, anomaly
+census, portal decks) stay quoted and gated on the canonical walk, with the paper
+saying so — their re-base is registered follow-up. Also registered: D5* under a
+*European* fine survey is the real "D6*" (ICGC/Lombardy/GUGiK lidar) — a fetch
+workstream, its own entry if wanted; and the F5-on-DEM result graduating into the
+letter needs its own registered arm (the floor choice pre-stated per chain, not read
+off this table).
 
 ---
 

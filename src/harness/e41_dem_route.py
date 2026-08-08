@@ -110,6 +110,24 @@ _smoke = os.environ.get("E41_SMOKE")
 SMOKE = bool(_smoke)
 SMOKE_N = 40 if _smoke in (None, "", "1") else int(_smoke)
 
+# ---- Entry 71 population/extension modes.  Everything is SUFFIXED under a
+# mode — output CSV, sampling cache — because the canonical files and their
+# gates belong to the published Table 1 (the env-suffix rule):
+#   E41_POP=p1  paper 1's calibration population — D3–D5 only (D1 ⊂ D5 and
+#               most of D2 re-evaluates the same author's rides: Entry 52's
+#               registration, applied to this letter's table)
+#   E41_D6=1    add D6 (the scikit corpus): FIT-only, arms own/fab5/fab30 —
+#               the IGC raster is a São Paulo product and no D6 ride can
+#               intersect it — physics joined from the paper-1 A-chain cache
+# A MODE run also computes, per arm: h̃₊ at a τ grid (the c(τ) curves), the
+# Entry-63 KE valley toll, and F5 — paper 3's H5 scored on paper 2's inputs.
+from bicycling_energy_model.util import env_suffix  # noqa: E402
+E41_POP = os.environ.get("E41_POP", "")
+E41_D6 = bool(os.environ.get("E41_D6"))
+MODE = bool(E41_POP or E41_D6)
+_MSUF = env_suffix("E41_POP", "E41_D6")
+TGRID = (2.0, 3.0, 4.5, 6.0)      # the MODE τ grid (deadband floors, m)
+
 # ---- rasters -------------------------------------------------------------
 # The WIDE IGC-SP 2010 survey (5 m, EPSG:31983) — supersedes the validated
 # sampa_geral.tif crop used by Entries 19–21, which covers only the censo bbox
@@ -173,8 +191,13 @@ PRIMARY_PROTO = "reg"           # the physics the headline is quoted at
 PROTOCOLS = ("frz", "reg")      # frozen priors · regime-consistent per-ride physics
 PROTO_LABEL = {"frz": "frozen priors", "reg": "regime-consistent per-ride"}
 CORPORA = ("longoes", "censo", "ppaz", "jaam", "danlessa")
+if E41_POP == "p1":
+    CORPORA = ("ppaz", "jaam", "danlessa")
+if E41_D6:
+    CORPORA = CORPORA + ("skc",)
 CORPUS_LABEL = {"longoes": "D1 longões", "censo": "D2 censo", "ppaz": "D3 P. Paz",
-                "jaam": "D4 JAAM", "danlessa": "D5 author-full"}
+                "jaam": "D4 JAAM", "danlessa": "D5 author-full",
+                "skc": "D6 scikit"}
 
 # ---- QA thresholds (pre-registered) --------------------------------------
 GAP_MIN = 50.0          # G1: a fix-to-fix gap beyond this is chord-interpolated
@@ -202,10 +225,10 @@ ARMS = [("own", "own", 5, 0.0),
 ARM_NAMES = [a[0] for a in ARMS]
 DEM_ARMS = [a for a in ARM_NAMES if a != "own"]
 
-CACHE_BIN = os.path.join(SCRATCH, "e41_profiles_smoke.bin" if SMOKE
-                         else "e41_profiles.bin")
-CACHE_META = os.path.join(SCRATCH, "e41_profiles_smoke.meta.json" if SMOKE
-                          else "e41_profiles.meta.json")
+CACHE_BIN = os.path.join(SCRATCH, f"e41_profiles{_MSUF}"
+                         + ("_smoke" if SMOKE else "") + ".bin")
+CACHE_META = os.path.join(SCRATCH, f"e41_profiles{_MSUF}"
+                          + ("_smoke" if SMOKE else "") + ".meta.json")
 CACHE_VERSION = 1
 
 
@@ -235,6 +258,59 @@ def load_e35() -> dict:
 
 
 E35 = load_e35()
+
+
+def load_skc_phys() -> dict:
+    """D6 per-ride physics from the paper-1 A-chain cache (m̂/Ĉrr/ĈdA under
+    the rider-fallback protocol; wind 0 — the D6 iterator carries no weather,
+    e52_build's own registration), keyed by track basename via the same
+    counter walk that labels the cache.  Also the per-rider median mass, the
+    frozen protocol's anchor for this corpus."""
+    if not E41_D6:
+        return {}
+    cache_csv = os.path.join(RESULTS, "e52_aggregates.csv")
+    if not os.path.exists(cache_csv):
+        raise SystemExit("E41_D6 needs e52_aggregates.csv — run e52_build.py")
+    by_label = {}
+    with open(cache_csv, encoding="utf-8") as fh:
+        import csv as _csv
+        for r in _csv.DictReader(fh):
+            if r["group"].startswith("D6-"):
+                by_label[r["ride"]] = {"m": float(r["m_hat"]),
+                                       "Crr": float(r["crr_hat"]),
+                                       "CdA": float(r["cda_hat"]),
+                                       "group": r["group"]}
+    from skc_compare import ride_files
+    out: dict = {}
+    seen: dict[str, int] = {}
+    for rider, path in ride_files():
+        try:
+            pts = load_pts(path)
+        except Exception:
+            continue
+        if len(pts) < 10:
+            continue
+        npow = sum(1 for q in pts if q.get("power") is not None)
+        nalt = sum(1 for q in pts if q.get("alt") is not None)
+        if npow / len(pts) <= 0.5 or nalt / len(pts) < 0.99 or pts[-1]["x"] / 1000 < 20:
+            continue
+        group = "D6-" + rider
+        i = seen.get(group, 0)
+        seen[group] = i + 1
+        r = by_label.get(f"{group}#{i}")
+        if r:
+            out[os.path.basename(path)] = {**r, "wind": 0.0, "rel":
+                                           os.path.relpath(path, DATA)}
+    for group in {v["group"] for v in out.values()}:
+        ms = sorted(v["m"] for v in out.values() if v["group"] == group)
+        m_med = ms[len(ms) // 2]
+        for v in out.values():
+            if v["group"] == group:
+                v["m_frz"] = m_med
+    return out
+
+
+SKC = load_skc_phys()
 
 
 # ===== small statistics (house convention: mulberry32, B = 10⁴, seeds 42/43) =====
@@ -540,6 +616,10 @@ def iter_corpus(name: str):
             if e.get("file") and os.path.exists(os.path.join(DATA, e["file"])):
                 yield (e["file"], e.get("name") or os.path.basename(e["file"]), None)
         return
+    if name == "skc":
+        for v in SKC.values():
+            yield (v["rel"], os.path.basename(v["rel"]), None)
+        return
     man = json.load(open(os.path.join(DATA, f"strava_{name}_manifest.json")))
     for a in man:
         if (a.get("sport") == "ride" and (a.get("powCov") or 0) > 0.5
@@ -588,9 +668,20 @@ def build_geometry(rel: str, label: str, corpus: str) -> dict | None:
     span = (min(geo[-1]["x"], base + total) - max(geo[0]["x"], base)) / total
     if span < 0.99:
         return {"skip": "geo-span"}
-    for q in geo:
-        if not (IGC_BBOX["lonMin"] <= q["lon"] <= IGC_BBOX["lonMax"]
-                and IGC_BBOX["latMin"] <= q["lat"] <= IGC_BBOX["latMax"]):
+    # IGC coverage: a flag under MODE, a skip in the canonical run.  D6 is
+    # European (never covered); D3-D5 carry occasional travel rides outside
+    # the raster (Roraima, Lombardy, Poland — the author's), which the
+    # canonical Table 1 drops and a MODE run KEEPS with the igc arms absent:
+    # that split is the D5-vs-D5* comparison (Danilo, Entry 71) — the full
+    # corpus against FABDEM+baro, the covered subset against every arm.
+    igc_ok = corpus != "skc"
+    if igc_ok:
+        for q in geo:
+            if not (IGC_BBOX["lonMin"] <= q["lon"] <= IGC_BBOX["lonMax"]
+                    and IGC_BBOX["latMin"] <= q["lat"] <= IGC_BBOX["latMax"]):
+                igc_ok = False
+                break
+        if not igc_ok and not MODE:
             return {"skip": "outside-raster"}
     d5 = grid_positions(total, ENGINE_DX)
     d30 = grid_positions(total, 30)
@@ -603,15 +694,18 @@ def build_geometry(rel: str, label: str, corpus: str) -> dict | None:
     return {"pts": pts, "prof5": prof5, "emp": emp, "total": total,
             "d5": d5, "d30": d30, "g5": g5, "g30": g30, "tiles": tiles,
             "max_gap": max_gap, "gap_frac": gap_frac, "geo_span": span,
-            "label": label,
+            "label": label, "igc_ok": igc_ok,
             "join": label if corpus == "longoes" else os.path.basename(rel)}
 
 
 def sample_columns(geo: dict, fab_ok: bool) -> dict:
     """The four raw sampled columns: igc@5, igc@30, fab@5, fab@30."""
     out = {}
-    out["igc5"] = sample_raster(IGC_WIDE, geo["g5"]["lons"], geo["g5"]["lats"], "igc5")
-    out["igc30"] = sample_raster(IGC_WIDE, geo["g30"]["lons"], geo["g30"]["lats"], "igc30")
+    if not geo.get("igc_ok", True):        # skc, or a MODE-kept travel ride
+        out["igc5"] = out["igc30"] = None
+    else:
+        out["igc5"] = sample_raster(IGC_WIDE, geo["g5"]["lons"], geo["g5"]["lats"], "igc5")
+        out["igc30"] = sample_raster(IGC_WIDE, geo["g30"]["lons"], geo["g30"]["lats"], "igc30")
     if fab_ok:
         out["fab5"] = sample_raster(FABDEM_VRT, geo["g5"]["lons"], geo["g5"]["lats"], "fab5")
         out["fab30"] = sample_raster(FABDEM_VRT, geo["g30"]["lons"], geo["g30"]["lats"],
@@ -679,6 +773,26 @@ def eval_arm(prof: dict, p: dict, pw: dict, vf: float,
             "canon": c["legE"] / 1000, "cons": resid,
             "cnoise": (a_raw["hplus"] - a_sm["hplus"]) / x_km if x_km > 0 else float("nan"),
             "n_anom": n_anom, "anom_hplus": inj}
+
+
+_E63 = None
+
+
+def toll_at(prof: dict, p: dict, vf: float, p_climb: float, tau_n: float) -> float:
+    """The Entry-63 KE valley toll at floor tau_n (v_b = ∞ arm), metres.
+    One algebra copy: e63_f5_kebuffer's own ride_tolls, its module floor set
+    per call (lazy import — the canonical run never touches it)."""
+    global _E63
+    if _E63 is None:
+        import e63_f5_kebuffer as _m
+        _E63 = _m
+    _E63.TAU_N = tau_n
+    t = _E63.ride_tolls(prof, p["m"], p["Crr"], p["CdA"], vf, p_climb)
+    return t[f"toll_vb{_E63.VB_INF_I}"]
+
+
+def sum_descent(h) -> float:
+    return sum(max(0.0, h[i - 1] - h[i]) for i in range(1, len(h)))
 
 
 def forms(a: dict, eps: float, c_rate: float = C_FROZEN) -> dict:
@@ -749,8 +863,8 @@ def main() -> None:
     for i, (corpus, g) in enumerate(geos):
         cols = cache_cols(cache, i, g)
         profs, valid = arm_profiles(g, cols)
-        if profs.get("igc5") is None:
-            note(corpus, "no-igc")
+        if profs.get("igc5") is None and g.get("igc_ok", True):
+            note(corpus, "no-igc")     # covered ride whose sampling failed
             continue
         pts = g["pts"]
         rp = extract_regime_powers(pts, CLIMB_THR, DESC_THR)
@@ -759,8 +873,12 @@ def main() -> None:
               "flat": flat,
               "descent": rp["descent"]["mean"] if rp["descent"]["mean"] is not None else 0,
               "climbThr": CLIMB_THR, "descThr": DESC_THR}
-        m_frz = g["m_log"] if g["m_log"] is not None else ANCHOR_M[corpus]
-        j35 = E35.get((corpus, g["join"]))
+        skc = SKC.get(g["join"]) if corpus == "skc" else None
+        m_frz = (g["m_log"] if g["m_log"] is not None
+                 else (skc["m_frz"] if skc else ANCHOR_M[corpus]))
+        j35 = E35.get((corpus, g["join"])) or (
+            {"m": skc["m"], "Crr": skc["Crr"], "CdA": skc["CdA"],
+             "wind": skc["wind"]} if skc else None)
         phys = {"frz": {**FROZEN, "m": m_frz, "vmax": VMAX, "vstart": VSTART}}
         phys["reg"] = ({"m": j35["m"], "Crr": j35["Crr"], "CdA": j35["CdA"],
                         "rho": FROZEN["rho"], "keff": FROZEN["keff"],
@@ -768,6 +886,7 @@ def main() -> None:
                        if j35 else dict(phys["frz"]))
         cross = portal_crossings(g)
         row = {"corpus": corpus, "ride": g["label"], "emp": g["emp"],
+               "igc_ok": int(g.get("igc_ok", True)),
                "portal_ok": int(cross is not None),
                "n_spans": len(cross) if cross else 0,
                "span_m": span_metres(cross) if cross else 0.0,
@@ -809,6 +928,27 @@ def main() -> None:
                 for k in ("beta", "a_roll", "a_aero", "aero_raw", "aero_sm",
                           "hminus_sm"):
                     row[f"{name}_{proto}_{k}"] = a[k]
+                # ---- Entry 71 (MODE only): the τ grid — per-chain c(τ)
+                # geometry, the KE valley toll, and F5 = F3(τ_n) with the
+                # toll moved off both gravity terms (paper 3's H5 scored on
+                # paper 2's inputs).  Geometry once (it is protocol-free);
+                # aero/toll/energies per protocol.
+                if MODE:
+                    for ti_, tn in enumerate(TGRID):
+                        hs_ = deadband(prof["h"], tn)
+                        if proto == "frz":
+                            row[f"{name}_hplus_t{ti_}"] = sum_ascent(hs_)
+                            row[f"{name}_hminus_t{ti_}"] = sum_descent(hs_)
+                        aS = approx_components({"x": prof["x"], "h": hs_},
+                                               p, vf, CLIMB_THR)
+                        T = toll_at(prof, p, vf, pw["climb"], tn)
+                        row[f"{name}_{proto}_toll_t{ti_}"] = T
+                        for tag, eps in (("d", a["eps_d"]), ("f", EPS_F)):
+                            e5 = (a["a_roll"] * a["X"] + aS["aero"]
+                                  + a["beta"] * (aS["hplus"] - T)
+                                  - eps * a["beta"] * (aS["hminus"] - T)) / 1000
+                            row[f"{name}_{proto}_f5{tag}_t{ti_}"] = jsdiv(
+                                e5 - g["emp"], g["emp"]) * 100
                 # portal-corrected twin of every DEM arm (closed forms only —
                 # the simulation is the expensive engine and adds nothing here)
                 if name != "own" and cross:
@@ -855,7 +995,13 @@ def main() -> None:
     save_portal_cache()
     write_csv(rows)          # first: the report is long, the CSV must survive it
     report(rows, funnel, cons_max)
-    ok = run_gates(rows, geos, cons_max)
+    if MODE:
+        print("\n[MODE run — the published gates anchor the canonical "
+              "population and are not asserted here; the parity check for "
+              "this population lives in its own entry]")
+        ok = True
+    else:
+        ok = run_gates(rows, geos, cons_max)
     sys.exit(0 if (ok or SMOKE) else 1)
 
 
@@ -1430,7 +1576,7 @@ def write_csv(rows) -> None:
         for k in r:
             if k not in cols:
                 cols.append(k)
-    name = "e41_dem_route_smoke.csv" if SMOKE else "e41_dem_route.csv"
+    name = ("e41_dem_route" + _MSUF + ("_smoke" if SMOKE else "") + ".csv")
     with open(os.path.join(RESULTS, name), "w", encoding="utf-8") as fh:
         fh.write(",".join(cols) + "\n")
         for r in rows:

@@ -30,10 +30,10 @@
 @prefix claims:  <https://danlessa.github.io/bicycling-energy-model/claims#> .
 
 <#c-a2.swap.cost> a schema:Claim ;
-  schema:text "Substituting a planner-grade DEM for the ride's own elevation stream costs about half a point of median error" ;
+  schema:text "Substituting a planner-grade DEM for the ride's own elevation stream costs about a third of a point of median error" ;
   dcterms:type "out-of-sample" ;
-  pc:value 4.3 ;
-  pc:gateSection "3i" ;
+  pc:value 4.1 ;
+  pc:gateSection "3j" ;
   cito:citesAsEvidence dg:o_e41 ;
   prov:wasDerivedFrom claims:assert41 ;
   rdfs:comment "The cost of the substitution that makes the law usable from a map - SM-2's whole question" .
@@ -48,10 +48,10 @@
   rdfs:comment "THE deliverable of A2: a prescription stated a priori, not a per-raster tuning - if it were tuned the elevation source would be a hidden free parameter" .
 
 <#c-a2.noise.rate> a schema:Claim ;
-  schema:text "Ascent-noise rate of the recording chain, 3.10 m/km" ;
+  schema:text "Ascent-noise rate of the recording chain, 3.01 m/km" ;
   dcterms:type "out-of-sample" ;
-  pc:value 3.10 ;
-  pc:gateSection "3i" ;
+  pc:value 3.01 ;
+  pc:gateSection "3j" ;
   cito:citesAsEvidence dg:o_e41 ;
   prov:wasDerivedFrom claims:assert41 ;
   rdfs:comment "A property of the chain rather than a universal constant - which is why F4's scalar c does not transfer" .

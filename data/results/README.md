@@ -58,6 +58,7 @@ resolve their inputs and this directory relative to their own location).
 | `e63_tolls.E63_TAUN{1p0,1p5,3p0,4p5,6p0}.csv` | `E63_TAUN=<x> E63_REBUILD=1 E63_F5FCV=1 python3 src/harness/e63_f5_kebuffer.py` | 68 (the τ_n sweep: F5f CV monotone to the F3 anchor, toll margin → 0; the floor needs a measured pin — E66's drift amplitude) |
 | `e69_{pins,frontier,loro,aging}.csv` (+ `e63_tolls.E63_TAUN{1p8,2p2,4p0}.csv` walks, `e63_loro`/`e67_*` `.E63_TAUN{3p0,4p5}` cross-checks) | `python3 src/harness/e69_frontier.py` (`E69_SMOKE=1`) | 69 (the frontier collapses: keepability flat in the floor — the harm is fitting τ, not its size; F5p, pinned per corpus by measured drift, matches F3's CV with zero chosen constants and transfers best, p = 0.0001) |
 | `e70_taucurves.csv` | `python3 src/harness/e70_taucurves.py` (`E70_SMOKE=1`) | 70 (pinned-τ loss curves per rider: basins rider-shaped not regional; optima anti-track measured noise; D6-user_3 and pooled-EU at the grid RAIL) |
+| `e41_dem_route.E41_POPp1_E41_D61.csv`, `e71_dem_pop.csv` | `E41_POP=p1 E41_D6=1 python3 src/harness/e41_dem_route.py` (~1 h) then `python3 src/harness/e71_dem_pop.py` | 71 (paper 2 re-based: D3–D5 with travel rides kept + D6 vs FABDEM/baro; per-arm τ-grid h̃₊ → c(τ), Entry-63 tolls and F5 per chain; gated in bootstrap_ci §3j) |
 
 `python3 src/harness/bootstrap_ci.py` (Entry 22) reads these CSVs and gates the
 article's published medians against them.

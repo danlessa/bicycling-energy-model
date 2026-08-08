@@ -137,6 +137,18 @@ home of the *derivation* and the side-by-side comparison.
   one rider), in-pool optima ANTI-track measured drift, and D6-user_3 runs
   monotonically to the 12 m grid RAIL — the absorber signature; flagged as
   the open diagnosis. `E70_SMOKE=1`),
+  `e71_dem_pop.py` + the `E41_POP=p1`/`E41_D6=1` MODE flags in
+  `e41_dem_route.py` (Entry 71 — paper 2 re-based onto paper 1's population
+  with D5's travel rides KEPT (`igc_ok` per-ride flag replaces the bbox skip
+  under MODE) and D6 added vs FABDEM+baro (physics from the A-chain cache,
+  wind 0). MODE runs suffix the CSV AND the sampling cache and skip the
+  published gates; they also emit per-arm τ-grid h̃₊ (c(τ) curves), the
+  Entry-63 valley toll (one algebra copy — calls e63's ride_tolls with its
+  module floor set per call) and F5 per floor. Verdicts: within-rider travel
+  split is the terrain caveat at fixed instrument; D6's chains 2.4× cleaner
+  (c 1.26 vs 3.01 m/km); F5 beats F3 on EVERY DEM chain with the best floor
+  at the chain's measured noise scale. Gate section 3j gates the re-based
+  headline; 3i still guards the canonical walk),
   `bootstrap_ci.py` (**the gate script**; exits non-zero on failure). **Narrowed
   2026-07-31 to only what the papers still claim** — 22 sections became 7, and a
   full run is 4.5 min instead of 15. Surviving sections are keyed to
