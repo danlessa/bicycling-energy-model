@@ -118,7 +118,12 @@ home of the *derivation* and the side-by-side comparison.
   constants age ~4.7× worse than F5f's on the same rider's later rides —
   the deadband's unique share carries ≈ zero transferable physics; F5f's
   ε+toll are stationary. Train half only; `E67_SMOKE=1`; pins `E63_TAUN=2.0`
-  before importing the e63 module),
+  before importing the e63 module. Entry 68 (`E63_F5FCV=1`, the light
+  τ_n-sweep mode in `e63_f5_kebuffer.py`): F5f's CV declines MONOTONICALLY in
+  τ_n to the F3 anchor (F5f(6) ≡ F3(6) at 0.05405) with the toll margin
+  decaying 0.0047→0 — the floor is load-bearing, so F5f's one-parameter claim
+  needs an external pin; the registered pin is E66's measured drift amplitude
+  (median 2.8 m), making τ_n telemetry, per corpus, not a chosen constant),
   `bootstrap_ci.py` (**the gate script**; exits non-zero on failure). **Narrowed
   2026-07-31 to only what the papers still claim** — 22 sections became 7, and a
   full run is 4.5 min instead of 15. Surviving sections are keyed to

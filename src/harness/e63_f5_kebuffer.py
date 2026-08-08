@@ -140,6 +140,13 @@ TAUPRED = bool(os.environ.get("E63_TAUPRED"))  # Entry 64 tau* prediction
 # engine calls). Both are meant to run with E63_TAUN=0.0 — no deadband at all.
 RAINFLOW = bool(os.environ.get("E63_RAINFLOW"))
 SMOOTH = float(os.environ.get("E63_SMOOTH") or 0)   # Gaussian sigma, metres
+# E63_F5FCV=1: the light tau_n-sweep mode (Entry 67 follow-up, Danilo: "why
+# tau=2 specifically? Have we tried other combinations?") — computes only
+# F5f's fold CV and the pinned-tau control at this arm's floor, so a sweep
+# over E63_TAUN is a walk plus ~2 min instead of a full chain. At tau_n = 6
+# the buffer caps at max(0, h_KE - 12) ~ 0, so F5f degenerates to F3(tau = 6,
+# eps-only) — the curve's far anchor.
+F5FCV = bool(os.environ.get("E63_F5FCV"))
 SUFF = env_suffix("E63_TAUN", "E63_RAINFLOW", "E63_SMOOTH") + (".SMOKE" if SMOKE else "")
 TOLLS_CSV = os.path.join(RESULTS, "e63_tolls" + SUFF + ".csv")
 SM_CHECK: list[float] = []        # build-time sm-component vs engine deviations
@@ -731,6 +738,16 @@ def main() -> None:
         return
     if TAUPRED:
         taupred(rows)
+        return
+    if F5FCV:
+        train, _ = split(rows)
+        e5, k5 = fit_f5f(train)
+        cvf = cv5(train, fit_f5f)
+        ctl = cv_f3_fixed(train, TI_N)
+        print(f"  F5FCV tau_n={TAU_N:g}: F5f CV {cvf['cv']:.5f} "
+              f"+/- {cvf['se']:.5f} (eps {e5:.4f})   "
+              f"F3(tau={TAU_N:g} pinned) CV {ctl['cv']:.5f} "
+              f"+/- {ctl['se']:.5f}")
         return
 
     train, test = split(rows)

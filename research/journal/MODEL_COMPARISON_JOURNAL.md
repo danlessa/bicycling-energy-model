@@ -171,6 +171,8 @@ changed. See Entry 11.)*
   [`e66_driftprobe.py`](../../src/harness/e66_driftprobe.py),
   [`e67_residual.py`](../../src/harness/e67_residual.py), plus
   [`epsilon-origin.md`](../notes/epsilon-origin.md)) — this commit
+- **Entry 68** (the τ_n sweep — F5f's floor is load-bearing; the `E63_F5FCV=1` mode in
+  [`e63_f5_kebuffer.py`](../../src/harness/e63_f5_kebuffer.py)) — this commit
 ---
 
 ## Data traceability
@@ -193,6 +195,7 @@ counted from its CSV rather than asserted, is [`research/data-graph.ttl`](../dat
 
 | entry | $I = (D, P)$ | $T$ | $O$ (rows) | $S$ |
 |--:|---|---|---|---|
+| 68 | the e52 cache + eight toll walks over the $\tau_n$ grid | F5f fold-CV + pinned-τ control per floor | `e63_tolls.E63_TAUN*.csv` (2,039 each; summary console-borne, ~2 min/arm) | CV($\tau_n$) monotone to the F3 anchor; the floor needs a measured pin |
 | 67 | the e52 cache + e63 tolls, train half | B: signature correlations; C: early/late refits + the aging test | `e67_signature.csv` (1,732), `e67_stability.csv` (6) | transferable share of the deadband's unique ~25 pp ≈ 0 |
 | 66 | $(D_3..D_6)$ raw records (geo re-parse) | closure-pair drift statistics | `e66_drift.csv` (2,039; 1,663 with ≥ 10 pairs) | drift real (2.8 m, 3.4 m/h); the τ = 6 benefit is drift-blind |
 | 65 | $(D_3..D_6, P_{f,r})$ via $O_{52}$ | F5 family under rainflow / Gaussian σ = 15, $\tau_n$ = 0 | `e63_tolls.E63_TAUN0p0_E63_RAINFLOW1.csv`, `…_E63_SMOOTH15.csv` (2,039 each) | both fragmentation fixes fail; toll-alone holds 53% of the gap |
@@ -263,6 +266,71 @@ Entries with no $O$ are reviews, registrations, imported notes or refactors — 
 what the other rows *mean* without producing a per-ride table of their own.
 
 ---
+
+---
+
+## 2026-08-07 — Entry 68: the τ_n sweep — F5f's floor is load-bearing, and only a measured pin can hold it
+
+**Lineage** — $I$: the e52 cache + eight toll walks, $\tau_n \in \{0, 0.5, 1, 1.5, 2,
+3, 4.5, 6\}$ · $T$: F5f fold-CV (ε in-fold, $v_b$ frozen ∞) + the pinned-τ F3 control
+per floor · $O$: the suffixed `e63_tolls.E63_TAUN*.csv` walks (2,039 each); the summary
+is console-borne, reproducible per arm in ~2 min via `E63_TAUN=<x> E63_F5FCV=1` ·
+$S$: the CV($\tau_n$) curve below.
+
+*Prompt (Danilo): "On F5f: why are we using tau=2 specifically? Have we tried other
+combinations of it?"* The honest answer at the time: $\tau_n$ = 2 was a priori (A.4's
+jitter scale), deliberately unfitted — and only $\{0, 0.5, 2\}$ had ever been tried.
+The suspicion the question carries — that the floor might be doing absorber work — is
+what the sweep tests.
+
+### The curve (train-half fold CV; F3 control = same floor, ε in-fold, no toll)
+
+| $\tau_n$ | F5f CV | F3(τ pinned) | toll margin | F5f ε |
+|--:|--:|--:|--:|--:|
+| 0 | 0.05831 | 0.06306 | 0.00475 | 0.4159 |
+| 0.5 | 0.05781 | 0.06012 | 0.00231 | 0.3999 |
+| 1 | 0.05688 | 0.05834 | 0.00146 | 0.3885 |
+| 1.5 | 0.05623 | 0.05717 | 0.00094 | 0.3781 |
+| 2 | 0.05567 | 0.05625 | 0.00058 | 0.3632 |
+| 3 | 0.05488 | 0.05519 | 0.00031 | 0.3396 |
+| 4.5 | 0.05419 | 0.05431 | 0.00012 | 0.3149 |
+| 6 | 0.05405 | 0.05406 | ~0 | 0.2930 |
+
+The $\tau_n$ = 6 row is the predicted degeneracy landing exactly: the $-2\tau_n$
+deduction leaves no buffer, F5f ≡ F3(τ = 6, ε-only), and its ε recovers the published
+0.2939 to the third decimal.
+
+### Reading — the suspicion was right
+
+**There is no data-internal floor.** F5f's CV declines monotonically to the F3 anchor
+— no flat bottom near 2 m, no elbow anywhere; the data would take more filter at every
+step. **The toll's margin decays in lock-step** (0.0047 → ~0): each metre of floor
+transfers work from the physics term to the filter, and by 4.5 m the toll is an
+ornament. So $\tau_n$ = 2 sits mid-slope, and F5f's one-parameter claim is exactly as
+strong as the *external* justification for its floor — fitted, it would be F3 with
+extra steps. Every Entry 63–67 result stands as stated *for the $\tau_n$ = 2 variant*;
+what the curve adds is that the variant choice was load-bearing, not innocuous.
+
+**The one defensible pin is a measurement, and Entry 66 already produced it**: the
+closure-pair drift amplitude — median 2.8 m across the corpora, a per-ride, per-corpus
+noise scale obtained without fitting anything — lands precisely in the 2–3 m region.
+The restatement this registers: *F5f's floor is the measured same-place elevation
+disagreement of the corpus it runs on*, and $\tau_n$ becomes telemetry like
+$\hat m$/$\hat v_b$, not a constant chosen by anyone. The frontier framing: in-pool CV
+improves monotonically with the floor while Entry 67 showed the filter's share is what
+neither transfers nor persists — so $\tau_n$ selects a point on an
+**accuracy-vs-keepability frontier**, and the published point should be the one a
+measurement pins.
+
+### Registered next steps (if the thread continues)
+
+(1) Re-run Entry 67's aging test and Entry 64's LORO at $\tau_n$ = 3 (nearest grid
+point to the measured 2.8 m) and at 4.5, mapping keepability along the curve — the
+prediction from Entry 67 is that aging worsens toward F3's as the floor grows.
+(2) Per-corpus pins: D6's measured drift medians (3.4–4.4 m) exceed D3–D5's
+(1.8–2.8 m), so a measurement-pinned $\tau_n$ differs by corpus — testable with zero
+fitted parameters, and a cleaner story than any shared constant. Sweep cost note:
+each floor is a fresh toll walk (~8 min) + ~2 min of fits under `E63_F5FCV=1`.
 
 ---
 
