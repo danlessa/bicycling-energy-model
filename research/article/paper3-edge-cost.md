@@ -61,6 +61,19 @@ ride. The realisation is deployed in an open-source energy-field router
 - **1.2 What the ride-level law provides.** Recap of paper 1's form 3/4 and
   the coasting-deficit ε; why it cannot be used as-is per edge (three
   non-local ingredients: deadband, route-aggregate ε, climbing share).
+  **Update [E63–E69]: the deadband's non-locality is now decomposed** —
+  roughly seven-eighths of its explanatory work is a kinetic-energy valley
+  toll min(D, H, h_KE) computable from the profile's descent→climb valleys
+  (buffer h_KE = (v_e² − v_c²)/2g from the branch fixed points), the rest a
+  measurable noise floor plus a fitted residue shown to be corpus-absorbing
+  (non-stationary within riders, non-transferable across them). The
+  physically load-bearing part of the filter is therefore *graph-computable*:
+  valleys are known at graph-build time. The dynamical scale that a strictly
+  edge-local cost drops is the KE boundary layer — recovery length
+  L_rec = m·v_f²/(C_rr·m·g + 3·½ρC_dA·v_f²) ≈ 90 m at the shared constants,
+  i.e. ~3 edges at 30 m pitch — which is exactly why kinetic continuity
+  between edges cannot be recovered by re-weighting single edges and needs a
+  per-valley (two-edge-window) term instead.
 - **1.3 The proposed edge realisation ("v2Edge").** [E17–E18,
   `regime_compare.py::r1d_v2_edge`] For an edge of length Δx and grade s:
   - climb edge (s ≥ 2%): E = α_r·Δx + β·k_s·Δh (aero gated off);
@@ -87,6 +100,22 @@ ride. The realisation is deployed in an open-source energy-field router
   may span one or two cells, so its vertical curve is sub-resolution and the
   straight-deck over-correction could be *larger* here than the −2.43 m
   [−3.26, −1.68] measured per touched ride at route grain.
+  **New candidates from the E63–E69 programme:** (H5) a *valley patch* — the
+  KE toll applied at graph-build time to each descent→climb node, replacing
+  k_s's scalar stand-in for the deadband — reproduces the ride-level filtered
+  form at edge grain without any non-local pass; the route-grain evidence
+  (toll alone carries ~half the filter's benefit, toll + measured floor
+  matches it, the fitted remainder is absorbing and NOT worth reproducing per
+  edge) sets the expected ceiling before any run. (H6) the interruption
+  component of ε₀ becomes *computable* here: the router knows junction
+  density and node degree — precisely the collection-truncation information
+  the ride-level calibration never had — so a per-node truncation term
+  should explain part of the urban/highway ε split [E60–E61] from graph
+  structure alone. (H7) the cost bundle's constants follow the measured-pin
+  doctrine [E68–E69]: noise floors measured per chain (paper 2's rates),
+  buffer from rider physics, ε the single fitted scalar — any constant
+  *fitted* at edge grain is presumed absorbing until it survives a
+  LORO-style transfer gate.
 
 ## 2. Methods
 
